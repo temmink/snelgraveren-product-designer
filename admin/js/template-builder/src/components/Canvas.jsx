@@ -174,6 +174,26 @@ export default function Canvas() {
     };
     canvas.on('object:modified', onModified);
 
+    canvas.on('object:moving', (e) => {
+      snapToGrid(e.target);
+      clampToZone(e.target);
+    });
+
+    canvas.on('object:scaling', (e) => {
+      clampScaleToZone(e.target);
+    });
+
+    canvas.on('text:changed', (e) => {
+      const obj = e.target;
+      if (!obj?.data?.elementType) return;
+      const textPerms = permissions[obj.data.elementType] || {};
+      const maxChars = textPerms.max_chars;
+      if (maxChars && maxChars > 0 && obj.text && obj.text.length > maxChars) {
+        obj.set({ text: obj.text.slice(0, maxChars) });
+        canvas.renderAll();
+      }
+    });
+
     // Load background image; push initial history snapshot after it loads
     // so the first undo state includes the background.
     if (currentView?.background_url) {
@@ -296,6 +316,11 @@ export default function Canvas() {
           selectable: !layer.locked,
           evented:    !layer.locked,
         });
+        // Refresh clipPath in case zone config changed.
+        const existingZi = existing.data?.zoneIndex;
+        if (existingZi != null && existingZi >= 0) {
+          applyZoneClip(existing, existingZi);
+        }
         handledIndexes.add(index);
       } else {
         // Create new fabric text object.
@@ -307,9 +332,20 @@ export default function Canvas() {
           fill:       layer.fill       || '#000000',
           selectable: !layer.locked,
           evented:    !layer.locked,
-          data:       { layerIndex: index, layerType: 'text' },
+          data:       {
+            layerIndex:  index,
+            layerType:   'text',
+            elementType: 'text',
+            zoneIndex:   findZoneForPoint(layer.left || 100, layer.top || 100, 'text'),
+          },
         });
         canvas.add(text);
+        applyPermissions(text, 'text');
+        const zi = text.data.zoneIndex;
+        if (zi >= 0) {
+          applyZoneClip(text, zi);
+          clampToZone(text);
+        }
         handledIndexes.add(index);
       }
     });
