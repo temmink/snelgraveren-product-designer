@@ -9,6 +9,10 @@ class Admin {
         add_action('admin_menu',           [$this, 'register_menus']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_scripts']);
         add_filter('user_has_cap',         [$this, 'grant_template_cap'], 10, 4);
+        add_filter('upload_mimes',         [$this, 'allow_svg_upload']);
+        add_filter('wp_check_filetype_and_ext', [$this, 'fix_svg_filetype'], 10, 5);
+
+        new ProductIntegration();
     }
 
     public function register_menus(): void {
@@ -67,6 +71,8 @@ class Admin {
             $deps    = $asset['dependencies'] ?? $deps;
         }
 
+        wp_enqueue_media();
+
         wp_enqueue_script(
             'pd-template-builder',
             PD_PLUGIN_URL . 'dist/admin-template-builder.js',
@@ -75,12 +81,15 @@ class Admin {
             true
         );
 
-        wp_enqueue_style(
-            'pd-template-builder',
-            PD_PLUGIN_URL . 'dist/admin-template-builder.css',
-            [],
-            $version
-        );
+        $css_file = PD_PLUGIN_DIR . 'dist/admin-template-builder.css';
+        if (file_exists($css_file)) {
+            wp_enqueue_style(
+                'pd-template-builder',
+                PD_PLUGIN_URL . 'dist/admin-template-builder.css',
+                [],
+                $version
+            );
+        }
 
         $template_id = (int) ($_GET['template_id'] ?? 0);
 
@@ -91,6 +100,24 @@ class Admin {
             'pluginUrl'       => PD_PLUGIN_URL,
             'currency_symbol' => get_woocommerce_currency_symbol(),
         ]);
+    }
+
+    public function allow_svg_upload(array $mimes): array {
+        $mimes['svg']  = 'image/svg+xml';
+        $mimes['svgz'] = 'image/svg+xml';
+        return $mimes;
+    }
+
+    public function fix_svg_filetype(array $data, string $file, string $filename, ?array $mimes, string|false $real_mime): array {
+        if (!empty($data['ext']) && !empty($data['type'])) {
+            return $data;
+        }
+        $ext = pathinfo($filename, PATHINFO_EXTENSION);
+        if ($ext === 'svg' || $ext === 'svgz') {
+            $data['ext']  = $ext;
+            $data['type'] = 'image/svg+xml';
+        }
+        return $data;
     }
 
     /**
