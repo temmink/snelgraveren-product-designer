@@ -4,6 +4,7 @@ namespace ProductDesigner\API;
 defined('ABSPATH') || exit;
 
 use ProductDesigner\Database\DesignRepository;
+use ProductDesigner\Database\TemplateRepository;
 use ProductDesigner\Security\CapabilityChecker;
 
 class RestDesigns {
@@ -60,6 +61,13 @@ class RestDesigns {
         if (empty($body['template_id'])) {
             return new \WP_Error('missing_template', 'template_id is required.', ['status' => 400]);
         }
+
+        $template_repo = new TemplateRepository();
+        $template = $template_repo->get((int) $body['template_id']);
+        if (!$template || ($template['status'] ?? '') !== 'published') {
+            return new \WP_Error('invalid_template', 'Template not found or not published.', ['status' => 400]);
+        }
+
         $body['customer_id'] = get_current_user_id();
         $body['session_id']  = CapabilityChecker::current_session_id();
 
