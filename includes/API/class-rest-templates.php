@@ -31,6 +31,10 @@ class RestTemplates {
             ['methods' => 'POST', 'callback' => [$this, 'duplicate_template'], 'permission_callback' => [$this, 'admin_permission']],
         ]);
 
+        register_rest_route($ns, '/templates/(?P<id>\d+)/public', [
+            ['methods' => 'GET', 'callback' => [$this, 'get_public_template'], 'permission_callback' => '__return_true'],
+        ]);
+
         register_rest_route($ns, '/templates/(?P<template_id>\d+)/views', [
             ['methods' => 'GET',  'callback' => [$this, 'list_views'],  'permission_callback' => [$this, 'admin_permission']],
             ['methods' => 'POST', 'callback' => [$this, 'create_view'], 'permission_callback' => [$this, 'admin_permission']],
@@ -113,6 +117,38 @@ class RestTemplates {
             return new \WP_Error('not_found', 'Template not found.', ['status' => 404]);
         }
         return new \WP_REST_Response($this->repo->get($new_id), 201);
+    }
+
+    public function get_public_template(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+        $template = $this->repo->get((int) $request['id']);
+        if (!$template || ($template['status'] ?? '') !== 'published') {
+            return new \WP_Error('not_found', 'Template not found.', ['status' => 404]);
+        }
+
+        $views = $this->repo->get_views((int) $template['id']);
+        $sanitized_views = array_map(function ($v) {
+            return [
+                'id'              => (int) $v['id'],
+                'name'            => $v['name'] ?? '',
+                'canvas_width'    => (int) ($v['canvas_width'] ?? 800),
+                'canvas_height'   => (int) ($v['canvas_height'] ?? 600),
+                'background_url'  => $v['background_url'] ?? '',
+                'zones_config'    => is_string($v['zones_config'] ?? '') ? json_decode($v['zones_config'], true) : ($v['zones_config'] ?? []),
+                'layers_config'   => is_string($v['layers_config'] ?? '') ? json_decode($v['layers_config'], true) : ($v['layers_config'] ?? []),
+            ];
+        }, $views);
+
+        $global_config = $template['global_config'] ?? '{}';
+        if (is_string($global_config)) {
+            $global_config = json_decode($global_config, true) ?: [];
+        }
+
+        return rest_ensure_response([
+            'id'            => (int) $template['id'],
+            'title'         => $template['title'],
+            'global_config' => $global_config,
+            'views'         => $sanitized_views,
+        ]);
     }
 
     public function list_views(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
