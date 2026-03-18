@@ -268,10 +268,16 @@ export default function Canvas() {
   }, [zones, isFreeMove]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Real-time layer sync ────────────────────────────────────────────────
-  // When layers_config changes in the store, update/add/remove fabric text
+  // When zone-nested layers change in the store, update/add/remove fabric text
   // objects to match. This makes sidebar edits appear on the canvas instantly.
 
-  const layers = currentView?.layers_config || [];
+  const layers = (currentView?.zones_config || []).flatMap((zone, zoneIndex) =>
+    (zone.layers || []).map((layer, layerIndex) => ({
+      ...layer,
+      _zoneIndex: zoneIndex,
+      _layerIndex: layerIndex,
+    }))
+  );
 
   useEffect(() => {
     const canvas = fabricRef.current;
@@ -279,21 +285,21 @@ export default function Canvas() {
 
     const fabricObjects = canvas.getObjects();
 
-    // Build a map of existing text objects by layerIndex.
-    const existingByIndex = {};
+    // Build a map of existing text objects by layer key.
+    const existingByKey = {};
     fabricObjects.forEach((obj) => {
-      if (obj.data?.layerType === 'text') {
-        existingByIndex[obj.data.layerIndex] = obj;
+      if (obj.data?.layerKey) {
+        existingByKey[obj.data.layerKey] = obj;
       }
     });
 
-    // Track which indexes we've handled.
-    const handledIndexes = new Set();
+    // Track which keys we've handled.
+    const handledKeys = new Set();
 
-    layers.forEach((layer, index) => {
+    layers.forEach((layer) => {
       if (layer.type !== 'text') return;
 
-      const existing = existingByIndex[index];
+      const existing = existingByKey[layer._key];
 
       if (!layer.text) {
         // No text content — remove existing object if any.
@@ -317,12 +323,18 @@ export default function Canvas() {
           selectable: !layer.locked,
           evented:    !layer.locked,
         });
+        // Update data in case zone/layer indices changed.
+        existing.data = {
+          ...existing.data,
+          layerIndex: layer._layerIndex,
+          zoneIndex:  layer._zoneIndex,
+        };
         // Refresh clipPath in case zone config changed.
-        const existingZi = existing.data?.zoneIndex;
-        if (existingZi != null && existingZi >= 0) {
-          applyZoneClip(existing, existingZi);
+        const zi = layer._zoneIndex;
+        if (zi != null && zi >= 0) {
+          applyZoneClip(existing, zi);
         }
-        handledIndexes.add(index);
+        handledKeys.add(layer._key);
       } else {
         // Create new fabric text object.
         const text = new FabricText(layer.text, {
@@ -334,26 +346,27 @@ export default function Canvas() {
           selectable: !layer.locked,
           evented:    !layer.locked,
           data:       {
-            layerIndex:  index,
-            layerType:   'text',
-            elementType: 'text',
-            zoneIndex:   findZoneForPoint(layer.left || 100, layer.top || 100, 'text'),
+            layerKey:    layer._key,
+            layerIndex:  layer._layerIndex,
+            zoneIndex:   layer._zoneIndex,
+            layerType:   layer.type,
+            elementType: layer.type,
           },
         });
         canvas.add(text);
-        applyPermissions(text, 'text');
-        const zi = text.data.zoneIndex;
+        applyPermissions(text, layer.type);
+        const zi = layer._zoneIndex;
         if (zi >= 0) {
           applyZoneClip(text, zi);
           clampToZone(text);
         }
-        handledIndexes.add(index);
+        handledKeys.add(layer._key);
       }
     });
 
     // Remove fabric objects for layers that no longer exist.
-    Object.entries(existingByIndex).forEach(([idx, obj]) => {
-      if (!handledIndexes.has(Number(idx))) {
+    Object.entries(existingByKey).forEach(([key, obj]) => {
+      if (!handledKeys.has(key)) {
         canvas.remove(obj);
       }
     });
@@ -378,7 +391,7 @@ export default function Canvas() {
         const newFontSize = Math.round((obj.fontSize || 24) * (obj.scaleX || 1));
         obj.set({ fontSize: newFontSize, scaleX: 1, scaleY: 1 });
 
-        updateLayer(currentViewIndex, obj.data.layerIndex, {
+        updateLayer(currentViewIndex, obj.data.zoneIndex, obj.data.layerIndex, {
           left:     Math.round(obj.left),
           top:      Math.round(obj.top),
           fontSize: newFontSize,

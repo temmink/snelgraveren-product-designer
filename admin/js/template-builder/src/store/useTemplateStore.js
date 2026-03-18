@@ -29,6 +29,56 @@ const DEFAULT_GLOBAL_CONFIG = {
   },
 };
 
+function migrateViewToNestedLayers(view) {
+  const zones = view.zones_config || [];
+  const allMigrated = zones.length > 0 && zones.every((z) => Array.isArray(z.layers));
+  if (allMigrated) return view;
+  if (!view.layers_config?.length) {
+    // No layers to migrate, but ensure all zones have a layers array.
+    return {
+      ...view,
+      zones_config: zones.map((z) => Array.isArray(z.layers) ? z : { ...z, layers: [] }),
+    };
+  }
+
+  const zonesWithLayers = zones.map((z) => ({ ...z, layers: Array.isArray(z.layers) ? [...z.layers] : [] }));
+  const layers = view.layers_config || [];
+
+  layers.forEach((layer) => {
+    // Find zone by center point of layer.
+    const cx = (layer.left || 0) + ((layer.width || 0) / 2);
+    const cy = (layer.top || 0) + ((layer.height || 0) / 2);
+
+    let bestIdx = -1;
+    let bestArea = Infinity;
+
+    zonesWithLayers.forEach((z, i) => {
+      if (cx >= z.x && cx <= z.x + z.width && cy >= z.y && cy <= z.y + z.height) {
+        const area = z.width * z.height;
+        if (area < bestArea) {
+          bestIdx = i;
+          bestArea = area;
+        }
+      }
+    });
+
+    if (bestIdx < 0) {
+      // No zone contains this layer — assign to first zone.
+      if (zonesWithLayers.length > 0) {
+        console.warn('[PD] Layer outside all zones, assigning to first zone:', layer.name || layer.type);
+        bestIdx = 0;
+      } else {
+        return; // No zones at all — drop the layer (shouldn't happen with the guard).
+      }
+    }
+
+    zonesWithLayers[bestIdx].layers.push(layer);
+  });
+
+  const { layers_config: _dropped, ...rest } = view;
+  return { ...rest, zones_config: zonesWithLayers };
+}
+
 const useTemplateStore = create((set, get) => ({
   // Persisted template data
   id: 0,
@@ -108,7 +158,7 @@ const useTemplateStore = create((set, get) => ({
       const views = [...s.views];
       views[viewIndex] = {
         ...views[viewIndex],
-        zones_config: [...(views[viewIndex].zones_config || []), { _key: crypto.randomUUID(), ...zone }],
+        zones_config: [...(views[viewIndex].zones_config || []), { _key: crypto.randomUUID(), layers: [], ...zone }],
       };
       return { views, isDirty: true };
     }),
@@ -132,44 +182,69 @@ const useTemplateStore = create((set, get) => ({
 
   // ── Layer management ──────────────────────────────────────────────────────
 
-  addLayer: (viewIndex, layer) =>
+  addLayer: (viewIndex, zoneIndex, layer) =>
     set((s) => {
       const views = [...s.views];
-      views[viewIndex] = {
-        ...views[viewIndex],
-        layers_config: [...(views[viewIndex].layers_config || []), { _key: crypto.randomUUID(), ...layer }],
+      const zones = [...(views[viewIndex].zones_config || [])];
+      zones[zoneIndex] = {
+        ...zones[zoneIndex],
+        layers: [...(zones[zoneIndex].layers || []), { _key: crypto.randomUUID(), ...layer }],
       };
+      views[viewIndex] = { ...views[viewIndex], zones_config: zones };
       return { views, isDirty: true };
     }),
 
-  updateLayer: (viewIndex, layerIndex, patch) =>
+  updateLayer: (viewIndex, zoneIndex, layerIndex, patch) =>
     set((s) => {
       const views = [...s.views];
-      const layers = [...(views[viewIndex].layers_config || [])];
+      const zones = [...(views[viewIndex].zones_config || [])];
+      const layers = [...(zones[zoneIndex].layers || [])];
       layers[layerIndex] = { ...layers[layerIndex], ...patch };
-      views[viewIndex] = { ...views[viewIndex], layers_config: layers };
+      zones[zoneIndex] = { ...zones[zoneIndex], layers };
+      views[viewIndex] = { ...views[viewIndex], zones_config: zones };
       return { views, isDirty: true };
     }),
 
-  removeLayer: (viewIndex, layerIndex) =>
+  removeLayer: (viewIndex, zoneIndex, layerIndex) =>
     set((s) => {
       const views = [...s.views];
-      const layers = (views[viewIndex].layers_config || [])
+      const zones = [...(views[viewIndex].zones_config || [])];
+      const layers = (zones[zoneIndex].layers || [])
         .filter((_, i) => i !== layerIndex)
         .map((layer, i) => ({ ...layer, z_order: i }));
-      views[viewIndex] = { ...views[viewIndex], layers_config: layers };
+      zones[zoneIndex] = { ...zones[zoneIndex], layers };
+      views[viewIndex] = { ...views[viewIndex], zones_config: zones };
       return { views, isDirty: true };
     }),
 
-  moveLayer: (viewIndex, fromIndex, toIndex) =>
+  moveLayer: (viewIndex, fromZoneIndex, fromLayerIndex, toZoneIndex, toLayerIndex) =>
     set((s) => {
       const views = [...s.views];
-      const layers = [...(views[viewIndex].layers_config || [])];
-      if (fromIndex < 0 || fromIndex >= layers.length || toIndex < 0 || toIndex >= layers.length) return {};
-      const [moved] = layers.splice(fromIndex, 1);
-      layers.splice(toIndex, 0, moved);
-      const reordered = layers.map((layer, i) => ({ ...layer, z_order: i }));
-      views[viewIndex] = { ...views[viewIndex], layers_config: reordered };
+      const zones = [...(views[viewIndex].zones_config || [])];
+
+      // Remove from source zone.
+      const fromLayers = [...(zones[fromZoneIndex].layers || [])];
+      const [moved] = fromLayers.splice(fromLayerIndex, 1);
+      zones[fromZoneIndex] = { ...zones[fromZoneIndex], layers: fromLayers.map((l, i) => ({ ...l, z_order: i })) };
+
+      // Insert into target zone.
+      const toLayers = fromZoneIndex === toZoneIndex ? fromLayers : [...(zones[toZoneIndex].layers || [])];
+      toLayers.splice(toLayerIndex, 0, moved);
+      zones[toZoneIndex] = { ...zones[toZoneIndex], layers: toLayers.map((l, i) => ({ ...l, z_order: i })) };
+
+      views[viewIndex] = { ...views[viewIndex], zones_config: zones };
+      return { views, isDirty: true };
+    }),
+
+  reorderZone: (viewIndex, fromIndex, toIndex) =>
+    set((s) => {
+      const views = [...s.views];
+      const zones = [...(views[viewIndex].zones_config || [])];
+      if (fromIndex < 0 || fromIndex >= zones.length || toIndex < 0 || toIndex >= zones.length) return {};
+      const [moved] = zones.splice(fromIndex, 1);
+      zones.splice(toIndex, 0, moved);
+      const reordered = zones.map((z, i) => ({ ...z, sort_order: i }));
+      views[viewIndex] = { ...views[viewIndex], zones_config: reordered };
       return { views, isDirty: true };
     }),
 
@@ -223,7 +298,10 @@ const useTemplateStore = create((set, get) => ({
       slug:         data.slug   || '',
       status:       data.status || 'draft',
       globalConfig: { ...DEFAULT_GLOBAL_CONFIG, ...(data.global_config || {}) },
-      views:        (data.views || []).map((v) => ({ _clientId: crypto.randomUUID(), ...v })),
+      views:        (data.views || []).map((v) => ({
+        _clientId: crypto.randomUUID(),
+        ...migrateViewToNestedLayers(v),
+      })),
       currentViewIndex: 0,
       isDirty:      false,
       history:      {},
