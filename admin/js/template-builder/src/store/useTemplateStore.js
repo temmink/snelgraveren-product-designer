@@ -23,7 +23,7 @@ const DEFAULT_GLOBAL_CONFIG = {
   min_surcharge: 0,
   max_surcharge: null,
   permissions: {
-    text:  { resize: true, rotate: true, delete: true, recolor: true, change_font: true, min_scale: 0.1, max_scale: 10, snap_to_grid: false, grid_size: 10 },
+    text:  { resize: true, rotate: true, delete: true, recolor: true, change_font: true, min_scale: 0.1, max_scale: 10, snap_to_grid: false, grid_size: 10, max_chars: 0 },
     image: { resize: true, rotate: true, delete: true, min_scale: 0.1, max_scale: 10, snap_to_grid: false, grid_size: 10 },
     svg:   { resize: true, rotate: true, delete: true, recolor: true, min_scale: 0.1, max_scale: 10, snap_to_grid: false, grid_size: 10 },
   },
@@ -42,12 +42,13 @@ const useTemplateStore = create((set, get) => ({
   // UI state
   isDirty: false,
   isSaving: false,
+  isFreeMove: false,
 
   // Track removed view IDs for deletion on save
   removedViewIds: [],
 
-  // Undo/redo history keyed by viewIndex
-  // { [viewIndex]: { stack: string[], pointer: number } }
+  // Undo/redo history keyed by view._clientId
+  // { [clientId]: { stack: string[], pointer: number } }
   history: {},
 
   // ── Core setters ──────────────────────────────────────────────────────────
@@ -58,6 +59,7 @@ const useTemplateStore = create((set, get) => ({
   setStatus:           (status) => set({ status, isDirty: true }),
   setIsDirty:          (v)      => set({ isDirty: v }),
   setIsSaving:         (v)      => set({ isSaving: v }),
+  setFreeMove:         (v)      => set({ isFreeMove: v }),
   setCurrentViewIndex: (i)      => set({ currentViewIndex: i }),
 
   setGlobalConfig: (patch) =>
@@ -78,17 +80,9 @@ const useTemplateStore = create((set, get) => ({
       const views = s.views.filter((_, i) => i !== index);
       const currentViewIndex = Math.min(s.currentViewIndex, Math.max(0, views.length - 1));
 
-      // Re-key history: remove the deleted view's entry, shift down entries at higher indexes.
-      const history = {};
-      for (const [key, val] of Object.entries(s.history)) {
-        const k = Number(key);
-        if (k === index) continue;
-        if (k > index) {
-          history[k - 1] = val;
-        } else {
-          history[k] = val;
-        }
-      }
+      // Remove history entry for the deleted view (keyed by _clientId).
+      const history = { ...s.history };
+      if (view?._clientId) delete history[view._clientId];
 
       // Track server ID for deletion on save (only if the view was persisted to the server).
       const removedViewIds = view?.id
@@ -167,44 +161,56 @@ const useTemplateStore = create((set, get) => ({
       return { views, isDirty: true };
     }),
 
+  moveLayer: (viewIndex, fromIndex, toIndex) =>
+    set((s) => {
+      const views = [...s.views];
+      const layers = [...(views[viewIndex].layers_config || [])];
+      if (fromIndex < 0 || fromIndex >= layers.length || toIndex < 0 || toIndex >= layers.length) return {};
+      const [moved] = layers.splice(fromIndex, 1);
+      layers.splice(toIndex, 0, moved);
+      const reordered = layers.map((layer, i) => ({ ...layer, z_order: i }));
+      views[viewIndex] = { ...views[viewIndex], layers_config: reordered };
+      return { views, isDirty: true };
+    }),
+
   // ── Undo / Redo ───────────────────────────────────────────────────────────
 
-  pushHistory: (viewIndex, snapshot) =>
+  pushHistory: (viewKey, snapshot) =>
     set((s) => {
-      const vh = s.history[viewIndex] || { stack: [], pointer: -1 };
+      const vh = s.history[viewKey] || { stack: [], pointer: -1 };
       const stack = vh.stack.slice(0, vh.pointer + 1);
       stack.push(snapshot);
       if (stack.length > MAX_HISTORY) stack.shift();
-      return { history: { ...s.history, [viewIndex]: { stack, pointer: stack.length - 1 } } };
+      return { history: { ...s.history, [viewKey]: { stack, pointer: stack.length - 1 } } };
     }),
 
-  undo: (viewIndex) => {
+  undo: (viewKey) => {
     const s = get();
-    const vh = s.history[viewIndex];
+    const vh = s.history[viewKey];
     if (!vh || vh.pointer <= 0) return null;
     const pointer = vh.pointer - 1;
     const snapshot = vh.stack[pointer];
-    set((st) => ({ history: { ...st.history, [viewIndex]: { ...vh, pointer } } }));
+    set((st) => ({ history: { ...st.history, [viewKey]: { ...vh, pointer } } }));
     return snapshot;
   },
 
-  redo: (viewIndex) => {
+  redo: (viewKey) => {
     const s = get();
-    const vh = s.history[viewIndex];
+    const vh = s.history[viewKey];
     if (!vh || vh.pointer >= vh.stack.length - 1) return null;
     const pointer = vh.pointer + 1;
     const snapshot = vh.stack[pointer];
-    set((st) => ({ history: { ...st.history, [viewIndex]: { ...vh, pointer } } }));
+    set((st) => ({ history: { ...st.history, [viewKey]: { ...vh, pointer } } }));
     return snapshot;
   },
 
-  canUndo: (viewIndex) => {
-    const vh = get().history[viewIndex];
+  canUndo: (viewKey) => {
+    const vh = get().history[viewKey];
     return vh ? vh.pointer > 0 : false;
   },
 
-  canRedo: (viewIndex) => {
-    const vh = get().history[viewIndex];
+  canRedo: (viewKey) => {
+    const vh = get().history[viewKey];
     return vh ? vh.pointer < vh.stack.length - 1 : false;
   },
 
