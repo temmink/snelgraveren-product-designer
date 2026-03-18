@@ -244,16 +244,17 @@ export default function Canvas() {
     // Re-add zone rects from current store state.
     zones.forEach((zone, index) => {
       const rect = new Rect({
-        left:        zone.x,
-        top:         zone.y,
-        width:       zone.width,
-        height:      zone.height,
-        fill:        'rgba(59, 130, 246, 0.15)',
-        stroke:      '#3b82f6',
-        strokeWidth: 2,
-        selectable:  false,
-        evented:     false,
-        data:        { zoneIndex: index, isZone: true },
+        left:            zone.x,
+        top:             zone.y,
+        width:           zone.width,
+        height:          zone.height,
+        fill:            'rgba(59, 130, 246, 0.15)',
+        stroke:          '#3b82f6',
+        strokeWidth:     2,
+        strokeDashArray: isFreeMove ? [6, 4] : undefined,
+        selectable:      false,
+        evented:         false,
+        data:            { zoneIndex: index, isZone: true },
       });
       canvas.add(rect);
     });
@@ -264,7 +265,7 @@ export default function Canvas() {
     });
 
     canvas.renderAll();
-  }, [zones]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [zones, isFreeMove]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Real-time layer sync ────────────────────────────────────────────────
   // When layers_config changes in the store, update/add/remove fabric text
@@ -408,6 +409,33 @@ export default function Canvas() {
     c.defaultCursor = 'default';
     c.hoverCursor   = 'move';
   }, []);
+
+  const enableFreeMove = useCallback(() => {
+    setFreeMove(true);
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    canvas.getObjects().forEach((obj) => {
+      if (obj.data?.isZone || obj.data?.isZoneOverlay) return;
+      obj.clipPath = undefined;
+    });
+    pushHistory(viewKey, canvas.toJSON());
+    canvas.renderAll();
+  }, [setFreeMove, pushHistory, viewKey]);
+
+  const disableFreeMove = useCallback(() => {
+    setFreeMove(false);
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    canvas.getObjects().forEach((obj) => {
+      if (obj.data?.isZone || obj.data?.isZoneOverlay) return;
+      if (obj.data?.zoneIndex >= 0) {
+        applyZoneClip(obj, obj.data.zoneIndex);
+        clampToZone(obj);
+      }
+    });
+    pushHistory(viewKey, canvas.toJSON());
+    canvas.renderAll();
+  }, [setFreeMove, applyZoneClip, clampToZone, pushHistory, viewKey]);
 
   useEffect(() => {
     const canvas = fabricRef.current;
@@ -581,6 +609,13 @@ export default function Canvas() {
           title={isDrawMode ? 'Cancel (Esc)' : 'Draw zone'}
         >
           {isDrawMode ? '✕ Cancel' : '⬚ Draw Zone'}
+        </button>
+        <button
+          className={`pd-canvas-toolbar__btn${isFreeMove ? ' pd-canvas-toolbar__btn--active' : ''}`}
+          onClick={isFreeMove ? disableFreeMove : enableFreeMove}
+          title={isFreeMove ? 'Enable zone enforcement' : 'Disable zone enforcement for free positioning'}
+        >
+          {isFreeMove ? 'Enforce Zones' : 'Free Move'}
         </button>
         <button
           className="pd-canvas-toolbar__btn"
