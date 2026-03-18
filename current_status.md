@@ -74,15 +74,24 @@ bash bin/package.sh
 
 ---
 
-## What's next
+### Phase 3 — Frontend customer designer ✅
+- **PHP:** `includes/Frontend/class-frontend.php` — hooks WooCommerce product page, enqueues assets, renders designer container, localizes `window.pdDesigner` config
+- **REST:** `GET /pd/v1/templates/{id}/public` — unauthenticated public endpoint, published templates only, sanitized response
+- **Security:** `RestDesigns::create_design()` validates template_id references a published template
+- **State:** `useDesignerStore.js` (Zustand) — template, design hash, canvas snapshots, tool mode, selected object, error state
+- **API:** `designerApi.js` — loadTemplate, createDesign, saveDesignView, uploadFile helpers
+- **Canvas:** `DesignerCanvas.jsx` — Fabric.js 6.x canvas with zone rendering (restrict/suggest styles), zone enforcement (clamp on move/scale), tool modes (add-text via click, add-image/add-svg via file upload), permissions enforcement, Fabric JSON whitelisting
+- **Sidebar:** Three-tab sidebar (Add / Element / Views) with auto-switch on selection
+  - `AddTab.jsx` — Text/Image/SVG tool buttons with zone-aware disabling
+  - `ElementTab.jsx` — Text properties (font, size, color, bold/italic), image/SVG properties (scale, recolor), delete
+  - `ViewsTab.jsx` — View switcher with snapshot persistence across view switches
+- **App:** `App.jsx` — template loading, save flow (create design + save views), display modes (embedded/modal), hidden design_hash input
+- **CSS:** `designer.css` — isolation (`all: initial`), layout, modal overlay, BEM naming with `pd-` prefix
+- **Build:** Vite outputs `dist/frontend-designer.js` + `dist/frontend-designer.css`
 
-### Phase 3 — Frontend customer designer
-- `frontend/js/designer/src/App.jsx` — currently a placeholder
-- Load template config from `pd/v1/templates/{id}` (public endpoint needed)
-- Render Fabric.js canvas per view tab
-- Enforce zone boundaries and element permissions
-- Save design via `pd/v1/designs` + `pd/v1/designs/{hash}/views`
-- CSS isolation: `.pd-designer { all: initial }` wrapper
+---
+
+## What's next
 
 ### Phase 4 — WooCommerce integration
 - Product meta: `_pd_designer_enabled`, `_pd_template_id`
@@ -126,9 +135,11 @@ product-designer/
 │   │   ├── class-capability-checker.php
 │   │   ├── class-nonce-manager.php
 │   │   └── class-upload-validator.php
+│   ├── Frontend/
+│   │   └── class-frontend.php       # WooCommerce product page hooks, asset enqueue
 │   ├── API/
-│   │   ├── class-rest-templates.php  # 10 routes
-│   │   ├── class-rest-designs.php    # 8 routes
+│   │   ├── class-rest-templates.php  # 11 routes (incl. public endpoint)
+│   │   ├── class-rest-designs.php    # 8 routes (with template validation)
 │   │   ├── class-rest-uploads.php
 │   │   ├── class-rest-fonts.php      # stub
 │   │   └── class-rest-exports.php    # stub
@@ -155,5 +166,15 @@ product-designer/
 │       └── GlobalSettings.jsx
 └── frontend/js/designer/src/
     ├── index.jsx
-    └── App.jsx                   # placeholder — Phase 3
+    ├── App.jsx                   # Template loading, save flow, display modes
+    ├── designer.css              # Isolated styles, layout, modal, components
+    ├── api/designerApi.js        # REST API helpers
+    ├── store/useDesignerStore.js  # Zustand state management
+    └── components/
+        ├── DesignerCanvas.jsx    # Fabric.js canvas, zones, tools, permissions
+        ├── Sidebar.jsx           # Three-tab sidebar wrapper
+        └── tabs/
+            ├── AddTab.jsx        # Text/Image/SVG tool buttons
+            ├── ElementTab.jsx    # Element property controls
+            └── ViewsTab.jsx      # View switcher
 ```
