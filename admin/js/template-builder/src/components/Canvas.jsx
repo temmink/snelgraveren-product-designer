@@ -262,15 +262,17 @@ export default function Canvas() {
 
     const handledKeys = new Set();
 
-    const zoneStyle = {
+    const zoneStyleFor = (zone) => ({
       fill:           isFreeMove ? 'transparent' : 'rgba(59, 130, 246, 0.08)',
       stroke:         '#3b82f6',
       strokeWidth:    2,
       strokeDashArray: isFreeMove ? [6, 4] : undefined,
-      selectable:     true,
-      evented:        true,
-      hasControls:    true,
-    };
+      selectable:     !zone.locked,
+      evented:        !zone.locked,
+      hasControls:    !zone.locked,
+      lockMovementX:  !!zone.locked,
+      lockMovementY:  !!zone.locked,
+    });
 
     const sendZonesToBack = () => {
       canvas.getObjects().forEach((obj) => {
@@ -288,7 +290,7 @@ export default function Canvas() {
         if (existing) {
           // Update SVG zone in-place (position/scale/rotation only).
           existing.set({
-            ...zoneStyle,
+            ...zoneStyleFor(zone),
             left:   zone.x,
             top:    zone.y,
             scaleX: zone.svg_scale || 1,
@@ -309,7 +311,7 @@ export default function Canvas() {
 
               const group = util.groupSVGElements(objects, options);
               group.set({
-                ...zoneStyle,
+                ...zoneStyleFor(zone),
                 left:   zone.x,
                 top:    zone.y,
                 scaleX: zone.svg_scale || 1,
@@ -343,7 +345,7 @@ export default function Canvas() {
         // Rect boundary.
         if (existing) {
           existing.set({
-            ...zoneStyle,
+            ...zoneStyleFor(zone),
             left:   zone.x,
             top:    zone.y,
             width:  zone.width,
@@ -355,7 +357,7 @@ export default function Canvas() {
           existing.setCoords();
         } else {
           const shape = new Rect({
-            ...zoneStyle,
+            ...zoneStyleFor(zone),
             left:   zone.x,
             top:    zone.y,
             width:  zone.width,
