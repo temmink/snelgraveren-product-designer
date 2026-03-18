@@ -3,15 +3,13 @@ import useTemplateStore from './store/useTemplateStore';
 import { templateApi } from './api/templateApi';
 import Canvas from './components/Canvas';
 import ViewTabs from './components/ViewTabs';
-import ZoneList from './components/ZoneList';
-import LayerPanel from './components/LayerPanel';
+import TreePanel from './components/TreePanel';
 import PermissionsPanel from './components/PermissionsPanel';
 import PricingPanel from './components/PricingPanel';
 import GlobalSettings from './components/GlobalSettings';
 
 const TABS = [
-  { label: 'Zones',       Component: ZoneList },
-  { label: 'Layers',      Component: LayerPanel },
+  { label: 'Structure',   Component: TreePanel },
   { label: 'Permissions', Component: PermissionsPanel },
   { label: 'Pricing',     Component: PricingPanel },
   { label: 'Settings',    Component: GlobalSettings },
@@ -45,10 +43,10 @@ export default function App() {
     } else if (views.length === 0) {
       // New template: seed a default "Front" view.
       addView({
-        view_name: 'Front',
+        name: 'Front',
         canvas_width: 800,
         canvas_height: 600,
-        background_image_url: '',
+        background_url: '',
         zones_config: [],
         layers_config: [],
         permissions: {},
@@ -88,13 +86,13 @@ export default function App() {
       // the client saves sequentially so partial failures are surfaced via saveError.
       for (const [index, view] of views.entries()) {
         const viewData = {
-          view_name:            view.view_name,
+          name:            view.name,
           sort_order:           index,
           canvas_width:         view.canvas_width  || 800,
           canvas_height:        view.canvas_height || 600,
-          background_image_url: view.background_image_url || '',
+          background_url:       view.background_url || '',
           zones_config:         view.zones_config  || [],
-          layers_config:        view.layers_config || [],
+          layers_config:        [],
           permissions:          view.permissions   || {},
         };
         if (view.id) {
