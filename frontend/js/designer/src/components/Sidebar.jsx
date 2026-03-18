@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import useDesignerStore from '../store/useDesignerStore';
 import AddTab from './tabs/AddTab';
+import ElementTab from './tabs/ElementTab';
+import ViewsTab from './tabs/ViewsTab';
 
 export default function Sidebar() {
   const { selectedObject } = useDesignerStore();
@@ -40,17 +42,9 @@ export default function Sidebar() {
       </div>
       <div className="pd-sidebar__content">
         {activeTab === 'add' && <AddTab />}
-        {activeTab === 'element' && <ElementTabPlaceholder />}
-        {activeTab === 'views' && <ViewsTabPlaceholder />}
+        {activeTab === 'element' && <ElementTab />}
+        {activeTab === 'views' && <ViewsTab />}
       </div>
     </div>
   );
-}
-
-function ElementTabPlaceholder() {
-  return <div className="pd-sidebar__tab-content"><p>Element properties (Task 8)</p></div>;
-}
-
-function ViewsTabPlaceholder() {
-  return <div className="pd-sidebar__tab-content"><p>View switcher (Task 9)</p></div>;
 }
