@@ -1,0 +1,225 @@
+<?php
+namespace ProductDesigner\Database;
+
+defined('ABSPATH') || exit;
+
+class TemplateRepository {
+
+    private string $table;
+    private string $views_table;
+
+    public function __construct() {
+        global $wpdb;
+        $this->table       = $wpdb->prefix . 'pd_templates';
+        $this->views_table = $wpdb->prefix . 'pd_template_views';
+    }
+
+    public function list(int $per_page = 20, int $page = 1, string $status = ''): array {
+        global $wpdb;
+        $offset = ($page - 1) * $per_page;
+
+        if ($status !== '') {
+            $rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT * FROM {$this->table} WHERE status = %s ORDER BY created_at DESC LIMIT %d OFFSET %d",
+                    $status, $per_page, $offset
+                ),
+                ARRAY_A
+            );
+        } else {
+            $rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT * FROM {$this->table} ORDER BY created_at DESC LIMIT %d OFFSET %d",
+                    $per_page, $offset
+                ),
+                ARRAY_A
+            );
+        }
+
+        return $rows ?: [];
+    }
+
+    public function count(string $status = ''): int {
+        global $wpdb;
+        if ($status !== '') {
+            return (int) $wpdb->get_var(
+                $wpdb->prepare("SELECT COUNT(*) FROM {$this->table} WHERE status = %s", $status)
+            );
+        }
+        return (int) $wpdb->get_var("SELECT COUNT(*) FROM {$this->table}");
+    }
+
+    public function get_status_counts(): array {
+        global $wpdb;
+        $rows = $wpdb->get_results(
+            "SELECT status, COUNT(*) as cnt FROM {$this->table} GROUP BY status",
+            ARRAY_A
+        );
+        $counts = ['draft' => 0, 'published' => 0, 'archived' => 0];
+        foreach ($rows as $row) {
+            $counts[$row['status']] = (int) $row['cnt'];
+        }
+        return $counts;
+    }
+
+    public function get(int $id): ?array {
+        global $wpdb;
+        $row = $wpdb->get_row(
+            $wpdb->prepare("SELECT * FROM {$this->table} WHERE id = %d", $id),
+            ARRAY_A
+        );
+        if (!$row) return null;
+
+        $row['global_config'] = json_decode($row['global_config'], true) ?: [];
+        $row['views']         = $this->get_views($id);
+        return $row;
+    }
+
+    public function create(array $data): int {
+        global $wpdb;
+        $wpdb->insert($this->table, [
+            'title'         => sanitize_text_field($data['title'] ?? ''),
+            'slug'          => sanitize_title($data['slug'] ?? $data['title'] ?? ''),
+            'status'        => in_array($data['status'] ?? 'draft', ['draft', 'published', 'archived'], true)
+                                ? $data['status'] : 'draft',
+            'global_config' => wp_json_encode($data['global_config'] ?? []),
+        ]);
+        return (int) $wpdb->insert_id;
+    }
+
+    public function update(int $id, array $data): bool {
+        global $wpdb;
+        $update = [];
+        if (isset($data['title']))         $update['title']         = sanitize_text_field($data['title']);
+        if (isset($data['slug']))          $update['slug']          = sanitize_title($data['slug']);
+        if (isset($data['status']))        $update['status']        = in_array($data['status'], ['draft', 'published', 'archived'], true) ? $data['status'] : 'draft';
+        if (isset($data['global_config'])) $update['global_config'] = wp_json_encode($data['global_config']);
+
+        if (empty($update)) return false;
+
+        return (bool) $wpdb->update($this->table, $update, ['id' => $id]);
+    }
+
+    public function delete(int $id): bool {
+        global $wpdb;
+        return (bool) $wpdb->delete($this->table, ['id' => $id]);
+    }
+
+    public function duplicate(int $id): ?int {
+        global $wpdb;
+        $original = $this->get($id);
+        if (!$original) return null;
+
+        $new_id = $this->create([
+            'title'         => $original['title'] . ' (Copy)',
+            'slug'          => $original['slug'] . '-copy-' . time(),
+            'status'        => 'draft',
+            'global_config' => $original['global_config'],
+        ]);
+
+        foreach ($original['views'] as $view) {
+            unset($view['id']);
+            $view['template_id'] = $new_id;
+            $this->create_view($new_id, $view);
+        }
+
+        return $new_id;
+    }
+
+    public function count_views(int $id): int {
+        global $wpdb;
+        return (int) $wpdb->get_var(
+            $wpdb->prepare("SELECT COUNT(*) FROM {$this->views_table} WHERE template_id = %d", $id)
+        );
+    }
+
+    public function count_products(int $id): int {
+        global $wpdb;
+        return (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(DISTINCT post_id) FROM {$wpdb->postmeta} WHERE meta_key = '_pd_template_id' AND meta_value = %s",
+                (string) $id
+            )
+        );
+    }
+
+    // ── Views ──────────────────────────────────────────────────────────────────
+
+    public function get_views(int $template_id): array {
+        global $wpdb;
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT * FROM {$this->views_table} WHERE template_id = %d ORDER BY sort_order ASC",
+                $template_id
+            ),
+            ARRAY_A
+        );
+        return array_map([$this, 'decode_view'], $rows ?: []);
+    }
+
+    public function get_view(int $template_id, int $view_id): ?array {
+        global $wpdb;
+        $row = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT * FROM {$this->views_table} WHERE id = %d AND template_id = %d",
+                $view_id, $template_id
+            ),
+            ARRAY_A
+        );
+        return $row ? $this->decode_view($row) : null;
+    }
+
+    public function create_view(int $template_id, array $data): int {
+        global $wpdb;
+        $wpdb->insert($this->views_table, [
+            'template_id'      => $template_id,
+            'name'             => sanitize_text_field($data['name'] ?? ''),
+            'sort_order'       => (int) ($data['sort_order'] ?? 0),
+            'canvas_width'     => max(1, (int) ($data['canvas_width'] ?? 800)),
+            'canvas_height'    => max(1, (int) ($data['canvas_height'] ?? 600)),
+            'background_color' => sanitize_hex_color($data['background_color'] ?? '#ffffff') ?: '#ffffff',
+            'background_url'   => esc_url_raw($data['background_url'] ?? ''),
+            'zones_config'     => wp_json_encode($data['zones_config'] ?? []),
+            'layers_config'    => wp_json_encode($data['layers_config'] ?? []),
+            'permissions'      => wp_json_encode($data['permissions'] ?? []),
+        ]);
+        return (int) $wpdb->insert_id;
+    }
+
+    public function update_view(int $template_id, int $view_id, array $data): bool {
+        global $wpdb;
+        $update = [];
+        if (isset($data['name']))             $update['name']             = sanitize_text_field($data['name']);
+        if (isset($data['sort_order']))       $update['sort_order']       = (int) $data['sort_order'];
+        if (isset($data['canvas_width']))     $update['canvas_width']     = max(1, (int) $data['canvas_width']);
+        if (isset($data['canvas_height']))    $update['canvas_height']    = max(1, (int) $data['canvas_height']);
+        if (isset($data['background_color'])) $update['background_color'] = sanitize_hex_color($data['background_color']) ?: '#ffffff';
+        if (isset($data['background_url']))   $update['background_url']   = esc_url_raw($data['background_url']);
+        if (isset($data['zones_config']))     $update['zones_config']     = wp_json_encode($data['zones_config']);
+        if (isset($data['layers_config']))    $update['layers_config']    = wp_json_encode($data['layers_config']);
+        if (isset($data['permissions']))      $update['permissions']      = wp_json_encode($data['permissions']);
+
+        if (empty($update)) return false;
+
+        return (bool) $wpdb->update(
+            $this->views_table,
+            $update,
+            ['id' => $view_id, 'template_id' => $template_id]
+        );
+    }
+
+    public function delete_view(int $template_id, int $view_id): bool {
+        global $wpdb;
+        return (bool) $wpdb->delete(
+            $this->views_table,
+            ['id' => $view_id, 'template_id' => $template_id]
+        );
+    }
+
+    private function decode_view(array $row): array {
+        $row['zones_config']  = json_decode($row['zones_config'], true)  ?: [];
+        $row['layers_config'] = json_decode($row['layers_config'], true) ?: [];
+        $row['permissions']   = json_decode($row['permissions'], true)   ?: [];
+        return $row;
+    }
+}

@@ -1,0 +1,100 @@
+# Product Designer for WooCommerce
+
+## What is this?
+
+A WooCommerce plugin that lets customers design text, images, and SVGs onto products using a drag-and-drop Fabric.js editor. Built as a secure replacement for Fancy Product Designer (FPD).
+
+## Key Documents
+
+- **Design spec:** `docs/superpowers/specs/2026-03-18-product-designer-plugin-design.md` — the complete technical specification. Read this before making architectural changes.
+- **Current status:** `current_status.md` — what's done, what's next, how to run the environment.
+- **Implementation plan:** `.claude/plans/lazy-finding-panda.md` — phased build plan (Phase 0-6).
+
+## Architecture
+
+- **Approach B: Pure custom database tables** (6 tables, no CPTs). All data in `wp_pd_*` tables.
+- **Frontend canvas:** Fabric.js 6.x
+- **UI framework:** React 18 + Zustand state management
+- **Build system:** Vite (single config, dual entry points: admin + frontend)
+- **Export:** Local only — PDF (TCPDF), PNG (Imagick), SVG (Fabric.js toSVG)
+- **PHP autoloading:** PSR-4 via custom autoloader. Namespace `ProductDesigner\` maps to `includes/`.
+
+## Development Environment
+
+```bash
+docker compose up -d                    # Start WordPress + MariaDB + phpMyAdmin
+docker compose exec wordpress wp ...    # Run WP-CLI commands
+npm run dev                             # Vite dev server (HMR)
+npm run build                           # Production build → dist/
+```
+
+- WordPress: http://localhost:8080 (admin / admin)
+- phpMyAdmin: http://localhost:8081
+
+## Coding Standards
+
+### PHP
+- **Namespace:** `ProductDesigner\` with sub-namespaces for each directory (Admin, Frontend, API, Database, Security, Export, Pricing)
+- **File naming:** `class-{name}.php` where name is lowercase-hyphenated (e.g., `DbManager` → `class-db-manager.php`)
+- **Namespace before ABSPATH check:** In every PHP file, `namespace` must come before `defined('ABSPATH') || exit;`
+- **All DB queries via `$wpdb->prepare()`** — no exceptions, no raw interpolation
+- **All DB access via Repository classes** — never use `$wpdb` directly outside `includes/Database/`
+- **File uploads validated via `UploadValidator`** — MIME check with `finfo_file()`, SVG sanitized with `enshrined/svg-sanitize`
+- **Prices always calculated server-side** — never trust client-sent price values
+- **Design IDs are hashes** — public-facing design identifiers use `bin2hex(random_bytes(16))`, never sequential IDs
+
+### JavaScript
+- **React 18** with functional components and hooks
+- **Zustand** for state management (not Redux, not Context)
+- **CSS scoping:** All frontend classes use `pd-` prefix with BEM naming. Designer wrapper uses `all: initial` to isolate from theme styles.
+- **Fabric.js JSON validation:** Whitelist allowed object types before `loadFromJSON`
+
+### REST API
+- Namespace: `pd/v1`
+- All endpoints require nonce verification
+- Admin endpoints require `edit_pd_templates` or `manage_woocommerce` capability
+- Customer design endpoints verify ownership (customer_id or session_id)
+- List endpoints support pagination (`per_page`, `page`) with `X-WP-Total` headers
+
+## Security Rules (Critical)
+
+These exist because FPD had CVE-2024-51919 (arbitrary file upload → RCE) and CVE-2024-51818 (SQL injection):
+
+1. **Never concatenate user input into SQL** — always `$wpdb->prepare()`
+2. **Never trust file extensions** — validate MIME via `finfo_file()`
+3. **Always sanitize SVGs** — strip `<script>`, `on*` attrs, `<use>` with external refs, `foreignObject`, `data:` URIs
+4. **Never expose sequential IDs** — designs use CSPRNG hashes
+5. **Never trust client-sent prices** — recalculate server-side on every cart/order operation
+6. **Rate limit uploads** — max 10/minute per session
+7. **Validate Fabric.js JSON** — whitelist allowed object types before serving to other users
+
+## Database Tables
+
+| Table | Purpose |
+|-------|---------|
+| `wp_pd_templates` | Template definitions (title, slug, status, global config) |
+| `wp_pd_template_views` | Per-view config: canvas size, background, zones, layers, permissions |
+| `wp_pd_designs` | Customer designs: hash ID, product/template link, status, price |
+| `wp_pd_design_views` | Per-view Fabric.js canvas JSON + thumbnail |
+| `wp_pd_exports` | Export records: format, file path, status per order |
+| `wp_pd_price_log` | Pricing audit trail per design element |
+
+All tables use InnoDB engine for foreign key and transaction support.
+
+## WooCommerce Integration Points
+
+- Product meta: `_pd_designer_enabled`, `_pd_template_id`
+- Cart: design_hash in cart item data, surcharge via `woocommerce_before_calculate_totals`
+- Order: design_hash in order item meta, export triggered on configurable order status
+- HPOS: Compatibility declared in `product-designer.php`
+
+## Don't
+
+- Don't use Custom Post Types for any plugin data
+- Don't load plugin assets on non-designer pages
+- Don't use jQuery (pure React + Fabric.js)
+- Don't store images as data URIs in Fabric.js JSON (use URLs)
+- Don't skip SVG sanitization for any uploaded SVG
+- Don't add cloud export features (explicitly out of scope)
+- Don't add social media image imports (out of scope)
+- Don't add 3D preview, QR codes, or AI image generation (out of scope)

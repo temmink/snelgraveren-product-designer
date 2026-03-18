@@ -1,0 +1,21 @@
+{
+    "name": "martintemmink/product-designer",
+    "description": "WooCommerce Product Designer Plugin",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "php": ">=8.1",
+        "tecnickcom/tcpdf": "^6.7",
+        "enshrined/svg-sanitize": "^0.22",
+        "intervention/image": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "ProductDesigner\\": "includes/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    }
+}

@@ -1,0 +1,156 @@
+<?php
+namespace ProductDesigner\API;
+
+defined('ABSPATH') || exit;
+
+use ProductDesigner\Database\TemplateRepository;
+
+class RestTemplates {
+
+    private TemplateRepository $repo;
+
+    public function __construct() {
+        $this->repo = new TemplateRepository();
+    }
+
+    public function register_routes(): void {
+        $ns = 'pd/v1';
+
+        register_rest_route($ns, '/templates', [
+            ['methods' => 'GET',  'callback' => [$this, 'list_templates'],   'permission_callback' => [$this, 'admin_permission']],
+            ['methods' => 'POST', 'callback' => [$this, 'create_template'],  'permission_callback' => [$this, 'admin_permission']],
+        ]);
+
+        register_rest_route($ns, '/templates/(?P<id>\d+)', [
+            ['methods' => 'GET',    'callback' => [$this, 'get_template'],    'permission_callback' => [$this, 'admin_permission']],
+            ['methods' => 'PUT',    'callback' => [$this, 'update_template'], 'permission_callback' => [$this, 'admin_permission']],
+            ['methods' => 'DELETE', 'callback' => [$this, 'delete_template'], 'permission_callback' => [$this, 'admin_permission']],
+        ]);
+
+        register_rest_route($ns, '/templates/(?P<id>\d+)/duplicate', [
+            ['methods' => 'POST', 'callback' => [$this, 'duplicate_template'], 'permission_callback' => [$this, 'admin_permission']],
+        ]);
+
+        register_rest_route($ns, '/templates/(?P<template_id>\d+)/views', [
+            ['methods' => 'GET',  'callback' => [$this, 'list_views'],  'permission_callback' => [$this, 'admin_permission']],
+            ['methods' => 'POST', 'callback' => [$this, 'create_view'], 'permission_callback' => [$this, 'admin_permission']],
+        ]);
+
+        register_rest_route($ns, '/templates/(?P<template_id>\d+)/views/(?P<view_id>\d+)', [
+            ['methods' => 'PUT',    'callback' => [$this, 'update_view'], 'permission_callback' => [$this, 'admin_permission']],
+            ['methods' => 'DELETE', 'callback' => [$this, 'delete_view'], 'permission_callback' => [$this, 'admin_permission']],
+        ]);
+    }
+
+    public function admin_permission(): bool {
+        return current_user_can('edit_pd_templates');
+    }
+
+    public function list_templates(\WP_REST_Request $request): \WP_REST_Response {
+        $per_page = (int) ($request['per_page'] ?? 20);
+        $page     = (int) ($request['page'] ?? 1);
+        $status   = sanitize_text_field($request['status'] ?? '');
+
+        $templates = $this->repo->list($per_page, $page, $status);
+        $total     = $this->repo->count($status);
+
+        foreach ($templates as &$t) {
+            $t['global_config'] = json_decode($t['global_config'], true) ?: [];
+            $t['view_count']    = $this->repo->count_views((int) $t['id']);
+        }
+        unset($t);
+
+        $response = rest_ensure_response($templates);
+        $response->header('X-WP-Total', $total);
+        $response->header('X-WP-TotalPages', (int) ceil($total / $per_page));
+        return $response;
+    }
+
+    public function create_template(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+        $body = $request->get_json_params();
+        if (empty($body['title'])) {
+            return new \WP_Error('missing_title', 'Title is required.', ['status' => 400]);
+        }
+        $id = $this->repo->create($body);
+        if (!$id) {
+            return new \WP_Error('create_failed', 'Failed to create template.', ['status' => 500]);
+        }
+        $template = $this->repo->get($id);
+        return new \WP_REST_Response($template, 201);
+    }
+
+    public function get_template(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+        $template = $this->repo->get((int) $request['id']);
+        if (!$template) {
+            return new \WP_Error('not_found', 'Template not found.', ['status' => 404]);
+        }
+        return rest_ensure_response($template);
+    }
+
+    public function update_template(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+        $id   = (int) $request['id'];
+        $body = $request->get_json_params();
+
+        if (!$this->repo->get($id)) {
+            return new \WP_Error('not_found', 'Template not found.', ['status' => 404]);
+        }
+        $this->repo->update($id, $body);
+        return rest_ensure_response($this->repo->get($id));
+    }
+
+    public function delete_template(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+        $id = (int) $request['id'];
+        if (!$this->repo->get($id)) {
+            return new \WP_Error('not_found', 'Template not found.', ['status' => 404]);
+        }
+        $this->repo->delete($id);
+        return new \WP_REST_Response(null, 204);
+    }
+
+    public function duplicate_template(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+        $new_id = $this->repo->duplicate((int) $request['id']);
+        if (!$new_id) {
+            return new \WP_Error('not_found', 'Template not found.', ['status' => 404]);
+        }
+        return new \WP_REST_Response($this->repo->get($new_id), 201);
+    }
+
+    public function list_views(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+        $template_id = (int) $request['template_id'];
+        if (!$this->repo->get($template_id)) {
+            return new \WP_Error('not_found', 'Template not found.', ['status' => 404]);
+        }
+        return rest_ensure_response($this->repo->get_views($template_id));
+    }
+
+    public function create_view(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+        $template_id = (int) $request['template_id'];
+        if (!$this->repo->get($template_id)) {
+            return new \WP_Error('not_found', 'Template not found.', ['status' => 404]);
+        }
+        $body = $request->get_json_params();
+        $id   = $this->repo->create_view($template_id, $body);
+        return new \WP_REST_Response($this->repo->get_view($template_id, $id), 201);
+    }
+
+    public function update_view(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+        $template_id = (int) $request['template_id'];
+        $view_id     = (int) $request['view_id'];
+        $view        = $this->repo->get_view($template_id, $view_id);
+        if (!$view) {
+            return new \WP_Error('not_found', 'View not found.', ['status' => 404]);
+        }
+        $this->repo->update_view($template_id, $view_id, $request->get_json_params());
+        return rest_ensure_response($this->repo->get_view($template_id, $view_id));
+    }
+
+    public function delete_view(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+        $template_id = (int) $request['template_id'];
+        $view_id     = (int) $request['view_id'];
+        if (!$this->repo->get_view($template_id, $view_id)) {
+            return new \WP_Error('not_found', 'View not found.', ['status' => 404]);
+        }
+        $this->repo->delete_view($template_id, $view_id);
+        return new \WP_REST_Response(null, 204);
+    }
+}
