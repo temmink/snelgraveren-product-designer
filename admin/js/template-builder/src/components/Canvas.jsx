@@ -1,19 +1,24 @@
-import React, { useRef, useEffect, useCallback, useState } from 'react';
-import { Canvas as FabricCanvas, Rect, FabricImage, FabricText, Path } from 'fabric';
+import React, { useRef, useEffect, useCallback } from 'react';
+import { Canvas as FabricCanvas, Rect, FabricImage, FabricText, loadSVGFromString, util } from 'fabric';
 import useTemplateStore from '../store/useTemplateStore';
+import { parseSvgToFabric } from '../utils/svgPathUtils';
 
 export default function Canvas() {
   const canvasEl    = useRef(null);
   const fabricRef   = useRef(null);
-  const isDrawing   = useRef(false);
-  const drawStart   = useRef(null);
-  const draftRect   = useRef(null);
+  const pendingLoads = useRef(new Set()); // Track in-flight async SVG/image loads by _key
 
-  const [isDrawMode, setIsDrawMode] = useState(false);
+  // Stable refs for callbacks used in canvas event handlers to avoid stale closures.
+  const clampToZoneRef     = useRef(null);
+  const clampScaleRef      = useRef(null);
+  const snapToGridRef      = useRef(null);
+
+  // Ref for applyZoneClip so async callbacks can use the latest version.
+  const applyZoneClipRef   = useRef(null);
 
   const {
     views, currentViewIndex,
-    addZone, updateView, updateLayer, pushHistory, undo, redo, canUndo, canRedo,
+    updateView, updateZone, updateLayer, pushHistory, undo, redo, canUndo, canRedo,
     isFreeMove, setFreeMove,
   } = useTemplateStore();
 
@@ -43,16 +48,28 @@ export default function Canvas() {
     if (zoneIdx < 0 || !zones[zoneIdx] || zones[zoneIdx].behavior !== 'restrict') return;
     const zone = zones[zoneIdx];
 
-    if (zone.boundary_type === 'svg' && zone.svg_path_data) {
-      obj.clipPath = new Path(zone.svg_path_data, {
-        left:   zone.x,
-        top:    zone.y,
-        scaleX: zone.svg_scale || 1,
-        scaleY: zone.svg_scale || 1,
-        angle:  zone.svg_rotation || 0,
-        absolutePositioned: true,
-      });
+    if (zone.boundary_type === 'svg') {
+      // Clone the zone boundary group already on the canvas for use as clip path.
+      const canvas = fabricRef.current;
+      if (!canvas) return;
+      const zoneObj = canvas.getObjects().find(
+        (o) => o.data?.isZone && o.data?.zoneKey === zone._key
+      );
+      if (zoneObj) {
+        zoneObj.clone().then((cloned) => {
+          cloned.set({ absolutePositioned: true });
+          // Clip paths render by filled area — ensure all child shapes have a fill.
+          if (cloned.getObjects) {
+            cloned.getObjects().forEach((c) => c.set({ fill: '#000000' }));
+          }
+          obj.clipPath = cloned;
+          canvas.renderAll();
+        });
+      }
+      // If zone SVG hasn't loaded yet, no clip is applied now — it will be
+      // re-applied when the SVG boundary loads (see zone sync effect).
     } else {
+      // Rect boundary clip.
       obj.clipPath = new Rect({
         left:   zone.x,
         top:    zone.y,
@@ -128,6 +145,12 @@ export default function Canvas() {
     obj.setCoords();
   }, [permissions, isFreeMove]);
 
+  // Keep refs in sync so canvas event handlers always use the latest callbacks.
+  clampToZoneRef.current    = clampToZone;
+  clampScaleRef.current     = clampScaleToZone;
+  snapToGridRef.current     = snapToGrid;
+  applyZoneClipRef.current  = applyZoneClip;
+
   const applyPermissions = useCallback((obj, elementType) => {
     if (isFreeMove) return;
     const perms = permissions[elementType] || {};
@@ -141,11 +164,6 @@ export default function Canvas() {
   useEffect(() => {
     if (!canvasEl.current) return;
 
-    // Reset draw-mode state for the new view.
-    setIsDrawMode(false);
-    isDrawing.current = false;
-    draftRect.current = null;
-
     const width  = currentView?.canvas_width  || 800;
     const height = currentView?.canvas_height || 600;
 
@@ -157,7 +175,6 @@ export default function Canvas() {
       enableRetinaScaling: false,
     });
     fabricRef.current = canvas;
-
     // Zone shapes are rendered by the real-time zone sync effect below.
     // Text layers are rendered by the real-time layer sync effect below.
 
@@ -170,12 +187,14 @@ export default function Canvas() {
     canvas.on('object:modified', onModified);
 
     canvas.on('object:moving', (e) => {
-      snapToGrid(e.target);
-      clampToZone(e.target);
+      if (e.target?.data?.isZone) return; // Don't clamp boundaries to themselves.
+      snapToGridRef.current?.(e.target);
+      clampToZoneRef.current?.(e.target);
     });
 
     canvas.on('object:scaling', (e) => {
-      clampScaleToZone(e.target);
+      if (e.target?.data?.isZone) return;
+      clampScaleRef.current?.(e.target);
     });
 
     canvas.on('text:changed', (e) => {
@@ -231,53 +250,132 @@ export default function Canvas() {
   useEffect(() => {
     const canvas = fabricRef.current;
     if (!canvas) return;
+    let cancelled = false;
 
-    // Remove all existing zone rects from the canvas.
-    const existing = canvas.getObjects().filter((o) => o.data?.isZone);
-    existing.forEach((obj) => canvas.remove(obj));
-
-    // Re-add zone shapes from current store state.
-    zones.forEach((zone, index) => {
-      let shape;
-      if (zone.boundary_type === 'svg' && zone.svg_path_data) {
-        shape = new Path(zone.svg_path_data, {
-          left:        zone.x,
-          top:         zone.y,
-          scaleX:      zone.svg_scale || 1,
-          scaleY:      zone.svg_scale || 1,
-          angle:       zone.svg_rotation || 0,
-          fill:        isFreeMove ? 'transparent' : 'rgba(59, 130, 246, 0.08)',
-          stroke:      '#3b82f6',
-          strokeWidth: 2,
-          strokeDashArray: isFreeMove ? [6, 4] : undefined,
-          selectable:  false,
-          evented:     false,
-          data:        { zoneIndex: index, isZone: true },
-        });
-      } else {
-        shape = new Rect({
-          left:        zone.x,
-          top:         zone.y,
-          width:       zone.width,
-          height:      zone.height,
-          fill:        isFreeMove ? 'transparent' : 'rgba(59, 130, 246, 0.15)',
-          stroke:      '#3b82f6',
-          strokeWidth: 2,
-          strokeDashArray: isFreeMove ? [6, 4] : undefined,
-          selectable:  false,
-          evented:     false,
-          data:        { zoneIndex: index, isZone: true },
-        });
-      }
-      canvas.add(shape);
-    });
-
-    // Move zone rects to the bottom so they stay behind text/image layers.
+    // Build map of existing zone objects by _key for in-place updates.
+    const existingByKey = {};
     canvas.getObjects().forEach((obj) => {
-      if (obj.data?.isZone) canvas.sendObjectToBack(obj);
+      if (obj.data?.isZone && obj.data?.zoneKey) {
+        existingByKey[obj.data.zoneKey] = obj;
+      }
     });
 
-    canvas.renderAll();
+    const handledKeys = new Set();
+
+    const zoneStyle = {
+      fill:           isFreeMove ? 'transparent' : 'rgba(59, 130, 246, 0.08)',
+      stroke:         '#3b82f6',
+      strokeWidth:    2,
+      strokeDashArray: isFreeMove ? [6, 4] : undefined,
+      selectable:     true,
+      evented:        true,
+      hasControls:    true,
+    };
+
+    const sendZonesToBack = () => {
+      canvas.getObjects().forEach((obj) => {
+        if (obj.data?.isZone) canvas.sendObjectToBack(obj);
+      });
+      canvas.renderAll();
+    };
+
+    zones.forEach((zone, index) => {
+      const key = zone._key;
+      handledKeys.add(key);
+      const existing = existingByKey[key];
+
+      if (zone.boundary_type === 'svg' && zone.svg_url) {
+        if (existing) {
+          // Update SVG zone in-place (position/scale/rotation only).
+          existing.set({
+            ...zoneStyle,
+            left:   zone.x,
+            top:    zone.y,
+            scaleX: zone.svg_scale || 1,
+            scaleY: zone.svg_scale || 1,
+            angle:  zone.svg_rotation || 0,
+          });
+          existing.data = { ...existing.data, zoneIndex: index };
+          existing.setCoords();
+        } else {
+          // Load SVG boundary asynchronously.
+          fetch(zone.svg_url)
+            .then((r) => r.text())
+            .then((svgText) => parseSvgToFabric(svgText))
+            .then((result) => {
+              if (cancelled || !result || !fabricRef.current) return;
+              const { objects, options } = result;
+              objects.forEach((o) => o.set({ strokeUniform: true }));
+
+              const group = util.groupSVGElements(objects, options);
+              group.set({
+                ...zoneStyle,
+                left:   zone.x,
+                top:    zone.y,
+                scaleX: zone.svg_scale || 1,
+                scaleY: zone.svg_scale || 1,
+                angle:  zone.svg_rotation || 0,
+                data:   { zoneIndex: index, zoneKey: key, isZone: true },
+              });
+              canvas.add(group);
+              group.setCoords();
+              sendZonesToBack();
+
+              // Re-apply SVG clip paths to any layers already in this zone
+              // by cloning the newly created boundary group.
+              canvas.getObjects().forEach((layerObj) => {
+                if (layerObj.data?.zoneIndex === index && layerObj.data?.layerKey) {
+                  group.clone().then((cloned) => {
+                    cloned.set({ absolutePositioned: true });
+                    // Clip paths render by filled area — ensure all child shapes have a fill.
+                    if (cloned.getObjects) {
+                      cloned.getObjects().forEach((c) => c.set({ fill: '#000000' }));
+                    }
+                    layerObj.clipPath = cloned;
+                    fabricRef.current?.renderAll();
+                  });
+                }
+              });
+            })
+            .catch((err) => console.warn('[PD] SVG boundary load failed:', err));
+        }
+      } else {
+        // Rect boundary.
+        if (existing) {
+          existing.set({
+            ...zoneStyle,
+            left:   zone.x,
+            top:    zone.y,
+            width:  zone.width,
+            height: zone.height,
+            scaleX: 1,
+            scaleY: 1,
+          });
+          existing.data = { ...existing.data, zoneIndex: index };
+          existing.setCoords();
+        } else {
+          const shape = new Rect({
+            ...zoneStyle,
+            left:   zone.x,
+            top:    zone.y,
+            width:  zone.width,
+            height: zone.height,
+            lockRotation: true,
+            data:   { zoneIndex: index, zoneKey: key, isZone: true },
+          });
+          canvas.add(shape);
+        }
+      }
+    });
+
+    // Remove zone objects that no longer exist in the store.
+    Object.entries(existingByKey).forEach(([key, obj]) => {
+      if (!handledKeys.has(key)) canvas.remove(obj);
+    });
+
+    sendZonesToBack();
+
+    return () => { cancelled = true; };
   }, [zones, isFreeMove]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Real-time layer sync ────────────────────────────────────────────────
@@ -298,7 +396,7 @@ export default function Canvas() {
 
     const fabricObjects = canvas.getObjects();
 
-    // Build a map of existing text objects by layer key.
+    // Build a map of existing layer objects by layer key.
     const existingByKey = {};
     fabricObjects.forEach((obj) => {
       if (obj.data?.layerKey) {
@@ -309,71 +407,164 @@ export default function Canvas() {
     // Track which keys we've handled.
     const handledKeys = new Set();
 
-    layers.forEach((layer) => {
-      if (layer.type !== 'text') return;
+    const layerData = (layer) => ({
+      layerKey:    layer._key,
+      layerIndex:  layer._layerIndex,
+      zoneIndex:   layer._zoneIndex,
+      layerType:   layer.type,
+      elementType: layer.type,
+    });
 
-      const existing = existingByKey[layer._key];
-
-      if (!layer.text) {
-        // No text content — remove existing object if any.
-        if (existing) {
-          canvas.remove(existing);
-        }
-        return;
+    const applyClipAndClamp = (obj, layer) => {
+      const zi = layer._zoneIndex;
+      if (zi != null && zi >= 0) {
+        applyZoneClip(obj, zi);
+        clampToZone(obj);
       }
+    };
 
-      if (existing) {
-        // Update existing fabric text object.
-        existing.set({
-          text:       layer.text,
-          left:       layer.left       || 100,
-          top:        layer.top        || 100,
-          fontSize:   layer.fontSize   || 24,
-          fontFamily: layer.fontFamily || 'Arial',
-          fill:       layer.fill       || '#000000',
-          scaleX:     1,
-          scaleY:     1,
-          selectable: !layer.locked,
-          evented:    !layer.locked,
-        });
-        // Update data in case zone/layer indices changed.
-        existing.data = {
-          ...existing.data,
-          layerIndex: layer._layerIndex,
-          zoneIndex:  layer._zoneIndex,
-        };
-        // Refresh clipPath in case zone config changed.
-        const zi = layer._zoneIndex;
-        if (zi != null && zi >= 0) {
-          applyZoneClip(existing, zi);
+    layers.forEach((layer) => {
+      const existing = existingByKey[layer._key];
+      handledKeys.add(layer._key);
+
+      if (layer.type === 'text') {
+        if (!layer.text) {
+          if (existing) canvas.remove(existing);
+          return;
         }
-        handledKeys.add(layer._key);
-      } else {
-        // Create new fabric text object.
-        const text = new FabricText(layer.text, {
-          left:       layer.left       || 100,
-          top:        layer.top        || 100,
-          fontSize:   layer.fontSize   || 24,
-          fontFamily: layer.fontFamily || 'Arial',
-          fill:       layer.fill       || '#000000',
-          selectable: !layer.locked,
-          evented:    !layer.locked,
-          data:       {
-            layerKey:    layer._key,
-            layerIndex:  layer._layerIndex,
-            zoneIndex:   layer._zoneIndex,
-            layerType:   layer.type,
-            elementType: layer.type,
-          },
-        });
-        canvas.add(text);
-        applyPermissions(text, layer.type);
-        const zi = layer._zoneIndex;
-        if (zi >= 0) {
-          applyZoneClip(text, zi);
-          clampToZone(text);
+
+        if (existing) {
+          existing.set({
+            text:       layer.text,
+            left:       layer.left       || 100,
+            top:        layer.top        || 100,
+            fontSize:   layer.fontSize   || 24,
+            fontFamily: layer.fontFamily || 'Arial',
+            fill:       layer.fill       || '#000000',
+            scaleX:     1,
+            scaleY:     1,
+            selectable: !layer.locked,
+            evented:    !layer.locked,
+          });
+          existing.data = { ...existing.data, layerIndex: layer._layerIndex, zoneIndex: layer._zoneIndex };
+          applyClipAndClamp(existing, layer);
+        } else {
+          const text = new FabricText(layer.text, {
+            left:       layer.left       || 100,
+            top:        layer.top        || 100,
+            fontSize:   layer.fontSize   || 24,
+            fontFamily: layer.fontFamily || 'Arial',
+            fill:       layer.fill       || '#000000',
+            selectable: !layer.locked,
+            evented:    !layer.locked,
+            data:       layerData(layer),
+          });
+          canvas.add(text);
+          applyPermissions(text, layer.type);
+          applyClipAndClamp(text, layer);
         }
-        handledKeys.add(layer._key);
+      } else if (layer.type === 'image') {
+        if (existing) {
+          existing.set({
+            left:       layer.left   || 100,
+            top:        layer.top    || 100,
+            scaleX:     layer.scaleX || 1,
+            scaleY:     layer.scaleY || 1,
+            angle:      layer.angle  || 0,
+            selectable: !layer.locked,
+            evented:    !layer.locked,
+          });
+          existing.data = { ...existing.data, layerIndex: layer._layerIndex, zoneIndex: layer._zoneIndex };
+          existing.setCoords();
+          applyClipAndClamp(existing, layer);
+        } else if (layer.src && !pendingLoads.current.has(layer._key)) {
+          pendingLoads.current.add(layer._key);
+          FabricImage.fromURL(layer.src, { crossOrigin: 'anonymous' })
+            .then((img) => {
+              pendingLoads.current.delete(layer._key);
+              if (!fabricRef.current) return;
+              img.set({
+                left:       layer.left   || 100,
+                top:        layer.top    || 100,
+                scaleX:     layer.scaleX || 1,
+                scaleY:     layer.scaleY || 1,
+                angle:      layer.angle  || 0,
+                selectable: !layer.locked,
+                evented:    !layer.locked,
+                data:       layerData(layer),
+              });
+              canvas.add(img);
+              img.setCoords();
+              applyPermissions(img, layer.type);
+              applyClipAndClamp(img, layer);
+              canvas.renderAll();
+            })
+            .catch(() => {
+              pendingLoads.current.delete(layer._key);
+            });
+        }
+      } else if (layer.type === 'svg') {
+        if (existing) {
+          existing.set({
+            left:       layer.left   || 100,
+            top:        layer.top    || 100,
+            scaleX:     layer.scaleX || 1,
+            scaleY:     layer.scaleY || 1,
+            angle:      layer.angle  || 0,
+            selectable: !layer.locked,
+            evented:    !layer.locked,
+          });
+          existing.data = { ...existing.data, layerIndex: layer._layerIndex, zoneIndex: layer._zoneIndex };
+          existing.setCoords();
+          applyClipAndClamp(existing, layer);
+        } else if (layer.src && !pendingLoads.current.has(layer._key)) {
+          pendingLoads.current.add(layer._key);
+          // Fetch SVG text, normalize mm/cm/in units to px, then parse with Fabric.
+          fetch(layer.src)
+            .then((r) => r.text())
+            .then((svgText) => {
+              // Convert unit-based width/height to px (1mm≈3.7795px, 1cm≈37.795px, 1in≈96px).
+              const normalized = svgText.replace(
+                /(<svg[^>]*?(?:width|height)="[\d.]+)(mm|cm|in)(")/g,
+                (_, prefix, unit, suffix) => {
+                  const val = parseFloat(prefix.match(/([\d.]+)$/)[1]);
+                  const scale = unit === 'mm' ? 3.7795 : unit === 'cm' ? 37.795 : 96;
+                  const px = (val * scale).toFixed(2);
+                  return prefix.replace(/([\d.]+)$/, px) + suffix;
+                }
+              );
+              return loadSVGFromString(normalized);
+            })
+            .then(({ objects, options }) => {
+              pendingLoads.current.delete(layer._key);
+              if (!fabricRef.current) return;
+              const filtered = objects.filter(Boolean);
+              filtered.forEach((o) => o.set({ strokeUniform: true }));
+              const group = util.groupSVGElements(filtered, options);
+              group.set({
+                left:          layer.left   || 100,
+                top:           layer.top    || 100,
+                scaleX:        layer.scaleX || 1,
+                scaleY:        layer.scaleY || 1,
+                angle:         layer.angle  || 0,
+                selectable:    !layer.locked,
+                evented:       !layer.locked,
+                strokeUniform: true,
+                subTargetCheck: false,
+                interactive:   false,
+                data:          layerData(layer),
+              });
+              canvas.add(group);
+              group.setCoords();
+              applyPermissions(group, layer.type);
+              applyClipAndClamp(group, layer);
+              canvas.renderAll();
+            })
+            .catch((err) => {
+              pendingLoads.current.delete(layer._key);
+              console.warn('[PD] SVG layer load failed:', err);
+            });
+        }
       }
     });
 
@@ -383,6 +574,27 @@ export default function Canvas() {
         canvas.remove(obj);
       }
     });
+
+    // ── Z-ordering: match tree panel order ──
+    // Zone boundaries stay at the bottom. Layer objects are ordered to match
+    // the flattened layers array (zone 0 layers first, then zone 1, etc.).
+    // This ensures the tree panel top-to-bottom order = canvas bottom-to-top
+    // stacking (last in array = visually on top).
+    const allObjects = canvas.getObjects();
+    const zoneObjects = allObjects.filter((o) => o.data?.isZone);
+    const layerObjects = allObjects.filter((o) => o.data?.layerKey);
+
+    // Build desired layer order from the flattened layers array.
+    const layerKeyOrder = layers.map((l) => l._key);
+    layerObjects.sort((a, b) => {
+      const ai = layerKeyOrder.indexOf(a.data.layerKey);
+      const bi = layerKeyOrder.indexOf(b.data.layerKey);
+      return ai - bi;
+    });
+
+    // Re-stack: zones at bottom, then layers in tree order.
+    zoneObjects.forEach((obj) => canvas.sendObjectToBack(obj));
+    layerObjects.forEach((obj) => canvas.bringObjectToFront(obj));
 
     canvas.renderAll();
   }, [layers]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -397,44 +609,69 @@ export default function Canvas() {
 
     const onObjectModified = (e) => {
       const obj = e.target;
+
+      // ── Zone boundary modified ──
+      if (obj?.data?.isZone) {
+        const zoneIndex = obj.data.zoneIndex;
+        const zone = zones[zoneIndex];
+        if (!zone) return;
+
+        if (zone.boundary_type === 'svg') {
+          const scale = obj.scaleX || 1;
+          const intrinsicW = obj.width || 200;
+          const intrinsicH = obj.height || 200;
+          updateZone(currentViewIndex, zoneIndex, {
+            x:                   Math.round(obj.left),
+            y:                   Math.round(obj.top),
+            width:               Math.round(intrinsicW * scale),
+            height:              Math.round(intrinsicH * scale),
+            svg_intrinsic_width:  intrinsicW,
+            svg_intrinsic_height: intrinsicH,
+            svg_scale:           scale,
+            svg_rotation:        Math.round(obj.angle || 0),
+          });
+        } else {
+          // Rect: absorb scale into width/height.
+          const newWidth  = Math.round((obj.width  || 200) * (obj.scaleX || 1));
+          const newHeight = Math.round((obj.height || 200) * (obj.scaleY || 1));
+          obj.set({ width: newWidth, height: newHeight, scaleX: 1, scaleY: 1 });
+          obj.setCoords();
+          updateZone(currentViewIndex, zoneIndex, {
+            x:      Math.round(obj.left),
+            y:      Math.round(obj.top),
+            width:  newWidth,
+            height: newHeight,
+          });
+        }
+        return;
+      }
+
+      // ── Layer modified ──
       if (!obj?.data?.layerType) return;
+
+      const patch = {
+        left:  Math.round(obj.left),
+        top:   Math.round(obj.top),
+        angle: Math.round(obj.angle || 0),
+      };
 
       if (obj.data.layerType === 'text') {
         // Convert canvas scale into fontSize so the layer sync can reset scale to 1.
         const newFontSize = Math.round((obj.fontSize || 24) * (obj.scaleX || 1));
         obj.set({ fontSize: newFontSize, scaleX: 1, scaleY: 1 });
-
-        updateLayer(currentViewIndex, obj.data.zoneIndex, obj.data.layerIndex, {
-          left:     Math.round(obj.left),
-          top:      Math.round(obj.top),
-          fontSize: newFontSize,
-        });
+        patch.fontSize = newFontSize;
+      } else {
+        // For image/svg layers, persist scale values.
+        patch.scaleX = obj.scaleX || 1;
+        patch.scaleY = obj.scaleY || 1;
       }
+
+      updateLayer(currentViewIndex, obj.data.zoneIndex, obj.data.layerIndex, patch);
     };
 
     canvas.on('object:modified', onObjectModified);
     return () => canvas.off('object:modified', onObjectModified);
-  }, [currentViewIndex, updateLayer]);
-
-  // ── Zone drawing ──────────────────────────────────────────────────────────
-
-  const enableDrawMode = useCallback(() => {
-    const c = fabricRef.current;
-    if (!c) return;
-    setIsDrawMode(true);
-    c.selection       = false;
-    c.defaultCursor   = 'crosshair';
-    c.hoverCursor     = 'crosshair';
-  }, []);
-
-  const disableDrawMode = useCallback(() => {
-    const c = fabricRef.current;
-    if (!c) return;
-    setIsDrawMode(false);
-    c.selection     = true;
-    c.defaultCursor = 'default';
-    c.hoverCursor   = 'move';
-  }, []);
+  }, [currentViewIndex, updateLayer, updateZone, zones]);
 
   const enableFreeMove = useCallback(() => {
     setFreeMove(true);
@@ -462,85 +699,6 @@ export default function Canvas() {
     pushHistory(viewKey, canvas.toJSON());
     canvas.renderAll();
   }, [setFreeMove, applyZoneClip, clampToZone, pushHistory, viewKey]);
-
-  useEffect(() => {
-    const canvas = fabricRef.current;
-    if (!canvas) return;
-
-    const onMouseDown = (opt) => {
-      if (!isDrawMode) return;
-      const ptr = canvas.getPointer(opt.e);
-      isDrawing.current = true;
-      drawStart.current = ptr;
-
-      const rect = new Rect({
-        left: ptr.x, top: ptr.y, width: 0, height: 0,
-        fill: 'rgba(59, 130, 246, 0.15)',
-        stroke: '#3b82f6', strokeWidth: 2,
-        selectable: false, evented: false,
-      });
-      canvas.add(rect);
-      draftRect.current = rect;
-    };
-
-    const onMouseMove = (opt) => {
-      if (!isDrawing.current || !draftRect.current) return;
-      const ptr = canvas.getPointer(opt.e);
-      const s   = drawStart.current;
-      draftRect.current.set({
-        left:   Math.min(s.x, ptr.x),
-        top:    Math.min(s.y, ptr.y),
-        width:  Math.abs(ptr.x - s.x),
-        height: Math.abs(ptr.y - s.y),
-      });
-      canvas.renderAll();
-    };
-
-    const onMouseUp = () => {
-      if (!isDrawing.current || !draftRect.current) return;
-      isDrawing.current = false;
-
-      const rect = draftRect.current;
-      draftRect.current = null;
-
-      // Discard tiny accidental drags.
-      if (rect.width < 10 || rect.height < 10) {
-        canvas.remove(rect);
-        canvas.renderAll();
-        return;
-      }
-
-      // Remove the draft rect — the zone sync effect will recreate a proper
-      // zone rect (with data.isZone) once addZone updates the store.
-      canvas.remove(rect);
-
-      const viewZones = views[currentViewIndex]?.zones_config || [];
-      addZone(currentViewIndex, {
-        x:             Math.round(rect.left),
-        y:             Math.round(rect.top),
-        width:         Math.round(rect.width),
-        height:        Math.round(rect.height),
-        name:          `Zone ${viewZones.length + 1}`,
-        type:          'safe_area',
-        allowed_types: ['text', 'image', 'svg'],
-        behavior:      'restrict',
-        mask_svg_url:  '',
-      });
-
-      disableDrawMode();
-      pushHistory(viewKey, canvas.toJSON());
-    };
-
-    canvas.on('mouse:down', onMouseDown);
-    canvas.on('mouse:move', onMouseMove);
-    canvas.on('mouse:up',   onMouseUp);
-
-    return () => {
-      canvas.off('mouse:down', onMouseDown);
-      canvas.off('mouse:move', onMouseMove);
-      canvas.off('mouse:up',   onMouseUp);
-    };
-  }, [isDrawMode, currentViewIndex, views, addZone, disableDrawMode, pushHistory]);
 
   // ── Keyboard undo/redo ────────────────────────────────────────────────────
 
@@ -629,13 +787,6 @@ export default function Canvas() {
   return (
     <div className="pd-canvas-wrap">
       <div className="pd-canvas-toolbar">
-        <button
-          className={`pd-canvas-toolbar__btn${isDrawMode ? ' pd-canvas-toolbar__btn--active' : ''}`}
-          onClick={isDrawMode ? disableDrawMode : enableDrawMode}
-          title={isDrawMode ? 'Cancel (Esc)' : 'Draw zone'}
-        >
-          {isDrawMode ? '✕ Cancel' : '⬚ Draw Zone'}
-        </button>
         <button
           className={`pd-canvas-toolbar__btn${isFreeMove ? ' pd-canvas-toolbar__btn--active' : ''}`}
           onClick={isFreeMove ? disableFreeMove : enableFreeMove}

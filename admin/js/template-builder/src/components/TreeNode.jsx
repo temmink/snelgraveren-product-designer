@@ -24,7 +24,7 @@ export default function TreeNode({ node, nodeType, isSelected, onSelect, onActio
     <div ref={setNodeRef} style={style} {...attributes}>
       <div
         className={`pd-tree-node pd-tree-node--${nodeType}${isSelected ? ' pd-tree-node--selected' : ''}`}
-        onClick={() => onSelect(node, nodeType)}
+        onClick={(e) => { e.stopPropagation(); onSelect(node, nodeType); }}
       >
         <span className="pd-tree-node__drag" {...listeners} title="Drag to reorder">⠿</span>
         <span className="pd-tree-node__icon">{icon}</span>

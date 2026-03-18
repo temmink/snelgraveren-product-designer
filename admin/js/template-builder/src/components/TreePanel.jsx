@@ -18,6 +18,12 @@ export default function TreePanel() {
   const [isAddingZone, setIsAddingZone] = useState(false);
   const [addingLayerToZone, setAddingLayerToZone] = useState(null);
   const [expandedZones, setExpandedZones] = useState({});
+  const [savedMsg, setSavedMsg] = useState(false);
+
+  const flashSaved = () => {
+    setSavedMsg(true);
+    setTimeout(() => setSavedMsg(false), 2000);
+  };
 
   const currentView = views[currentViewIndex];
   const zones = currentView?.zones_config || [];
@@ -114,7 +120,7 @@ export default function TreePanel() {
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={allSortableKeys} strategy={verticalListSortingStrategy}>
           {zones.length === 0 && (
-            <p className="pd-tree-panel__empty">Add a zone first to place layers.</p>
+            <p className="pd-tree-panel__empty">Add a boundary first to place layers.</p>
           )}
           {zones.map((zone, zoneIndex) => {
             const isExpanded = expandedZones[zone._key] !== false; // Default expanded.
@@ -162,41 +168,55 @@ export default function TreePanel() {
           className="pd-tree-panel__add-zone-btn"
           onClick={() => setIsAddingZone(true)}
         >
-          + Add Zone
+          + Add Boundary
         </button>
+        {savedMsg && <span className="pd-zone-form__saved">Saved Boundary</span>}
       </div>
 
       {isAddingZone && (
         <ZoneForm
-          onSubmit={(zone) => { addZone(currentViewIndex, zone); setIsAddingZone(false); }}
+          onSubmit={(zone) => { addZone(currentViewIndex, zone); setIsAddingZone(false); flashSaved(); }}
           onCancel={() => setIsAddingZone(false)}
         />
       )}
 
       {selectedNode && (
         <div className="pd-tree-panel__detail">
-          {selectedNode.nodeType === 'zone' && (
-            <ZoneForm
-              key={selectedNode.node._key}
-              initialData={selectedNode.node}
-              onSubmit={(patch) => {
-                const idx = zones.findIndex((z) => z._key === selectedNode.node._key);
-                if (idx >= 0) updateZone(currentViewIndex, idx, patch);
-              }}
-              onCancel={() => setSelectedNode(null)}
-            />
-          )}
-          {selectedNode.nodeType === 'layer' && (
-            <LayerDetail
-              layer={selectedNode.node}
-              onChange={(patch) => {
-                for (let zi = 0; zi < zones.length; zi++) {
-                  const li = (zones[zi].layers || []).findIndex((l) => l._key === selectedNode.node._key);
-                  if (li >= 0) { updateLayer(currentViewIndex, zi, li, patch); break; }
-                }
-              }}
-            />
-          )}
+          {selectedNode.nodeType === 'zone' && (() => {
+            const zoneIdx = zones.findIndex((z) => z._key === selectedNode.node._key);
+            const liveZone = zoneIdx >= 0 ? zones[zoneIdx] : selectedNode.node;
+            return (
+              <ZoneForm
+                key={selectedNode.node._key}
+                initialData={liveZone}
+                onChange={(patch) => {
+                  if (zoneIdx >= 0) updateZone(currentViewIndex, zoneIdx, patch);
+                }}
+                onSubmit={(patch) => {
+                  if (zoneIdx >= 0) { updateZone(currentViewIndex, zoneIdx, patch); flashSaved(); }
+                }}
+                onCancel={() => setSelectedNode(null)}
+              />
+            );
+          })()}
+          {selectedNode.nodeType === 'layer' && (() => {
+            let liveLayer = selectedNode.node;
+            let liveZi = -1;
+            let liveLi = -1;
+            for (let zi = 0; zi < zones.length; zi++) {
+              const li = (zones[zi].layers || []).findIndex((l) => l._key === selectedNode.node._key);
+              if (li >= 0) { liveLayer = zones[zi].layers[li]; liveZi = zi; liveLi = li; break; }
+            }
+            return (
+              <LayerDetail
+                key={selectedNode.node._key}
+                layer={liveLayer}
+                onChange={(patch) => {
+                  if (liveZi >= 0 && liveLi >= 0) updateLayer(currentViewIndex, liveZi, liveLi, patch);
+                }}
+              />
+            );
+          })()}
         </div>
       )}
     </div>
@@ -207,6 +227,37 @@ function AddLayerInline({ zone, onAdd, onCancel }) {
   const [name, setName] = useState('');
   const [type, setType] = useState('text');
   const allowedTypes = zone.allowed_types || ['text', 'image', 'svg'];
+
+  const handleAdd = () => {
+    if (type === 'text') {
+      onAdd({ name: name || 'Text', type, locked: false, visible: true, text: 'Text', fontSize: 24, fontFamily: 'Arial', fill: '#000000', left: zone.x + 20, top: zone.y + 20 });
+    } else {
+      // Open WP Media Library for image/svg selection.
+      if (!window.wp?.media) return;
+      const frame = window.wp.media({
+        title: type === 'svg' ? 'Select SVG' : 'Select Image',
+        button: { text: 'Use' },
+        multiple: false,
+        library: { type: type === 'svg' ? 'image/svg+xml' : 'image' },
+      });
+      frame.on('select', () => {
+        const attachment = frame.state().get('selection').first().toJSON();
+        onAdd({
+          name: name || attachment.filename || type,
+          type,
+          locked: false,
+          visible: true,
+          src: attachment.url,
+          left: zone.x + 20,
+          top: zone.y + 20,
+          scaleX: 1,
+          scaleY: 1,
+          angle: 0,
+        });
+      });
+      frame.open();
+    }
+  };
 
   return (
     <div className="pd-tree-panel__add-layer" style={{ paddingLeft: '32px' }}>
@@ -220,9 +271,7 @@ function AddLayerInline({ zone, onAdd, onCancel }) {
       <select value={type} onChange={(e) => setType(e.target.value)}>
         {allowedTypes.map((t) => <option key={t} value={t}>{t}</option>)}
       </select>
-      <button onClick={() => onAdd({ name: name || type, type, locked: false, visible: true, text: type === 'text' ? 'Text' : '', fontSize: 24, fontFamily: 'Arial', fill: '#000000', left: zone.x + 20, top: zone.y + 20 })}>
-        Add
-      </button>
+      <button onClick={handleAdd}>Add</button>
       <button onClick={onCancel}>Cancel</button>
     </div>
   );
@@ -261,12 +310,38 @@ function LayerDetail({ layer, onChange }) {
     );
   }
 
+  const typeLabel = (layer.type || 'Layer').charAt(0).toUpperCase() + (layer.type || '').slice(1);
   return (
     <div className="pd-tree-panel__layer-detail">
-      <h4>{(layer.type || 'Layer').charAt(0).toUpperCase() + (layer.type || '').slice(1)} Properties</h4>
+      <h4>{typeLabel} Properties</h4>
       <label>
         Name
         <input type="text" value={layer.name || ''} onChange={(e) => onChange({ name: e.target.value })} />
+      </label>
+      {layer.src && (
+        <div style={{ margin: '8px 0' }}>
+          <img src={layer.src} alt="Preview" style={{ maxWidth: '100%', maxHeight: 60 }} />
+        </div>
+      )}
+      <label>
+        X
+        <input type="number" value={layer.left || 0} onChange={(e) => onChange({ left: parseInt(e.target.value, 10) || 0 })} />
+      </label>
+      <label>
+        Y
+        <input type="number" value={layer.top || 0} onChange={(e) => onChange({ top: parseInt(e.target.value, 10) || 0 })} />
+      </label>
+      <label>
+        Scale X
+        <input type="number" step="0.1" min="0.1" value={layer.scaleX || 1} onChange={(e) => onChange({ scaleX: parseFloat(e.target.value) || 1 })} />
+      </label>
+      <label>
+        Scale Y
+        <input type="number" step="0.1" min="0.1" value={layer.scaleY || 1} onChange={(e) => onChange({ scaleY: parseFloat(e.target.value) || 1 })} />
+      </label>
+      <label>
+        Rotation
+        <input type="number" min="0" max="360" value={layer.angle || 0} onChange={(e) => onChange({ angle: parseInt(e.target.value, 10) || 0 })} />
       </label>
     </div>
   );
