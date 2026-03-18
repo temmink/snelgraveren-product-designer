@@ -181,23 +181,40 @@ export default function DesignerCanvas() {
 
     let disposed = false;
 
-    // Render zone rects
-    zones.forEach((zone) => {
+    // Render zone shapes
+    zones.forEach((zone, index) => {
       const isRestrict = zone.behavior === 'restrict';
-      const rect = new Rect({
-        left:           zone.x,
-        top:            zone.y,
-        width:          zone.width,
-        height:         zone.height,
-        fill:           isRestrict ? 'rgba(59,130,246,0.08)' : 'transparent',
-        stroke:         isRestrict ? '#3b82f6' : '#9ca3af',
-        strokeWidth:    2,
-        strokeDashArray: isRestrict ? null : [6, 4],
-        selectable:     false,
-        evented:        false,
-        data:           { isZoneOverlay: true },
-      });
-      canvas.add(rect);
+      let shape;
+      if (zone.boundary_type === 'svg' && zone.svg_path_data) {
+        shape = new Path(zone.svg_path_data, {
+          left:        zone.x,
+          top:         zone.y,
+          scaleX:      zone.svg_scale || 1,
+          scaleY:      zone.svg_scale || 1,
+          angle:       zone.svg_rotation || 0,
+          fill:        'rgba(59, 130, 246, 0.08)',
+          stroke:      '#3b82f6',
+          strokeWidth: 2,
+          selectable:  false,
+          evented:     false,
+          data:        { zoneIndex: index, isZoneOverlay: true },
+        });
+      } else {
+        shape = new Rect({
+          left:            zone.x,
+          top:             zone.y,
+          width:           zone.width,
+          height:          zone.height,
+          fill:            isRestrict ? 'rgba(59,130,246,0.08)' : 'transparent',
+          stroke:          isRestrict ? '#3b82f6' : '#9ca3af',
+          strokeWidth:     2,
+          strokeDashArray: isRestrict ? null : [6, 4],
+          selectable:      false,
+          evented:         false,
+          data:            { zoneIndex: index, isZoneOverlay: true },
+        });
+      }
+      canvas.add(shape);
     });
 
     // Load background image

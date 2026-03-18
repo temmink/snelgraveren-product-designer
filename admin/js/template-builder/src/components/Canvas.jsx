@@ -158,24 +158,7 @@ export default function Canvas() {
     });
     fabricRef.current = canvas;
 
-    // Draw existing zone rects.
-    const zones = currentView?.zones_config || [];
-    zones.forEach((zone, index) => {
-      const rect = new Rect({
-        left:        zone.x,
-        top:         zone.y,
-        width:       zone.width,
-        height:      zone.height,
-        fill:        'rgba(59, 130, 246, 0.15)',
-        stroke:      '#3b82f6',
-        strokeWidth: 2,
-        selectable:  false,
-        evented:     false,
-        data:        { zoneIndex: index, isZone: true },
-      });
-      canvas.add(rect);
-    });
-
+    // Zone shapes are rendered by the real-time zone sync effect below.
     // Text layers are rendered by the real-time layer sync effect below.
 
     // Push history whenever an object is moved/scaled/rotated.
