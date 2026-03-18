@@ -104,10 +104,16 @@ class RestTemplates {
 
     public function delete_template(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
         $id = (int) $request['id'];
-        if (!$this->repo->get($id)) {
+        $template = $this->repo->get($id);
+        if (!$template) {
             return new \WP_Error('not_found', 'Template not found.', ['status' => 404]);
         }
-        $this->repo->delete($id);
+        $force = filter_var($request->get_param('force'), FILTER_VALIDATE_BOOLEAN);
+        if ($force) {
+            $this->repo->delete($id);
+        } else {
+            $this->repo->trash($id);
+        }
         return new \WP_REST_Response(null, 204);
     }
 
@@ -133,8 +139,8 @@ class RestTemplates {
                 'canvas_width'    => (int) ($v['canvas_width'] ?? 800),
                 'canvas_height'   => (int) ($v['canvas_height'] ?? 600),
                 'background_url'  => $v['background_url'] ?? '',
-                'zones_config'    => is_string($v['zones_config'] ?? '') ? json_decode($v['zones_config'], true) : ($v['zones_config'] ?? []),
-                'layers_config'   => is_string($v['layers_config'] ?? '') ? json_decode($v['layers_config'], true) : ($v['layers_config'] ?? []),
+                'zones_config'    => $v['zones_config'] ?? [],
+                'layers_config'   => $v['layers_config'] ?? [],
             ];
         }, $views);
 

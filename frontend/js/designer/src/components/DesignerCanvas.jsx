@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useCallback } from 'react';
-import { Canvas as FabricCanvas, Rect, IText, FabricImage } from 'fabric';
+import { Canvas as FabricCanvas, Rect, IText, FabricImage, filters } from 'fabric';
 import useDesignerStore from '../store/useDesignerStore';
 import { uploadFile } from '../api/designerApi';
 
@@ -50,6 +50,20 @@ export default function DesignerCanvas() {
       if ((z.allowed_types || []).includes(elementType)) return i;
     }
     return -1;
+  }, [zones]);
+
+  // ── Clip object to its zone ───────────────────────────────────────────────
+
+  const applyZoneClip = useCallback((obj, zoneIdx) => {
+    if (zoneIdx < 0 || !zones[zoneIdx] || zones[zoneIdx].behavior !== 'restrict') return;
+    const zone = zones[zoneIdx];
+    obj.clipPath = new Rect({
+      left:   zone.x,
+      top:    zone.y,
+      width:  zone.width,
+      height: zone.height,
+      absolutePositioned: true,
+    });
   }, [zones]);
 
   // ── Apply permissions to a fabric object ──────────────────────────────────
@@ -107,10 +121,16 @@ export default function DesignerCanvas() {
       if (obj.scaleY > perms.max_scale) obj.set({ scaleY: perms.max_scale });
     }
 
-    // If bounding rect exceeds zone, scale down
+    // If bounding rect exceeds zone, scale down (but respect min_scale)
     if (bound.width > zone.width || bound.height > zone.height) {
       const ratio = Math.min(zone.width / bound.width, zone.height / bound.height);
-      obj.set({ scaleX: obj.scaleX * ratio, scaleY: obj.scaleY * ratio });
+      let newScaleX = obj.scaleX * ratio;
+      let newScaleY = obj.scaleY * ratio;
+      if (perms.min_scale != null) {
+        newScaleX = Math.max(newScaleX, perms.min_scale);
+        newScaleY = Math.max(newScaleY, perms.min_scale);
+      }
+      obj.set({ scaleX: newScaleX, scaleY: newScaleY });
     }
 
     obj.setCoords();
@@ -143,6 +163,7 @@ export default function DesignerCanvas() {
       height,
       selection: true,
       preserveObjectStacking: true,
+      enableRetinaScaling: false,
     });
     fabricRef.current = canvas;
 
@@ -174,11 +195,31 @@ export default function DesignerCanvas() {
           if (disposed) return;
           img.set({ selectable: false, evented: false });
           img.scaleToWidth(width);
-          canvas.set('backgroundImage', img);
+          canvas.backgroundImage = img;
           canvas.renderAll();
         })
         .catch(() => {});
     }
+
+    // Render pre-placed template layers from zones.
+    zones.forEach((zone, zoneIdx) => {
+      (zone.layers || []).forEach((layer) => {
+        if (layer.type === 'text' && layer.text) {
+          const text = new IText(layer.text, {
+            left:       layer.left       || zone.x + 20,
+            top:        layer.top        || zone.y + 20,
+            fontSize:   layer.fontSize   || 24,
+            fontFamily: layer.fontFamily || 'Arial',
+            fill:       layer.fill       || '#000000',
+            data:       { elementType: 'text', zoneIndex: zoneIdx },
+          });
+          applyPermissions(text, 'text');
+          if (zone.behavior === 'restrict') applyZoneClip(text, zoneIdx);
+          canvas.add(text);
+          if (zone.behavior === 'restrict') clampToZone(text);
+        }
+      });
+    });
 
     // Restore snapshot if switching back to a previously edited view
     const existing = canvasSnapshots[currentViewIndex];
@@ -202,6 +243,18 @@ export default function DesignerCanvas() {
 
     canvas.on('object:modified', () => {
       if (!disposed) snapshotView(currentViewIndex, canvas.toJSON());
+    });
+
+    // Enforce max_chars on in-canvas text editing
+    canvas.on('text:changed', (e) => {
+      const obj = e.target;
+      if (!obj?.data?.elementType) return;
+      const textPerms = permissions[obj.data.elementType] || {};
+      const maxChars = textPerms.max_chars;
+      if (maxChars && maxChars > 0 && obj.text && obj.text.length > maxChars) {
+        obj.set({ text: obj.text.slice(0, maxChars) });
+        canvas.renderAll();
+      }
     });
 
     canvas.on('object:removed', () => {
@@ -290,6 +343,7 @@ export default function DesignerCanvas() {
       });
 
       applyPermissions(text, 'text');
+      if (zoneIdx >= 0) applyZoneClip(text, zoneIdx);
       canvas.add(text);
       canvas.setActiveObject(text);
 
@@ -305,7 +359,7 @@ export default function DesignerCanvas() {
       canvas.off('mouse:down', onClick);
       canvas.defaultCursor = 'default';
     };
-  }, [activeTool, currentViewIndex, findZoneForPoint, applyPermissions, clampToZone, snapshotView, setActiveTool]);
+  }, [activeTool, currentViewIndex, findZoneForPoint, applyPermissions, applyZoneClip, clampToZone, snapshotView, setActiveTool]);
 
   // ── Tool: add-image / add-svg via file input ──────────────────────────────
 
@@ -339,6 +393,7 @@ export default function DesignerCanvas() {
       });
 
       applyPermissions(img, elementType);
+      if (zoneIdx >= 0) applyZoneClip(img, zoneIdx);
       canvas.add(img);
       canvas.setActiveObject(img);
 
@@ -351,7 +406,7 @@ export default function DesignerCanvas() {
     }
 
     setActiveTool('select');
-  }, [findFirstZoneForType, zones, applyPermissions, clampToZone, snapshotView, currentViewIndex, setActiveTool, setError]);
+  }, [findFirstZoneForType, zones, applyPermissions, applyZoneClip, clampToZone, snapshotView, currentViewIndex, setActiveTool, setError]);
 
   // Called by AddTab via store
   const triggerFileUpload = useCallback((elementType) => {

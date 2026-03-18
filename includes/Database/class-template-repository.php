@@ -27,9 +27,10 @@ class TemplateRepository {
                 ARRAY_A
             );
         } else {
+            // "All" excludes trashed templates.
             $rows = $wpdb->get_results(
                 $wpdb->prepare(
-                    "SELECT * FROM {$this->table} ORDER BY created_at DESC LIMIT %d OFFSET %d",
+                    "SELECT * FROM {$this->table} WHERE status != 'trashed' ORDER BY created_at DESC LIMIT %d OFFSET %d",
                     $per_page, $offset
                 ),
                 ARRAY_A
@@ -46,7 +47,8 @@ class TemplateRepository {
                 $wpdb->prepare("SELECT COUNT(*) FROM {$this->table} WHERE status = %s", $status)
             );
         }
-        return (int) $wpdb->get_var("SELECT COUNT(*) FROM {$this->table}");
+        // "All" excludes trashed.
+        return (int) $wpdb->get_var("SELECT COUNT(*) FROM {$this->table} WHERE status != 'trashed'");
     }
 
     public function get_status_counts(): array {
@@ -55,7 +57,7 @@ class TemplateRepository {
             "SELECT status, COUNT(*) as cnt FROM {$this->table} GROUP BY status",
             ARRAY_A
         );
-        $counts = ['draft' => 0, 'published' => 0, 'archived' => 0];
+        $counts = ['draft' => 0, 'published' => 0, 'archived' => 0, 'trashed' => 0];
         foreach ($rows as $row) {
             $counts[$row['status']] = (int) $row['cnt'];
         }
@@ -92,16 +94,27 @@ class TemplateRepository {
         $update = [];
         if (isset($data['title']))         $update['title']         = sanitize_text_field($data['title']);
         if (isset($data['slug']))          $update['slug']          = sanitize_title($data['slug']);
-        if (isset($data['status']))        $update['status']        = in_array($data['status'], ['draft', 'published', 'archived'], true) ? $data['status'] : 'draft';
+        if (isset($data['status']))        $update['status']        = in_array($data['status'], ['draft', 'published', 'archived', 'trashed'], true) ? $data['status'] : 'draft';
         if (isset($data['global_config'])) $update['global_config'] = wp_json_encode($data['global_config']);
 
-        if (empty($update)) return false;
+        if (empty($update)) return true;
 
-        return (bool) $wpdb->update($this->table, $update, ['id' => $id]);
+        $result = $wpdb->update($this->table, $update, ['id' => $id]);
+        return $result !== false;
+    }
+
+    public function trash(int $id): bool {
+        return $this->update($id, ['status' => 'trashed']);
+    }
+
+    public function restore(int $id): bool {
+        return $this->update($id, ['status' => 'draft']);
     }
 
     public function delete(int $id): bool {
         global $wpdb;
+        // Delete views first, then the template.
+        $wpdb->delete($this->views_table, ['template_id' => $id]);
         return (bool) $wpdb->delete($this->table, ['id' => $id]);
     }
 
@@ -172,16 +185,15 @@ class TemplateRepository {
     public function create_view(int $template_id, array $data): int {
         global $wpdb;
         $wpdb->insert($this->views_table, [
-            'template_id'      => $template_id,
-            'name'             => sanitize_text_field($data['name'] ?? ''),
-            'sort_order'       => (int) ($data['sort_order'] ?? 0),
-            'canvas_width'     => max(1, (int) ($data['canvas_width'] ?? 800)),
-            'canvas_height'    => max(1, (int) ($data['canvas_height'] ?? 600)),
-            'background_color' => sanitize_hex_color($data['background_color'] ?? '#ffffff') ?: '#ffffff',
-            'background_url'   => esc_url_raw($data['background_url'] ?? ''),
-            'zones_config'     => wp_json_encode($data['zones_config'] ?? []),
-            'layers_config'    => wp_json_encode($data['layers_config'] ?? []),
-            'permissions'      => wp_json_encode($data['permissions'] ?? []),
+            'template_id'        => $template_id,
+            'view_name'          => sanitize_text_field($data['name'] ?? ''),
+            'sort_order'         => (int) ($data['sort_order'] ?? 0),
+            'canvas_width'       => max(1, (int) ($data['canvas_width'] ?? 800)),
+            'canvas_height'      => max(1, (int) ($data['canvas_height'] ?? 600)),
+            'background_image_url' => esc_url_raw($data['background_url'] ?? ''),
+            'zones_config'       => wp_json_encode($data['zones_config'] ?? []),
+            'layers_config'      => wp_json_encode($data['layers_config'] ?? []),
+            'permissions'        => wp_json_encode($data['permissions'] ?? []),
         ]);
         return (int) $wpdb->insert_id;
     }
@@ -189,23 +201,24 @@ class TemplateRepository {
     public function update_view(int $template_id, int $view_id, array $data): bool {
         global $wpdb;
         $update = [];
-        if (isset($data['name']))             $update['name']             = sanitize_text_field($data['name']);
-        if (isset($data['sort_order']))       $update['sort_order']       = (int) $data['sort_order'];
-        if (isset($data['canvas_width']))     $update['canvas_width']     = max(1, (int) $data['canvas_width']);
-        if (isset($data['canvas_height']))    $update['canvas_height']    = max(1, (int) $data['canvas_height']);
-        if (isset($data['background_color'])) $update['background_color'] = sanitize_hex_color($data['background_color']) ?: '#ffffff';
-        if (isset($data['background_url']))   $update['background_url']   = esc_url_raw($data['background_url']);
-        if (isset($data['zones_config']))     $update['zones_config']     = wp_json_encode($data['zones_config']);
-        if (isset($data['layers_config']))    $update['layers_config']    = wp_json_encode($data['layers_config']);
-        if (isset($data['permissions']))      $update['permissions']      = wp_json_encode($data['permissions']);
+        if (isset($data['name']))             $update['view_name']          = sanitize_text_field($data['name']);
+        if (isset($data['sort_order']))       $update['sort_order']         = (int) $data['sort_order'];
+        if (isset($data['canvas_width']))     $update['canvas_width']       = max(1, (int) $data['canvas_width']);
+        if (isset($data['canvas_height']))    $update['canvas_height']      = max(1, (int) $data['canvas_height']);
+        if (isset($data['background_url']))   $update['background_image_url'] = esc_url_raw($data['background_url']);
+        if (isset($data['zones_config']))     $update['zones_config']       = wp_json_encode($data['zones_config']);
+        if (isset($data['layers_config']))    $update['layers_config']      = wp_json_encode($data['layers_config']);
+        if (isset($data['permissions']))      $update['permissions']        = wp_json_encode($data['permissions']);
 
-        if (empty($update)) return false;
+        if (empty($update)) return true;
 
-        return (bool) $wpdb->update(
+        $result = $wpdb->update(
             $this->views_table,
             $update,
             ['id' => $view_id, 'template_id' => $template_id]
         );
+        // $wpdb->update returns false on error, 0 if no rows changed (data identical).
+        return $result !== false;
     }
 
     public function delete_view(int $template_id, int $view_id): bool {
@@ -217,9 +230,40 @@ class TemplateRepository {
     }
 
     private function decode_view(array $row): array {
-        $row['zones_config']  = json_decode($row['zones_config'], true)  ?: [];
-        $row['layers_config'] = json_decode($row['layers_config'], true) ?: [];
-        $row['permissions']   = json_decode($row['permissions'], true)   ?: [];
+        // Normalize DB column names to consistent API field names.
+        $row['name']           = $row['view_name'] ?? '';
+        $row['background_url'] = $row['background_image_url'] ?? '';
+        unset($row['view_name'], $row['background_image_url']);
+
+        $row['zones_config']  = json_decode($row['zones_config'] ?? '', true)  ?: [];
+        $row['layers_config'] = json_decode($row['layers_config'] ?? '', true) ?: [];
+        $row['permissions']   = json_decode($row['permissions'] ?? '', true)   ?: [];
+
+        // Migrate: if zones don't have nested layers but layers_config exists, merge them.
+        if (!empty($row['layers_config']) && is_array($row['layers_config'])) {
+            $hasNested = false;
+            foreach ($row['zones_config'] as $zone) {
+                if (isset($zone['layers'])) { $hasNested = true; break; }
+            }
+            if (!$hasNested && !empty($row['zones_config'])) {
+                foreach ($row['layers_config'] as $layer) {
+                    $cx = ($layer['left'] ?? 0) + (($layer['width'] ?? 0) / 2);
+                    $cy = ($layer['top'] ?? 0) + (($layer['height'] ?? 0) / 2);
+                    $bestIdx = 0;
+                    $bestArea = PHP_INT_MAX;
+                    foreach ($row['zones_config'] as $i => $z) {
+                        if ($cx >= $z['x'] && $cx <= $z['x'] + $z['width'] &&
+                            $cy >= $z['y'] && $cy <= $z['y'] + $z['height']) {
+                            $area = $z['width'] * $z['height'];
+                            if ($area < $bestArea) { $bestIdx = $i; $bestArea = $area; }
+                        }
+                    }
+                    $row['zones_config'][$bestIdx]['layers'][] = $layer;
+                }
+            }
+            unset($row['layers_config']);
+        }
+
         return $row;
     }
 }
