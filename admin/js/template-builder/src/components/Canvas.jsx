@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
-import { Canvas as FabricCanvas, Rect, FabricImage, FabricText } from 'fabric';
+import { Canvas as FabricCanvas, Rect, FabricImage, FabricText, Path } from 'fabric';
 import useTemplateStore from '../store/useTemplateStore';
 
 export default function Canvas() {
@@ -42,13 +42,25 @@ export default function Canvas() {
     const zones = views[currentViewIndex]?.zones_config || [];
     if (zoneIdx < 0 || !zones[zoneIdx] || zones[zoneIdx].behavior !== 'restrict') return;
     const zone = zones[zoneIdx];
-    obj.clipPath = new Rect({
-      left:   zone.x,
-      top:    zone.y,
-      width:  zone.width,
-      height: zone.height,
-      absolutePositioned: true,
-    });
+
+    if (zone.boundary_type === 'svg' && zone.svg_path_data) {
+      obj.clipPath = new Path(zone.svg_path_data, {
+        left:   zone.x,
+        top:    zone.y,
+        scaleX: zone.svg_scale || 1,
+        scaleY: zone.svg_scale || 1,
+        angle:  zone.svg_rotation || 0,
+        absolutePositioned: true,
+      });
+    } else {
+      obj.clipPath = new Rect({
+        left:   zone.x,
+        top:    zone.y,
+        width:  zone.width,
+        height: zone.height,
+        absolutePositioned: true,
+      });
+    }
   }, [views, currentViewIndex, isFreeMove]);
 
   const clampToZone = useCallback((obj) => {
@@ -241,22 +253,40 @@ export default function Canvas() {
     const existing = canvas.getObjects().filter((o) => o.data?.isZone);
     existing.forEach((obj) => canvas.remove(obj));
 
-    // Re-add zone rects from current store state.
+    // Re-add zone shapes from current store state.
     zones.forEach((zone, index) => {
-      const rect = new Rect({
-        left:            zone.x,
-        top:             zone.y,
-        width:           zone.width,
-        height:          zone.height,
-        fill:            'rgba(59, 130, 246, 0.15)',
-        stroke:          '#3b82f6',
-        strokeWidth:     2,
-        strokeDashArray: isFreeMove ? [6, 4] : undefined,
-        selectable:      false,
-        evented:         false,
-        data:            { zoneIndex: index, isZone: true },
-      });
-      canvas.add(rect);
+      let shape;
+      if (zone.boundary_type === 'svg' && zone.svg_path_data) {
+        shape = new Path(zone.svg_path_data, {
+          left:        zone.x,
+          top:         zone.y,
+          scaleX:      zone.svg_scale || 1,
+          scaleY:      zone.svg_scale || 1,
+          angle:       zone.svg_rotation || 0,
+          fill:        isFreeMove ? 'transparent' : 'rgba(59, 130, 246, 0.08)',
+          stroke:      '#3b82f6',
+          strokeWidth: 2,
+          strokeDashArray: isFreeMove ? [6, 4] : undefined,
+          selectable:  false,
+          evented:     false,
+          data:        { zoneIndex: index, isZone: true },
+        });
+      } else {
+        shape = new Rect({
+          left:        zone.x,
+          top:         zone.y,
+          width:       zone.width,
+          height:      zone.height,
+          fill:        isFreeMove ? 'transparent' : 'rgba(59, 130, 246, 0.15)',
+          stroke:      '#3b82f6',
+          strokeWidth: 2,
+          strokeDashArray: isFreeMove ? [6, 4] : undefined,
+          selectable:  false,
+          evented:     false,
+          data:        { zoneIndex: index, isZone: true },
+        });
+      }
+      canvas.add(shape);
     });
 
     // Move zone rects to the bottom so they stay behind text/image layers.

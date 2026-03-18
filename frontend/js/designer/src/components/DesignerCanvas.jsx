@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useCallback } from 'react';
-import { Canvas as FabricCanvas, Rect, IText, FabricImage, filters } from 'fabric';
+import { Canvas as FabricCanvas, Rect, IText, FabricImage, filters, Path } from 'fabric';
 import useDesignerStore from '../store/useDesignerStore';
 import { uploadFile } from '../api/designerApi';
 
@@ -57,13 +57,25 @@ export default function DesignerCanvas() {
   const applyZoneClip = useCallback((obj, zoneIdx) => {
     if (zoneIdx < 0 || !zones[zoneIdx] || zones[zoneIdx].behavior !== 'restrict') return;
     const zone = zones[zoneIdx];
-    obj.clipPath = new Rect({
-      left:   zone.x,
-      top:    zone.y,
-      width:  zone.width,
-      height: zone.height,
-      absolutePositioned: true,
-    });
+
+    if (zone.boundary_type === 'svg' && zone.svg_path_data) {
+      obj.clipPath = new Path(zone.svg_path_data, {
+        left:   zone.x,
+        top:    zone.y,
+        scaleX: zone.svg_scale || 1,
+        scaleY: zone.svg_scale || 1,
+        angle:  zone.svg_rotation || 0,
+        absolutePositioned: true,
+      });
+    } else {
+      obj.clipPath = new Rect({
+        left:   zone.x,
+        top:    zone.y,
+        width:  zone.width,
+        height: zone.height,
+        absolutePositioned: true,
+      });
+    }
   }, [zones]);
 
   // ── Apply permissions to a fabric object ──────────────────────────────────
