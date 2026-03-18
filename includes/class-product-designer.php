@@ -18,12 +18,19 @@ class ProductDesigner {
     private function init(): void {
         if (is_admin()) {
             $this->init_admin();
+        } else {
+            $this->init_frontend();
         }
         $this->init_api();
     }
 
     private function init_admin(): void {
         new Admin\Admin();
+    }
+
+    private function init_frontend(): void {
+        $frontend = new Frontend\Frontend();
+        $frontend->init();
     }
 
     private function init_api(): void {
