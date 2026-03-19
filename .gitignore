@@ -4,3 +4,7 @@ dist/
 .env
 *.zip
 .DS_Store
+.superpowers/
+tests/e2e/.auth/
+test-results/
+playwright-report/
