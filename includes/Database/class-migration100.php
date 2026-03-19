@@ -9,8 +9,10 @@ class Migration100 {
         global $wpdb;
         $charset = $wpdb->get_charset_collate();
 
+        // dbDelta() does not support CONSTRAINT/FOREIGN KEY syntax.
+        // Create tables without FKs first, then add constraints separately.
         $sql = "
-            CREATE TABLE IF NOT EXISTS {$wpdb->prefix}pd_templates (
+            CREATE TABLE {$wpdb->prefix}pd_templates (
                 id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
                 title         VARCHAR(255)    NOT NULL DEFAULT '',
                 slug          VARCHAR(255)    NOT NULL DEFAULT '',
@@ -23,7 +25,7 @@ class Migration100 {
                 KEY status (status)
             ) ENGINE=InnoDB {$charset};
 
-            CREATE TABLE IF NOT EXISTS {$wpdb->prefix}pd_template_views (
+            CREATE TABLE {$wpdb->prefix}pd_template_views (
                 id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
                 template_id   BIGINT UNSIGNED NOT NULL,
                 name          VARCHAR(255)    NOT NULL DEFAULT '',
@@ -36,11 +38,10 @@ class Migration100 {
                 layers_config LONGTEXT        NOT NULL DEFAULT '[]',
                 permissions   LONGTEXT        NOT NULL DEFAULT '{}',
                 PRIMARY KEY (id),
-                KEY template_id (template_id),
-                CONSTRAINT fk_tv_template FOREIGN KEY (template_id) REFERENCES {$wpdb->prefix}pd_templates(id) ON DELETE CASCADE
+                KEY template_id (template_id)
             ) ENGINE=InnoDB {$charset};
 
-            CREATE TABLE IF NOT EXISTS {$wpdb->prefix}pd_designs (
+            CREATE TABLE {$wpdb->prefix}pd_designs (
                 id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
                 design_hash   CHAR(32)        NOT NULL,
                 template_id   BIGINT UNSIGNED NOT NULL,
@@ -55,22 +56,20 @@ class Migration100 {
                 UNIQUE KEY design_hash (design_hash),
                 KEY template_id (template_id),
                 KEY customer_id (customer_id),
-                KEY session_id (session_id),
-                CONSTRAINT fk_d_template FOREIGN KEY (template_id) REFERENCES {$wpdb->prefix}pd_templates(id)
+                KEY session_id (session_id)
             ) ENGINE=InnoDB {$charset};
 
-            CREATE TABLE IF NOT EXISTS {$wpdb->prefix}pd_design_views (
+            CREATE TABLE {$wpdb->prefix}pd_design_views (
                 id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
                 design_id   BIGINT UNSIGNED NOT NULL,
                 view_id     BIGINT UNSIGNED NOT NULL,
                 canvas_json LONGTEXT        NOT NULL DEFAULT '{}',
                 thumbnail   VARCHAR(2048)   NOT NULL DEFAULT '',
                 PRIMARY KEY (id),
-                KEY design_id (design_id),
-                CONSTRAINT fk_dv_design FOREIGN KEY (design_id) REFERENCES {$wpdb->prefix}pd_designs(id) ON DELETE CASCADE
+                KEY design_id (design_id)
             ) ENGINE=InnoDB {$charset};
 
-            CREATE TABLE IF NOT EXISTS {$wpdb->prefix}pd_exports (
+            CREATE TABLE {$wpdb->prefix}pd_exports (
                 id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
                 design_id   BIGINT UNSIGNED NOT NULL,
                 order_id    BIGINT UNSIGNED NOT NULL DEFAULT 0,
@@ -80,11 +79,10 @@ class Migration100 {
                 created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (id),
                 KEY design_id (design_id),
-                KEY order_id (order_id),
-                CONSTRAINT fk_e_design FOREIGN KEY (design_id) REFERENCES {$wpdb->prefix}pd_designs(id)
+                KEY order_id (order_id)
             ) ENGINE=InnoDB {$charset};
 
-            CREATE TABLE IF NOT EXISTS {$wpdb->prefix}pd_price_log (
+            CREATE TABLE {$wpdb->prefix}pd_price_log (
                 id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
                 design_id   BIGINT UNSIGNED NOT NULL,
                 element_type ENUM('text','image','svg') NOT NULL,
@@ -92,12 +90,26 @@ class Migration100 {
                 price       DECIMAL(10,2)   NOT NULL DEFAULT 0.00,
                 logged_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (id),
-                KEY design_id (design_id),
-                CONSTRAINT fk_pl_design FOREIGN KEY (design_id) REFERENCES {$wpdb->prefix}pd_designs(id) ON DELETE CASCADE
+                KEY design_id (design_id)
             ) ENGINE=InnoDB {$charset};
         ";
 
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta($sql);
+
+        // Add foreign key constraints via direct queries.
+        // Silently skip if they already exist (re-activation safe).
+        $fks = [
+            "ALTER TABLE {$wpdb->prefix}pd_template_views ADD CONSTRAINT fk_tv_template FOREIGN KEY (template_id) REFERENCES {$wpdb->prefix}pd_templates(id) ON DELETE CASCADE",
+            "ALTER TABLE {$wpdb->prefix}pd_designs ADD CONSTRAINT fk_d_template FOREIGN KEY (template_id) REFERENCES {$wpdb->prefix}pd_templates(id)",
+            "ALTER TABLE {$wpdb->prefix}pd_design_views ADD CONSTRAINT fk_dv_design FOREIGN KEY (design_id) REFERENCES {$wpdb->prefix}pd_designs(id) ON DELETE CASCADE",
+            "ALTER TABLE {$wpdb->prefix}pd_exports ADD CONSTRAINT fk_e_design FOREIGN KEY (design_id) REFERENCES {$wpdb->prefix}pd_designs(id)",
+            "ALTER TABLE {$wpdb->prefix}pd_price_log ADD CONSTRAINT fk_pl_design FOREIGN KEY (design_id) REFERENCES {$wpdb->prefix}pd_designs(id) ON DELETE CASCADE",
+        ];
+
+        foreach ($fks as $fk) {
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- static DDL, no user input
+            $wpdb->query($fk);
+        }
     }
 }
