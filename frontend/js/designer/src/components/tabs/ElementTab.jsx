@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { __ } from '@wordpress/i18n';
 import useDesignerStore from '../../store/useDesignerStore';
 
 export default function ElementTab() {
@@ -8,7 +9,7 @@ export default function ElementTab() {
   const permissions  = globalConfig.permissions || {};
 
   if (!selectedObject) {
-    return <div className="pd-sidebar__tab-content"><p>Select an element</p></div>;
+    return <div className="pd-sidebar__tab-content"><p>{__('Select an element', 'product-designer')}</p></div>;
   }
 
   const { type, fabricObj } = selectedObject;
@@ -16,7 +17,7 @@ export default function ElementTab() {
 
   return (
     <div className="pd-sidebar__tab-content">
-      <h3 className="pd-sidebar__heading">{type.charAt(0).toUpperCase() + type.slice(1)} Properties</h3>
+      <h3 className="pd-sidebar__heading">{type.charAt(0).toUpperCase() + type.slice(1)}{__(' Properties', 'product-designer')}</h3>
 
       {type === 'text' && (
         <TextProperties
@@ -52,7 +53,7 @@ export default function ElementTab() {
             }
           }}
         >
-          Delete
+          {__('Delete', 'product-designer')}
         </button>
       )}
     </div>
@@ -90,7 +91,7 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
       {/* Font family */}
       {perms.change_font !== false && allowedFonts.length > 0 && (
         <label className="pd-element__field">
-          <span>Font</span>
+          <span>{__('Font', 'product-designer')}</span>
           <select
             value={fontFamily}
             onChange={(e) => {
@@ -107,7 +108,7 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
 
       {/* Font size */}
       <label className="pd-element__field">
-        <span>Size</span>
+        <span>{__('Size', 'product-designer')}</span>
         <input
           type="number"
           min="8"
@@ -124,7 +125,7 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
       {/* Color */}
       {perms.recolor !== false && (
         <label className="pd-element__field">
-          <span>Color</span>
+          <span>{__('Color', 'product-designer')}</span>
           {anyColor ? (
             <input
               type="color"
@@ -228,7 +229,7 @@ function ImageProperties({ fabricObj, type, perms, globalConfig, snapshotView, c
       {/* SVG recolor */}
       {type === 'svg' && perms.recolor !== false && (
         <label className="pd-element__field">
-          <span>Tint Color</span>
+          <span>{__('Tint Color', 'product-designer')}</span>
           {anyColor || allowedColors.length === 0 ? (
             <input
               type="color"

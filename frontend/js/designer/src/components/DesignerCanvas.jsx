@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useCallback } from 'react';
+import { __ } from '@wordpress/i18n';
 import { Canvas as FabricCanvas, Rect, IText, FabricImage, filters, Path, loadSVGFromString, util } from 'fabric';
 import useDesignerStore from '../store/useDesignerStore';
 import { uploadFile } from '../api/designerApi';
@@ -408,7 +409,7 @@ export default function DesignerCanvas() {
       const ptr = canvas.getPointer(opt.e);
       const zoneIdx = findZoneForPoint(ptr.x, ptr.y, 'text');
 
-      const text = new IText('Your text here', {
+      const text = new IText(__('Your text here', 'product-designer'), {
         left: ptr.x,
         top: ptr.y,
         fontSize: 24,

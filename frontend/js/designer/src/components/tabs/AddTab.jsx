@@ -1,4 +1,5 @@
 import React from 'react';
+import { __ } from '@wordpress/i18n';
 import useDesignerStore from '../../store/useDesignerStore';
 
 export default function AddTab() {
@@ -26,34 +27,34 @@ export default function AddTab() {
 
   return (
     <div className="pd-sidebar__tab-content">
-      <h3 className="pd-sidebar__heading">Add Element</h3>
+      <h3 className="pd-sidebar__heading">{__('Add Element', 'product-designer')}</h3>
       <div className="pd-add-tools">
         <button
           type="button"
           className={`pd-add-tools__btn${activeTool === 'add-text' ? ' pd-add-tools__btn--active' : ''}`}
           disabled={!isTypeAllowed('text')}
           onClick={() => handleToolClick('add-text')}
-          title={!isTypeAllowed('text') ? 'Text not allowed on this view' : 'Add text'}
+          title={!isTypeAllowed('text') ? __('Text not allowed on this view', 'product-designer') : __('Add text', 'product-designer')}
         >
-          Text
+          {__('Text', 'product-designer')}
         </button>
         <button
           type="button"
           className={`pd-add-tools__btn${activeTool === 'add-image' ? ' pd-add-tools__btn--active' : ''}`}
           disabled={!isTypeAllowed('image')}
           onClick={() => handleToolClick('add-image')}
-          title={!isTypeAllowed('image') ? 'Images not allowed on this view' : 'Add image (jpg, png, webp)'}
+          title={!isTypeAllowed('image') ? __('Images not allowed on this view', 'product-designer') : __('Add image (jpg, png, webp)', 'product-designer')}
         >
-          Image
+          {__('Image', 'product-designer')}
         </button>
         <button
           type="button"
           className={`pd-add-tools__btn${activeTool === 'add-svg' ? ' pd-add-tools__btn--active' : ''}`}
           disabled={!isTypeAllowed('svg')}
           onClick={() => handleToolClick('add-svg')}
-          title={!isTypeAllowed('svg') ? 'SVGs not allowed on this view' : 'Add SVG'}
+          title={!isTypeAllowed('svg') ? __('SVGs not allowed on this view', 'product-designer') : __('Add SVG', 'product-designer')}
         >
-          SVG
+          {__('SVG', 'product-designer')}
         </button>
       </div>
     </div>

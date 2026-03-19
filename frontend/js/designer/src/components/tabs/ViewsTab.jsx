@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { __, sprintf } from '@wordpress/i18n';
 import useDesignerStore from '../../store/useDesignerStore';
 
 export default function ViewsTab() {
@@ -13,7 +14,7 @@ export default function ViewsTab() {
 
   return (
     <div className="pd-sidebar__tab-content">
-      <h3 className="pd-sidebar__heading">Views</h3>
+      <h3 className="pd-sidebar__heading">{__('Views', 'product-designer')}</h3>
       <div className="pd-views">
         {views.map((view, i) => (
           <button
@@ -22,7 +23,7 @@ export default function ViewsTab() {
             className={`pd-views__btn${i === currentViewIndex ? ' pd-views__btn--active' : ''}`}
             onClick={() => handleSwitch(i)}
           >
-            {view.name || `View ${i + 1}`}
+            {view.name || sprintf(__('View %d', 'product-designer'), i + 1)}
           </button>
         ))}
       </div>

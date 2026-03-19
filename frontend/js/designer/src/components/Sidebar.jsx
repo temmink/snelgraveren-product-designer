@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { __ } from '@wordpress/i18n';
 import useDesignerStore from '../store/useDesignerStore';
 import AddTab from './tabs/AddTab';
 import ElementTab from './tabs/ElementTab';
@@ -25,7 +26,7 @@ export default function Sidebar() {
           className={`pd-sidebar__tab${activeTab === 'add' ? ' pd-sidebar__tab--active' : ''}`}
           onClick={() => setActiveTab('add')}
         >
-          Add
+          {__('Add', 'product-designer')}
         </button>
         <button
           type="button"
@@ -33,14 +34,14 @@ export default function Sidebar() {
           onClick={() => setActiveTab('element')}
           disabled={!selectedObject}
         >
-          Element
+          {__('Element', 'product-designer')}
         </button>
         <button
           type="button"
           className={`pd-sidebar__tab${activeTab === 'views' ? ' pd-sidebar__tab--active' : ''}`}
           onClick={() => setActiveTab('views')}
         >
-          Views
+          {__('Views', 'product-designer')}
         </button>
       </div>
       <div className="pd-sidebar__content">

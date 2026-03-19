@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { __ } from '@wordpress/i18n';
 import useDesignerStore from './store/useDesignerStore';
 import { loadTemplate, loadDesign, createDesign, saveDesignView } from './api/designerApi';
 import DesignerCanvas from './components/DesignerCanvas';
@@ -25,7 +26,7 @@ export default function App() {
   // Load template on mount, then load existing design if hash is present
   useEffect(() => {
     if (!config.template_id) {
-      setError('No template configured for this product.');
+      setError(__('No template configured for this product.', 'product-designer'));
       setLoading(false);
       return;
     }
@@ -162,11 +163,11 @@ export default function App() {
   };
 
   if (loading) {
-    return <div className="pd-designer pd-designer--loading">Loading designer...</div>;
+    return <div className="pd-designer pd-designer--loading">{__('Loading designer...', 'product-designer')}</div>;
   }
 
   if (!template) {
-    return <div className="pd-designer pd-designer--error">{error || 'Template not available.'}</div>;
+    return <div className="pd-designer pd-designer--error">{error || __('Template not available.', 'product-designer')}</div>;
   }
 
   const isModal = config.display_mode === 'modal';
@@ -197,7 +198,7 @@ export default function App() {
             onClick={handleSave}
             disabled={isSaving || !isDirty}
           >
-            {isSaving ? 'Saving...' : savedRecently ? 'Saved!' : 'Save Design'}
+            {isSaving ? __('Saving...', 'product-designer') : savedRecently ? __('Saved!', 'product-designer') : __('Save Design', 'product-designer')}
           </button>
           {isModal && (
             <button
@@ -205,7 +206,7 @@ export default function App() {
               className="pd-designer__close-btn"
               onClick={(e) => { e.stopPropagation(); setDesignerOpen(false); }}
             >
-              Close Designer
+              {__('Close Designer', 'product-designer')}
             </button>
           )}
         </div>
