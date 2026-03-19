@@ -63,7 +63,7 @@ class Admin {
 
         $asset_file = PD_PLUGIN_DIR . 'dist/admin-template-builder.asset.php';
         $version    = PD_VERSION;
-        $deps       = ['react', 'react-dom'];
+        $deps       = ['react', 'react-dom', 'wp-i18n'];
 
         if (file_exists($asset_file)) {
             $asset   = include $asset_file;
@@ -80,6 +80,8 @@ class Admin {
             $version,
             true
         );
+
+        wp_set_script_translations('pd-template-builder', 'product-designer', PD_PLUGIN_DIR . 'languages');
 
         $css_file = PD_PLUGIN_DIR . 'dist/admin-template-builder.css';
         if (file_exists($css_file)) {

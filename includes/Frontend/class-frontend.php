@@ -174,10 +174,12 @@ class Frontend {
             wp_enqueue_script(
                 'pd-frontend-designer',
                 $dist_url . $js_file,
-                [],
+                ['wp-i18n'],
                 PD_VERSION,
                 true
             );
+
+            wp_set_script_translations('pd-frontend-designer', 'product-designer', PD_PLUGIN_DIR . 'languages');
 
             $js_config = [
                 'template_id'     => $template_id,
@@ -226,7 +228,7 @@ class Frontend {
         echo '<div id="pd-designer-root" data-mode="' . esc_attr($mode) . '"></div>';
 
         if ($mode === 'modal') {
-            echo '<button type="button" class="pd-open-designer button">Customize Product</button>';
+            echo '<button type="button" class="pd-open-designer button">' . esc_html__('Customize Product', 'product-designer') . '</button>';
         }
     }
 }

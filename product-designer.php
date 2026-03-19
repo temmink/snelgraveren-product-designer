@@ -50,6 +50,11 @@ add_filter('site_transient_update_plugins', function ($transient) {
     return $transient;
 });
 
+// Load plugin text domain for translations
+add_action('init', function () {
+    load_plugin_textdomain('product-designer', false, dirname(plugin_basename(__FILE__)) . '/languages');
+});
+
 // Boot plugin
 add_action('plugins_loaded', function () {
     ProductDesigner::instance();
