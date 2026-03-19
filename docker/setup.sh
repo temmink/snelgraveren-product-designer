@@ -48,6 +48,16 @@ wp wc product create \
 echo "Activating Product Designer plugin..."
 wp plugin activate product-designer --allow-root
 
+echo "Installing fonts for export rendering..."
+apt-get update -qq && apt-get install -y -qq fonts-dejavu-core 2>/dev/null
+
+echo "Fixing file permissions..."
+chown -R www-data:www-data /var/www/html/wp-content
+
+echo "Enabling debug logging..."
+wp config set WP_DEBUG true --raw --allow-root
+wp config set WP_DEBUG_LOG true --raw --allow-root
+
 echo "Setup complete!"
 echo "WordPress: http://localhost:8080 (admin / admin)"
 echo "phpMyAdmin: http://localhost:8081"

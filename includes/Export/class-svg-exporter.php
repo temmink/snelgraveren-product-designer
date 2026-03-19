@@ -16,6 +16,7 @@ class SvgExporter {
         $svg .= '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"';
         $svg .= ' width="' . $width . '" height="' . $height . '"';
         $svg .= ' viewBox="0 0 ' . $width . ' ' . $height . '">';
+
         // Background: solid color or 'none'
         if (!empty($bg) && $bg !== 'none') {
             $svg .= '<rect width="' . $width . '" height="' . $height . '" fill="' . esc_attr($bg) . '"/>';
@@ -78,12 +79,12 @@ class SvgExporter {
 
         $transform = $this->build_transform($left, $top, $angle, $scaleX, $scaleY);
 
-        // Fabric.js positions text at origin, so we offset by fontSize for SVG baseline
         $lines = explode("\n", $text);
         $svg = '<g transform="' . esc_attr($transform) . '" opacity="' . $opacity . '">';
         foreach ($lines as $i => $line) {
-            $y = $size + ($i * $size * 1.16); // line height ~1.16
+            $y = $i * $size * 1.16;
             $svg .= '<text x="0" y="' . $y . '"'
+                . ' dominant-baseline="hanging"'
                 . ' fill="' . esc_attr($fill) . '"'
                 . ' font-size="' . $size . '"'
                 . ' font-family="' . esc_attr($family) . '"'
@@ -144,13 +145,21 @@ class SvgExporter {
         $scaleY = (float) ($obj['scaleY'] ?? 1);
         $opacity = (float) ($obj['opacity'] ?? 1);
 
+        // Make invisible boundary shapes visible for export
+        $export_fill   = $this->export_color($fill);
+        $export_stroke = $this->export_color($stroke);
+        if ($export_fill === 'none' && $export_stroke === 'none') {
+            $export_stroke = '#888888';
+            $strokeWidth = max($strokeWidth, 0.5);
+        }
+
         $transform = $this->build_transform($left, $top, $angle, $scaleX, $scaleY);
 
         return '<path'
             . ' transform="' . esc_attr($transform) . '"'
             . ' d="' . esc_attr($d) . '"'
-            . ' fill="' . esc_attr($fill ?: 'none') . '"'
-            . ' stroke="' . esc_attr($stroke ?: 'none') . '"'
+            . ' fill="' . esc_attr($export_fill) . '"'
+            . ' stroke="' . esc_attr($export_stroke) . '"'
             . ' stroke-width="' . $strokeWidth . '"'
             . ' opacity="' . $opacity . '"'
             . '/>';
@@ -164,13 +173,23 @@ class SvgExporter {
         $scaleY = (float) ($obj['scaleY'] ?? 1);
         $opacity = (float) ($obj['opacity'] ?? 1);
         $objects = $obj['objects'] ?? [];
+        $width  = (float) ($obj['width'] ?? 0);
+        $height = (float) ($obj['height'] ?? 0);
+
+        // Fabric.js Group: children are positioned relative to the group center.
+        // Translate to group position, then offset by half width/height so
+        // children's relative coordinates resolve correctly.
+        $cx = $width / 2;
+        $cy = $height / 2;
 
         $transform = $this->build_transform($left, $top, $angle, $scaleX, $scaleY);
 
         $svg = '<g transform="' . esc_attr($transform) . '" opacity="' . $opacity . '">';
+        $svg .= '<g transform="translate(' . $cx . ',' . $cy . ')">';
         foreach ($objects as $child) {
             $svg .= $this->render_object($child);
         }
+        $svg .= '</g>';
         $svg .= '</g>';
 
         return $svg;
@@ -195,8 +214,8 @@ class SvgExporter {
         return '<rect'
             . ' transform="' . esc_attr($transform) . '"'
             . ' width="' . $width . '" height="' . $height . '"'
-            . ' fill="' . esc_attr($fill ?: 'none') . '"'
-            . ' stroke="' . esc_attr($stroke ?: 'none') . '"'
+            . ' fill="' . esc_attr($this->export_color($fill) ?: 'none') . '"'
+            . ' stroke="' . esc_attr($this->export_color($stroke) ?: 'none') . '"'
             . ' stroke-width="' . $strokeWidth . '"'
             . ' rx="' . $rx . '"'
             . ' opacity="' . $opacity . '"'
@@ -220,11 +239,14 @@ class SvgExporter {
         $cy = $radius;
         $transform = $this->build_transform($left, $top, $angle, $scaleX, $scaleY);
 
+        $export_fill   = $this->export_color($fill);
+        $export_stroke = $this->export_color($stroke);
+
         return '<circle'
             . ' transform="' . esc_attr($transform) . '"'
             . ' cx="' . $cx . '" cy="' . $cy . '" r="' . $radius . '"'
-            . ' fill="' . esc_attr($fill ?: 'none') . '"'
-            . ' stroke="' . esc_attr($stroke ?: 'none') . '"'
+            . ' fill="' . esc_attr($export_fill ?: 'none') . '"'
+            . ' stroke="' . esc_attr($export_stroke ?: 'none') . '"'
             . ' stroke-width="' . $strokeWidth . '"'
             . ' opacity="' . $opacity . '"'
             . '/>';
@@ -256,6 +278,17 @@ class SvgExporter {
             }
         }
         return implode(' ', $parts);
+    }
+
+    /**
+     * Convert a Fabric.js color to an export-safe color.
+     * Maps 'transparent' to 'none' for SVG.
+     */
+    private function export_color(?string $color): string {
+        if ($color === null || $color === '' || $color === 'transparent') {
+            return 'none';
+        }
+        return $color;
     }
 
     /**
