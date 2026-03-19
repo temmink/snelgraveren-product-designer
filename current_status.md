@@ -1,6 +1,6 @@
 # Product Designer — Current Status
 
-**Last updated:** 2026-03-18
+**Last updated:** 2026-03-19
 **Plugin version:** 1.0.0
 **Docker environment:** Running (WordPress 6.7, WooCommerce 10.6.1, MariaDB 11)
 
@@ -89,13 +89,28 @@ bash bin/package.sh
 - **CSS:** `designer.css` — isolation (`all: initial`), layout, modal overlay, BEM naming with `pd-` prefix
 - **Build:** Vite outputs `dist/frontend-designer.js` + `dist/frontend-designer.css`
 
+### Phase 4 — WooCommerce cart integration ✅
+- **Add to cart:** `pd_design_hash` attached to cart item data via hidden input + `woocommerce_add_cart_item_data` filter
+- **Cart thumbnails (classic):** `woocommerce_cart_item_thumbnail` filter replaces product thumbnail with design thumbnail
+- **Cart thumbnails (block):** `woocommerce_store_api_cart_item_images` filter for WooCommerce Store API block cart
+- **Cart item label:** `woocommerce_get_item_data` filter shows "Design: Customized" in cart
+- **Thumbnail storage:** Base64 data URL thumbnails saved as PNG files in `wp-content/uploads/pd-thumbnails/` (block cart requires real URLs, not data URIs)
+- **Product image update:** After saving, product gallery image on the page updates to show the design thumbnail
+- **Cart → product link:** `woocommerce_cart_item_permalink` filter appends `?pd_design=HASH` to cart item URLs
+- **Design reload from cart:** When returning to product page via cart link, the saved design loads automatically:
+  - PHP detects `pd_design` query param, passes `existing_design_hash` + `auto_open` to JS config
+  - `loadDesign()` API function fetches saved design via `GET /pd/v1/designs/{hash}`
+  - Canvas snapshots populated from saved `canvas_json` per view
+  - Designer auto-opens in modal mode
+- **Product gallery override:** `woocommerce_single_product_image_thumbnail_html` filter replaces product gallery image with design thumbnail when `pd_design` is in the URL (no flash of default product image)
+- **Close button:** "Close Designer" button in sidebar for modal mode (replaces floating × button)
+- **Save UX:** "Save Design" → "Saving..." → "Saved!" (green, 2s) → back to normal
+
 ---
 
 ## What's next
 
-### Phase 4 — WooCommerce integration
-- Product meta: `_pd_designer_enabled`, `_pd_template_id`
-- Add to cart with design_hash in cart item data
+### Phase 4b — WooCommerce integration (remaining)
 - Surcharge calculation via `woocommerce_before_calculate_totals`
 - Order item meta storage
 

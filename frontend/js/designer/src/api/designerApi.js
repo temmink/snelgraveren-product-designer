@@ -51,6 +51,17 @@ export async function saveDesignView(designHash, viewId, canvasJson, thumbnail =
   return res.json();
 }
 
+export async function loadDesign(designHash) {
+  const res = await fetch(apiUrl(`/designs/${designHash}`), {
+    headers: headers(),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Failed to load design');
+  }
+  return res.json();
+}
+
 export async function uploadFile(file) {
   const formData = new FormData();
   formData.append('file', file);

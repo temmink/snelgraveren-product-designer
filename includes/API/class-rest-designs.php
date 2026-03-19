@@ -117,8 +117,40 @@ class RestDesigns {
         $json    = $body['canvas_json'] ?? [];
         $thumb   = $body['thumbnail'] ?? '';
 
-        $this->repo->upsert_view((int) $design['id'], $view_id, $json, $thumb);
+        // Save base64 thumbnail as a file
+        $thumb_url = '';
+        if (!empty($thumb) && str_starts_with($thumb, 'data:image/png;base64,')) {
+            $thumb_url = $this->save_thumbnail_file($request['hash'], $view_id, $thumb);
+        }
+
+        $this->repo->upsert_view((int) $design['id'], $view_id, $json, $thumb_url);
         return new \WP_REST_Response($this->repo->get_by_hash($request['hash']), 200);
+    }
+
+    private function save_thumbnail_file(string $hash, int $view_id, string $data_url): string {
+        $upload_dir = wp_upload_dir();
+        $pd_dir     = $upload_dir['basedir'] . '/pd-thumbnails';
+
+        if (!is_dir($pd_dir)) {
+            wp_mkdir_p($pd_dir);
+            // Protect directory from browsing
+            file_put_contents($pd_dir . '/index.php', '<?php // Silence is golden.');
+        }
+
+        $base64  = str_replace('data:image/png;base64,', '', $data_url);
+        $decoded = base64_decode($base64, true);
+        if (!$decoded) {
+            return '';
+        }
+
+        $filename = $hash . '-view-' . $view_id . '.png';
+        $filepath = $pd_dir . '/' . $filename;
+
+        if (file_put_contents($filepath, $decoded) === false) {
+            return '';
+        }
+
+        return $upload_dir['baseurl'] . '/pd-thumbnails/' . $filename;
     }
 
     public function admin_list(\WP_REST_Request $request): \WP_REST_Response {

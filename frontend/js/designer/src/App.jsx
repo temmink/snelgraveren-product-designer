@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import useDesignerStore from './store/useDesignerStore';
-import { loadTemplate, createDesign, saveDesignView } from './api/designerApi';
+import { loadTemplate, loadDesign, createDesign, saveDesignView } from './api/designerApi';
 import DesignerCanvas from './components/DesignerCanvas';
 import Sidebar from './components/Sidebar';
 
@@ -18,9 +18,10 @@ export default function App() {
   } = useDesignerStore();
 
   const [loading, setLoading] = useState(true);
-  const [designerOpen, setDesignerOpen] = useState(config.display_mode !== 'modal');
+  const [designerOpen, setDesignerOpen] = useState(config.display_mode !== 'modal' || !!config.auto_open);
+  const [savedRecently, setSavedRecently] = useState(false);
 
-  // Load template on mount
+  // Load template on mount, then load existing design if hash is present
   useEffect(() => {
     if (!config.template_id) {
       setError('No template configured for this product.');
@@ -29,8 +30,32 @@ export default function App() {
     }
 
     loadTemplate(config.template_id)
-      .then((data) => {
+      .then(async (data) => {
         setTemplate(data);
+
+        // If returning from cart with an existing design, load it
+        if (config.existing_design_hash) {
+          try {
+            const design = await loadDesign(config.existing_design_hash);
+            setDesignHash(design.design_hash);
+
+            // Populate canvas snapshots from saved views
+            const views = data.views || [];
+            if (design.views) {
+              for (const dv of design.views) {
+                const viewIndex = views.findIndex((v) => v.id === dv.view_id);
+                if (viewIndex !== -1 && dv.canvas_json) {
+                  useDesignerStore.getState().snapshotView(viewIndex, dv.canvas_json);
+                }
+              }
+            }
+            // Mark as not dirty since we just loaded
+            setIsDirty(false);
+          } catch (_) {
+            // Design load failed — continue with blank template
+          }
+        }
+
         setLoading(false);
       })
       .catch((err) => {
@@ -42,6 +67,11 @@ export default function App() {
   // Modal open/close
   useEffect(() => {
     if (config.display_mode !== 'modal') return;
+
+    // Auto-open when returning from cart with an existing design
+    if (config.existing_design_hash) {
+      setDesignerOpen(true);
+    }
 
     const btn = document.querySelector('.pd-open-designer');
     if (!btn) return;
@@ -82,6 +112,7 @@ export default function App() {
 
       // Save each view that has a snapshot
       const views = template?.views || [];
+      let savedDesign = null;
       for (const [viewIndex, json] of Object.entries(canvasSnapshots)) {
         const view = views[parseInt(viewIndex, 10)];
         if (view?.id) {
@@ -92,11 +123,23 @@ export default function App() {
               thumbnail = fabricCanvasRef.toDataURL({ format: 'png', multiplier: 0.5 });
             } catch (_) { /* ignore */ }
           }
-          await saveDesignView(hash, view.id, json, thumbnail);
+          savedDesign = await saveDesignView(hash, view.id, json, thumbnail);
+        }
+      }
+
+      // Update the product image on the page with the design thumbnail
+      if (savedDesign?.views?.[0]?.thumbnail) {
+        const thumbUrl = savedDesign.views[0].thumbnail;
+        const productImg = document.querySelector('.woocommerce-product-gallery img, .wp-post-image');
+        if (productImg) {
+          productImg.src = thumbUrl;
+          productImg.srcset = '';
         }
       }
 
       setIsDirty(false);
+      setSavedRecently(true);
+      setTimeout(() => setSavedRecently(false), 2000);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -125,17 +168,6 @@ export default function App() {
       onClick={isModal ? (e) => { e.stopPropagation(); setDesignerOpen(false); } : undefined}
       onMouseDown={isModal ? (e) => e.stopPropagation() : undefined}
     >
-      {isModal && (
-        <button
-          type="button"
-          className="pd-designer__close"
-          onClick={(e) => { e.stopPropagation(); setDesignerOpen(false); }}
-          aria-label="Close designer"
-        >
-          &times;
-        </button>
-      )}
-
       <div className="pd-designer__layout" onClick={isModal ? (e) => e.stopPropagation() : undefined}>
         <DesignerCanvas />
         <div className="pd-designer__sidebar-wrap">
@@ -147,12 +179,21 @@ export default function App() {
           )}
           <button
             type="button"
-            className="pd-designer__save-btn"
+            className={`pd-designer__save-btn${savedRecently ? ' pd-designer__save-btn--saved' : ''}`}
             onClick={handleSave}
             disabled={isSaving || !isDirty}
           >
-            {isSaving ? 'Saving...' : 'Save Design'}
+            {isSaving ? 'Saving...' : savedRecently ? 'Saved!' : 'Save Design'}
           </button>
+          {isModal && (
+            <button
+              type="button"
+              className="pd-designer__close-btn"
+              onClick={(e) => { e.stopPropagation(); setDesignerOpen(false); }}
+            >
+              Close Designer
+            </button>
+          )}
         </div>
       </div>
     </div>

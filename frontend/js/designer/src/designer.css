@@ -82,21 +82,20 @@
   position: relative;
 }
 
-.pd-designer__close {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.75rem;
-  background: none;
-  border: none;
-  font-size: 1.5rem;
+.pd-designer__close-btn {
+  padding: 0.6rem 1rem;
+  background: #fff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
   cursor: pointer;
-  color: #6b7280;
-  z-index: 1;
-  line-height: 1;
+  font-size: 14px;
+  font-weight: 500;
 }
 
-.pd-designer__close:hover {
-  color: #1f2937;
+.pd-designer__close-btn:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
 }
 
 /* ── Open designer button (rendered by PHP) ──────────────────────────────── */
@@ -336,7 +335,16 @@
 
 .pd-designer__save-btn:disabled {
   opacity: 0.5;
-  cursor: not-allowed;
+  cursor: default;
+}
+
+.pd-designer__save-btn--saved {
+  background: #16a34a;
+  opacity: 1 !important;
+}
+
+.pd-designer__save-btn--saved:hover {
+  background: #16a34a;
 }
 
 /* ── Error ────────────────────────────────────────────────────────────────── */

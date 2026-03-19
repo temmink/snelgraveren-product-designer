@@ -83,9 +83,14 @@ All tables use InnoDB engine for foreign key and transaction support.
 
 ## WooCommerce Integration Points
 
-- Product meta: `_pd_designer_enabled`, `_pd_template_id`
-- Cart: design_hash in cart item data, surcharge via `woocommerce_before_calculate_totals`
-- Order: design_hash in order item meta, export triggered on configurable order status
+- Product meta: `_pd_designer_enabled`, `_pd_template_id`, `_pd_display_mode`
+- Cart: `pd_design_hash` in cart item data via hidden input + `woocommerce_add_cart_item_data` filter
+- Cart thumbnails: `woocommerce_cart_item_thumbnail` (classic) + `woocommerce_store_api_cart_item_images` (block cart)
+- Cart permalinks: `woocommerce_cart_item_permalink` appends `?pd_design=HASH` for design reload
+- Product gallery: `woocommerce_single_product_image_thumbnail_html` replaces image when `pd_design` query param present
+- Thumbnails: Saved as PNG files in `wp-content/uploads/pd-thumbnails/` (block cart requires real URLs, not data URIs)
+- Surcharge: via `woocommerce_before_calculate_totals` (not yet implemented)
+- Order: design_hash in order item meta, export triggered on configurable order status (not yet implemented)
 - HPOS: Compatibility declared in `product-designer.php`
 
 ## Don't
