@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { __ } from '@wordpress/i18n';
 import useTemplateStore from './store/useTemplateStore';
 import { templateApi } from './api/templateApi';
 import Canvas from './components/Canvas';
@@ -10,10 +11,10 @@ import GlobalSettings from './components/GlobalSettings';
 import { loadGoogleFonts } from './utils/fonts';
 
 const TABS = [
-  { label: 'Structure',   Component: TreePanel },
-  { label: 'Permissions', Component: PermissionsPanel },
-  { label: 'Pricing',     Component: PricingPanel },
-  { label: 'Settings',    Component: GlobalSettings },
+  { label: __( 'Structure',   'product-designer' ), Component: TreePanel },
+  { label: __( 'Permissions', 'product-designer' ), Component: PermissionsPanel },
+  { label: __( 'Pricing',     'product-designer' ), Component: PricingPanel },
+  { label: __( 'Settings',    'product-designer' ), Component: GlobalSettings },
 ];
 
 export default function App() {
@@ -44,7 +45,7 @@ export default function App() {
     } else if (views.length === 0) {
       // New template: seed a default "Front" view.
       addView({
-        name: 'Front',
+        name: __( 'Front', 'product-designer' ),
         canvas_width: 800,
         canvas_height: 600,
         background_url: '',
@@ -66,7 +67,7 @@ export default function App() {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      setSaveError('Title is required.');
+      setSaveError( __( 'Title is required.', 'product-designer' ) );
       return;
     }
     setSaveError(null);
@@ -120,7 +121,7 @@ export default function App() {
 
       setIsDirty(false);
     } catch (err) {
-      setSaveError(err.message || 'Save failed.');
+      setSaveError( err.message || __( 'Save failed.', 'product-designer' ) );
     } finally {
       setIsSaving(false);
     }
@@ -129,7 +130,7 @@ export default function App() {
   const { Component: ActivePanel } = TABS[activeTab];
 
   if (isLoading) {
-    return <div className="pd-builder pd-builder--loading">Loading template…</div>;
+    return <div className="pd-builder pd-builder--loading">{ __( 'Loading template…', 'product-designer' ) }</div>;
   }
 
   return (
@@ -138,30 +139,30 @@ export default function App() {
       {/* ── Header bar ─────────────────────────────────────────────────── */}
       <div className="pd-builder__header">
         <a href="?page=product-designer" className="pd-builder__back button">
-          ← Templates
+          { __( '← Templates', 'product-designer' ) }
         </a>
         <input
           type="text"
           className="pd-builder__title-input"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Template title…"
+          placeholder={ __( 'Template title…', 'product-designer' ) }
         />
         <select
           className="pd-builder__status-select"
           value={status}
           onChange={(e) => setStatus(e.target.value)}
         >
-          <option value="draft">Draft</option>
-          <option value="published">Published</option>
-          <option value="archived">Archived</option>
+          <option value="draft">{ __( 'Draft', 'product-designer' ) }</option>
+          <option value="published">{ __( 'Published', 'product-designer' ) }</option>
+          <option value="archived">{ __( 'Archived', 'product-designer' ) }</option>
         </select>
         <button
           className="pd-builder__save-btn button button-primary"
           onClick={handleSave}
           disabled={isSaving}
         >
-          {isSaving ? 'Saving…' : isDirty ? 'Save' : 'Saved ✓'}
+          { isSaving ? __( 'Saving…', 'product-designer' ) : isDirty ? __( 'Save', 'product-designer' ) : __( 'Saved ✓', 'product-designer' ) }
         </button>
         {saveError && <span className="pd-builder__save-error">{saveError}</span>}
       </div>
@@ -202,5 +203,3 @@ export default function App() {
   );
 }
 
-// NOTE: No i18n shim needed — string literals are used directly.
-// TODO Phase 6: replace with import { __ } from '@wordpress/i18n'

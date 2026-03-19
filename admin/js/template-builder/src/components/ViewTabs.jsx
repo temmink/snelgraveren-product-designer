@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { __ } from '@wordpress/i18n';
 import useTemplateStore from '../store/useTemplateStore';
 
 export default function ViewTabs() {
@@ -13,10 +14,11 @@ export default function ViewTabs() {
 
   const handleAdd = () => {
     addView({
-      view_name:            `View ${views.length + 1}`,
+      /* translators: %d is the view number */
+      name:            `${ __( 'View', 'product-designer' ) } ${views.length + 1}`,
       canvas_width:         800,
       canvas_height:        600,
-      background_image_url: '',
+      background_url: '',
       zones_config:         [],
       layers_config:        [],
       permissions:          {},
@@ -29,7 +31,7 @@ export default function ViewTabs() {
     e.stopPropagation();
     cancelledRef.current = false;
     setEditingIndex(index);
-    setEditName(views[index].view_name);
+    setEditName(views[index].name);
   };
 
   const commitRename = (index) => {
@@ -39,7 +41,7 @@ export default function ViewTabs() {
       return;
     }
     if (editName.trim()) {
-      updateView(index, { view_name: editName.trim() });
+      updateView(index, { name: editName.trim() });
     }
     setEditingIndex(null);
   };
@@ -75,18 +77,19 @@ export default function ViewTabs() {
               <span
                 className="pd-builder__view-tab-name"
                 onDoubleClick={(e) => startRename(e, index)}
-                title="Double-click to rename"
+                title={ __( 'Double-click to rename', 'product-designer' ) }
               >
-                {view.view_name}
+                {view.name}
               </span>
               {views.length > 1 && (
                 <button
                   className="pd-builder__view-tab-remove"
-                  aria-label={`Remove ${view.view_name}`}
+                  aria-label={ `${ __( 'Remove', 'product-designer' ) } ${view.name}` }
                   disabled={isSaving}
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (window.confirm(`Remove view "${view.view_name}"?`)) {
+                    /* translators: %s is the view name */
+                    if (window.confirm( `${ __( 'Remove view', 'product-designer' ) } "${view.name}"?` )) {
                       removeView(index);
                     }
                   }}
@@ -101,10 +104,10 @@ export default function ViewTabs() {
       <button
         className="pd-builder__view-tab-add"
         onClick={handleAdd}
-        aria-label="Add view"
+        aria-label={ __( 'Add view', 'product-designer' ) }
         disabled={isSaving}
       >
-        + Add View
+        { __( '+ Add View', 'product-designer' ) }
       </button>
     </div>
   );

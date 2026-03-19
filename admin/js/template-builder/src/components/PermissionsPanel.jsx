@@ -1,10 +1,12 @@
 import React from 'react';
+import { __ } from '@wordpress/i18n';
 import useTemplateStore from '../store/useTemplateStore';
 
-const ELEMENT_TYPES = [
-  { key: 'text',  label: 'Text',  extras: ['recolor', 'change_font'] },
-  { key: 'image', label: 'Image', extras: [] },
-  { key: 'svg',   label: 'SVG',   extras: ['recolor'] },
+// Labels are computed inside the component so __ is called after the module loads.
+const ELEMENT_TYPE_KEYS = [
+  { key: 'text',  labelKey: 'Text',  extras: ['recolor', 'change_font'] },
+  { key: 'image', labelKey: 'Image', extras: [] },
+  { key: 'svg',   labelKey: 'SVG',   extras: ['recolor'] },
 ];
 
 export default function PermissionsPanel() {
@@ -21,6 +23,12 @@ export default function PermissionsPanel() {
       },
     });
   };
+
+  const ELEMENT_TYPES = ELEMENT_TYPE_KEYS.map(({ key, labelKey, extras }) => ({
+    key,
+    label: __( labelKey, 'product-designer' ),
+    extras,
+  }));
 
   return (
     <div className="pd-permissions">
@@ -42,7 +50,7 @@ export default function PermissionsPanel() {
             ))}
             <div className="pd-permissions__scales">
               <label>
-                Min scale
+                { __( 'Min scale', 'product-designer' ) }
                 <input
                   type="number" step="0.1" min="0.01"
                   value={perm.min_scale ?? 0.1}
@@ -51,7 +59,7 @@ export default function PermissionsPanel() {
                 />
               </label>
               <label>
-                Max scale
+                { __( 'Max scale', 'product-designer' ) }
                 <input
                   type="number" step="0.1" min="0.1"
                   value={perm.max_scale ?? 10}
@@ -61,7 +69,7 @@ export default function PermissionsPanel() {
               </label>
               {perm.snap_to_grid && (
                 <label>
-                  Grid size (px)
+                  { __( 'Grid size (px)', 'product-designer' ) }
                   <input
                     type="number" min="1"
                     value={perm.grid_size ?? 10}

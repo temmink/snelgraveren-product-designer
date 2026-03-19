@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { __ } from '@wordpress/i18n';
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
 } from '@dnd-kit/core';
@@ -121,7 +122,7 @@ export default function TreePanel() {
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={allSortableKeys} strategy={verticalListSortingStrategy}>
           {zones.length === 0 && (
-            <p className="pd-tree-panel__empty">Add a boundary first to place layers.</p>
+            <p className="pd-tree-panel__empty">{ __( 'Add a boundary first to place layers.', 'product-designer' ) }</p>
           )}
           {zones.map((zone, zoneIndex) => {
             const isExpanded = expandedZones[zone._key] !== false; // Default expanded.
@@ -169,9 +170,9 @@ export default function TreePanel() {
           className="pd-tree-panel__add-zone-btn"
           onClick={() => setIsAddingZone(true)}
         >
-          + Add Boundary
+          { __( '+ Add Boundary', 'product-designer' ) }
         </button>
-        {savedMsg && <span className="pd-zone-form__saved">Saved Boundary</span>}
+        {savedMsg && <span className="pd-zone-form__saved">{ __( 'Saved Boundary', 'product-designer' ) }</span>}
       </div>
 
       {isAddingZone && (
@@ -231,13 +232,13 @@ function AddLayerInline({ zone, onAdd, onCancel }) {
 
   const handleAdd = () => {
     if (type === 'text') {
-      onAdd({ name: name || 'Text', type, locked: false, visible: true, text: 'Text', fontSize: 24, fontFamily: 'Arial', fill: '#000000', left: zone.x + 20, top: zone.y + 20 });
+      onAdd({ name: name || __( 'Text', 'product-designer' ), type, locked: false, visible: true, text: __( 'Text', 'product-designer' ), fontSize: 24, fontFamily: 'Arial', fill: '#000000', left: zone.x + 20, top: zone.y + 20 });
     } else {
       // Open WP Media Library for image/svg selection.
       if (!window.wp?.media) return;
       const frame = window.wp.media({
-        title: type === 'svg' ? 'Select SVG' : 'Select Image',
-        button: { text: 'Use' },
+        title: type === 'svg' ? __( 'Select SVG', 'product-designer' ) : __( 'Select Image', 'product-designer' ),
+        button: { text: __( 'Use', 'product-designer' ) },
         multiple: false,
         library: { type: type === 'svg' ? 'image/svg+xml' : 'image' },
       });
@@ -264,7 +265,7 @@ function AddLayerInline({ zone, onAdd, onCancel }) {
     <div className="pd-tree-panel__add-layer" style={{ paddingLeft: '32px' }}>
       <input
         type="text"
-        placeholder="Layer name"
+        placeholder={ __( 'Layer name', 'product-designer' ) }
         value={name}
         onChange={(e) => setName(e.target.value)}
         autoFocus
@@ -272,8 +273,8 @@ function AddLayerInline({ zone, onAdd, onCancel }) {
       <select value={type} onChange={(e) => setType(e.target.value)}>
         {allowedTypes.map((t) => <option key={t} value={t}>{t}</option>)}
       </select>
-      <button onClick={handleAdd}>Add</button>
-      <button onClick={onCancel}>Cancel</button>
+      <button onClick={handleAdd}>{ __( 'Add', 'product-designer' ) }</button>
+      <button onClick={onCancel}>{ __( 'Cancel', 'product-designer' ) }</button>
     </div>
   );
 }
@@ -289,17 +290,17 @@ function LayerDetail({ layer, onChange }) {
   if (layer.type === 'text') {
     return (
       <div className="pd-tree-panel__layer-detail">
-        <h4>Text Properties</h4>
+        <h4>{ __( 'Text Properties', 'product-designer' ) }</h4>
         <label>
-          Text
+          { __( 'Text', 'product-designer' ) }
           <input type="text" value={layer.text || ''} onChange={(e) => onChange({ text: e.target.value })} />
         </label>
         <label>
-          Font Size
+          { __( 'Font Size', 'product-designer' ) }
           <input type="number" min="8" max="200" value={layer.fontSize || 24} onChange={(e) => onChange({ fontSize: parseInt(e.target.value, 10) || 24 })} />
         </label>
         <label>
-          Font Family
+          { __( 'Font Family', 'product-designer' ) }
           <select value={layer.fontFamily || 'Arial'} onChange={(e) => onChange({ fontFamily: e.target.value })}>
             {fontOptions.map((f) => (
               <option key={f} value={f}>{f}</option>
@@ -307,52 +308,53 @@ function LayerDetail({ layer, onChange }) {
           </select>
         </label>
         <label>
-          Color
+          { __( 'Color', 'product-designer' ) }
           <input type="color" value={layer.fill || '#000000'} onChange={(e) => onChange({ fill: e.target.value })} />
         </label>
         <label>
-          X
+          { __( 'X', 'product-designer' ) }
           <input type="number" value={layer.left || 0} onChange={(e) => onChange({ left: parseInt(e.target.value, 10) || 0 })} />
         </label>
         <label>
-          Y
+          { __( 'Y', 'product-designer' ) }
           <input type="number" value={layer.top || 0} onChange={(e) => onChange({ top: parseInt(e.target.value, 10) || 0 })} />
         </label>
       </div>
     );
   }
 
-  const typeLabel = (layer.type || 'Layer').charAt(0).toUpperCase() + (layer.type || '').slice(1);
+  const typeLabel = (layer.type || __( 'Layer', 'product-designer' )).charAt(0).toUpperCase() + (layer.type || '').slice(1);
   return (
     <div className="pd-tree-panel__layer-detail">
-      <h4>{typeLabel} Properties</h4>
+      {/* translators: %s is the layer type (e.g. Image, SVG) */}
+      <h4>{ `${typeLabel} ${ __( 'Properties', 'product-designer' ) }` }</h4>
       <label>
-        Name
+        { __( 'Name', 'product-designer' ) }
         <input type="text" value={layer.name || ''} onChange={(e) => onChange({ name: e.target.value })} />
       </label>
       {layer.src && (
         <div style={{ margin: '8px 0' }}>
-          <img src={layer.src} alt="Preview" style={{ maxWidth: '100%', maxHeight: 60 }} />
+          <img src={layer.src} alt={ __( 'Preview', 'product-designer' ) } style={{ maxWidth: '100%', maxHeight: 60 }} />
         </div>
       )}
       <label>
-        X
+        { __( 'X', 'product-designer' ) }
         <input type="number" value={layer.left || 0} onChange={(e) => onChange({ left: parseInt(e.target.value, 10) || 0 })} />
       </label>
       <label>
-        Y
+        { __( 'Y', 'product-designer' ) }
         <input type="number" value={layer.top || 0} onChange={(e) => onChange({ top: parseInt(e.target.value, 10) || 0 })} />
       </label>
       <label>
-        Scale X
+        { __( 'Scale X', 'product-designer' ) }
         <input type="number" step="0.1" min="0.1" value={layer.scaleX || 1} onChange={(e) => onChange({ scaleX: parseFloat(e.target.value) || 1 })} />
       </label>
       <label>
-        Scale Y
+        { __( 'Scale Y', 'product-designer' ) }
         <input type="number" step="0.1" min="0.1" value={layer.scaleY || 1} onChange={(e) => onChange({ scaleY: parseFloat(e.target.value) || 1 })} />
       </label>
       <label>
-        Rotation
+        { __( 'Rotation', 'product-designer' ) }
         <input type="number" min="0" max="360" value={layer.angle || 0} onChange={(e) => onChange({ angle: parseInt(e.target.value, 10) || 0 })} />
       </label>
     </div>

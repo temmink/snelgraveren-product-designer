@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { extractClosedPath, pathToBoundingBox } from '../utils/svgPathUtils';
+import React, { useState, useEffect } from 'react';
+import { __ } from '@wordpress/i18n';
+import { extractSvgBoundingBox } from '../utils/svgPathUtils';
 
 const DEFAULT = {
   name: '', type: 'safe_area',
@@ -13,10 +14,28 @@ const DEFAULT = {
   svg_rotation: 0,
 };
 
-export default function ZoneForm({ initialData = {}, onSubmit, onCancel }) {
+export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChange }) {
   const [data, setData] = useState({ ...DEFAULT, ...initialData });
 
-  const set = (key, val) => setData((d) => ({ ...d, [key]: val }));
+  // Re-sync local state when store data changes externally (e.g. canvas drag/resize).
+  useEffect(() => {
+    setData((prev) => ({ ...prev, ...initialData }));
+  }, [initialData.x, initialData.y, initialData.width, initialData.height, initialData.svg_scale, initialData.svg_rotation]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const set = (key, val) => {
+    setData((d) => {
+      const next = { ...d, [key]: val };
+
+      // When svg_scale changes, auto-compute width/height from intrinsic SVG size.
+      if (key === 'svg_scale' && d.boundary_type === 'svg' && d.svg_intrinsic_width) {
+        next.width  = Math.round(d.svg_intrinsic_width  * (next.svg_scale || 1));
+        next.height = Math.round(d.svg_intrinsic_height * (next.svg_scale || 1));
+      }
+
+      if (onChange) onChange(next);
+      return next;
+    });
+  };
 
   const toggleType = (type) => {
     const types = data.allowed_types.includes(type)
@@ -36,42 +55,42 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel }) {
     <form onSubmit={handleSubmit} className="pd-zone-form">
       <div className="pd-zone-form__row">
         <label className="pd-zone-form__label">
-          Name
+          { __( 'Name', 'product-designer' ) }
           <input
             type="text" value={data.name} required
             onChange={(e) => set('name', e.target.value)}
             className="pd-zone-form__input"
-            placeholder="e.g. Print Area"
+            placeholder={ __( 'e.g. Front Print Area', 'product-designer' ) }
           />
         </label>
       </div>
 
       <div className="pd-zone-form__row">
         <label className="pd-zone-form__label">
-          Type
+          { __( 'Type', 'product-designer' ) }
           <select value={data.type} onChange={(e) => set('type', e.target.value)} className="pd-zone-form__select">
-            <option value="safe_area">Safe Area</option>
-            <option value="upload_zone">Upload Zone</option>
+            <option value="safe_area">{ __( 'Safe Area', 'product-designer' ) }</option>
+            <option value="upload_zone">{ __( 'Upload Zone', 'product-designer' ) }</option>
           </select>
         </label>
         <label className="pd-zone-form__label">
-          Behavior
+          { __( 'Behavior', 'product-designer' ) }
           <select value={data.behavior} onChange={(e) => set('behavior', e.target.value)} className="pd-zone-form__select">
-            <option value="restrict">Restrict (can't leave)</option>
-            <option value="clip">Clip at boundary</option>
+            <option value="restrict">{ __( "Restrict (can't leave)", 'product-designer' ) }</option>
+            <option value="clip">{ __( 'Clip at boundary', 'product-designer' ) }</option>
           </select>
         </label>
       </div>
 
       {/* Boundary Type */}
       <label className="pd-zone-form__field">
-        <span>Boundary</span>
+        <span>{ __( 'Boundary', 'product-designer' ) }</span>
         <select
           value={data.boundary_type || 'rect'}
           onChange={(e) => set('boundary_type', e.target.value)}
         >
-          <option value="rect">Rectangle</option>
-          <option value="svg">SVG Shape</option>
+          <option value="rect">{ __( 'Rectangle', 'product-designer' ) }</option>
+          <option value="svg">{ __( 'SVG Shape', 'product-designer' ) }</option>
         </select>
       </label>
 
@@ -80,9 +99,13 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel }) {
         <div className="pd-zone-form__svg-upload">
           {data.svg_url ? (
             <div className="pd-zone-form__svg-preview">
-              <img src={data.svg_url} alt="Zone shape" style={{ maxWidth: '100%', maxHeight: '80px' }} />
-              <button type="button" onClick={() => setData((d) => ({ ...d, svg_url: '', svg_path_data: '' }))}>
-                Remove
+              <img src={data.svg_url} alt={ __( 'Zone shape', 'product-designer' ) } style={{ maxWidth: '100%', maxHeight: '80px' }} />
+              <button type="button" onClick={() => setData((d) => {
+                const next = { ...d, svg_url: '', svg_path_data: '' };
+                if (onChange) onChange(next);
+                return next;
+              })}>
+                { __( 'Remove', 'product-designer' ) }
               </button>
             </div>
           ) : (
@@ -91,8 +114,8 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel }) {
               onClick={() => {
                 if (!window.wp?.media) return;
                 const frame = window.wp.media({
-                  title: 'Select SVG Zone Shape',
-                  button: { text: 'Use Shape' },
+                  title: __( 'Select SVG Zone Shape', 'product-designer' ),
+                  button: { text: __( 'Use Shape', 'product-designer' ) },
                   multiple: false,
                   library: { type: 'image/svg+xml' },
                 });
@@ -101,53 +124,52 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel }) {
                   try {
                     const resp = await fetch(attachment.url);
                     const svgText = await resp.text();
-                    const result = extractClosedPath(svgText);
-                    if (!result) {
-                      alert('SVG must contain a single closed path.');
+                    const bbox = await extractSvgBoundingBox(svgText);
+                    if (!bbox) {
+                      alert( __( 'Could not parse SVG file.', 'product-designer' ) );
                       return;
                     }
-                    const bbox = pathToBoundingBox(result.pathData, data.svg_scale || 1, data.svg_rotation || 0);
-                    setData((d) => ({
-                      ...d,
-                      svg_url: attachment.url,
-                      svg_path_data: result.pathData,
-                      width: bbox.width || 200,
-                      height: bbox.height || 200,
-                    }));
+                    setData((d) => {
+                      const iw = bbox.width || 200;
+                      const ih = bbox.height || 200;
+                      const scale = d.svg_scale || 1;
+                      const next = {
+                        ...d,
+                        svg_url: attachment.url,
+                        svg_intrinsic_width: iw,
+                        svg_intrinsic_height: ih,
+                        width: Math.round(iw * scale),
+                        height: Math.round(ih * scale),
+                      };
+                      if (onChange) onChange(next);
+                      return next;
+                    });
                   } catch {
-                    alert('Failed to parse SVG file.');
+                    alert( __( 'Failed to parse SVG file.', 'product-designer' ) );
                   }
                 });
                 frame.open();
               }}
             >
-              Upload SVG Shape
+              { __( 'Upload SVG Shape', 'product-designer' ) }
             </button>
           )}
-          {data.svg_path_data && (
+          {data.svg_url && (
             <>
               <label className="pd-zone-form__field">
-                <span>Scale</span>
+                <span>{ __( 'Scale', 'product-designer' ) }</span>
                 <input
-                  type="number" step="0.1" min="0.1" max="10"
-                  value={data.svg_scale || 1}
-                  onChange={(e) => {
-                    const s = parseFloat(e.target.value) || 1;
-                    const bbox = pathToBoundingBox(data.svg_path_data, s, data.svg_rotation || 0);
-                    setData((d) => ({ ...d, svg_scale: s, width: bbox.width, height: bbox.height }));
-                  }}
+                  type="number" step="any" min="0.1"
+                  value={Math.round((data.svg_scale || 1) * 100) / 100}
+                  onChange={(e) => set('svg_scale', parseFloat(e.target.value) || 1)}
                 />
               </label>
               <label className="pd-zone-form__field">
-                <span>Rotation</span>
+                <span>{ __( 'Rotation', 'product-designer' ) }</span>
                 <input
                   type="number" step="1" min="0" max="360"
                   value={data.svg_rotation || 0}
-                  onChange={(e) => {
-                    const r = parseInt(e.target.value, 10) || 0;
-                    const bbox = pathToBoundingBox(data.svg_path_data, data.svg_scale || 1, r);
-                    setData((d) => ({ ...d, svg_rotation: r, width: bbox.width, height: bbox.height }));
-                  }}
+                  onChange={(e) => set('svg_rotation', parseInt(e.target.value, 10) || 0)}
                 />
               </label>
             </>
@@ -156,20 +178,26 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel }) {
       )}
 
       <div className="pd-zone-form__row pd-zone-form__row--coords">
-        {[['x','X'], ['y','Y'], ['width','W'], ['height','H']].map(([key, label]) => (
-          <label key={key} className="pd-zone-form__label pd-zone-form__label--coord">
-            {label}
-            <input
-              type="number" value={data[key]} min={key === 'width' || key === 'height' ? 1 : 0}
-              onChange={(e) => set(key, Number(e.target.value))}
-              className="pd-zone-form__input pd-zone-form__input--number"
-            />
-          </label>
-        ))}
+        {[['x','X'], ['y','Y'], ['width','W'], ['height','H']].map(([key, label]) => {
+          const isSvgSize = data.boundary_type === 'svg' && (key === 'width' || key === 'height');
+          return (
+            <label key={key} className="pd-zone-form__label pd-zone-form__label--coord">
+              {label}
+              <input
+                type="number" value={data[key]} min={key === 'width' || key === 'height' ? 1 : 0}
+                onChange={(e) => set(key, Number(e.target.value))}
+                readOnly={isSvgSize}
+                className="pd-zone-form__input pd-zone-form__input--number"
+                style={isSvgSize ? { opacity: 0.6 } : undefined}
+                title={isSvgSize ? __( 'Resize the SVG on canvas or change Scale to adjust', 'product-designer' ) : undefined}
+              />
+            </label>
+          );
+        })}
       </div>
 
       <fieldset className="pd-zone-form__fieldset">
-        <legend>Allowed element types</legend>
+        <legend>{ __( 'Allowed element types', 'product-designer' ) }</legend>
         {['text', 'image', 'svg'].map((t) => (
           <label key={t} className="pd-zone-form__checkbox-label">
             <input
@@ -185,7 +213,7 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel }) {
       {data.type === 'upload_zone' && (
         <div className="pd-zone-form__row">
           <label className="pd-zone-form__label">
-            Mask SVG URL
+            { __( 'Mask SVG URL', 'product-designer' ) }
             <input
               type="url" value={data.mask_svg_url || ''}
               onChange={(e) => set('mask_svg_url', e.target.value)}
@@ -197,8 +225,8 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel }) {
       )}
 
       <div className="pd-zone-form__actions">
-        <button type="submit" className="button button-primary">Save Zone</button>
-        <button type="button" className="button" onClick={onCancel}>Cancel</button>
+        <button type="submit" className="button button-primary">{ __( 'Save Boundary', 'product-designer' ) }</button>
+        <button type="button" className="button" onClick={onCancel}>{ __( 'Cancel', 'product-designer' ) }</button>
       </div>
     </form>
   );

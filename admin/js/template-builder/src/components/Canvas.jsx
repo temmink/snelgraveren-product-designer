@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useCallback } from 'react';
+import { __ } from '@wordpress/i18n';
 import { Canvas as FabricCanvas, Rect, FabricImage, FabricText, loadSVGFromString, util } from 'fabric';
 import useTemplateStore from '../store/useTemplateStore';
 import { parseSvgToFabric } from '../utils/svgPathUtils';
@@ -733,8 +734,8 @@ export default function Canvas() {
     if (!window.wp?.media) return;
 
     const frame = window.wp.media({
-      title: 'Select Background Image',
-      button: { text: 'Set Background' },
+      title: __( 'Select Background Image', 'product-designer' ),
+      button: { text: __( 'Set Background', 'product-designer' ) },
       multiple: false,
       library: { type: 'image' },
     });
@@ -792,41 +793,41 @@ export default function Canvas() {
         <button
           className={`pd-canvas-toolbar__btn${isFreeMove ? ' pd-canvas-toolbar__btn--active' : ''}`}
           onClick={isFreeMove ? disableFreeMove : enableFreeMove}
-          title={isFreeMove ? 'Enable zone enforcement' : 'Disable zone enforcement for free positioning'}
+          title={ isFreeMove ? __( 'Enable zone enforcement', 'product-designer' ) : __( 'Disable zone enforcement for free positioning', 'product-designer' ) }
         >
-          {isFreeMove ? 'Enforce Zones' : 'Free Move'}
+          { isFreeMove ? __( 'Enforce Zones', 'product-designer' ) : __( 'Free Move', 'product-designer' ) }
         </button>
         <button
           className="pd-canvas-toolbar__btn"
           onClick={openMediaPicker}
-          title="Set background image"
+          title={ __( 'Set background image', 'product-designer' ) }
         >
-          {currentView?.background_url ? 'Change Background' : 'Set Background'}
+          { currentView?.background_url ? __( 'Change Background', 'product-designer' ) : __( 'Set Background', 'product-designer' ) }
         </button>
         {currentView?.background_url && (
           <button
             className="pd-canvas-toolbar__btn"
             onClick={removeBackground}
-            title="Remove background image"
+            title={ __( 'Remove background image', 'product-designer' ) }
           >
-            Remove BG
+            { __( 'Remove BG', 'product-designer' ) }
           </button>
         )}
         <button
           className="pd-canvas-toolbar__btn"
           onClick={applyUndo}
           disabled={!canUndo(viewKey)}
-          title="Undo (Ctrl+Z)"
+          title={ __( 'Undo (Ctrl+Z)', 'product-designer' ) }
         >
-          ↩ Undo
+          { __( '↩ Undo', 'product-designer' ) }
         </button>
         <button
           className="pd-canvas-toolbar__btn"
           onClick={applyRedo}
           disabled={!canRedo(viewKey)}
-          title="Redo (Ctrl+Shift+Z)"
+          title={ __( 'Redo (Ctrl+Shift+Z)', 'product-designer' ) }
         >
-          ↪ Redo
+          { __( '↪ Redo', 'product-designer' ) }
         </button>
       </div>
       <div className="pd-canvas-scroll">

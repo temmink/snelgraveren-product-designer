@@ -1,4 +1,5 @@
 import React from 'react';
+import { __ } from '@wordpress/i18n';
 import useTemplateStore from '../store/useTemplateStore';
 
 export default function PricingPanel() {
@@ -23,26 +24,26 @@ export default function PricingPanel() {
     <div className="pd-pricing">
       <div className="pd-pricing__row">
         <label className="pd-pricing__label">
-          Pricing mode
+          { __( 'Pricing mode', 'product-designer' ) }
           <select
             value={pricing_mode}
             onChange={(e) => update('pricing_mode', e.target.value)}
             className="pd-pricing__select"
           >
-            <option value="per_element">Per element</option>
-            <option value="tier">Tier-based</option>
+            <option value="per_element">{ __( 'Per element', 'product-designer' ) }</option>
+            <option value="tier">{ __( 'Tier-based', 'product-designer' ) }</option>
           </select>
         </label>
       </div>
 
       {pricing_mode === 'per_element' && (
         <fieldset className="pd-pricing__fieldset">
-          <legend>Element prices</legend>
+          <legend>{ __( 'Element prices', 'product-designer' ) }</legend>
           {[
-            ['text_price',       'Text'],
-            ['image_price',      'Image'],
-            ['svg_price',        'SVG'],
-            ['extra_layer_price','Extra layer'],
+            ['text_price',       __( 'Text', 'product-designer' )],
+            ['image_price',      __( 'Image', 'product-designer' )],
+            ['svg_price',        __( 'SVG', 'product-designer' )],
+            ['extra_layer_price', __( 'Extra layer', 'product-designer' )],
           ].map(([key, label]) => (
             <label key={key} className="pd-pricing__label">
               {label} ({currencySymbol})
@@ -59,12 +60,12 @@ export default function PricingPanel() {
 
       {pricing_mode === 'tier' && (
         <fieldset className="pd-pricing__fieldset">
-          <legend>Tiers (element count → surcharge)</legend>
+          <legend>{ __( 'Tiers (element count → surcharge)', 'product-designer' ) }</legend>
           {tiers.map((tier, i) => (
             <div key={i} className="pd-pricing__tier">
-              <input type="number" min="0" value={tier.min} onChange={(e) => updateTier(i, 'min', e.target.value)} className="pd-pricing__tier-num" placeholder="Min" />
+              <input type="number" min="0" value={tier.min} onChange={(e) => updateTier(i, 'min', e.target.value)} className="pd-pricing__tier-num" placeholder={ __( 'Min', 'product-designer' ) } />
               –
-              <input type="number" min="0" value={tier.max} onChange={(e) => updateTier(i, 'max', e.target.value)} className="pd-pricing__tier-num" placeholder="Max" />
+              <input type="number" min="0" value={tier.max} onChange={(e) => updateTier(i, 'max', e.target.value)} className="pd-pricing__tier-num" placeholder={ __( 'Max', 'product-designer' ) } />
               elements → {currencySymbol}
               <input type="number" min="0" step="0.01" value={tier.surcharge} onChange={(e) => updateTier(i, 'surcharge', e.target.value)} className="pd-pricing__tier-num" />
               <button
@@ -78,26 +79,26 @@ export default function PricingPanel() {
             className="button button-secondary"
             onClick={() => update('tiers', [...tiers, { min: 0, max: 999, surcharge: 0 }])}
           >
-            Add Tier
+            { __( 'Add Tier', 'product-designer' ) }
           </button>
         </fieldset>
       )}
 
       <fieldset className="pd-pricing__fieldset">
-        <legend>Surcharge caps</legend>
+        <legend>{ __( 'Surcharge caps', 'product-designer' ) }</legend>
         <label className="pd-pricing__label">
-          Minimum ({currencySymbol})
+          { `${ __( 'Minimum', 'product-designer' ) } (${currencySymbol})` }
           <input type="number" step="0.01" min="0" value={min_surcharge}
             onChange={(e) => update('min_surcharge', parseFloat(e.target.value) || 0)}
             className="pd-pricing__number"
           />
         </label>
         <label className="pd-pricing__label">
-          Maximum cap ({currencySymbol}, leave blank for no cap)
+          { `${ __( 'Maximum cap', 'product-designer' ) } (${currencySymbol}, ${ __( 'leave blank for no cap', 'product-designer' ) })` }
           <input type="number" step="0.01" min="0" value={max_surcharge ?? ''}
             onChange={(e) => update('max_surcharge', e.target.value === '' ? null : parseFloat(e.target.value))}
             className="pd-pricing__number"
-            placeholder="No cap"
+            placeholder={ __( 'No cap', 'product-designer' ) }
           />
         </label>
       </fieldset>
