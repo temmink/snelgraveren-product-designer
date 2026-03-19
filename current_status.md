@@ -123,11 +123,19 @@ bash bin/package.sh
 
 ---
 
-## What's next
+### Phase 5 — Export ✅
+- **SVG Exporter:** Reconstructs SVG from Fabric.js canvas JSON (text, images, paths, groups, rects, circles)
+- **PNG Exporter:** Renders via Intervention Image with configurable DPI (default 300)
+- **PDF Exporter:** Multi-page PDF via TCPDF, one page per view sized to canvas dimensions
+- **Export Manager:** Orchestrates exports, auto-triggers on configurable order status (`pd_export_trigger_status` option, default: `completed`)
+- **REST API:** `POST /exports/{hash}` (trigger), `GET /exports/{id}/download`, `GET /orders/{order_id}/exports`, `DELETE /exports/{id}`
+- **Admin order UI:** Export buttons (PDF/PNG/SVG) per order item with design, download links for completed exports
+- **File storage:** `wp-content/uploads/pd-exports/{format}/` with `index.php` guards
+- **Options:** `pd_export_trigger_status` (default: completed), `pd_export_default_format` (default: pdf)
 
-### Phase 5 — Export
-- PDF via TCPDF, PNG via Imagick, SVG via Fabric.js toSVG
-- Triggered on configurable order status hook
+---
+
+## What's next
 
 ### Phase 6 — Polish
 - i18n/l10n, accessibility, performance, end-to-end tests
@@ -169,7 +177,12 @@ product-designer/
 │   │   ├── class-rest-designs.php    # 8 routes (with template validation)
 │   │   ├── class-rest-uploads.php
 │   │   ├── class-rest-fonts.php      # stub
-│   │   └── class-rest-exports.php    # stub
+│   │   └── class-rest-exports.php    # trigger, download, list, delete
+│   ├── Export/
+│   │   ├── class-export-manager.php     # Orchestrator + order status hook
+│   │   ├── class-svg-exporter.php       # SVG from Fabric.js JSON
+│   │   ├── class-png-exporter.php       # PNG via Intervention Image
+│   │   └── class-pdf-exporter.php       # PDF via TCPDF
 │   ├── Pricing/
 │   │   ├── class-cart-surcharge.php      # WooCommerce cart integration
 │   │   └── class-price-calculator.php    # Server-side surcharge calculation
