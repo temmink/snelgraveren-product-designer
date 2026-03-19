@@ -5,6 +5,15 @@ defined('ABSPATH') || exit;
 
 class Frontend {
 
+    private ?\ProductDesigner\Database\DesignRepository $design_repo = null;
+
+    private function design_repo(): \ProductDesigner\Database\DesignRepository {
+        if (!$this->design_repo) {
+            $this->design_repo = new \ProductDesigner\Database\DesignRepository();
+        }
+        return $this->design_repo;
+    }
+
     public function init(): void {
         add_action('wp_enqueue_scripts', [$this, 'enqueue_assets']);
         add_action('woocommerce_before_add_to_cart_button', [$this, 'render_designer']);
@@ -41,8 +50,7 @@ class Frontend {
      * @return string[] Valid thumbnail URLs, one per view.
      */
     private function get_design_thumbnail_urls(string $hash): array {
-        $repo   = new \ProductDesigner\Database\DesignRepository();
-        $design = $repo->get_by_hash($hash);
+        $design = $this->design_repo()->get_by_hash($hash);
         if (!$design || empty($design['views'])) {
             return [];
         }

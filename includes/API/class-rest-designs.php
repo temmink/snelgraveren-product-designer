@@ -10,9 +10,11 @@ use ProductDesigner\Security\CapabilityChecker;
 class RestDesigns {
 
     private DesignRepository $repo;
+    private TemplateRepository $template_repo;
 
     public function __construct() {
-        $this->repo = new DesignRepository();
+        $this->repo          = new DesignRepository();
+        $this->template_repo = new TemplateRepository();
     }
 
     /**
@@ -88,8 +90,7 @@ class RestDesigns {
             return new \WP_Error('missing_template', 'template_id is required.', ['status' => 400]);
         }
 
-        $template_repo = new TemplateRepository();
-        $template = $template_repo->get((int) $body['template_id']);
+        $template = $this->template_repo->get((int) $body['template_id']);
         if (!$template || ($template['status'] ?? '') !== 'published') {
             return new \WP_Error('invalid_template', 'Template not found or not published.', ['status' => 400]);
         }
@@ -120,8 +121,9 @@ class RestDesigns {
         $body = $request->get_json_params();
         if (!empty($body['status'])) {
             $this->repo->update_status((int) $design['id'], $body['status']);
+            $design['status'] = $body['status'];
         }
-        return rest_ensure_response($this->sanitize_for_customer($this->repo->get_by_hash($request['hash'])));
+        return rest_ensure_response($this->sanitize_for_customer($design));
     }
 
     public function delete_design(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
@@ -150,6 +152,7 @@ class RestDesigns {
         }
 
         $this->repo->upsert_view((int) $design['id'], $view_id, $json, $thumb_url);
+        $this->repo->invalidate_cache($request['hash']);
         return new \WP_REST_Response($this->sanitize_for_customer($this->repo->get_by_hash($request['hash'])), 200);
     }
 
@@ -206,7 +209,9 @@ class RestDesigns {
         if (!$design) return new \WP_Error('not_found', 'Design not found.', ['status' => 404]);
 
         $body = $request->get_json_params();
-        $this->repo->update_status((int) $design['id'], $body['status'] ?? 'draft');
-        return rest_ensure_response($this->repo->get_by_hash($request['hash']));
+        $new_status = $body['status'] ?? 'draft';
+        $this->repo->update_status((int) $design['id'], $new_status);
+        $design['status'] = $new_status;
+        return rest_ensure_response($design);
     }
 }

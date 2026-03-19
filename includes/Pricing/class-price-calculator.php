@@ -161,6 +161,7 @@ class PriceCalculator {
         // Clear existing logs so the audit trail reflects the current design state
         $this->price_log->delete_for_design($design_id);
 
+        $entries = [];
         $element_index = 0;
         foreach ($views as $view) {
             $canvas  = $view['canvas_json'] ?? [];
@@ -180,14 +181,19 @@ class PriceCalculator {
                         default => 0.0,
                     };
                 } else {
-                    // For tier mode, individual element price isn't meaningful
                     $price = 0.0;
                 }
 
-                $element_id = sprintf('%s_%d', $type, $element_index);
-                $this->price_log->log($design_id, $type, $element_id, $price);
+                $entries[] = [
+                    'design_id'    => $design_id,
+                    'element_type' => $type,
+                    'element_id'   => sprintf('%s_%d', $type, $element_index),
+                    'price'        => $price,
+                ];
                 $element_index++;
             }
         }
+
+        $this->price_log->log_batch($entries);
     }
 }

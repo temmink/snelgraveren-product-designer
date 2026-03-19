@@ -8,6 +8,15 @@ use ProductDesigner\Database\ExportRepository;
 
 class RestExports {
 
+    private ?ExportManager $manager = null;
+
+    private function manager(): ExportManager {
+        if (!$this->manager) {
+            $this->manager = new ExportManager();
+        }
+        return $this->manager;
+    }
+
     public function register_routes(): void {
         // Trigger export for a design
         register_rest_route('pd/v1', '/exports/(?P<hash>[a-f0-9]{32})', [
@@ -58,8 +67,7 @@ class RestExports {
         $format   = $request->get_param('format') ?: 'pdf';
         $order_id = (int) ($request->get_param('order_id') ?: 0);
 
-        $manager = new ExportManager();
-        $result  = $manager->generate_export($hash, $format, $order_id);
+        $result = $this->manager()->generate_export($hash, $format, $order_id);
 
         if (isset($result['error'])) {
             return new \WP_REST_Response(['error' => $result['error']], 400);
@@ -75,8 +83,7 @@ class RestExports {
     public function download_export(\WP_REST_Request $request): \WP_REST_Response {
         $export_id = (int) $request->get_param('id');
 
-        $manager = new ExportManager();
-        $path    = $manager->get_download_path($export_id);
+        $path = $this->manager()->get_download_path($export_id);
 
         if (empty($path)) {
             return new \WP_REST_Response(['error' => 'Export not found or not ready'], 404);

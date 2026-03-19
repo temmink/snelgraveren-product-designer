@@ -25,6 +25,27 @@ class PriceRepository {
         return (int) $wpdb->insert_id;
     }
 
+    /**
+     * Batch insert multiple price log entries in a single query.
+     *
+     * @param array $entries Each entry: ['design_id' => int, 'element_type' => string, 'element_id' => string, 'price' => float]
+     */
+    public function log_batch(array $entries): void {
+        if (empty($entries)) {
+            return;
+        }
+        global $wpdb;
+        $allowed = ['text', 'image', 'svg'];
+        $values  = [];
+        $format  = [];
+        foreach ($entries as $entry) {
+            $type = in_array($entry['element_type'], $allowed, true) ? $entry['element_type'] : 'text';
+            $values[] = $wpdb->prepare('(%d, %s, %s, %f)', $entry['design_id'], $type, sanitize_text_field($entry['element_id']), $entry['price']);
+        }
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- each value is individually prepared above
+        $wpdb->query("INSERT INTO {$this->table} (design_id, element_type, element_id, price) VALUES " . implode(',', $values));
+    }
+
     public function get_for_design(int $design_id): array {
         global $wpdb;
         return $wpdb->get_results(

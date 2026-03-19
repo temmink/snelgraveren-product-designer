@@ -8,6 +8,9 @@ class DesignRepository {
     private string $table;
     private string $views_table;
 
+    /** @var array<string, ?array> Request-level cache keyed by design hash. */
+    private static array $hash_cache = [];
+
     public function __construct() {
         global $wpdb;
         $this->table       = $wpdb->prefix . 'pd_designs';
@@ -44,14 +47,29 @@ class DesignRepository {
     }
 
     public function get_by_hash(string $hash): ?array {
+        if (array_key_exists($hash, self::$hash_cache)) {
+            return self::$hash_cache[$hash];
+        }
+
         global $wpdb;
         $row = $wpdb->get_row(
             $wpdb->prepare("SELECT * FROM {$this->table} WHERE design_hash = %s", $hash),
             ARRAY_A
         );
-        if (!$row) return null;
+        if (!$row) {
+            self::$hash_cache[$hash] = null;
+            return null;
+        }
         $row['views'] = $this->get_views((int) $row['id']);
+        self::$hash_cache[$hash] = $row;
         return $row;
+    }
+
+    /**
+     * Invalidate the request-level cache for a given hash (call after mutations).
+     */
+    public function invalidate_cache(string $hash): void {
+        unset(self::$hash_cache[$hash]);
     }
 
     public function create(array $data): int {

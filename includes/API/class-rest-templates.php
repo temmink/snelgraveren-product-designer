@@ -162,10 +162,12 @@ class RestTemplates {
 
     public function list_views(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
         $template_id = (int) $request['template_id'];
-        if (!$this->repo->get($template_id)) {
+        $template = $this->repo->get($template_id);
+        if (!$template) {
             return new \WP_Error('not_found', 'Template not found.', ['status' => 404]);
         }
-        return rest_ensure_response($this->repo->get_views($template_id));
+        // Views are already loaded by get() — avoid redundant query
+        return rest_ensure_response($template['views'] ?? $this->repo->get_views($template_id));
     }
 
     public function create_view(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {

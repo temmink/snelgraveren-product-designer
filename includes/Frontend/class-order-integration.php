@@ -10,6 +10,15 @@ defined('ABSPATH') || exit;
  */
 class OrderIntegration {
 
+    private ?\ProductDesigner\Database\DesignRepository $design_repo = null;
+
+    private function design_repo(): \ProductDesigner\Database\DesignRepository {
+        if (!$this->design_repo) {
+            $this->design_repo = new \ProductDesigner\Database\DesignRepository();
+        }
+        return $this->design_repo;
+    }
+
     public function init(): void {
         // Save design hash to order item meta on checkout (classic + block draft creation)
         add_action('woocommerce_checkout_create_order_line_item', [$this, 'save_order_item_meta'], 10, 4);
@@ -29,8 +38,7 @@ class OrderIntegration {
      * Get the thumbnail URL for a design hash.
      */
     private function get_design_thumbnail_url(string $hash): string {
-        $repo   = new \ProductDesigner\Database\DesignRepository();
-        $design = $repo->get_by_hash($hash);
+        $design = $this->design_repo()->get_by_hash($hash);
         if (!$design || empty($design['views'])) {
             return '';
         }
@@ -173,8 +181,7 @@ class OrderIntegration {
         $nonce    = wp_create_nonce('wp_rest');
 
         // Check for existing exports
-        $design_repo = new \ProductDesigner\Database\DesignRepository();
-        $design = $design_repo->get_by_hash($hash);
+        $design = $this->design_repo()->get_by_hash($hash);
         $design_id = $design ? (int) $design['id'] : 0;
 
         $export_repo = new \ProductDesigner\Database\ExportRepository();
