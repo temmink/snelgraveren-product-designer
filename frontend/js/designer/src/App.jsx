@@ -1,10 +1,31 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { __ } from '@wordpress/i18n';
+import { Canvas as FabricCanvas } from 'fabric';
 import useDesignerStore from './store/useDesignerStore';
 import { loadTemplate, loadDesign, createDesign, saveDesignView } from './api/designerApi';
 import DesignerCanvas from './components/DesignerCanvas';
 import Sidebar from './components/Sidebar';
 import { loadGoogleFonts } from './utils/fonts';
+
+/**
+ * Render a thumbnail from canvas JSON using an offscreen Fabric canvas.
+ * Returns a data URL (PNG) or empty string on failure.
+ */
+async function renderOffscreenThumbnail(canvasJson, width, height) {
+  try {
+    const el = document.createElement('canvas');
+    el.width = width;
+    el.height = height;
+    const offscreen = new FabricCanvas(el, { width, height });
+    await offscreen.loadFromJSON(canvasJson);
+    offscreen.renderAll();
+    const dataUrl = offscreen.toDataURL({ format: 'png', multiplier: 0.5 });
+    offscreen.dispose();
+    return dataUrl;
+  } catch (_) {
+    return '';
+  }
+}
 
 const config = window.pdDesigner || {};
 
@@ -22,9 +43,11 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [designerOpen, setDesignerOpen] = useState(config.display_mode !== 'modal' || !!config.auto_open);
   const [savedRecently, setSavedRecently] = useState(false);
+  const [designSaved, setDesignSaved] = useState(!!config.existing_design_hash);
 
   const modalRef = useRef(null);
   const returnFocusRef = useRef(null);
+  const savingForCartRef = useRef(false);
 
   // Load template on mount, then load existing design if hash is present
   useEffect(() => {
@@ -36,15 +59,15 @@ export default function App() {
 
     loadTemplate(config.template_id)
       .then(async (data) => {
-        setTemplate(data);
-
         // Load Google Fonts used in this template
         const allowedFonts = data.global_config?.allowed_fonts || [];
         if (allowedFonts.length > 0) {
           loadGoogleFonts(allowedFonts);
         }
 
-        // If returning from cart with an existing design, load it
+        // If returning from cart with an existing design, load it BEFORE
+        // setting the template so that canvas snapshots are available when
+        // DesignerCanvas initialises.
         if (config.existing_design_hash) {
           try {
             const design = await loadDesign(config.existing_design_hash);
@@ -54,7 +77,7 @@ export default function App() {
             const views = data.views || [];
             if (design.views) {
               for (const dv of design.views) {
-                const viewIndex = views.findIndex((v) => v.id === dv.view_id);
+                const viewIndex = views.findIndex((v) => String(v.id) === String(dv.view_id));
                 if (viewIndex !== -1 && dv.canvas_json) {
                   useDesignerStore.getState().snapshotView(viewIndex, dv.canvas_json);
                 }
@@ -67,6 +90,9 @@ export default function App() {
           }
         }
 
+        // Set template last — this triggers DesignerCanvas to initialise,
+        // and by now any saved design snapshots are already in the store.
+        setTemplate(data);
         setLoading(false);
       })
       .catch((err) => {
@@ -164,6 +190,108 @@ export default function App() {
     input.value = designHash;
   }, [designHash]);
 
+  // Determine if customization is required from template config
+  const customizationRequired = template?.global_config?.customization_required === true
+    || template?.global_config?.customization_required === 'true';
+
+  // Manage add-to-cart button state when customization is required
+  useEffect(() => {
+    if (!template) return;
+
+    const btn = document.querySelector('.single_add_to_cart_button');
+    if (!btn) return;
+
+    if (customizationRequired && !designSaved) {
+      btn.classList.add('pd-design-required');
+      btn.setAttribute('data-pd-original-text', btn.textContent);
+      // Don't disable — just add a class and intercept via the submit handler
+    } else {
+      btn.classList.remove('pd-design-required');
+    }
+
+    return () => {
+      btn.classList.remove('pd-design-required');
+    };
+  }, [template, customizationRequired, designSaved]);
+
+  // Intercept cart form submit: auto-save design before adding to cart
+  useEffect(() => {
+    const form = document.querySelector('form.cart');
+    if (!form) return;
+
+    const handleSubmit = async (e) => {
+      const store = useDesignerStore.getState();
+
+      // If customization is required but no design was saved, block submission
+      if (customizationRequired && !store.designHash && Object.keys(store.canvasSnapshots).length === 0) {
+        e.preventDefault();
+        setError(__('Please customize your product before adding to cart.', 'product-designer'));
+        return;
+      }
+
+      // If there are unsaved changes, auto-save before submitting
+      if (store.isDirty && Object.keys(store.canvasSnapshots).length > 0) {
+        e.preventDefault();
+        savingForCartRef.current = true;
+
+        try {
+          let hash = store.designHash;
+
+          // Create design if first save
+          if (!hash) {
+            const design = await createDesign(config.template_id, config.product_id);
+            hash = design.design_hash;
+            setDesignHash(hash);
+          }
+
+          // Save each view that has a snapshot
+          const views = store.template?.views || [];
+          for (const [viewIndex, json] of Object.entries(store.canvasSnapshots)) {
+            const idx = parseInt(viewIndex, 10);
+            const view = views[idx];
+            if (view?.id) {
+              let thumbnail = '';
+              if (idx === store.currentViewIndex && store.fabricCanvasRef) {
+                try {
+                  thumbnail = store.fabricCanvasRef.toDataURL({ format: 'png', multiplier: 0.5 });
+                } catch (_) { /* ignore */ }
+              } else {
+                const w = view.canvas_width || 600;
+                const h = view.canvas_height || 600;
+                thumbnail = await renderOffscreenThumbnail(json, w, h);
+              }
+              await saveDesignView(hash, view.id, json, thumbnail);
+            }
+          }
+
+          // Sync hash to hidden input
+          let input = document.querySelector('input[name="pd_design_hash"]');
+          if (!input) {
+            input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'pd_design_hash';
+            form.appendChild(input);
+          }
+          input.value = hash;
+
+          setIsDirty(false);
+          setDesignSaved(true);
+
+          // Re-submit the form now that design is saved
+          savingForCartRef.current = false;
+          form.submit();
+        } catch (err) {
+          savingForCartRef.current = false;
+          setError(__('Failed to save design. Please try again.', 'product-designer'));
+        }
+        return;
+      }
+    };
+
+    form.addEventListener('submit', handleSubmit);
+    return () => form.removeEventListener('submit', handleSubmit);
+  }, [template, customizationRequired]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Save handler
   const handleSave = async () => {
     clearError();
@@ -182,16 +310,23 @@ export default function App() {
 
       // Save each view that has a snapshot
       const views = template?.views || [];
+      const activeViewIndex = useDesignerStore.getState().currentViewIndex;
       let savedDesign = null;
       for (const [viewIndex, json] of Object.entries(canvasSnapshots)) {
-        const view = views[parseInt(viewIndex, 10)];
+        const idx = parseInt(viewIndex, 10);
+        const view = views[idx];
         if (view?.id) {
-          // Generate thumbnail from current canvas (for the active view)
           let thumbnail = '';
-          if (fabricCanvasRef && parseInt(viewIndex, 10) === useDesignerStore.getState().currentViewIndex) {
+          if (idx === activeViewIndex && fabricCanvasRef) {
+            // Active view: capture directly from the live canvas
             try {
               thumbnail = fabricCanvasRef.toDataURL({ format: 'png', multiplier: 0.5 });
             } catch (_) { /* ignore */ }
+          } else {
+            // Non-active view: render offscreen to generate thumbnail
+            const w = view.canvas_width || 600;
+            const h = view.canvas_height || 600;
+            thumbnail = await renderOffscreenThumbnail(json, w, h);
           }
           savedDesign = await saveDesignView(hash, view.id, json, thumbnail);
         }
@@ -215,6 +350,7 @@ export default function App() {
 
       setIsSaving(false);
       setIsDirty(false);
+      setDesignSaved(true);
       setSavedRecently(true);
       setTimeout(() => setSavedRecently(false), 2000);
     } catch (err) {

@@ -95,9 +95,13 @@ class DesignRepository {
         $json_str = wp_json_encode($canvas_json);
 
         if ($existing) {
+            $data = ['canvas_json' => $json_str];
+            if (!empty($thumbnail)) {
+                $data['thumbnail'] = $thumbnail;
+            }
             return (bool) $wpdb->update(
                 $this->views_table,
-                ['canvas_json' => $json_str, 'thumbnail' => $thumbnail],
+                $data,
                 ['id' => (int) $existing]
             );
         }

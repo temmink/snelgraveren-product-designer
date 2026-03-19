@@ -6,6 +6,17 @@ import { uploadFile } from '../api/designerApi';
 
 const ALLOWED_FABRIC_TYPES = ['IText', 'Image', 'Rect', 'Path', 'Group'];
 
+// Infer element type from Fabric object type when data.elementType is missing
+// (e.g. designs saved before data serialisation was added).
+function inferElementType(obj) {
+  if (obj.data?.elementType) return obj.data.elementType;
+  const t = (obj.type || '').toLowerCase();
+  if (t === 'itext' || t === 'i-text') return 'text';
+  if (t === 'image') return 'image';
+  if (t === 'path' || t === 'group') return 'svg';
+  return 'unknown';
+}
+
 function filterFabricJson(json) {
   if (!json || !json.objects) return json;
   return {
@@ -217,10 +228,12 @@ export default function DesignerCanvas() {
               evented:     false,
               data:        { zoneIndex: index, isZoneOverlay: true },
             });
-            // Hide the overlay visually — it's only used for clipping
+            // Show a subtle boundary outline so customers can see the design area.
+            // Child paths get the visible stroke; group stroke is nulled (Fabric draws group stroke as a bounding rect).
             if (group.getObjects) {
-              group.getObjects().forEach((c) => c.set({ fill: 'transparent', stroke: 'transparent', strokeWidth: 0 }));
+              group.getObjects().forEach((c) => c.set({ fill: 'rgba(0, 0, 0, 0.03)', stroke: '#cccccc', strokeWidth: 1, strokeUniform: true }));
             }
+            group.set({ stroke: null, strokeWidth: 0 });
             canvas.add(group);
             canvas.sendObjectToBack(group);
             canvas.renderAll();
@@ -319,7 +332,7 @@ export default function DesignerCanvas() {
     });
 
     canvas.on('object:modified', () => {
-      if (!disposed) snapshotView(currentViewIndex, canvas.toJSON());
+      if (!disposed) snapshotView(currentViewIndex, canvas.toJSON(['data']));
     });
 
     // Enforce max_chars on in-canvas text editing
@@ -335,14 +348,14 @@ export default function DesignerCanvas() {
     });
 
     canvas.on('object:removed', () => {
-      if (!disposed) snapshotView(currentViewIndex, canvas.toJSON());
+      if (!disposed) snapshotView(currentViewIndex, canvas.toJSON(['data']));
     });
 
     canvas.on('selection:created', (e) => {
       const obj = e.selected?.[0];
       if (obj && !obj.data?.isZoneOverlay) {
         setSelectedObject({
-          type: obj.data?.elementType || 'unknown',
+          type: inferElementType(obj),
           fabricObj: obj,
         });
       }
@@ -352,7 +365,7 @@ export default function DesignerCanvas() {
       const obj = e.selected?.[0];
       if (obj && !obj.data?.isZoneOverlay) {
         setSelectedObject({
-          type: obj.data?.elementType || 'unknown',
+          type: inferElementType(obj),
           fabricObj: obj,
         });
       }
@@ -388,7 +401,7 @@ export default function DesignerCanvas() {
       // Only snapshot if canvas finished loading — prevents overwriting
       // good snapshots with incomplete state during fast view switching
       if (!disposed && canvasReady && fabricRef.current) {
-        snapshotView(currentViewIndex, fabricRef.current.toJSON());
+        snapshotView(currentViewIndex, fabricRef.current.toJSON(['data']));
       }
       disposed = true;
       document.removeEventListener('keydown', onKeyDown);
@@ -428,7 +441,7 @@ export default function DesignerCanvas() {
       if (zoneIdx >= 0) clampToZone(text);
 
       canvas.renderAll();
-      snapshotView(currentViewIndex, canvas.toJSON());
+      snapshotView(currentViewIndex, canvas.toJSON(['data']));
       setActiveTool('select');
     };
 
@@ -478,7 +491,7 @@ export default function DesignerCanvas() {
       if (zoneIdx >= 0) clampToZone(img);
 
       canvas.renderAll();
-      snapshotView(currentViewIndex, canvas.toJSON());
+      snapshotView(currentViewIndex, canvas.toJSON(['data']));
     } catch (err) {
       setError(err.message);
     }

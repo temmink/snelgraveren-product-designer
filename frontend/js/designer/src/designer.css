@@ -120,7 +120,7 @@
 
 .pd-sidebar__tab {
   flex: 1;
-  padding: 0.5rem;
+  padding: 0.5rem 0.25rem;
   background: none;
   border: none;
   cursor: pointer;
@@ -128,6 +128,12 @@
   font-weight: 500;
   color: #6b7280;
   border-bottom: 2px solid transparent;
+  text-transform: none;
+  letter-spacing: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .pd-sidebar__tab:hover:not(:disabled) {
@@ -174,6 +180,7 @@
   border: 1px solid #d1d5db;
   border-radius: 4px;
   background: #fff;
+  color: #1f2937;
   cursor: pointer;
   font-size: 13px;
   text-align: left;
@@ -265,6 +272,7 @@
   border: 1px solid #d1d5db;
   border-radius: 3px;
   background: #fff;
+  color: #1f2937;
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
@@ -304,6 +312,7 @@
   border: 1px solid #d1d5db;
   border-radius: 4px;
   background: #fff;
+  color: #1f2937;
   cursor: pointer;
   font-size: 13px;
   text-align: left;
@@ -380,4 +389,12 @@
   border-radius: 4px;
   font-size: 13px;
   cursor: pointer;
+}
+
+/* ── Cart integration: design-required state ────────────────────────────── */
+
+.single_add_to_cart_button.pd-design-required {
+  position: relative;
+  opacity: 0.6;
+  cursor: not-allowed;
 }

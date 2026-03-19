@@ -70,7 +70,7 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
   const update = useCallback((props) => {
     fabricObj.set(props);
     fabricObj.canvas?.renderAll();
-    snapshotView(currentViewIndex, fabricObj.canvas?.toJSON());
+    snapshotView(currentViewIndex, fabricObj.canvas?.toJSON(['data']));
   }, [fabricObj, snapshotView, currentViewIndex]);
 
   // Sync state when selected object changes
@@ -210,12 +210,12 @@ function ImageProperties({ fabricObj, type, perms, globalConfig, snapshotView, c
       }
       fabricObj.applyFilters();
       fabricObj.canvas?.renderAll();
-      snapshotView(currentViewIndex, fabricObj.canvas?.toJSON());
+      snapshotView(currentViewIndex, fabricObj.canvas?.toJSON(['data']));
     } catch {
       // Fallback: just set fill (works for some SVG types)
       fabricObj.set({ fill: color });
       fabricObj.canvas?.renderAll();
-      snapshotView(currentViewIndex, fabricObj.canvas?.toJSON());
+      snapshotView(currentViewIndex, fabricObj.canvas?.toJSON(['data']));
     }
   }, [fabricObj, snapshotView, currentViewIndex]);
 
