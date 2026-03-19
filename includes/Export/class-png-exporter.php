@@ -32,7 +32,14 @@ class PngExporter {
 
             // Create canvas with background color
             $bg = $canvas_json['background'] ?? '#ffffff';
-            $image = $manager->create($render_width, $render_height)->fill($bg);
+            $fill_color = (!empty($bg) && $bg !== 'none') ? $bg : '#ffffff';
+            $image = $manager->create($render_width, $render_height)->fill($fill_color);
+
+            // Render background image (product photo)
+            $bg_image = $canvas_json['backgroundImage'] ?? null;
+            if ($bg_image && !empty($bg_image['src'])) {
+                $this->render_image($image, $bg_image, $scale);
+            }
 
             // Render objects
             $objects = $canvas_json['objects'] ?? [];
@@ -50,10 +57,6 @@ class PngExporter {
 
     private function render_object($image, array $obj, float $scale): void {
         $type = $obj['type'] ?? '';
-
-        if (!empty($obj['isZoneBoundary'])) {
-            return;
-        }
 
         match (true) {
             in_array($type, ['i-text', 'IText', 'Textbox', 'textbox', 'Text'], true) => $this->render_text($image, $obj, $scale),
@@ -119,9 +122,6 @@ class PngExporter {
     }
 
     private function render_rect($image, array $obj, float $scale): void {
-        if (!empty($obj['isZoneBoundary'])) {
-            return;
-        }
 
         $left   = (float) ($obj['left'] ?? 0) * $scale;
         $top    = (float) ($obj['top'] ?? 0) * $scale;

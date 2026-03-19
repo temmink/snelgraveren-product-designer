@@ -45,11 +45,19 @@ class PdfExporter {
                 // Set page size to match canvas dimensions (in points)
                 $pdf->AddPage('', [$width, $height]);
 
-                // Render background
+                // Render background color
                 $bg = $canvas_json['background'] ?? '#ffffff';
-                $rgb = $this->hex_to_rgb($bg);
-                $pdf->SetFillColor($rgb[0], $rgb[1], $rgb[2]);
-                $pdf->Rect(0, 0, $width, $height, 'F');
+                if (!empty($bg) && $bg !== 'none') {
+                    $rgb = $this->hex_to_rgb($bg);
+                    $pdf->SetFillColor($rgb[0], $rgb[1], $rgb[2]);
+                    $pdf->Rect(0, 0, $width, $height, 'F');
+                }
+
+                // Render background image (product photo)
+                $bg_image = $canvas_json['backgroundImage'] ?? null;
+                if ($bg_image && !empty($bg_image['src'])) {
+                    $this->render_image($pdf, $bg_image);
+                }
 
                 // Render each object
                 $objects = $canvas_json['objects'] ?? [];
@@ -76,10 +84,6 @@ class PdfExporter {
 
     private function render_object(\TCPDF $pdf, array $obj): void {
         $type = $obj['type'] ?? '';
-
-        if (!empty($obj['isZoneBoundary'])) {
-            return;
-        }
 
         match (true) {
             in_array($type, ['i-text', 'IText', 'Textbox', 'textbox', 'Text'], true) => $this->render_text($pdf, $obj),
@@ -140,9 +144,6 @@ class PdfExporter {
     }
 
     private function render_rect(\TCPDF $pdf, array $obj): void {
-        if (!empty($obj['isZoneBoundary'])) {
-            return;
-        }
 
         $left   = (float) ($obj['left'] ?? 0);
         $top    = (float) ($obj['top'] ?? 0);

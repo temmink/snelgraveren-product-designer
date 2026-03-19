@@ -16,7 +16,16 @@ class SvgExporter {
         $svg .= '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"';
         $svg .= ' width="' . $width . '" height="' . $height . '"';
         $svg .= ' viewBox="0 0 ' . $width . ' ' . $height . '">';
-        $svg .= '<rect width="' . $width . '" height="' . $height . '" fill="' . esc_attr($bg) . '"/>';
+        // Background: solid color or 'none'
+        if (!empty($bg) && $bg !== 'none') {
+            $svg .= '<rect width="' . $width . '" height="' . $height . '" fill="' . esc_attr($bg) . '"/>';
+        }
+
+        // Background image (product photo)
+        $bg_image = $canvas_json['backgroundImage'] ?? null;
+        if ($bg_image && !empty($bg_image['src'])) {
+            $svg .= $this->render_image($bg_image);
+        }
 
         foreach ($objects as $obj) {
             $svg .= $this->render_object($obj);
@@ -41,11 +50,6 @@ class SvgExporter {
 
     private function render_object(array $obj): string {
         $type = $obj['type'] ?? '';
-
-        // Skip zone boundaries
-        if (!empty($obj['isZoneBoundary'])) {
-            return '';
-        }
 
         return match (true) {
             in_array($type, ['i-text', 'IText', 'Textbox', 'textbox', 'Text'], true) => $this->render_text($obj),
