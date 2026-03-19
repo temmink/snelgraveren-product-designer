@@ -21,10 +21,6 @@ class CapabilityChecker {
         return current_user_can( 'manage_woocommerce' );
     }
 
-    public static function current_user_id(): int {
-        return get_current_user_id();
-    }
-
     /**
      * Get or create the guest session ID from a cookie.
      *

@@ -4,6 +4,19 @@ import { Canvas as FabricCanvas, Rect, FabricImage, FabricText, loadSVGFromStrin
 import useTemplateStore from '../store/useTemplateStore';
 import { parseSvgToFabric } from '../utils/svgPathUtils';
 
+const ALLOWED_FABRIC_TYPES = new Set([
+  'IText', 'Image', 'Rect', 'Path', 'Group', 'FabricText',
+  'i-text', 'image', 'rect', 'path', 'group',
+]);
+
+function filterFabricJson(json) {
+  if (!json || !json.objects) return json;
+  return {
+    ...json,
+    objects: json.objects.filter((obj) => ALLOWED_FABRIC_TYPES.has(obj.type)),
+  };
+}
+
 export default function Canvas() {
   const canvasEl    = useRef(null);
   const fabricRef   = useRef(null);
@@ -183,7 +196,7 @@ export default function Canvas() {
     let disposed = false;
     const onModified = () => {
       if (disposed) return;
-      pushHistory(viewKey, canvas.toJSON());
+      pushHistory(viewKey, canvas.toJSON(['data']));
     };
     canvas.on('object:modified', onModified);
 
@@ -218,17 +231,17 @@ export default function Canvas() {
           img.scaleToWidth(width);
           canvas.backgroundImage = img;
           canvas.renderAll();
-          pushHistory(viewKey, canvas.toJSON());
+          pushHistory(viewKey, canvas.toJSON(['data']));
         })
         .catch((err) => {
           if (disposed) return;
           console.warn('Background load failed:', err);
           // Background load failure is non-fatal; seed history without background.
-          pushHistory(viewKey, canvas.toJSON());
+          pushHistory(viewKey, canvas.toJSON(['data']));
         });
     } else {
       canvas.renderAll();
-      pushHistory(viewKey, canvas.toJSON());
+      pushHistory(viewKey, canvas.toJSON(['data']));
     }
 
     // Intentionally omit currentView/pushHistory from deps: we only want to
@@ -699,7 +712,7 @@ export default function Canvas() {
       if (obj.data?.isZone || obj.data?.isZoneOverlay) return;
       obj.clipPath = undefined;
     });
-    pushHistory(viewKey, canvas.toJSON());
+    pushHistory(viewKey, canvas.toJSON(['data']));
     canvas.renderAll();
   }, [setFreeMove, pushHistory, viewKey]);
 
@@ -714,7 +727,7 @@ export default function Canvas() {
         clampToZone(obj);
       }
     });
-    pushHistory(viewKey, canvas.toJSON());
+    pushHistory(viewKey, canvas.toJSON(['data']));
     canvas.renderAll();
   }, [setFreeMove, applyZoneClip, clampToZone, pushHistory, viewKey]);
 
@@ -734,7 +747,7 @@ export default function Canvas() {
 
       const snapshot = isUndo ? undo(viewKey) : redo(viewKey);
       if (snapshot && fabricRef.current) {
-        fabricRef.current.loadFromJSON(snapshot)
+        fabricRef.current.loadFromJSON(filterFabricJson(snapshot))
           .then(() => fabricRef.current?.renderAll());
       }
     };
@@ -768,7 +781,7 @@ export default function Canvas() {
             img.scaleToWidth(canvas.width);
             canvas.backgroundImage = img;
             canvas.renderAll();
-            pushHistory(viewKey, canvas.toJSON());
+            pushHistory(viewKey, canvas.toJSON(['data']));
           });
       }
     });
@@ -782,7 +795,7 @@ export default function Canvas() {
     if (canvas) {
       canvas.backgroundImage = undefined;
       canvas.renderAll();
-      pushHistory(viewKey, canvas.toJSON());
+      pushHistory(viewKey, canvas.toJSON(['data']));
     }
   }, [currentViewIndex, updateView, pushHistory]);
 
@@ -791,14 +804,14 @@ export default function Canvas() {
   const applyUndo = () => {
     const snap = undo(viewKey);
     if (snap && fabricRef.current) {
-      fabricRef.current.loadFromJSON(snap).then(() => fabricRef.current?.renderAll());
+      fabricRef.current.loadFromJSON(filterFabricJson(snap)).then(() => fabricRef.current?.renderAll());
     }
   };
 
   const applyRedo = () => {
     const snap = redo(viewKey);
     if (snap && fabricRef.current) {
-      fabricRef.current.loadFromJSON(snap).then(() => fabricRef.current?.renderAll());
+      fabricRef.current.loadFromJSON(filterFabricJson(snap)).then(() => fabricRef.current?.renderAll());
     }
   };
 

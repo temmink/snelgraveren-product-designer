@@ -297,6 +297,7 @@ export default function App() {
 
   // Save handler
   const handleSave = async () => {
+    if (useDesignerStore.getState().isSaving) return;
     clearError();
     setIsSaving(true);
     const saveStart = Date.now();

@@ -35,6 +35,13 @@ export default function DesignerCanvas() {
   const fabricRef = useRef(null);
   const fileInputRef = useRef(null);
 
+  // Stable refs for callbacks used in canvas event handlers to avoid stale closures.
+  const clampToZoneRef     = useRef(null);
+  const clampScaleRef      = useRef(null);
+  const snapToGridRef      = useRef(null);
+  const snapshotViewRef    = useRef(null);
+  const currentViewIndexRef = useRef(0);
+
   const {
     template, currentViewIndex, activeTool,
     canvasSnapshots, snapshotView, setActiveTool,
@@ -187,6 +194,13 @@ export default function DesignerCanvas() {
     obj.setCoords();
   }, [permissions]);
 
+  // ── Sync refs so canvas event handlers always use the latest callbacks ───
+  clampToZoneRef.current      = clampToZone;
+  clampScaleRef.current       = clampScaleToZone;
+  snapToGridRef.current       = snapToGrid;
+  snapshotViewRef.current     = snapshotView;
+  currentViewIndexRef.current = currentViewIndex;
+
   // ── Canvas init ───────────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -328,23 +342,24 @@ export default function DesignerCanvas() {
     // ── Event handlers ────────────────────────────────────────────────────
 
     canvas.on('object:moving', (e) => {
-      snapToGrid(e.target);
-      clampToZone(e.target);
+      snapToGridRef.current?.(e.target);
+      clampToZoneRef.current?.(e.target);
     });
 
     canvas.on('object:scaling', (e) => {
-      clampScaleToZone(e.target);
+      clampScaleRef.current?.(e.target);
     });
 
     canvas.on('object:modified', () => {
-      if (!disposed) snapshotView(currentViewIndex, canvas.toJSON(['data']));
+      if (!disposed) snapshotViewRef.current?.(currentViewIndexRef.current, canvas.toJSON(['data']));
     });
 
     // Enforce max_chars on in-canvas text editing
     canvas.on('text:changed', (e) => {
       const obj = e.target;
       if (!obj?.data?.elementType) return;
-      const textPerms = permissions[obj.data.elementType] || {};
+      const perms = useDesignerStore.getState().template?.global_config?.permissions || {};
+      const textPerms = perms[obj.data.elementType] || {};
       const maxChars = textPerms.max_chars;
       if (maxChars && maxChars > 0 && obj.text && obj.text.length > maxChars) {
         obj.set({ text: obj.text.slice(0, maxChars) });
@@ -353,7 +368,7 @@ export default function DesignerCanvas() {
     });
 
     canvas.on('object:removed', () => {
-      if (!disposed) snapshotView(currentViewIndex, canvas.toJSON(['data']));
+      if (!disposed) snapshotViewRef.current?.(currentViewIndexRef.current, canvas.toJSON(['data']));
     });
 
     canvas.on('selection:created', (e) => {

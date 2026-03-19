@@ -123,11 +123,12 @@ class ExportManager {
         }
 
         $path = $export['file_path'];
-        if (empty($path) || !file_exists($path)) {
+        if (empty($path)) {
             return '';
         }
 
-        // Ensure path is within the expected export directory to prevent path traversal
+        // Ensure path is within the expected export directory to prevent path traversal.
+        // realpath() returns false for non-existent paths, so no separate file_exists() needed.
         $upload_dir  = wp_upload_dir();
         $exports_dir = realpath($upload_dir['basedir'] . '/pd-exports');
         $real_path   = realpath($path);

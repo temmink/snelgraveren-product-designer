@@ -20,7 +20,7 @@ class RestDesigns {
      * CLAUDE.md rule 4: "Never expose sequential IDs — designs use CSPRNG hashes".
      */
     private function sanitize_for_customer(array $design): array {
-        unset($design['id'], $design['template_id'], $design['customer_id']);
+        unset($design['id'], $design['template_id'], $design['customer_id'], $design['session_id']);
         if (!empty($design['views'])) {
             $design['views'] = array_map(function ($view) {
                 unset($view['id'], $view['design_id']);
