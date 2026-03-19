@@ -19,9 +19,9 @@ class RestDesigns {
      * Verify the WP REST nonce is present and valid.
      * This prevents CSRF on write operations.
      */
-    public function verify_nonce(): bool {
+    public function verify_nonce(\WP_REST_Request $request): bool {
         return (bool) wp_verify_nonce(
-            sanitize_text_field($_SERVER['HTTP_X_WP_NONCE'] ?? ''),
+            $request->get_header('x-wp-nonce') ?? '',
             'wp_rest'
         );
     }

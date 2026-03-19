@@ -39,28 +39,30 @@ class CartSurcharge {
         }
         $running = true;
 
-        foreach ($cart->get_cart() as $cart_item_key => $cart_item) {
-            if (empty($cart_item['pd_design_hash'])) {
-                continue;
-            }
+        try {
+            foreach ($cart->get_cart() as $cart_item_key => $cart_item) {
+                if (empty($cart_item['pd_design_hash'])) {
+                    continue;
+                }
 
-            $surcharge = $this->calculator()->calculate($cart_item['pd_design_hash']);
-            if ($surcharge <= 0) {
-                continue;
-            }
+                $surcharge = $this->calculator()->calculate($cart_item['pd_design_hash']);
+                if ($surcharge <= 0) {
+                    continue;
+                }
 
-            // Store surcharge in cart item for display
-            $cart->cart_contents[$cart_item_key]['pd_surcharge'] = $surcharge;
+                // Store surcharge in cart item for display
+                $cart->cart_contents[$cart_item_key]['pd_surcharge'] = $surcharge;
 
-            // Add surcharge to the product price
-            $product = $cart_item['data'];
-            if ($product instanceof \WC_Product) {
-                $base_price = (float) $product->get_price();
-                $product->set_price($base_price + $surcharge);
+                // Add surcharge to the product price
+                $product = $cart_item['data'];
+                if ($product instanceof \WC_Product) {
+                    $base_price = (float) $product->get_price();
+                    $product->set_price($base_price + $surcharge);
+                }
             }
+        } finally {
+            $running = false;
         }
-
-        $running = false;
     }
 
     /**

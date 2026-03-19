@@ -63,10 +63,17 @@ class OrderIntegration {
             return;
         }
 
-        // Track which cart item hashes have been assigned to prevent
-        // the same hash being applied to multiple order items when
-        // the same product is in the cart more than once.
+        // Pre-populate with hashes already written by save_order_item_meta
+        // to prevent double-assignment when 3+ items share the same product.
         $assigned_hashes = [];
+        foreach ($order->get_items() as $item) {
+            if ($item instanceof \WC_Order_Item_Product) {
+                $existing = $item->get_meta('_pd_design_hash');
+                if (!empty($existing)) {
+                    $assigned_hashes[] = $existing;
+                }
+            }
+        }
 
         foreach ($order->get_items() as $item) {
             if (!($item instanceof \WC_Order_Item_Product)) {
