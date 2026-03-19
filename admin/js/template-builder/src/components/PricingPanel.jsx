@@ -71,7 +71,7 @@ export default function PricingPanel() {
               <button
                 className="pd-pricing__tier-remove"
                 onClick={() => update('tiers', tiers.filter((_, j) => j !== i))}
-                aria-label="Remove tier"
+                aria-label={__('Remove tier', 'product-designer')}
               >×</button>
             </div>
           ))}
