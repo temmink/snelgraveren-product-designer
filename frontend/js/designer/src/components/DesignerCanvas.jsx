@@ -1,9 +1,9 @@
 import React, { useRef, useEffect, useCallback } from 'react';
-import { Canvas as FabricCanvas, Rect, IText, FabricImage, filters, Path } from 'fabric';
+import { Canvas as FabricCanvas, Rect, IText, FabricImage, filters, Path, loadSVGFromString, util } from 'fabric';
 import useDesignerStore from '../store/useDesignerStore';
 import { uploadFile } from '../api/designerApi';
 
-const ALLOWED_FABRIC_TYPES = ['i-text', 'image', 'rect'];
+const ALLOWED_FABRIC_TYPES = ['IText', 'Image', 'Rect', 'Path', 'Group'];
 
 function filterFabricJson(json) {
   if (!json || !json.objects) return json;
@@ -21,7 +21,7 @@ export default function DesignerCanvas() {
   const {
     template, currentViewIndex, activeTool,
     canvasSnapshots, snapshotView, setActiveTool,
-    setSelectedObject, setError, setTriggerFileUpload,
+    setSelectedObject, setError, setTriggerFileUpload, setFabricCanvasRef,
   } = useDesignerStore();
 
   const currentView = template?.views?.[currentViewIndex];
@@ -58,15 +58,23 @@ export default function DesignerCanvas() {
     if (zoneIdx < 0 || !zones[zoneIdx] || zones[zoneIdx].behavior !== 'restrict') return;
     const zone = zones[zoneIdx];
 
-    if (zone.boundary_type === 'svg' && zone.svg_path_data) {
-      obj.clipPath = new Path(zone.svg_path_data, {
-        left:   zone.x,
-        top:    zone.y,
-        scaleX: zone.svg_scale || 1,
-        scaleY: zone.svg_scale || 1,
-        angle:  zone.svg_rotation || 0,
-        absolutePositioned: true,
-      });
+    if (zone.boundary_type === 'svg') {
+      // Clone the zone boundary group from the canvas for use as clip path
+      const canvas = fabricRef.current;
+      if (!canvas) return;
+      const zoneObj = canvas.getObjects().find(
+        (o) => o.data?.isZoneOverlay && o.data?.zoneIndex === zoneIdx
+      );
+      if (zoneObj) {
+        zoneObj.clone().then((cloned) => {
+          cloned.set({ absolutePositioned: true });
+          if (cloned.getObjects) {
+            cloned.getObjects().forEach((c) => c.set({ fill: '#000000' }));
+          }
+          obj.clipPath = cloned;
+          canvas.renderAll();
+        });
+      }
     } else {
       obj.clipPath = new Rect({
         left:   zone.x,
@@ -178,43 +186,75 @@ export default function DesignerCanvas() {
       enableRetinaScaling: false,
     });
     fabricRef.current = canvas;
+    setFabricCanvasRef(canvas);
 
     let disposed = false;
+    let canvasReady = false;
 
     // Render zone shapes
+    const svgZonePromises = [];
     zones.forEach((zone, index) => {
       const isRestrict = zone.behavior === 'restrict';
-      let shape;
-      if (zone.boundary_type === 'svg' && zone.svg_path_data) {
-        shape = new Path(zone.svg_path_data, {
-          left:        zone.x,
-          top:         zone.y,
-          scaleX:      zone.svg_scale || 1,
-          scaleY:      zone.svg_scale || 1,
-          angle:       zone.svg_rotation || 0,
-          fill:        'rgba(59, 130, 246, 0.08)',
-          stroke:      '#3b82f6',
-          strokeWidth: 2,
-          selectable:  false,
-          evented:     false,
-          data:        { zoneIndex: index, isZoneOverlay: true },
-        });
+
+      if (zone.boundary_type === 'svg' && zone.svg_url) {
+        // Load SVG from URL asynchronously
+        const promise = fetch(zone.svg_url)
+          .then((r) => r.text())
+          .then((svgString) => loadSVGFromString(svgString))
+          .then(({ objects, options }) => {
+            if (disposed) return;
+            const filtered = objects.filter(Boolean);
+            if (filtered.length === 0) return;
+            const group = util.groupSVGElements(filtered, options);
+            group.set({
+              left:        zone.x,
+              top:         zone.y,
+              scaleX:      zone.svg_scale || 1,
+              scaleY:      zone.svg_scale || 1,
+              angle:       zone.svg_rotation || 0,
+              selectable:  false,
+              evented:     false,
+              data:        { zoneIndex: index, isZoneOverlay: true },
+            });
+            // Hide the overlay visually — it's only used for clipping
+            if (group.getObjects) {
+              group.getObjects().forEach((c) => c.set({ fill: 'transparent', stroke: 'transparent', strokeWidth: 0 }));
+            }
+            canvas.add(group);
+            canvas.sendObjectToBack(group);
+            canvas.renderAll();
+
+            // Apply clip paths to any template layers already on canvas for this zone
+            canvas.getObjects().forEach((obj) => {
+              if (obj.data?.zoneIndex === index && !obj.data?.isZoneOverlay && zone.behavior === 'restrict') {
+                group.clone().then((cloned) => {
+                  cloned.set({ absolutePositioned: true });
+                  if (cloned.getObjects) {
+                    cloned.getObjects().forEach((c) => c.set({ fill: '#000000' }));
+                  }
+                  obj.clipPath = cloned;
+                  canvas.renderAll();
+                });
+              }
+            });
+          })
+          .catch(() => {});
+        svgZonePromises.push(promise);
       } else {
-        shape = new Rect({
+        const shape = new Rect({
           left:            zone.x,
           top:             zone.y,
           width:           zone.width,
           height:          zone.height,
-          fill:            isRestrict ? 'rgba(59,130,246,0.08)' : 'transparent',
-          stroke:          isRestrict ? '#3b82f6' : '#9ca3af',
-          strokeWidth:     2,
-          strokeDashArray: isRestrict ? null : [6, 4],
+          fill:            'transparent',
+          stroke:          'transparent',
+          strokeWidth:     0,
           selectable:      false,
           evented:         false,
           data:            { zoneIndex: index, isZoneOverlay: true },
         });
+        canvas.add(shape);
       }
-      canvas.add(shape);
     });
 
     // Load background image
@@ -251,12 +291,19 @@ export default function DesignerCanvas() {
     });
 
     // Restore snapshot if switching back to a previously edited view
-    const existing = canvasSnapshots[currentViewIndex];
+    // Read latest from store to avoid stale closure
+    const latestSnapshots = useDesignerStore.getState().canvasSnapshots;
+    const existing = latestSnapshots[currentViewIndex];
     if (existing) {
       const filtered = filterFabricJson(existing);
       canvas.loadFromJSON(filtered).then(() => {
-        if (!disposed) canvas.renderAll();
+        if (!disposed) {
+          canvas.renderAll();
+          canvasReady = true;
+        }
       });
+    } else {
+      canvasReady = true;
     }
 
     // ── Event handlers ────────────────────────────────────────────────────
@@ -337,8 +384,9 @@ export default function DesignerCanvas() {
     canvas.renderAll();
 
     return () => {
-      // Snapshot current canvas state before switching views
-      if (!disposed && fabricRef.current) {
+      // Only snapshot if canvas finished loading — prevents overwriting
+      // good snapshots with incomplete state during fast view switching
+      if (!disposed && canvasReady && fabricRef.current) {
         snapshotView(currentViewIndex, fabricRef.current.toJSON());
       }
       disposed = true;

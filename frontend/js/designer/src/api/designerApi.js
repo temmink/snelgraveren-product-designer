@@ -34,14 +34,14 @@ export async function createDesign(templateId, productId) {
   return res.json();
 }
 
-export async function saveDesignView(designHash, viewId, canvasJson) {
+export async function saveDesignView(designHash, viewId, canvasJson, thumbnail = '') {
   const res = await fetch(apiUrl(`/designs/${designHash}/views`), {
     method: 'POST',
     headers: headers(),
     body: JSON.stringify({
       view_id: viewId,
       canvas_json: canvasJson,
-      thumbnail: '',
+      thumbnail,
     }),
   });
   if (!res.ok) {

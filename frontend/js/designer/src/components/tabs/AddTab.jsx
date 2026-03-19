@@ -29,6 +29,7 @@ export default function AddTab() {
       <h3 className="pd-sidebar__heading">Add Element</h3>
       <div className="pd-add-tools">
         <button
+          type="button"
           className={`pd-add-tools__btn${activeTool === 'add-text' ? ' pd-add-tools__btn--active' : ''}`}
           disabled={!isTypeAllowed('text')}
           onClick={() => handleToolClick('add-text')}
@@ -37,6 +38,7 @@ export default function AddTab() {
           Text
         </button>
         <button
+          type="button"
           className={`pd-add-tools__btn${activeTool === 'add-image' ? ' pd-add-tools__btn--active' : ''}`}
           disabled={!isTypeAllowed('image')}
           onClick={() => handleToolClick('add-image')}
@@ -45,6 +47,7 @@ export default function AddTab() {
           Image
         </button>
         <button
+          type="button"
           className={`pd-add-tools__btn${activeTool === 'add-svg' ? ' pd-add-tools__btn--active' : ''}`}
           disabled={!isTypeAllowed('svg')}
           onClick={() => handleToolClick('add-svg')}

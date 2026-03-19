@@ -14,6 +14,7 @@ export default function App() {
     isDirty, setIsDirty,
     canvasSnapshots,
     error, setError, clearError,
+    fabricCanvasRef,
   } = useDesignerStore();
 
   const [loading, setLoading] = useState(true);
@@ -84,7 +85,14 @@ export default function App() {
       for (const [viewIndex, json] of Object.entries(canvasSnapshots)) {
         const view = views[parseInt(viewIndex, 10)];
         if (view?.id) {
-          await saveDesignView(hash, view.id, json);
+          // Generate thumbnail from current canvas (for the active view)
+          let thumbnail = '';
+          if (fabricCanvasRef && parseInt(viewIndex, 10) === useDesignerStore.getState().currentViewIndex) {
+            try {
+              thumbnail = fabricCanvasRef.toDataURL({ format: 'png', multiplier: 0.5 });
+            } catch (_) { /* ignore */ }
+          }
+          await saveDesignView(hash, view.id, json, thumbnail);
         }
       }
 
@@ -112,18 +120,23 @@ export default function App() {
   ].filter(Boolean).join(' ');
 
   return (
-    <div className={wrapperClass}>
+    <div
+      className={wrapperClass}
+      onClick={isModal ? (e) => { e.stopPropagation(); setDesignerOpen(false); } : undefined}
+      onMouseDown={isModal ? (e) => e.stopPropagation() : undefined}
+    >
       {isModal && (
         <button
+          type="button"
           className="pd-designer__close"
-          onClick={() => setDesignerOpen(false)}
+          onClick={(e) => { e.stopPropagation(); setDesignerOpen(false); }}
           aria-label="Close designer"
         >
           &times;
         </button>
       )}
 
-      <div className="pd-designer__layout">
+      <div className="pd-designer__layout" onClick={isModal ? (e) => e.stopPropagation() : undefined}>
         <DesignerCanvas />
         <div className="pd-designer__sidebar-wrap">
           <Sidebar />
@@ -133,6 +146,7 @@ export default function App() {
             </div>
           )}
           <button
+            type="button"
             className="pd-designer__save-btn"
             onClick={handleSave}
             disabled={isSaving || !isDirty}

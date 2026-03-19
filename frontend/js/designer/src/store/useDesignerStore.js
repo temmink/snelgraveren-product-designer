@@ -26,6 +26,9 @@ const useDesignerStore = create((set) => ({
   // File upload trigger (set by DesignerCanvas, called by AddTab)
   triggerFileUpload: null,
 
+  // Canvas ref (set by DesignerCanvas, used by App for thumbnails)
+  fabricCanvasRef: null,
+
   // Actions
   loadTemplate: (data) => set({ template: data, currentViewIndex: 0 }),
 
@@ -52,6 +55,8 @@ const useDesignerStore = create((set) => ({
     })),
 
   setTriggerFileUpload: (fn) => set({ triggerFileUpload: fn }),
+
+  setFabricCanvasRef: (ref) => set({ fabricCanvasRef: ref }),
 }));
 
 export default useDesignerStore;

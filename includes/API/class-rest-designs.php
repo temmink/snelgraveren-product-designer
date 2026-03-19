@@ -115,7 +115,7 @@ class RestDesigns {
         $body    = $request->get_json_params();
         $view_id = (int) ($body['view_id'] ?? 0);
         $json    = $body['canvas_json'] ?? [];
-        $thumb   = sanitize_text_field($body['thumbnail'] ?? '');
+        $thumb   = $body['thumbnail'] ?? '';
 
         $this->repo->upsert_view((int) $design['id'], $view_id, $json, $thumb);
         return new \WP_REST_Response($this->repo->get_by_hash($request['hash']), 200);

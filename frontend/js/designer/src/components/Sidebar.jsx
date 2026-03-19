@@ -21,12 +21,14 @@ export default function Sidebar() {
     <div className="pd-sidebar">
       <div className="pd-sidebar__tabs">
         <button
+          type="button"
           className={`pd-sidebar__tab${activeTab === 'add' ? ' pd-sidebar__tab--active' : ''}`}
           onClick={() => setActiveTab('add')}
         >
           Add
         </button>
         <button
+          type="button"
           className={`pd-sidebar__tab${activeTab === 'element' ? ' pd-sidebar__tab--active' : ''}`}
           onClick={() => setActiveTab('element')}
           disabled={!selectedObject}
@@ -34,6 +36,7 @@ export default function Sidebar() {
           Element
         </button>
         <button
+          type="button"
           className={`pd-sidebar__tab${activeTab === 'views' ? ' pd-sidebar__tab--active' : ''}`}
           onClick={() => setActiveTab('views')}
         >

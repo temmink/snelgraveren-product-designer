@@ -41,6 +41,7 @@ export default function ElementTab() {
 
       {perms.delete !== false && (
         <button
+          type="button"
           className="pd-element__delete-btn"
           onClick={() => {
             const canvas = fabricObj.canvas;
@@ -137,6 +138,7 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
             <div className="pd-element__color-swatches">
               {allowedColors.map((c) => (
                 <button
+                  type="button"
                   key={c}
                   className={`pd-element__swatch${fill === c ? ' pd-element__swatch--active' : ''}`}
                   style={{ backgroundColor: c }}
@@ -163,6 +165,7 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
       {/* Bold / Italic */}
       <div className="pd-element__toggles">
         <button
+          type="button"
           className={`pd-element__toggle${bold ? ' pd-element__toggle--active' : ''}`}
           onClick={() => {
             const next = !bold;
@@ -173,6 +176,7 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
           B
         </button>
         <button
+          type="button"
           className={`pd-element__toggle${italic ? ' pd-element__toggle--active' : ''}`}
           onClick={() => {
             const next = !italic;
@@ -194,10 +198,24 @@ function ImageProperties({ fabricObj, type, perms, globalConfig, snapshotView, c
   const anyColor = globalConfig.any_color || false;
   const [fill, setFill] = useState('');
 
-  const update = useCallback((props) => {
-    fabricObj.set(props);
-    fabricObj.canvas?.renderAll();
-    snapshotView(currentViewIndex, fabricObj.canvas?.toJSON());
+  const applyRecolor = useCallback((color) => {
+    try {
+      // Dynamic import to avoid issues if filters aren't available
+      const { BlendColor } = require('fabric').filters;
+      if (color) {
+        fabricObj.filters = [new BlendColor({ color, mode: 'tint', alpha: 1 })];
+      } else {
+        fabricObj.filters = [];
+      }
+      fabricObj.applyFilters();
+      fabricObj.canvas?.renderAll();
+      snapshotView(currentViewIndex, fabricObj.canvas?.toJSON());
+    } catch {
+      // Fallback: just set fill (works for some SVG types)
+      fabricObj.set({ fill: color });
+      fabricObj.canvas?.renderAll();
+      snapshotView(currentViewIndex, fabricObj.canvas?.toJSON());
+    }
   }, [fabricObj, snapshotView, currentViewIndex]);
 
   return (
@@ -210,31 +228,32 @@ function ImageProperties({ fabricObj, type, perms, globalConfig, snapshotView, c
       {/* SVG recolor */}
       {type === 'svg' && perms.recolor !== false && (
         <label className="pd-element__field">
-          <span>Color</span>
-          {anyColor ? (
+          <span>Tint Color</span>
+          {anyColor || allowedColors.length === 0 ? (
             <input
               type="color"
-              value={fill}
+              value={fill || '#000000'}
               onChange={(e) => {
                 setFill(e.target.value);
-                update({ fill: e.target.value });
+                applyRecolor(e.target.value);
               }}
             />
-          ) : allowedColors.length > 0 ? (
+          ) : (
             <div className="pd-element__color-swatches">
               {allowedColors.map((c) => (
                 <button
+                  type="button"
                   key={c}
                   className={`pd-element__swatch${fill === c ? ' pd-element__swatch--active' : ''}`}
                   style={{ backgroundColor: c }}
                   onClick={() => {
                     setFill(c);
-                    update({ fill: c });
+                    applyRecolor(c);
                   }}
                 />
               ))}
             </div>
-          ) : null}
+          )}
         </label>
       )}
     </div>

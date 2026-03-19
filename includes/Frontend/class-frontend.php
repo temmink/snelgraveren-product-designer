@@ -9,13 +9,60 @@ class Frontend {
         add_action('wp_enqueue_scripts', [$this, 'enqueue_assets']);
         add_action('woocommerce_before_add_to_cart_button', [$this, 'render_designer']);
         add_filter('woocommerce_add_cart_item_data', [$this, 'add_cart_item_data'], 10, 2);
+        add_filter('woocommerce_cart_item_thumbnail', [$this, 'cart_item_thumbnail'], 10, 3);
+        add_filter('woocommerce_get_item_data', [$this, 'display_cart_item_data'], 10, 2);
     }
 
     /**
-     * Stub for Phase 4 — attach design_hash to cart item data.
+     * Attach design_hash to cart item data when adding to cart.
      */
     public function add_cart_item_data(array $cart_item_data, int $product_id): array {
+        // phpcs:disable WordPress.Security.NonceVerification
+        if (!empty($_POST['pd_design_hash'])) {
+            $hash = sanitize_text_field(wp_unslash($_POST['pd_design_hash']));
+            if (preg_match('/^[0-9a-f]{32}$/', $hash)) {
+                $cart_item_data['pd_design_hash'] = $hash;
+            }
+        }
+        // phpcs:enable
         return $cart_item_data;
+    }
+
+    /**
+     * Show design thumbnail in cart instead of default product image.
+     */
+    public function cart_item_thumbnail(string $thumbnail, array $cart_item, string $cart_item_key): string {
+        if (empty($cart_item['pd_design_hash'])) {
+            return $thumbnail;
+        }
+
+        $repo   = new \ProductDesigner\Database\DesignRepository();
+        $design = $repo->get_by_hash($cart_item['pd_design_hash']);
+        if (!$design || empty($design['views'])) {
+            return $thumbnail;
+        }
+
+        // Use the first view's thumbnail
+        $first_view = $design['views'][0];
+        $thumb_data = $first_view['thumbnail'] ?? '';
+        if (!empty($thumb_data)) {
+            return '<img src="' . esc_attr($thumb_data) . '" alt="Custom design" style="max-width:100px;max-height:100px;" />';
+        }
+
+        return $thumbnail;
+    }
+
+    /**
+     * Display "Customized" label in cart item data.
+     */
+    public function display_cart_item_data(array $item_data, array $cart_item): array {
+        if (!empty($cart_item['pd_design_hash'])) {
+            $item_data[] = [
+                'key'   => __('Design', 'product-designer'),
+                'value' => __('Customized', 'product-designer'),
+            ];
+        }
+        return $item_data;
     }
 
     public function enqueue_assets(): void {

@@ -17,6 +17,7 @@ export default function ViewsTab() {
       <div className="pd-views">
         {views.map((view, i) => (
           <button
+            type="button"
             key={view.id || i}
             className={`pd-views__btn${i === currentViewIndex ? ' pd-views__btn--active' : ''}`}
             onClick={() => handleSwitch(i)}
