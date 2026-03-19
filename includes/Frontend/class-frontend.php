@@ -17,6 +17,14 @@ class Frontend {
         add_filter('woocommerce_cart_item_permalink', [$this, 'cart_item_permalink'], 10, 3);
         // Replace product gallery image with design thumbnail when returning from cart
         add_filter('woocommerce_single_product_image_thumbnail_html', [$this, 'override_gallery_thumbnail_html'], 10, 2);
+        // Save design hash to order item meta on checkout (classic + block draft creation)
+        add_action('woocommerce_checkout_create_order_line_item', [$this, 'save_order_item_meta'], 10, 4);
+        // Block checkout: ensure design hash is saved when order is finalized
+        add_action('woocommerce_store_api_checkout_update_order_meta', [$this, 'store_api_save_design_meta'], 10, 1);
+        // Show design thumbnail in order confirmation, emails, and invoices
+        add_filter('woocommerce_order_item_thumbnail', [$this, 'order_item_thumbnail'], 10, 2);
+        // Show "Design: Customized" label in order item details (expose hidden meta)
+        add_filter('woocommerce_order_item_get_formatted_meta_data', [$this, 'order_item_formatted_meta'], 10, 2);
     }
 
     /**
@@ -228,5 +236,83 @@ class Frontend {
         if ($mode === 'modal') {
             echo '<button type="button" class="pd-open-designer button">Customize Product</button>';
         }
+    }
+
+    /**
+     * Save design hash from cart item to order item meta during checkout.
+     */
+    public function save_order_item_meta(\WC_Order_Item_Product $item, string $cart_item_key, array $values, \WC_Order $order): void {
+        if (!empty($values['pd_design_hash'])) {
+            $item->add_meta_data('_pd_design_hash', $values['pd_design_hash'], true);
+        }
+    }
+
+    /**
+     * Block checkout: iterate cart items and ensure design hash is saved to order items.
+     * This fires when the Store API finalizes the order, covering cases where
+     * woocommerce_checkout_create_order_line_item didn't fire (draft reuse).
+     */
+    public function store_api_save_design_meta(\WC_Order $order): void {
+        $cart = WC()->cart;
+        if (!$cart) {
+            return;
+        }
+
+        foreach ($order->get_items() as $item) {
+            if (!($item instanceof \WC_Order_Item_Product)) {
+                continue;
+            }
+            // Skip items that already have the meta
+            if ($item->get_meta('_pd_design_hash')) {
+                continue;
+            }
+
+            $product_id = $item->get_product_id();
+            // Find the matching cart item by product ID
+            foreach ($cart->get_cart() as $cart_item) {
+                if (!empty($cart_item['pd_design_hash']) && (int) $cart_item['product_id'] === $product_id) {
+                    $item->add_meta_data('_pd_design_hash', $cart_item['pd_design_hash'], true);
+                    $item->save();
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Replace product thumbnail in order confirmation page and emails.
+     */
+    public function order_item_thumbnail(string $thumbnail, \WC_Order_Item $item): string {
+        $hash = $item->get_meta('_pd_design_hash');
+        if (empty($hash)) {
+            return $thumbnail;
+        }
+
+        $thumb_url = $this->get_design_thumbnail_url($hash);
+        if (!empty($thumb_url)) {
+            return '<img src="' . esc_url($thumb_url) . '" alt="' . esc_attr__('Custom design', 'product-designer') . '" style="max-width:100px;max-height:100px;" />';
+        }
+
+        return $thumbnail;
+    }
+
+    /**
+     * Expose the hidden _pd_design_hash meta as "Design: Customized" in order details.
+     * WooCommerce hides meta keys starting with _ by default.
+     */
+    public function order_item_formatted_meta(array $formatted_meta, \WC_Order_Item $item): array {
+        $hash = $item->get_meta('_pd_design_hash');
+        if (empty($hash)) {
+            return $formatted_meta;
+        }
+
+        $formatted_meta['pd_design'] = (object) [
+            'key'           => '_pd_design_hash',
+            'value'         => $hash,
+            'display_key'   => __('Design', 'product-designer'),
+            'display_value' => __('Customized', 'product-designer'),
+        ];
+
+        return $formatted_meta;
     }
 }
