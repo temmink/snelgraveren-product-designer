@@ -9,6 +9,7 @@ A WooCommerce plugin that lets customers design text, images, and SVGs onto prod
 - **Design spec:** `docs/superpowers/specs/2026-03-18-product-designer-plugin-design.md` — the complete technical specification. Read this before making architectural changes.
 - **Current status:** `current_status.md` — what's done, what's next, how to run the environment.
 - **Implementation plan:** `.claude/plans/lazy-finding-panda.md` — phased build plan (Phase 0-6).
+- **Admin builder redesign:** `docs/superpowers/specs/2026-03-18-admin-builder-redesign-design.md` — 3-phase redesign (zone enforcement, tree UI, SVG boundaries)
 
 ## Architecture
 
@@ -56,6 +57,7 @@ npm run build                           # Production build → dist/
 - All endpoints require nonce verification
 - Admin endpoints require `edit_pd_templates` or `manage_woocommerce` capability
 - Customer design endpoints verify ownership (customer_id or session_id)
+- `grant_template_cap` filter lives in `ProductDesigner` main class (not Admin) so it applies in REST API context too
 - List endpoints support pagination (`per_page`, `page`) with `X-WP-Total` headers
 
 ## Security Rules (Critical)
@@ -75,7 +77,7 @@ These exist because FPD had CVE-2024-51919 (arbitrary file upload → RCE) and C
 | Table | Purpose |
 |-------|---------|
 | `wp_pd_templates` | Template definitions (title, slug, status, global config) |
-| `wp_pd_template_views` | Per-view config: canvas size, background, zones, layers, permissions |
+| `wp_pd_template_views` | Per-view config: canvas size, background, zones, layers, permissions. Columns use `name` (not `view_name`) and `background_url` (not `background_image_url`) |
 | `wp_pd_designs` | Customer designs: hash ID, product/template link, status, price |
 | `wp_pd_design_views` | Per-view Fabric.js canvas JSON + thumbnail |
 | `wp_pd_exports` | Export records: format, file path, status per order |
