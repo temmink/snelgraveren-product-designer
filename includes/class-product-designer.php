@@ -22,6 +22,7 @@ class ProductDesigner {
             $this->init_frontend();
         }
         $this->init_api();
+        $this->init_order_hooks();
     }
 
     private function init_admin(): void {
@@ -31,6 +32,14 @@ class ProductDesigner {
     private function init_frontend(): void {
         $frontend = new Frontend\Frontend();
         $frontend->init();
+    }
+
+    /**
+     * Register order-related hooks that must fire in both admin and frontend contexts.
+     */
+    private function init_order_hooks(): void {
+        $order = new Frontend\OrderIntegration();
+        $order->init();
     }
 
     private function init_api(): void {
