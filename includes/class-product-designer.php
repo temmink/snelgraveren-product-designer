@@ -24,6 +24,7 @@ class ProductDesigner {
         $this->init_api();
         $this->init_order_hooks();
         $this->init_pricing();
+        $this->init_exports();
     }
 
     private function init_admin(): void {
@@ -46,6 +47,11 @@ class ProductDesigner {
     private function init_pricing(): void {
         $surcharge = new Pricing\CartSurcharge();
         $surcharge->init();
+    }
+
+    private function init_exports(): void {
+        $exports = new Export\ExportManager();
+        $exports->init();
     }
 
     private function init_api(): void {

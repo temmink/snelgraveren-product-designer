@@ -21,6 +21,8 @@ class OrderIntegration {
         add_filter('woocommerce_admin_order_item_thumbnail', [$this, 'admin_order_item_thumbnail'], 10, 3);
         // Show "Design: Customized" label in order item details (expose hidden meta)
         add_filter('woocommerce_order_item_get_formatted_meta_data', [$this, 'order_item_formatted_meta'], 10, 2);
+        // Add export action buttons in admin order view
+        add_action('woocommerce_after_order_itemmeta', [$this, 'render_export_actions'], 10, 3);
     }
 
     /**
@@ -135,5 +137,114 @@ class OrderIntegration {
         ];
 
         return $formatted_meta;
+    }
+
+    /**
+     * Render export action buttons below order item meta in admin.
+     */
+    public function render_export_actions(int $item_id, \WC_Order_Item $item, ?\WC_Product $product): void {
+        if (!is_admin() || !current_user_can('edit_pd_templates')) {
+            return;
+        }
+
+        $hash = $item->get_meta('_pd_design_hash');
+        if (empty($hash)) {
+            return;
+        }
+
+        $api_base = rest_url('pd/v1');
+        $nonce    = wp_create_nonce('wp_rest');
+
+        // Check for existing exports
+        $design_repo = new \ProductDesigner\Database\DesignRepository();
+        $design = $design_repo->get_by_hash($hash);
+        $design_id = $design ? (int) $design['id'] : 0;
+
+        $export_repo = new \ProductDesigner\Database\ExportRepository();
+        $existing = $design_id ? $export_repo->get_by_design($design_id) : [];
+
+        echo '<div class="pd-export-actions" style="margin-top:8px;">';
+        echo '<strong style="display:block;margin-bottom:4px;">' . esc_html__('Export Design:', 'product-designer') . '</strong>';
+
+        // Export buttons
+        foreach (['pdf', 'png', 'svg'] as $format) {
+            $label = strtoupper($format);
+            echo '<button type="button" class="button button-small pd-export-btn" '
+                . 'data-hash="' . esc_attr($hash) . '" '
+                . 'data-format="' . esc_attr($format) . '" '
+                . 'data-api="' . esc_url($api_base) . '" '
+                . 'data-nonce="' . esc_attr($nonce) . '" '
+                . 'style="margin-right:4px;">'
+                . esc_html($label)
+                . '</button>';
+        }
+
+        // Show existing exports with download links
+        if (!empty($existing)) {
+            echo '<div class="pd-existing-exports" style="margin-top:6px;">';
+            foreach ($existing as $export) {
+                if ($export['status'] !== 'done') {
+                    continue;
+                }
+                $download_url = $api_base . '/exports/' . (int) $export['id'] . '/download?_wpnonce=' . $nonce;
+                $label = strtoupper($export['format']);
+                $date  = wp_date(get_option('date_format') . ' ' . get_option('time_format'), strtotime($export['created_at']));
+                echo '<a href="' . esc_url($download_url) . '" class="button button-small" style="margin-right:4px;margin-top:2px;" title="' . esc_attr($date) . '">'
+                    . '⬇ ' . esc_html($label)
+                    . '</a>';
+            }
+            echo '</div>';
+        }
+
+        echo '</div>';
+
+        // Inline JS for export buttons (only output once)
+        static $script_output = false;
+        if (!$script_output) {
+            $script_output = true;
+            ?>
+            <script>
+            document.addEventListener('click', function(e) {
+                var btn = e.target.closest('.pd-export-btn');
+                if (!btn) return;
+                e.preventDefault();
+                var hash = btn.dataset.hash;
+                var format = btn.dataset.format;
+                var api = btn.dataset.api;
+                var nonce = btn.dataset.nonce;
+                btn.disabled = true;
+                btn.textContent = format.toUpperCase() + '...';
+                fetch(api + '/exports/' + hash, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-WP-Nonce': nonce
+                    },
+                    body: JSON.stringify({ format: format })
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.export_id) {
+                        btn.textContent = '✓ ' + format.toUpperCase();
+                        // Auto-download
+                        window.location.href = api + '/exports/' + data.export_id + '/download?_wpnonce=' + nonce;
+                    } else {
+                        btn.textContent = '✗ ' + format.toUpperCase();
+                        alert('Export failed: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(function() {
+                    btn.textContent = '✗ ' + format.toUpperCase();
+                })
+                .finally(function() {
+                    setTimeout(function() {
+                        btn.disabled = false;
+                        btn.textContent = format.toUpperCase();
+                    }, 3000);
+                });
+            });
+            </script>
+            <?php
+        }
     }
 }

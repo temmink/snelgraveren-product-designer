@@ -41,4 +41,26 @@ class ExportRepository {
             ARRAY_A
         ) ?: [];
     }
+
+    public function get_by_id(int $id): ?array {
+        global $wpdb;
+        $row = $wpdb->get_row(
+            $wpdb->prepare("SELECT * FROM {$this->table} WHERE id = %d", $id),
+            ARRAY_A
+        );
+        return $row ?: null;
+    }
+
+    public function get_by_design(int $design_id): array {
+        global $wpdb;
+        return $wpdb->get_results(
+            $wpdb->prepare("SELECT * FROM {$this->table} WHERE design_id = %d ORDER BY created_at DESC", $design_id),
+            ARRAY_A
+        ) ?: [];
+    }
+
+    public function delete(int $id): bool {
+        global $wpdb;
+        return (bool) $wpdb->delete($this->table, ['id' => $id]);
+    }
 }
