@@ -3,6 +3,7 @@ import useDesignerStore from './store/useDesignerStore';
 import { loadTemplate, loadDesign, createDesign, saveDesignView } from './api/designerApi';
 import DesignerCanvas from './components/DesignerCanvas';
 import Sidebar from './components/Sidebar';
+import { loadGoogleFonts } from './utils/fonts';
 
 const config = window.pdDesigner || {};
 
@@ -32,6 +33,12 @@ export default function App() {
     loadTemplate(config.template_id)
       .then(async (data) => {
         setTemplate(data);
+
+        // Load Google Fonts used in this template
+        const allowedFonts = data.global_config?.allowed_fonts || [];
+        if (allowedFonts.length > 0) {
+          loadGoogleFonts(allowedFonts);
+        }
 
         // If returning from cart with an existing design, load it
         if (config.existing_design_hash) {

@@ -7,6 +7,7 @@ import TreePanel from './components/TreePanel';
 import PermissionsPanel from './components/PermissionsPanel';
 import PricingPanel from './components/PricingPanel';
 import GlobalSettings from './components/GlobalSettings';
+import { loadGoogleFonts } from './utils/fonts';
 
 const TABS = [
   { label: 'Structure',   Component: TreePanel },
@@ -54,6 +55,14 @@ export default function App() {
       });
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Load Google Fonts when allowed_fonts changes
+  useEffect(() => {
+    const fonts = globalConfig.allowed_fonts || [];
+    if (fonts.length > 0) {
+      loadGoogleFonts(fonts);
+    }
+  }, [globalConfig.allowed_fonts]);
 
   const handleSave = async () => {
     if (!title.trim()) {

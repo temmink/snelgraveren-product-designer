@@ -6,6 +6,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import useTemplateStore from '../store/useTemplateStore';
 import TreeNode from './TreeNode';
 import ZoneForm from './ZoneForm';
+import { AVAILABLE_FONTS } from '../utils/fonts';
 
 export default function TreePanel() {
   const {
@@ -278,6 +279,13 @@ function AddLayerInline({ zone, onAdd, onCancel }) {
 }
 
 function LayerDetail({ layer, onChange }) {
+  const { globalConfig } = useTemplateStore();
+  const allowedFonts = globalConfig.allowed_fonts || [];
+  // In admin, show allowed fonts if configured, otherwise show all available fonts
+  const fontOptions = allowedFonts.length > 0
+    ? allowedFonts
+    : AVAILABLE_FONTS.map((f) => f.family);
+
   if (layer.type === 'text') {
     return (
       <div className="pd-tree-panel__layer-detail">
@@ -292,7 +300,11 @@ function LayerDetail({ layer, onChange }) {
         </label>
         <label>
           Font Family
-          <input type="text" value={layer.fontFamily || 'Arial'} onChange={(e) => onChange({ fontFamily: e.target.value })} />
+          <select value={layer.fontFamily || 'Arial'} onChange={(e) => onChange({ fontFamily: e.target.value })}>
+            {fontOptions.map((f) => (
+              <option key={f} value={f}>{f}</option>
+            ))}
+          </select>
         </label>
         <label>
           Color

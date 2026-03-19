@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import useTemplateStore from '../store/useTemplateStore';
+import { AVAILABLE_FONTS } from '../utils/fonts';
 
 const IMAGE_TYPES = ['jpg', 'png', 'svg', 'webp'];
 
@@ -94,9 +95,10 @@ export default function GlobalSettings() {
           Enable font picker
         </label>
         {fonts_enabled && (
-          <p className="pd-settings__note">
-            Font management (Google Fonts cache) will be available in a future update.
-          </p>
+          <FontSelector
+            allowed={globalConfig.allowed_fonts || []}
+            onChange={(fonts) => update('allowed_fonts', fonts)}
+          />
         )}
       </fieldset>
 
@@ -142,6 +144,63 @@ export default function GlobalSettings() {
           ))}
         </div>
       </fieldset>
+    </div>
+  );
+}
+
+function FontSelector({ allowed, onChange }) {
+  const [adding, setAdding] = useState('');
+
+  const available = AVAILABLE_FONTS.filter((f) => !allowed.includes(f.family));
+
+  const addFont = (family) => {
+    if (family && !allowed.includes(family)) {
+      onChange([...allowed, family]);
+    }
+    setAdding('');
+  };
+
+  const removeFont = (family) => {
+    onChange(allowed.filter((f) => f !== family));
+  };
+
+  return (
+    <div className="pd-settings__fonts">
+      {allowed.length > 0 && (
+        <div className="pd-settings__font-list">
+          {allowed.map((family) => (
+            <div key={family} className="pd-settings__font-item">
+              <span>{family}</span>
+              <button
+                type="button"
+                className="pd-settings__font-remove"
+                onClick={() => removeFont(family)}
+                aria-label={`Remove ${family}`}
+              >
+                &times;
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="pd-settings__font-add">
+        <select
+          value={adding}
+          onChange={(e) => addFont(e.target.value)}
+        >
+          <option value="">Add a font...</option>
+          {available.map((f) => (
+            <option key={f.family} value={f.family}>
+              {f.family} ({f.category})
+            </option>
+          ))}
+        </select>
+      </div>
+      {allowed.length === 0 && (
+        <p className="pd-settings__note">
+          No fonts selected. Customers won't be able to change fonts.
+        </p>
+      )}
     </div>
   );
 }
