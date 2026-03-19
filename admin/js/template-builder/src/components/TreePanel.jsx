@@ -169,6 +169,7 @@ export default function TreePanel() {
         <button
           className="pd-tree-panel__add-zone-btn"
           onClick={() => setIsAddingZone(true)}
+          aria-label={ __( 'Add Boundary', 'product-designer' ) }
         >
           { __( '+ Add Boundary', 'product-designer' ) }
         </button>

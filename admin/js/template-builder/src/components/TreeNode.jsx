@@ -27,7 +27,7 @@ export default function TreeNode({ node, nodeType, isSelected, onSelect, onActio
         className={`pd-tree-node pd-tree-node--${nodeType}${isSelected ? ' pd-tree-node--selected' : ''}`}
         onClick={(e) => { e.stopPropagation(); onSelect(node, nodeType); }}
       >
-        <span className="pd-tree-node__drag" {...listeners} title={ __( 'Drag to reorder', 'product-designer' ) }>⠿</span>
+        <button className="pd-tree-node__drag" {...listeners} aria-label={ __( 'Drag to reorder', 'product-designer' ) } title={ __( 'Drag to reorder', 'product-designer' ) }>⠿</button>
         <span className="pd-tree-node__icon">{icon}</span>
         <span className="pd-tree-node__label">{label}</span>
 
@@ -40,22 +40,26 @@ export default function TreeNode({ node, nodeType, isSelected, onSelect, onActio
             <button
               className="pd-tree-node__action"
               onClick={(e) => { e.stopPropagation(); onAction('add-layer', node); }}
+              aria-label={ __( 'Add layer', 'product-designer' ) }
               title={ __( 'Add layer', 'product-designer' ) }
             >+</button>
           )}
           <button
             className="pd-tree-node__action"
             onClick={(e) => { e.stopPropagation(); onAction('toggle-visibility', node); }}
+            aria-label={ node.visible === false ? __( 'Show layer', 'product-designer' ) : __( 'Hide layer', 'product-designer' ) }
             title={ node.visible === false ? __( 'Show', 'product-designer' ) : __( 'Hide', 'product-designer' ) }
           >{node.visible === false ? '\u25CB' : '\u25C9'}</button>
           <button
             className="pd-tree-node__action"
             onClick={(e) => { e.stopPropagation(); onAction('toggle-lock', node); }}
+            aria-label={ node.locked ? __( 'Unlock layer', 'product-designer' ) : __( 'Lock layer', 'product-designer' ) }
             title={ node.locked ? __( 'Unlock', 'product-designer' ) : __( 'Lock', 'product-designer' ) }
           >{node.locked ? '\u{1F512}' : '\u{1F513}'}</button>
           <button
             className="pd-tree-node__action pd-tree-node__action--danger"
             onClick={(e) => { e.stopPropagation(); onAction('delete', node); }}
+            aria-label={ __( 'Delete', 'product-designer' ) }
             title={ __( 'Delete', 'product-designer' ) }
           >&times;</button>
         </span>
