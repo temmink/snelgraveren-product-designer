@@ -108,11 +108,22 @@ bash bin/package.sh
 
 ---
 
-## What's next
+### Phase 4b — Order integration ✅
+- **Order item meta:** `_pd_design_hash` saved to order items via `woocommerce_checkout_create_order_line_item` (classic) + `woocommerce_store_api_checkout_update_order_meta` (block checkout safety net)
+- **Order thumbnails:** Custom design replaces stock product image in admin order view (`woocommerce_admin_order_item_thumbnail`), order confirmation page, and emails (`woocommerce_order_item_thumbnail`)
+- **Order meta label:** Hidden `_pd_design_hash` meta exposed as "Design: Customized" via `woocommerce_order_item_get_formatted_meta_data`
+- **Refactored:** Order hooks extracted to `Frontend\OrderIntegration` class, registered in both admin and frontend contexts
 
-### Phase 4b — WooCommerce integration (remaining)
-- Surcharge calculation via `woocommerce_before_calculate_totals`
-- Order item meta storage
+---
+
+### Phase 4c — Surcharge calculation ✅
+- **PriceCalculator:** Server-side surcharge from canvas_json — counts text/image/svg elements, applies per-element or tier pricing, min/max caps
+- **CartSurcharge:** `woocommerce_before_calculate_totals` hook adds surcharge to product price; `woocommerce_get_item_data` shows "Design surcharge: €X.XX" in cart
+- **Audit trail:** Element-level pricing logged to `wp_pd_price_log`, design `total_price` updated in `wp_pd_designs`
+
+---
+
+## What's next
 
 ### Phase 5 — Export
 - PDF via TCPDF, PNG via Imagick, SVG via Fabric.js toSVG
@@ -151,13 +162,17 @@ product-designer/
 │   │   ├── class-nonce-manager.php
 │   │   └── class-upload-validator.php
 │   ├── Frontend/
-│   │   └── class-frontend.php       # WooCommerce product page hooks, asset enqueue
+│   │   ├── class-frontend.php       # WooCommerce product page hooks, asset enqueue
+│   │   └── class-order-integration.php  # Order meta, thumbnails, labels (admin+frontend)
 │   ├── API/
 │   │   ├── class-rest-templates.php  # 11 routes (incl. public endpoint)
 │   │   ├── class-rest-designs.php    # 8 routes (with template validation)
 │   │   ├── class-rest-uploads.php
 │   │   ├── class-rest-fonts.php      # stub
 │   │   └── class-rest-exports.php    # stub
+│   ├── Pricing/
+│   │   ├── class-cart-surcharge.php      # WooCommerce cart integration
+│   │   └── class-price-calculator.php    # Server-side surcharge calculation
 │   └── Admin/
 │       ├── class-admin.php
 │       ├── class-template-list-table.php
