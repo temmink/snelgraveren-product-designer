@@ -179,21 +179,30 @@ class OrderIntegration {
                 . '</button>';
         }
 
-        // Show existing exports with download links
+        // Show existing exports with download links (latest per format only)
         if (!empty($existing)) {
-            echo '<div class="pd-existing-exports" style="margin-top:6px;">';
+            $latest_by_format = [];
             foreach ($existing as $export) {
                 if ($export['status'] !== 'done') {
                     continue;
                 }
-                $download_url = $api_base . '/exports/' . (int) $export['id'] . '/download?_wpnonce=' . $nonce;
-                $label = strtoupper($export['format']);
-                $date  = wp_date(get_option('date_format') . ' ' . get_option('time_format'), strtotime($export['created_at']));
-                echo '<a href="' . esc_url($download_url) . '" class="button button-small" style="margin-right:4px;margin-top:2px;" title="' . esc_attr($date) . '">'
-                    . '⬇ ' . esc_html($label)
-                    . '</a>';
+                $fmt = $export['format'];
+                if (!isset($latest_by_format[$fmt]) || (int) $export['id'] > (int) $latest_by_format[$fmt]['id']) {
+                    $latest_by_format[$fmt] = $export;
+                }
             }
-            echo '</div>';
+            if (!empty($latest_by_format)) {
+                echo '<div class="pd-existing-exports" style="margin-top:6px;">';
+                foreach ($latest_by_format as $export) {
+                    $download_url = $api_base . '/exports/' . (int) $export['id'] . '/download?_wpnonce=' . $nonce;
+                    $label = strtoupper($export['format']);
+                    $date  = wp_date(get_option('date_format') . ' ' . get_option('time_format'), strtotime($export['created_at']));
+                    echo '<a href="' . esc_url($download_url) . '" class="button button-small" style="margin-right:4px;margin-top:2px;" title="' . esc_attr($date) . '">'
+                        . '⬇ ' . esc_html($label)
+                        . '</a>';
+                }
+                echo '</div>';
+            }
         }
 
         echo '</div>';

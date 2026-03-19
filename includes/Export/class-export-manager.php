@@ -64,6 +64,18 @@ class ExportManager {
         }
 
         $design_id = (int) $design['id'];
+
+        // Remove previous exports of the same format for this design
+        $existing = $this->exports->get_by_design($design_id);
+        foreach ($existing as $old) {
+            if ($old['format'] === $format) {
+                if (!empty($old['file_path']) && file_exists($old['file_path'])) {
+                    @unlink($old['file_path']);
+                }
+                $this->exports->delete((int) $old['id']);
+            }
+        }
+
         $export_id = $this->exports->create($design_id, $order_id, $format);
         if (!$export_id) {
             return ['error' => 'Failed to create export record'];

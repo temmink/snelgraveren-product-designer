@@ -34,7 +34,10 @@ class SvgExporter {
 
         $svg .= '</svg>';
 
-        return $this->sanitize($svg);
+        // Do NOT sanitize: this SVG is generated server-side from known data.
+        // The enshrined/svg-sanitize library strips <image>, <text>, and
+        // attributes like dominant-baseline, breaking the export.
+        return $svg;
     }
 
     /**
@@ -80,11 +83,15 @@ class SvgExporter {
         $transform = $this->build_transform($left, $top, $angle, $scaleX, $scaleY);
 
         $lines = explode("\n", $text);
+        $line_height = $size * 1.16;
+        // Fabric.js top = top of bounding box. SVG default baseline is alphabetic.
+        // Offset y by ~80% of fontSize (font ascent) to match Fabric.js positioning.
+        $ascent_offset = $size * 0.8;
+
         $svg = '<g transform="' . esc_attr($transform) . '" opacity="' . $opacity . '">';
         foreach ($lines as $i => $line) {
-            $y = $i * $size * 1.16;
+            $y = ($i * $line_height) + $ascent_offset;
             $svg .= '<text x="0" y="' . $y . '"'
-                . ' dominant-baseline="hanging"'
                 . ' fill="' . esc_attr($fill) . '"'
                 . ' font-size="' . $size . '"'
                 . ' font-family="' . esc_attr($family) . '"'
@@ -108,7 +115,13 @@ class SvgExporter {
         $scaleY = (float) ($obj['scaleY'] ?? 1);
         $opacity = (float) ($obj['opacity'] ?? 1);
 
-        if (empty($src) || !filter_var($src, FILTER_VALIDATE_URL)) {
+        if (empty($src)) {
+            return '';
+        }
+
+        // Embed as base64 data URI for portability (works offline, in TCPDF, etc.)
+        $data_uri = $this->image_to_data_uri($src);
+        if (empty($data_uri)) {
             return '';
         }
 
@@ -117,7 +130,7 @@ class SvgExporter {
         return '<image'
             . ' transform="' . esc_attr($transform) . '"'
             . ' width="' . $width . '" height="' . $height . '"'
-            . ' href="' . esc_url($src) . '"'
+            . ' href="' . $data_uri . '"'
             . ' opacity="' . $opacity . '"'
             . ' preserveAspectRatio="none"'
             . '/>';
@@ -292,13 +305,45 @@ class SvgExporter {
     }
 
     /**
-     * Sanitize SVG output using enshrined/svg-sanitize.
+     * Convert an image URL to a base64 data URI by reading the local file.
      */
-    private function sanitize(string $svg): string {
-        if (!class_exists('\\enshrined\\svgSanitize\\Sanitizer')) {
-            return $svg;
+    private function image_to_data_uri(string $url): string {
+        $local_path = $this->url_to_local_path($url);
+        if (empty($local_path) || !file_exists($local_path)) {
+            return '';
         }
-        $sanitizer = new \enshrined\svgSanitize\Sanitizer();
-        return $sanitizer->sanitize($svg) ?: $svg;
+
+        $data = file_get_contents($local_path);
+        if ($data === false) {
+            return '';
+        }
+
+        $mime = mime_content_type($local_path) ?: 'image/png';
+        return 'data:' . $mime . ';base64,' . base64_encode($data);
+    }
+
+    /**
+     * Convert a URL to a local file path if it's on this server.
+     */
+    private function url_to_local_path(string $url): string {
+        $upload_dir = wp_upload_dir();
+        $base_url = $upload_dir['baseurl'];
+        $base_dir = $upload_dir['basedir'];
+
+        if (str_starts_with($url, $base_url)) {
+            return str_replace($base_url, $base_dir, $url);
+        }
+
+        $site_url = site_url();
+        $abspath  = ABSPATH;
+        if (str_starts_with($url, $site_url)) {
+            $relative = str_replace($site_url, '', $url);
+            $path = $abspath . ltrim($relative, '/');
+            if (file_exists($path)) {
+                return $path;
+            }
+        }
+
+        return '';
     }
 }
