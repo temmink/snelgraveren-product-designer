@@ -3,6 +3,7 @@ import { create } from 'zustand';
 const MAX_HISTORY = 50;
 
 const DEFAULT_GLOBAL_CONFIG = {
+  customization_required: false,
   pricing_mode: 'per_element',
   fonts_enabled: false,
   colors_enabled: false,
@@ -298,10 +299,21 @@ const useTemplateStore = create((set, get) => ({
       slug:         data.slug   || '',
       status:       data.status || 'draft',
       globalConfig: { ...DEFAULT_GLOBAL_CONFIG, ...(data.global_config || {}) },
-      views:        (data.views || []).map((v) => ({
-        _clientId: crypto.randomUUID(),
-        ...migrateViewToNestedLayers(v),
-      })),
+      views:        (data.views || []).map((v) => {
+        const migrated = migrateViewToNestedLayers(v);
+        return {
+          _clientId: crypto.randomUUID(),
+          ...migrated,
+          zones_config: (migrated.zones_config || []).map((z) => ({
+            _key: crypto.randomUUID(),
+            ...z,
+            layers: (z.layers || []).map((l) => ({
+              _key: crypto.randomUUID(),
+              ...l,
+            })),
+          })),
+        };
+      }),
       currentViewIndex: 0,
       isDirty:      false,
       history:      {},

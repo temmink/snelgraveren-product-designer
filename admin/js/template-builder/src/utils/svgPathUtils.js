@@ -1,16 +1,59 @@
-import { Path } from 'fabric';
+import { loadSVGFromString, util } from 'fabric';
 
 /**
- * Extract a single closed path from an SVG string.
- * Returns { pathData, viewBox } or null if no valid path found.
+ * Normalize an SVG string by converting mm/cm/in units in width/height to px.
+ */
+function normalizeSvgUnits(svgString) {
+  return svgString.replace(
+    /(<svg[^>]*?(?:width|height)="\s*)([\d.]+)\s*(mm|cm|in)\s*(")/g,
+    (_, before, val, unit, after) => {
+      const scale = unit === 'mm' ? 3.7795 : unit === 'cm' ? 37.795 : 96;
+      return before + (parseFloat(val) * scale).toFixed(2) + after;
+    }
+  );
+}
+
+/**
+ * Load an SVG string through Fabric's parser, returning properly transformed
+ * objects and the computed bounding box in pixels.
+ *
+ * Returns { objects, options, width, height } or null on failure.
+ */
+export async function parseSvgToFabric(svgString) {
+  const normalized = normalizeSvgUnits(svgString);
+  const { objects, options } = await loadSVGFromString(normalized);
+  const filtered = objects.filter(Boolean);
+  if (filtered.length === 0) return null;
+
+  const group = util.groupSVGElements(filtered, options);
+  return {
+    objects: filtered,
+    options,
+    group,
+    width: Math.round(group.width * (group.scaleX || 1)),
+    height: Math.round(group.height * (group.scaleY || 1)),
+  };
+}
+
+/**
+ * Extract SVG markup and compute pixel bounding box.
+ * Returns { svgString, width, height } or null.
+ */
+export async function extractSvgBoundingBox(svgString) {
+  const result = await parseSvgToFabric(svgString);
+  if (!result) return null;
+  return { width: result.width, height: result.height };
+}
+
+// Keep backward-compat exports used by ZoneForm.
+
+/**
+ * @deprecated Use extractSvgBoundingBox instead.
  */
 export function extractClosedPath(svgString) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(svgString, 'image/svg+xml');
-
-  // Check for parse errors.
-  const parseError = doc.querySelector('parsererror');
-  if (parseError) return null;
+  if (doc.querySelector('parsererror')) return null;
 
   const svgEl = doc.querySelector('svg');
   const viewBox = svgEl?.getAttribute('viewBox') || '';
@@ -19,36 +62,15 @@ export function extractClosedPath(svgString) {
   for (const pathEl of paths) {
     const d = (pathEl.getAttribute('d') || '').trim();
     if (!d) continue;
-
-    // Must be a single closed subpath: exactly one M/m command, ends with Z/z.
-    const moveMatches = d.match(/[Mm]/g);
-    if (!moveMatches || moveMatches.length !== 1) continue;
     if (!/[Zz]\s*$/.test(d)) continue;
-
     return { pathData: d, viewBox };
   }
-
   return null;
 }
 
 /**
- * Compute the axis-aligned bounding box of a path with transforms applied.
- * Uses a temporary Fabric.js Path object.
+ * @deprecated Use extractSvgBoundingBox instead.
  */
-export function pathToBoundingBox(pathData, scale = 1, rotation = 0) {
-  const tempPath = new Path(pathData, {
-    left: 0,
-    top: 0,
-    scaleX: scale,
-    scaleY: scale,
-    angle: rotation,
-  });
-
-  const bound = tempPath.getBoundingRect();
-  return {
-    x: Math.round(bound.left),
-    y: Math.round(bound.top),
-    width: Math.round(bound.width),
-    height: Math.round(bound.height),
-  };
+export function pathToBoundingBox() {
+  return { x: 0, y: 0, width: 200, height: 200 };
 }

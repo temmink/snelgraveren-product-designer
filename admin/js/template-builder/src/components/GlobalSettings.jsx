@@ -8,6 +8,7 @@ const IMAGE_TYPES = ['jpg', 'png', 'svg', 'webp'];
 export default function GlobalSettings() {
   const { globalConfig, setGlobalConfig } = useTemplateStore();
   const {
+    customization_required = false,
     colors_enabled    = false,
     any_color         = false,
     allowed_colors    = [],
@@ -37,6 +38,18 @@ export default function GlobalSettings() {
 
   return (
     <div className="pd-settings">
+
+      <fieldset className="pd-settings__fieldset">
+        <legend>{ __( 'Cart Behavior', 'product-designer' ) }</legend>
+        <label className="pd-settings__check">
+          <input type="checkbox" checked={customization_required}
+            onChange={(e) => update('customization_required', e.target.checked)} />
+          { __( 'Require customization before adding to cart', 'product-designer' ) }
+        </label>
+        <p className="pd-settings__note">
+          { __( 'When enabled, customers must save a design before they can add the product to their cart.', 'product-designer' ) }
+        </p>
+      </fieldset>
 
       <fieldset className="pd-settings__fieldset">
         <legend>{ __( 'Color Picker', 'product-designer' ) }</legend>

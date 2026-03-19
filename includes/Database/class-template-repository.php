@@ -244,15 +244,15 @@ class TemplateRepository {
     public function create_view(int $template_id, array $data): int {
         global $wpdb;
         $wpdb->insert($this->views_table, [
-            'template_id'        => $template_id,
-            'view_name'          => sanitize_text_field($data['name'] ?? ''),
-            'sort_order'         => (int) ($data['sort_order'] ?? 0),
-            'canvas_width'       => max(1, (int) ($data['canvas_width'] ?? 800)),
-            'canvas_height'      => max(1, (int) ($data['canvas_height'] ?? 600)),
-            'background_image_url' => esc_url_raw($data['background_url'] ?? ''),
-            'zones_config'       => wp_json_encode($data['zones_config'] ?? []),
-            'layers_config'      => wp_json_encode($data['layers_config'] ?? []),
-            'permissions'        => wp_json_encode($data['permissions'] ?? []),
+            'template_id'      => $template_id,
+            'name'             => sanitize_text_field($data['name'] ?? ''),
+            'sort_order'       => (int) ($data['sort_order'] ?? 0),
+            'canvas_width'     => max(1, (int) ($data['canvas_width'] ?? 800)),
+            'canvas_height'    => max(1, (int) ($data['canvas_height'] ?? 600)),
+            'background_url'   => esc_url_raw($data['background_url'] ?? ''),
+            'zones_config'     => wp_json_encode($data['zones_config'] ?? []),
+            'layers_config'    => wp_json_encode($data['layers_config'] ?? []),
+            'permissions'      => wp_json_encode($data['permissions'] ?? []),
         ]);
         delete_transient('pd_template_' . $template_id);
         return (int) $wpdb->insert_id;
@@ -261,11 +261,11 @@ class TemplateRepository {
     public function update_view(int $template_id, int $view_id, array $data): bool {
         global $wpdb;
         $update = [];
-        if (isset($data['name']))             $update['view_name']          = sanitize_text_field($data['name']);
-        if (isset($data['sort_order']))       $update['sort_order']         = (int) $data['sort_order'];
-        if (isset($data['canvas_width']))     $update['canvas_width']       = max(1, (int) $data['canvas_width']);
-        if (isset($data['canvas_height']))    $update['canvas_height']      = max(1, (int) $data['canvas_height']);
-        if (isset($data['background_url']))   $update['background_image_url'] = esc_url_raw($data['background_url']);
+        if (isset($data['name']))             $update['name']             = sanitize_text_field($data['name']);
+        if (isset($data['sort_order']))       $update['sort_order']       = (int) $data['sort_order'];
+        if (isset($data['canvas_width']))     $update['canvas_width']     = max(1, (int) $data['canvas_width']);
+        if (isset($data['canvas_height']))    $update['canvas_height']    = max(1, (int) $data['canvas_height']);
+        if (isset($data['background_url']))   $update['background_url']   = esc_url_raw($data['background_url']);
         if (isset($data['zones_config']))     $update['zones_config']       = wp_json_encode($data['zones_config']);
         if (isset($data['layers_config']))    $update['layers_config']      = wp_json_encode($data['layers_config']);
         if (isset($data['permissions']))      $update['permissions']        = wp_json_encode($data['permissions']);
@@ -293,11 +293,6 @@ class TemplateRepository {
     }
 
     private function decode_view(array $row): array {
-        // Normalize DB column names to consistent API field names.
-        $row['name']           = $row['view_name'] ?? '';
-        $row['background_url'] = $row['background_image_url'] ?? '';
-        unset($row['view_name'], $row['background_image_url']);
-
         $row['zones_config']  = json_decode($row['zones_config'] ?? '', true)  ?: [];
         $row['layers_config'] = json_decode($row['layers_config'] ?? '', true) ?: [];
         $row['permissions']   = json_decode($row['permissions'] ?? '', true)   ?: [];

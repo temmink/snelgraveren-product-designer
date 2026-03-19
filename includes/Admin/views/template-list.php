@@ -12,6 +12,18 @@ defined('ABSPATH') || exit;
     </a>
     <hr class="wp-header-end">
 
+    <?php
+    if (!empty($_GET['trashed'])) {
+        echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Template moved to Trash.', 'product-designer') . '</p></div>';
+    }
+    if (!empty($_GET['restored'])) {
+        echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Template restored.', 'product-designer') . '</p></div>';
+    }
+    if (!empty($_GET['deleted'])) {
+        echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Template permanently deleted.', 'product-designer') . '</p></div>';
+    }
+    ?>
+
     <?php $list_table->render_status_tabs(); ?>
 
     <form id="pd-templates-form" method="post">

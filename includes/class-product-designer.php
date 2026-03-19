@@ -16,6 +16,8 @@ class ProductDesigner {
     }
 
     private function init(): void {
+        add_filter('user_has_cap', [$this, 'grant_template_cap'], 10, 4);
+
         if (is_admin()) {
             $this->init_admin();
         } else {
@@ -25,6 +27,19 @@ class ProductDesigner {
         $this->init_order_hooks();
         $this->init_pricing();
         $this->init_exports();
+    }
+
+    /**
+     * Dynamically grant edit_pd_templates to users who can manage_woocommerce or manage_options.
+     * Registered here (not in Admin) so it applies in REST API context too.
+     */
+    public function grant_template_cap(array $allcaps, array $caps, array $args, \WP_User $user): array {
+        if (in_array('edit_pd_templates', $caps, true)) {
+            if (!empty($allcaps['manage_woocommerce']) || !empty($allcaps['manage_options'])) {
+                $allcaps['edit_pd_templates'] = true;
+            }
+        }
+        return $allcaps;
     }
 
     private function init_admin(): void {

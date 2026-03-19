@@ -8,7 +8,6 @@ class Admin {
     public function __construct() {
         add_action('admin_menu',           [$this, 'register_menus']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_scripts']);
-        add_filter('user_has_cap',         [$this, 'grant_template_cap'], 10, 4);
         add_filter('upload_mimes',         [$this, 'allow_svg_upload']);
         add_filter('wp_check_filetype_and_ext', [$this, 'fix_svg_filetype'], 10, 5);
 
@@ -122,16 +121,4 @@ class Admin {
         return $data;
     }
 
-    /**
-     * Dynamically grant edit_pd_templates to users who can manage_woocommerce.
-     * Required because add_menu_page() only accepts a single capability string.
-     */
-    public function grant_template_cap(array $allcaps, array $caps, array $args, \WP_User $user): array {
-        if (in_array('edit_pd_templates', $caps, true)) {
-            if (!empty($allcaps['manage_woocommerce']) || !empty($allcaps['manage_options'])) {
-                $allcaps['edit_pd_templates'] = true;
-            }
-        }
-        return $allcaps;
-    }
 }

@@ -267,6 +267,7 @@ export default function Canvas() {
       fill:           isFreeMove ? 'transparent' : 'rgba(59, 130, 246, 0.08)',
       stroke:         '#3b82f6',
       strokeWidth:    2,
+      strokeUniform:  true,
       strokeDashArray: isFreeMove ? [6, 4] : undefined,
       selectable:     !zone.locked,
       evented:        !zone.locked,
@@ -290,8 +291,20 @@ export default function Canvas() {
       if (zone.boundary_type === 'svg' && zone.svg_url) {
         if (existing) {
           // Update SVG zone in-place (position/scale/rotation only).
+          // For SVG groups, stroke/fill lives on child paths, not the group.
+          const style = zoneStyleFor(zone);
+          if (existing.getObjects) {
+            existing.getObjects().forEach((c) => c.set({
+              stroke: style.stroke,
+              strokeWidth: style.strokeWidth,
+              strokeUniform: true,
+              fill: style.fill,
+            }));
+          }
           existing.set({
-            ...zoneStyleFor(zone),
+            ...style,
+            stroke: null,
+            strokeWidth: 0,
             left:   zone.x,
             top:    zone.y,
             scaleX: zone.svg_scale || 1,
@@ -308,11 +321,13 @@ export default function Canvas() {
             .then((result) => {
               if (cancelled || !result || !fabricRef.current) return;
               const { objects, options } = result;
-              objects.forEach((o) => o.set({ strokeUniform: true }));
+              objects.forEach((o) => o.set({ stroke: '#3b82f6', strokeWidth: 2, strokeUniform: true, fill: 'rgba(59, 130, 246, 0.08)' }));
 
               const group = util.groupSVGElements(objects, options);
               group.set({
                 ...zoneStyleFor(zone),
+                stroke: null,
+                strokeWidth: 0,
                 left:   zone.x,
                 top:    zone.y,
                 scaleX: zone.svg_scale || 1,
