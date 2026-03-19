@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { __ } from '@wordpress/i18n';
 import useDesignerStore from './store/useDesignerStore';
 import { loadTemplate, loadDesign, createDesign, saveDesignView } from './api/designerApi';
@@ -22,6 +22,9 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [designerOpen, setDesignerOpen] = useState(config.display_mode !== 'modal' || !!config.auto_open);
   const [savedRecently, setSavedRecently] = useState(false);
+
+  const modalRef = useRef(null);
+  const returnFocusRef = useRef(null);
 
   // Load template on mount, then load existing design if hash is present
   useEffect(() => {
@@ -88,6 +91,64 @@ export default function App() {
     btn.addEventListener('click', handler);
     return () => btn.removeEventListener('click', handler);
   }, []);
+
+  // Modal focus trapping and keyboard handling
+  useEffect(() => {
+    if (config.display_mode !== 'modal') return;
+
+    if (designerOpen) {
+      // Save the element that opened the modal so we can restore focus on close
+      returnFocusRef.current = document.activeElement;
+
+      // Focus the first interactive element inside the modal
+      const focusable = modalRef.current?.querySelectorAll(
+        'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable && focusable.length > 0) {
+        focusable[0].focus();
+      }
+
+      const handleKeyDown = (e) => {
+        if (e.key === 'Escape') {
+          setDesignerOpen(false);
+          return;
+        }
+
+        if (e.key === 'Tab' && modalRef.current) {
+          const focusableEls = Array.from(
+            modalRef.current.querySelectorAll(
+              'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
+            )
+          );
+          if (focusableEls.length === 0) return;
+
+          const first = focusableEls[0];
+          const last = focusableEls[focusableEls.length - 1];
+
+          if (e.shiftKey) {
+            if (document.activeElement === first) {
+              e.preventDefault();
+              last.focus();
+            }
+          } else {
+            if (document.activeElement === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        }
+      };
+
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    } else {
+      // Restore focus when modal closes
+      if (returnFocusRef.current) {
+        returnFocusRef.current.focus();
+        returnFocusRef.current = null;
+      }
+    }
+  }, [designerOpen]);
 
   // Sync design hash to hidden input
   useEffect(() => {
@@ -179,7 +240,11 @@ export default function App() {
 
   return (
     <div
+      ref={isModal ? modalRef : undefined}
       className={wrapperClass}
+      role={isModal ? 'dialog' : undefined}
+      aria-modal={isModal ? 'true' : undefined}
+      aria-label={isModal ? __('Product designer', 'product-designer') : undefined}
       onClick={isModal ? (e) => { e.stopPropagation(); setDesignerOpen(false); } : undefined}
       onMouseDown={isModal ? (e) => e.stopPropagation() : undefined}
     >
@@ -198,7 +263,9 @@ export default function App() {
             onClick={handleSave}
             disabled={isSaving || !isDirty}
           >
-            {isSaving ? __('Saving...', 'product-designer') : savedRecently ? __('Saved!', 'product-designer') : __('Save Design', 'product-designer')}
+            <span aria-live="polite">
+              {isSaving ? __('Saving...', 'product-designer') : savedRecently ? __('Saved!', 'product-designer') : __('Save Design', 'product-designer')}
+            </span>
           </button>
           {isModal && (
             <button

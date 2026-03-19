@@ -34,6 +34,7 @@ export default function AddTab() {
           className={`pd-add-tools__btn${activeTool === 'add-text' ? ' pd-add-tools__btn--active' : ''}`}
           disabled={!isTypeAllowed('text')}
           onClick={() => handleToolClick('add-text')}
+          aria-label={!isTypeAllowed('text') ? __('Text not allowed on this view', 'product-designer') : __('Add text element', 'product-designer')}
           title={!isTypeAllowed('text') ? __('Text not allowed on this view', 'product-designer') : __('Add text', 'product-designer')}
         >
           {__('Text', 'product-designer')}
@@ -43,6 +44,7 @@ export default function AddTab() {
           className={`pd-add-tools__btn${activeTool === 'add-image' ? ' pd-add-tools__btn--active' : ''}`}
           disabled={!isTypeAllowed('image')}
           onClick={() => handleToolClick('add-image')}
+          aria-label={!isTypeAllowed('image') ? __('Images not allowed on this view', 'product-designer') : __('Add image element', 'product-designer')}
           title={!isTypeAllowed('image') ? __('Images not allowed on this view', 'product-designer') : __('Add image (jpg, png, webp)', 'product-designer')}
         >
           {__('Image', 'product-designer')}
@@ -52,6 +54,7 @@ export default function AddTab() {
           className={`pd-add-tools__btn${activeTool === 'add-svg' ? ' pd-add-tools__btn--active' : ''}`}
           disabled={!isTypeAllowed('svg')}
           onClick={() => handleToolClick('add-svg')}
+          aria-label={!isTypeAllowed('svg') ? __('SVGs not allowed on this view', 'product-designer') : __('Add SVG element', 'product-designer')}
           title={!isTypeAllowed('svg') ? __('SVGs not allowed on this view', 'product-designer') : __('Add SVG', 'product-designer')}
         >
           {__('SVG', 'product-designer')}

@@ -20,9 +20,13 @@ export default function Sidebar() {
 
   return (
     <div className="pd-sidebar">
-      <div className="pd-sidebar__tabs">
+      <div className="pd-sidebar__tabs" role="tablist" aria-label={__('Designer tools', 'product-designer')}>
         <button
           type="button"
+          role="tab"
+          id="pd-tab-add"
+          aria-selected={activeTab === 'add'}
+          aria-controls="pd-panel-add"
           className={`pd-sidebar__tab${activeTab === 'add' ? ' pd-sidebar__tab--active' : ''}`}
           onClick={() => setActiveTab('add')}
         >
@@ -30,6 +34,10 @@ export default function Sidebar() {
         </button>
         <button
           type="button"
+          role="tab"
+          id="pd-tab-element"
+          aria-selected={activeTab === 'element'}
+          aria-controls="pd-panel-element"
           className={`pd-sidebar__tab${activeTab === 'element' ? ' pd-sidebar__tab--active' : ''}`}
           onClick={() => setActiveTab('element')}
           disabled={!selectedObject}
@@ -38,6 +46,10 @@ export default function Sidebar() {
         </button>
         <button
           type="button"
+          role="tab"
+          id="pd-tab-views"
+          aria-selected={activeTab === 'views'}
+          aria-controls="pd-panel-views"
           className={`pd-sidebar__tab${activeTab === 'views' ? ' pd-sidebar__tab--active' : ''}`}
           onClick={() => setActiveTab('views')}
         >
@@ -45,9 +57,21 @@ export default function Sidebar() {
         </button>
       </div>
       <div className="pd-sidebar__content">
-        {activeTab === 'add' && <AddTab />}
-        {activeTab === 'element' && <ElementTab />}
-        {activeTab === 'views' && <ViewsTab />}
+        {activeTab === 'add' && (
+          <div role="tabpanel" id="pd-panel-add" aria-labelledby="pd-tab-add">
+            <AddTab />
+          </div>
+        )}
+        {activeTab === 'element' && (
+          <div role="tabpanel" id="pd-panel-element" aria-labelledby="pd-tab-element">
+            <ElementTab />
+          </div>
+        )}
+        {activeTab === 'views' && (
+          <div role="tabpanel" id="pd-panel-views" aria-labelledby="pd-tab-views">
+            <ViewsTab />
+          </div>
+        )}
       </div>
     </div>
   );

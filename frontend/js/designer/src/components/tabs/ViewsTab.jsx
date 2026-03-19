@@ -15,11 +15,13 @@ export default function ViewsTab() {
   return (
     <div className="pd-sidebar__tab-content">
       <h3 className="pd-sidebar__heading">{__('Views', 'product-designer')}</h3>
-      <div className="pd-views">
+      <div className="pd-views" role="tablist" aria-label={__('Product views', 'product-designer')}>
         {views.map((view, i) => (
           <button
             type="button"
+            role="tab"
             key={view.id || i}
+            aria-selected={i === currentViewIndex}
             className={`pd-views__btn${i === currentViewIndex ? ' pd-views__btn--active' : ''}`}
             onClick={() => handleSwitch(i)}
           >
