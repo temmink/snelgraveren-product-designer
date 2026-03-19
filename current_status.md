@@ -135,10 +135,30 @@ bash bin/package.sh
 
 ---
 
-## What's next
+### Phase 6 — Polish ✅
 
-### Phase 6 — Polish
-- i18n/l10n, accessibility, performance, end-to-end tests
+#### 6.1 Internationalization (i18n)
+- **PHP:** `load_plugin_textdomain` on `plugins_loaded` (priority 1), all user-facing strings wrapped in `__()` / `esc_html__()`
+- **JavaScript:** `@wordpress/i18n` externalized in Vite (both admin and frontend builds), `wp_set_script_translations` for both script handles
+- **Admin JSX:** All 9 components wrapped (`App`, `ViewTabs`, `Canvas`, `ZoneForm`, `TreePanel`, `TreeNode`, `PermissionsPanel`, `PricingPanel`, `GlobalSettings`)
+- **Frontend JSX:** All 6 components wrapped (`App`, `Sidebar`, `DesignerCanvas`, `AddTab`, `ElementTab`, `ViewsTab`)
+- **Translations:** `.pot` file (143 strings), Dutch `.po`/`.mo`/`.json` translation files in `languages/`
+
+#### 6.2 Accessibility (a11y)
+- **Frontend:** ARIA roles (`tablist`, `tab`, `tabpanel`) on sidebar tabs and view tabs, `aria-selected`, `aria-label` on icon buttons, `aria-live="polite"` on save status, `role="dialog"` + `aria-modal` on modal, focus trapping (Tab/Shift+Tab wrapping, Escape to close), focus restore on modal close
+- **Admin:** `aria-label` on tree panel action buttons (drag, add, visibility, lock, delete)
+- **CSS:** `:focus-visible` outlines on all interactive elements (both admin and frontend), `.pd-sr-only` screen-reader utility class
+
+#### 6.3 Performance
+- **Batch queries:** `count_views_batch()` and `count_products_batch()` in `TemplateRepository` — 2 queries instead of 2N for template list
+- **Transient caching:** `get()` method in `TemplateRepository` uses 5-minute WordPress transients, invalidated on create/update/delete
+
+#### 6.4 Testing
+- **PHPUnit** (Docker): 44+ tests across 11 test files — repositories (CRUD, batch counts), security (upload validation, capabilities, nonces), pricing (per-element, empty designs), exporters (SVG/PDF/PNG rendering), API endpoints (templates, designs)
+- **Jest** (local): 71 tests — Zustand store tests (useTemplateStore, useDesignerStore), component tests (Sidebar, AddTab, ViewsTab)
+- **Playwright E2E** (local): 9 tests — admin template list/builder, customer design flow, export flow
+- **Config files:** `phpunit.xml`, `jest.config.js`, `babel.config.js`, `playwright.config.js`
+- **Test commands:** `npm test` (Jest), `npm run test:e2e` (Playwright), `docker compose exec wordpress bash -c "cd wp-content/plugins/product-designer && phpunit"` (PHPUnit)
 
 ---
 
@@ -149,7 +169,10 @@ product-designer/
 ├── product-designer.php          # Plugin bootstrap + HPOS + update-protection filter
 ├── uninstall.php                 # Drops all wp_pd_* tables
 ├── composer.json / composer.lock
-├── package.json / vite.config.js
+├── package.json / vite.config.mjs
+├── jest.config.js / babel.config.js  # Jest test config
+├── playwright.config.js          # E2E test config
+├── phpunit.xml                   # PHPUnit config
 ├── bin/package.sh                # Build + zip for distribution
 ├── CLAUDE.md                     # Coding standards
 ├── current_status.md             # This file
@@ -207,17 +230,40 @@ product-designer/
 │       ├── PermissionsPanel.jsx
 │       ├── PricingPanel.jsx
 │       └── GlobalSettings.jsx
-└── frontend/js/designer/src/
-    ├── index.jsx
-    ├── App.jsx                   # Template loading, save flow, display modes
-    ├── designer.css              # Isolated styles, layout, modal, components
-    ├── api/designerApi.js        # REST API helpers
-    ├── store/useDesignerStore.js  # Zustand state management
-    └── components/
-        ├── DesignerCanvas.jsx    # Fabric.js canvas, zones, tools, permissions
-        ├── Sidebar.jsx           # Three-tab sidebar wrapper
-        └── tabs/
-            ├── AddTab.jsx        # Text/Image/SVG tool buttons
-            ├── ElementTab.jsx    # Element property controls
-            └── ViewsTab.jsx      # View switcher
+├── frontend/js/designer/src/
+│   ├── index.jsx
+│   ├── App.jsx                   # Template loading, save flow, display modes
+│   ├── designer.css              # Isolated styles, layout, modal, components
+│   ├── api/designerApi.js        # REST API helpers
+│   ├── store/useDesignerStore.js  # Zustand state management
+│   └── components/
+│       ├── DesignerCanvas.jsx    # Fabric.js canvas, zones, tools, permissions
+│       ├── Sidebar.jsx           # Three-tab sidebar wrapper
+│       └── tabs/
+│           ├── AddTab.jsx        # Text/Image/SVG tool buttons
+│           ├── ElementTab.jsx    # Element property controls
+│           └── ViewsTab.jsx      # View switcher
+├── languages/
+│   ├── product-designer.pot          # Translation template (143 strings)
+│   ├── product-designer-nl_NL.po     # Dutch translations
+│   ├── product-designer-nl_NL.mo     # Compiled Dutch translations
+│   └── product-designer-nl_NL-*.json # JS Dutch translations
+└── tests/
+    ├── php/
+    │   ├── bootstrap.php
+    │   ├── Database/             # TemplateRepositoryTest, DesignRepositoryTest
+    │   ├── Security/             # UploadValidatorTest, CapabilityCheckerTest, NonceManagerTest
+    │   ├── Pricing/              # PriceCalculatorTest
+    │   ├── Export/               # SvgExporterTest, PdfExporterTest, PngExporterTest
+    │   └── API/                  # TemplateEndpointTest, DesignEndpointTest
+    ├── js/
+    │   ├── setup.js
+    │   ├── __mocks__/            # styleMock, wpI18n, fabric
+    │   ├── stores/               # useTemplateStore.test.js, useDesignerStore.test.js
+    │   └── components/           # Sidebar.test.js, AddTab.test.js, ViewsTab.test.js
+    └── e2e/
+        ├── global-setup.js
+        ├── admin-template.spec.js
+        ├── customer-design.spec.js
+        └── export.spec.js
 ```
