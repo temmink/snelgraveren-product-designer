@@ -16,6 +16,21 @@ class RestDesigns {
     }
 
     /**
+     * Strip internal sequential IDs from design data before sending to non-admin users.
+     * CLAUDE.md rule 4: "Never expose sequential IDs — designs use CSPRNG hashes".
+     */
+    private function sanitize_for_customer(array $design): array {
+        unset($design['id'], $design['template_id'], $design['customer_id']);
+        if (!empty($design['views'])) {
+            $design['views'] = array_map(function ($view) {
+                unset($view['id'], $view['design_id']);
+                return $view;
+            }, $design['views']);
+        }
+        return $design;
+    }
+
+    /**
      * Verify the WP REST nonce is present and valid.
      * This prevents CSRF on write operations.
      */
@@ -83,7 +98,7 @@ class RestDesigns {
         $body['session_id']  = CapabilityChecker::current_session_id();
 
         $id = $this->repo->create($body);
-        return new \WP_REST_Response($this->repo->get($id), 201);
+        return new \WP_REST_Response($this->sanitize_for_customer($this->repo->get($id)), 201);
     }
 
     public function get_design(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
@@ -94,7 +109,7 @@ class RestDesigns {
         if (!$this->owns_design($design)) {
             return new \WP_Error('forbidden', 'Access denied.', ['status' => 403]);
         }
-        return rest_ensure_response($design);
+        return rest_ensure_response($this->sanitize_for_customer($design));
     }
 
     public function update_design(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
@@ -106,7 +121,7 @@ class RestDesigns {
         if (!empty($body['status'])) {
             $this->repo->update_status((int) $design['id'], $body['status']);
         }
-        return rest_ensure_response($this->repo->get_by_hash($request['hash']));
+        return rest_ensure_response($this->sanitize_for_customer($this->repo->get_by_hash($request['hash'])));
     }
 
     public function delete_design(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
@@ -135,7 +150,7 @@ class RestDesigns {
         }
 
         $this->repo->upsert_view((int) $design['id'], $view_id, $json, $thumb_url);
-        return new \WP_REST_Response($this->repo->get_by_hash($request['hash']), 200);
+        return new \WP_REST_Response($this->sanitize_for_customer($this->repo->get_by_hash($request['hash'])), 200);
     }
 
     private function save_thumbnail_file(string $hash, int $view_id, string $data_url): string {
@@ -145,7 +160,7 @@ class RestDesigns {
         // Create directory if needed (wp_mkdir_p is safe to call if it already exists)
         wp_mkdir_p($pd_dir);
 
-        // Protect directory from browsing — write guards unconditionally to avoid TOCTOU race
+        // Protect directory from browsing
         if (!file_exists($pd_dir . '/index.php')) {
             file_put_contents($pd_dir . '/index.php', '<?php // Silence is golden.');
         }
@@ -156,6 +171,11 @@ class RestDesigns {
         $base64  = str_replace('data:image/png;base64,', '', $data_url);
         $decoded = base64_decode($base64, true);
         if (!$decoded) {
+            return '';
+        }
+
+        // Validate PNG magic bytes: \x89PNG\r\n\x1a\n
+        if (strlen($decoded) < 8 || substr($decoded, 0, 8) !== "\x89PNG\r\n\x1a\n") {
             return '';
         }
 

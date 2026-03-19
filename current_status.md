@@ -174,6 +174,63 @@ bash bin/package.sh
 
 ---
 
+### Admin Builder Redesign ✅
+
+All 3 phases from the redesign spec (`docs/superpowers/specs/2026-03-18-admin-builder-redesign-design.md`) are complete:
+
+#### Phase 1: Zone Enforcement ✅
+- **ClipPath on layers:** `applyZoneClip()` in Canvas.jsx — supports both rect and SVG boundaries
+- **Clamp-to-zone:** `clampToZone()` on `object:moving` event
+- **Scale clamping:** `clampScaleToZone()` on `object:scaling` — enforces min/max scale from permissions
+- **Snap-to-grid:** `snapToGrid()` rounds position to `permissions.grid_size`
+- **Max chars:** `text:changed` event handler truncates to `permissions.max_chars`
+- **Free Move toggle:** `isFreeMove` state in store, toolbar button, bypasses all enforcement when on
+
+#### Phase 2: Tree UI ✅
+- **TreePanel.jsx + TreeNode.jsx:** Replace old ZoneList + LayerPanel
+- **Nested store shape:** Layers stored inside `zones_config[].layers` (not flat `layers_config`)
+- **Migration:** `migrateViewToNestedLayers()` converts old flat templates on load (idempotent)
+- **Store actions:** `addLayer(viewIndex, zoneIndex, layer)`, `moveLayer()` with cross-zone support
+- **Drag-and-drop:** `@dnd-kit` for reordering within/between zones with `allowed_types` validation
+- **Old files removed:** `ZoneList.jsx` and `LayerPanel.jsx` deleted
+
+#### Phase 3: SVG Zone Boundaries ✅
+- **ZoneForm.jsx:** Boundary type toggle (Rectangle/SVG Shape), media library SVG picker
+- **svgPathUtils.js:** `parseSvgToFabric()`, `extractSvgBoundingBox()`, backward-compat `extractClosedPath()`
+- **Canvas rendering:** SVG zones loaded as Fabric groups with proper styling and metadata
+- **SVG clipPath:** Both admin Canvas.jsx and frontend DesignerCanvas.jsx clone SVG zone overlays for clipping
+
+---
+
+### Code Review Fixes ✅
+
+Full code review performed 2026-03-19 (17 findings, all resolved):
+
+#### Critical (3)
+- **Nonce verification on design write endpoints** — POST/PUT/DELETE require `X-WP-Nonce` via `verify_nonce()` permission callback
+- **Nonce verification on upload endpoint** — Same pattern prevents unauthenticated uploads
+- **Export download hardened** — Filename sanitized, `nocache_headers()`, `X-Content-Type-Options: nosniff`
+
+#### Important (8)
+- **Sale price respected** — `get_price()` instead of `get_regular_price()` in CartSurcharge
+- **SQL prepare policy** — `$wpdb->prepare()` for all queries, phpcs comments where no user input
+- **Block checkout duplicate product attribution** — Tracks assigned hashes to prevent duplication
+- **Fabric.js whitelist case-insensitive** — `Set` with both PascalCase and lowercase forms
+- **Cart recursion guard** — Static `$running` flag instead of `did_action()` counter
+- **Price log refresh** — `PriceRepository::delete_for_design()` clears stale logs before re-logging
+- **`$format` arrays** — All `$wpdb->insert()/update()/delete()` across 4 repositories
+- **TOCTOU on thumbnail dir** — `wp_mkdir_p()` always called, `.htaccess` guard added
+
+#### Suggestions (6)
+- **ENUM includes 'trashed'** — Migration schema matches `trash()` method
+- **Shared `FileUtils::url_to_local_path()`** — Extracted from 3 exporters into `Export\FileUtils`
+- **Repository pattern in `admin_list()`** — Uses `DesignRepository::list()/count()` instead of raw `$wpdb`
+- **Offscreen thumbnail errors logged** — `console.warn` in dev mode
+- **N+1 query fixed** — `list_templates` uses `count_views_batch()`
+- **Build order-independent** — `rm -rf dist` before builds, both entries use `emptyOutDir: false`
+
+---
+
 ## File map (source only, excluding build artifacts)
 
 ```
@@ -215,6 +272,7 @@ product-designer/
 │   │   └── class-rest-exports.php    # trigger, download, list, delete
 │   ├── Export/
 │   │   ├── class-export-manager.php     # Orchestrator + order status hook
+│   │   ├── class-file-utils.php         # Shared url_to_local_path() utility
 │   │   ├── class-svg-exporter.php       # SVG from Fabric.js JSON
 │   │   ├── class-png-exporter.php       # PNG via Intervention Image
 │   │   └── class-pdf-exporter.php       # PDF via TCPDF
@@ -223,6 +281,7 @@ product-designer/
 │   │   └── class-price-calculator.php    # Server-side surcharge calculation
 │   └── Admin/
 │       ├── class-admin.php
+│       ├── class-product-integration.php # WooCommerce product editor tab
 │       ├── class-template-list-table.php
 │       ├── class-template-builder.php
 │       └── views/
@@ -233,12 +292,15 @@ product-designer/
 │   ├── App.jsx
 │   ├── api/templateApi.js
 │   ├── store/useTemplateStore.js
+│   └── utils/
+│       ├── fonts.js                 # Google Fonts loader
+│       └── svgPathUtils.js          # SVG path extraction utilities
 │   └── components/
 │       ├── Canvas.jsx
 │       ├── ViewTabs.jsx
 │       ├── ZoneForm.jsx
-│       ├── ZoneList.jsx
-│       ├── LayerPanel.jsx
+│       ├── TreePanel.jsx            # Zone/layer tree (replaced ZoneList + LayerPanel)
+│       ├── TreeNode.jsx             # Recursive tree node component
 │       ├── PermissionsPanel.jsx
 │       ├── PricingPanel.jsx
 │       └── GlobalSettings.jsx

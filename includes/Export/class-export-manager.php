@@ -123,11 +123,19 @@ class ExportManager {
         }
 
         $path = $export['file_path'];
-        if (!empty($path) && file_exists($path)) {
-            return $path;
+        if (empty($path) || !file_exists($path)) {
+            return '';
         }
 
-        return '';
+        // Ensure path is within the expected export directory to prevent path traversal
+        $upload_dir  = wp_upload_dir();
+        $exports_dir = realpath($upload_dir['basedir'] . '/pd-exports');
+        $real_path   = realpath($path);
+        if (!$exports_dir || !$real_path || !str_starts_with($real_path, $exports_dir . '/')) {
+            return '';
+        }
+
+        return $real_path;
     }
 
     private function export_pdf(array $views, array $template, string $dir, string $file_name): string {
