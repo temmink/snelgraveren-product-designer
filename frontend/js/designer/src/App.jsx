@@ -106,6 +106,7 @@ export default function App() {
   const handleSave = async () => {
     clearError();
     setIsSaving(true);
+    const saveStart = Date.now();
 
     try {
       let hash = designHash;
@@ -144,12 +145,18 @@ export default function App() {
         }
       }
 
+      // Ensure "Saving..." shows for at least 600ms so the user sees feedback
+      const elapsed = Date.now() - saveStart;
+      if (elapsed < 600) {
+        await new Promise((r) => setTimeout(r, 600 - elapsed));
+      }
+
+      setIsSaving(false);
       setIsDirty(false);
       setSavedRecently(true);
       setTimeout(() => setSavedRecently(false), 2000);
     } catch (err) {
       setError(err.message);
-    } finally {
       setIsSaving(false);
     }
   };
