@@ -68,7 +68,7 @@ class Admin {
         if (file_exists($asset_file)) {
             $asset   = include $asset_file;
             $version = $asset['version'] ?? PD_VERSION;
-            $deps    = $asset['dependencies'] ?? $deps;
+            $deps    = array_unique(array_merge($asset['dependencies'] ?? [], ['wp-i18n']));
         }
 
         wp_enqueue_media();

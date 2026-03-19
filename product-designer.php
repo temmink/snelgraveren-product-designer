@@ -50,10 +50,10 @@ add_filter('site_transient_update_plugins', function ($transient) {
     return $transient;
 });
 
-// Load plugin text domain for translations
-add_action('init', function () {
+// Load plugin text domain before booting so translated strings in plugins_loaded work
+add_action('plugins_loaded', function () {
     load_plugin_textdomain('product-designer', false, dirname(plugin_basename(__FILE__)) . '/languages');
-});
+}, 1);
 
 // Boot plugin
 add_action('plugins_loaded', function () {
