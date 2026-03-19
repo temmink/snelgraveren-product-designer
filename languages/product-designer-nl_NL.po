@@ -1,0 +1,970 @@
+# Dutch translation of Product Designer for WooCommerce
+# Copyright (C) 2026 Martin Temmink
+# This file is distributed under the GPL-2.0-or-later.
+# Martin Temmink <martin@example.com>, 2026.
+msgid ""
+msgstr ""
+"Project-Id-Version: Product Designer for WooCommerce 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/product-designer\n"
+"POT-Creation-Date: 2026-03-19T13:15:57+00:00\n"
+"PO-Revision-Date: 2026-03-19 14:00+0000\n"
+"Last-Translator: Martin Temmink <martin@example.com>\n"
+"Language-Team: Dutch <nl@li.org>\n"
+"Language: nl_NL\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Manual\n"
+"X-Domain: product-designer\n"
+
+#. Plugin Name of the plugin
+#: product-designer.php
+msgid "Product Designer for WooCommerce"
+msgstr "Product Designer voor WooCommerce"
+
+#. Plugin URI of the plugin
+#: product-designer.php
+msgid "https://example.com/product-designer"
+msgstr "https://example.com/product-designer"
+
+#. Description of the plugin
+#: product-designer.php
+msgid "Let customers personalise products with text, images, and SVGs using a drag-and-drop editor."
+msgstr "Laat klanten producten personaliseren met tekst, afbeeldingen en SVG's via een drag-and-drop editor."
+
+#. Author of the plugin
+#: product-designer.php
+msgid "Martin Temmink"
+msgstr "Martin Temmink"
+
+#: includes/Admin/class-admin.php:20
+#: includes/Admin/class-admin.php:21
+#: includes/Admin/class-product-integration.php:18
+msgid "Product Designer"
+msgstr "Product Designer"
+
+#: includes/Admin/class-admin.php:31
+#: includes/Admin/class-admin.php:32
+#: includes/Admin/views/template-list.php:9
+msgid "Templates"
+msgstr "Sjablonen"
+
+#: includes/Admin/class-admin.php:40
+msgid "Template Builder"
+msgstr "Sjabloon Bewerken"
+
+#: includes/Admin/class-admin.php:41
+#: includes/Admin/views/template-list.php:11
+msgid "Add New"
+msgstr "Nieuw Toevoegen"
+
+#: includes/Admin/class-product-integration.php:42
+msgid "Enable Designer"
+msgstr "Designer Inschakelen"
+
+#: includes/Admin/class-product-integration.php:43
+msgid "Allow customers to personalise this product."
+msgstr "Klanten toestaan dit product te personaliseren."
+
+#: includes/Admin/class-product-integration.php:47
+msgid "— Select template —"
+msgstr "— Selecteer sjabloon —"
+
+#: includes/Admin/class-product-integration.php:54
+msgid "Template"
+msgstr "Sjabloon"
+
+#: includes/Admin/class-product-integration.php:61
+msgid "Display Mode"
+msgstr "Weergavemodus"
+
+#: includes/Admin/class-product-integration.php:63
+msgid "Embedded on product page"
+msgstr "Ingesloten op productpagina"
+
+#: includes/Admin/class-product-integration.php:64
+msgid "Open in modal popup"
+msgstr "Openen in pop-upvenster"
+
+#: includes/Admin/class-template-list-table.php:36
+msgid "Title"
+msgstr "Titel"
+
+#: includes/Admin/class-template-list-table.php:37
+msgid "Status"
+msgstr "Status"
+
+#: includes/Admin/class-template-list-table.php:38
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/components/Sidebar.jsx:44
+#: frontend/js/designer/src/components/tabs/ViewsTab.jsx:17
+msgid "Views"
+msgstr "Weergaven"
+
+#: includes/Admin/class-template-list-table.php:39
+msgid "Products"
+msgstr "Producten"
+
+#: includes/Admin/class-template-list-table.php:40
+msgid "Created"
+msgstr "Aangemaakt"
+
+#: includes/Admin/class-template-list-table.php:55
+#: includes/Admin/class-template-list-table.php:166
+msgid "Restore"
+msgstr "Herstellen"
+
+#: includes/Admin/class-template-list-table.php:56
+#: includes/Admin/class-template-list-table.php:168
+msgid "Delete Permanently"
+msgstr "Definitief Verwijderen"
+
+#: includes/Admin/class-template-list-table.php:60
+msgid "Publish"
+msgstr "Publiceren"
+
+#: includes/Admin/class-template-list-table.php:61
+msgid "Archive"
+msgstr "Archiveren"
+
+#: includes/Admin/class-template-list-table.php:62
+msgid "Move to Trash"
+msgstr "Naar Prullenbak"
+
+#: includes/Admin/class-template-list-table.php:180
+msgid "Edit"
+msgstr "Bewerken"
+
+#: includes/Admin/class-template-list-table.php:181
+#: includes/Admin/class-template-list-table.php:228
+msgid "Trash"
+msgstr "Prullenbak"
+
+#: includes/Admin/class-template-list-table.php:190
+#: includes/Admin/class-template-list-table.php:221
+#: admin/js/template-builder/src/App.jsx:156
+#: dist/admin-template-builder.js:533
+msgid "Draft"
+msgstr "Concept"
+
+#: includes/Admin/class-template-list-table.php:191
+#: includes/Admin/class-template-list-table.php:222
+#: admin/js/template-builder/src/App.jsx:157
+#: dist/admin-template-builder.js:533
+msgid "Published"
+msgstr "Gepubliceerd"
+
+#: includes/Admin/class-template-list-table.php:192
+#: includes/Admin/class-template-list-table.php:223
+#: admin/js/template-builder/src/App.jsx:158
+#: dist/admin-template-builder.js:533
+msgid "Archived"
+msgstr "Gearchiveerd"
+
+#: includes/Admin/class-template-list-table.php:193
+msgid "Trashed"
+msgstr "Verwijderd"
+
+#: includes/Admin/class-template-list-table.php:220
+msgid "All"
+msgstr "Alles"
+
+#: includes/Admin/views/template-list.php:17
+msgid "Template moved to Trash."
+msgstr "Sjabloon naar prullenbak verplaatst."
+
+#: includes/Admin/views/template-list.php:20
+msgid "Template restored."
+msgstr "Sjabloon hersteld."
+
+#: includes/Admin/views/template-list.php:23
+msgid "Template permanently deleted."
+msgstr "Sjabloon definitief verwijderd."
+
+#: includes/Admin/views/template-list.php:31
+msgid "Search Templates"
+msgstr "Sjablonen Zoeken"
+
+#: includes/Frontend/class-frontend.php:65
+#: includes/Frontend/class-order-integration.php:96
+#: includes/Frontend/class-order-integration.php:117
+msgid "Custom design"
+msgstr "Aangepast ontwerp"
+
+#: includes/Frontend/class-frontend.php:91
+msgid "Custom Design"
+msgstr "Aangepast Ontwerp"
+
+#: includes/Frontend/class-frontend.php:92
+msgid "Your custom product design"
+msgstr "Uw aangepaste productontwerp"
+
+#: includes/Frontend/class-frontend.php:103
+#: includes/Frontend/class-order-integration.php:135
+msgid "Design"
+msgstr "Ontwerp"
+
+#: includes/Frontend/class-frontend.php:104
+#: includes/Frontend/class-order-integration.php:136
+msgid "Customized"
+msgstr "Aangepast"
+
+#: includes/Frontend/class-frontend.php:144
+msgid "Your custom design"
+msgstr "Uw aangepaste ontwerp"
+
+#: includes/Frontend/class-frontend.php:231
+msgid "Customize Product"
+msgstr "Product Aanpassen"
+
+#: includes/Frontend/class-order-integration.php:167
+msgid "Export Design:"
+msgstr "Ontwerp Exporteren:"
+
+#: includes/Pricing/class-cart-surcharge.php:68
+msgid "Design surcharge"
+msgstr "Ontwerptoeslag"
+
+#: admin/js/template-builder/src/App.jsx:14
+#: dist/admin-template-builder.js:533
+msgid "Structure"
+msgstr "Structuur"
+
+#: admin/js/template-builder/src/App.jsx:15
+#: dist/admin-template-builder.js:533
+msgid "Permissions"
+msgstr "Rechten"
+
+#: admin/js/template-builder/src/App.jsx:16
+#: dist/admin-template-builder.js:533
+msgid "Pricing"
+msgstr "Prijzen"
+
+#: admin/js/template-builder/src/App.jsx:17
+#: dist/admin-template-builder.js:533
+msgid "Settings"
+msgstr "Instellingen"
+
+#: admin/js/template-builder/src/App.jsx:48
+#: dist/admin-template-builder.js:533
+msgid "Front"
+msgstr "Voorkant"
+
+#: admin/js/template-builder/src/App.jsx:70
+#: dist/admin-template-builder.js:533
+msgid "Title is required."
+msgstr "Titel is verplicht."
+
+#: admin/js/template-builder/src/App.jsx:124
+#: dist/admin-template-builder.js:533
+msgid "Save failed."
+msgstr "Opslaan mislukt."
+
+#: admin/js/template-builder/src/App.jsx:133
+#: dist/admin-template-builder.js:533
+msgid "Loading template…"
+msgstr "Sjabloon laden…"
+
+#: admin/js/template-builder/src/App.jsx:142
+#: dist/admin-template-builder.js:533
+msgid "← Templates"
+msgstr "← Sjablonen"
+
+#: admin/js/template-builder/src/App.jsx:149
+#: dist/admin-template-builder.js:533
+msgid "Template title…"
+msgstr "Sjabloontitel…"
+
+#: admin/js/template-builder/src/App.jsx:165
+#: dist/admin-template-builder.js:533
+msgid "Saving…"
+msgstr "Opslaan…"
+
+#: admin/js/template-builder/src/App.jsx:165
+#: dist/admin-template-builder.js:533
+msgid "Save"
+msgstr "Opslaan"
+
+#: admin/js/template-builder/src/App.jsx:165
+#: dist/admin-template-builder.js:533
+msgid "Saved ✓"
+msgstr "Opgeslagen ✓"
+
+#: admin/js/template-builder/src/components/Canvas.jsx:737
+#: dist/admin-template-builder.js:529
+msgid "Select Background Image"
+msgstr "Achtergrondafbeelding Selecteren"
+
+#: admin/js/template-builder/src/components/Canvas.jsx:738
+#: admin/js/template-builder/src/components/Canvas.jsx:805
+#: dist/admin-template-builder.js:529
+msgid "Set Background"
+msgstr "Achtergrond Instellen"
+
+#: admin/js/template-builder/src/components/Canvas.jsx:796
+#: dist/admin-template-builder.js:529
+msgid "Enable zone enforcement"
+msgstr "Zone-afdwinging inschakelen"
+
+#: admin/js/template-builder/src/components/Canvas.jsx:796
+#: dist/admin-template-builder.js:529
+msgid "Disable zone enforcement for free positioning"
+msgstr "Zone-afdwinging uitschakelen voor vrije plaatsing"
+
+#: admin/js/template-builder/src/components/Canvas.jsx:798
+#: dist/admin-template-builder.js:529
+msgid "Enforce Zones"
+msgstr "Zones Afdwingen"
+
+#: admin/js/template-builder/src/components/Canvas.jsx:798
+#: dist/admin-template-builder.js:529
+msgid "Free Move"
+msgstr "Vrij Bewegen"
+
+#: admin/js/template-builder/src/components/Canvas.jsx:803
+#: dist/admin-template-builder.js:529
+msgid "Set background image"
+msgstr "Achtergrondafbeelding instellen"
+
+#: admin/js/template-builder/src/components/Canvas.jsx:805
+#: dist/admin-template-builder.js:529
+msgid "Change Background"
+msgstr "Achtergrond Wijzigen"
+
+#: admin/js/template-builder/src/components/Canvas.jsx:811
+#: dist/admin-template-builder.js:529
+msgid "Remove background image"
+msgstr "Achtergrondafbeelding verwijderen"
+
+#: admin/js/template-builder/src/components/Canvas.jsx:813
+#: dist/admin-template-builder.js:529
+msgid "Remove BG"
+msgstr "Achtergrond Verwijderen"
+
+#: admin/js/template-builder/src/components/Canvas.jsx:820
+#: dist/admin-template-builder.js:529
+msgid "Undo (Ctrl+Z)"
+msgstr "Ongedaan maken (Ctrl+Z)"
+
+#: admin/js/template-builder/src/components/Canvas.jsx:822
+#: dist/admin-template-builder.js:529
+msgid "↩ Undo"
+msgstr "↩ Ongedaan maken"
+
+#: admin/js/template-builder/src/components/Canvas.jsx:828
+#: dist/admin-template-builder.js:529
+msgid "Redo (Ctrl+Shift+Z)"
+msgstr "Opnieuw uitvoeren (Ctrl+Shift+Z)"
+
+#: admin/js/template-builder/src/components/Canvas.jsx:830
+#: dist/admin-template-builder.js:529
+msgid "↪ Redo"
+msgstr "↪ Opnieuw uitvoeren"
+
+#: admin/js/template-builder/src/components/GlobalSettings.jsx:42
+#: dist/admin-template-builder.js:533
+msgid "Color Picker"
+msgstr "Kleurenkiezer"
+
+#: admin/js/template-builder/src/components/GlobalSettings.jsx:46
+#: dist/admin-template-builder.js:533
+msgid "Enable color picker"
+msgstr "Kleurenkiezer inschakelen"
+
+#: admin/js/template-builder/src/components/GlobalSettings.jsx:53
+#: dist/admin-template-builder.js:533
+msgid "Allow any color (full picker)"
+msgstr "Elke kleur toestaan (volledige kiezer)"
+
+#: admin/js/template-builder/src/components/GlobalSettings.jsx:73
+#: admin/js/template-builder/src/components/GlobalSettings.jsx:74
+#: dist/admin-template-builder.js:533
+msgid "Pick a color"
+msgstr "Kies een kleur"
+
+#: admin/js/template-builder/src/components/GlobalSettings.jsx:80
+#: dist/admin-template-builder.js:533
+msgid "Add selected color"
+msgstr "Geselecteerde kleur toevoegen"
+
+#: admin/js/template-builder/src/components/GlobalSettings.jsx:82
+#: admin/js/template-builder/src/components/TreePanel.jsx:276
+#: dist/admin-template-builder.js:533
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/components/Sidebar.jsx:29
+msgid "Add"
+msgstr "Toevoegen"
+
+#: admin/js/template-builder/src/components/GlobalSettings.jsx:92
+#: dist/admin-template-builder.js:533
+msgid "Font Picker"
+msgstr "Lettertypekiezer"
+
+#: admin/js/template-builder/src/components/GlobalSettings.jsx:96
+#: dist/admin-template-builder.js:533
+msgid "Enable font picker"
+msgstr "Lettertypekiezer inschakelen"
+
+#: admin/js/template-builder/src/components/GlobalSettings.jsx:107
+#: dist/admin-template-builder.js:533
+msgid "Image Upload Restrictions"
+msgstr "Beperkingen voor afbeeldingen uploaden"
+
+#: admin/js/template-builder/src/components/GlobalSettings.jsx:109
+#: dist/admin-template-builder.js:533
+msgid "Max file size (MB)"
+msgstr "Maximale bestandsgrootte (MB)"
+
+#: admin/js/template-builder/src/components/GlobalSettings.jsx:116
+#: dist/admin-template-builder.js:533
+msgid "Min width (px)"
+msgstr "Minimale breedte (px)"
+
+#: admin/js/template-builder/src/components/GlobalSettings.jsx:123
+#: dist/admin-template-builder.js:533
+msgid "Min height (px)"
+msgstr "Minimale hoogte (px)"
+
+#: admin/js/template-builder/src/components/GlobalSettings.jsx:130
+#: dist/admin-template-builder.js:533
+msgid "Min DPI"
+msgstr "Minimale DPI"
+
+#: admin/js/template-builder/src/components/GlobalSettings.jsx:137
+#: dist/admin-template-builder.js:533
+msgid "Allowed types:"
+msgstr "Toegestane typen:"
+
+#: admin/js/template-builder/src/components/GlobalSettings.jsx:192
+#: dist/admin-template-builder.js:533
+msgid "Add a font..."
+msgstr "Lettertype toevoegen..."
+
+#: admin/js/template-builder/src/components/GlobalSettings.jsx:202
+#: dist/admin-template-builder.js:533
+msgid "No fonts selected. Customers won't be able to change fonts."
+msgstr "Geen lettertypen geselecteerd. Klanten kunnen geen lettertypen wijzigen."
+
+#: admin/js/template-builder/src/components/PermissionsPanel.jsx:53
+#: dist/admin-template-builder.js:533
+msgid "Min scale"
+msgstr "Minimale schaal"
+
+#: admin/js/template-builder/src/components/PermissionsPanel.jsx:62
+#: dist/admin-template-builder.js:533
+msgid "Max scale"
+msgstr "Maximale schaal"
+
+#: admin/js/template-builder/src/components/PermissionsPanel.jsx:72
+#: dist/admin-template-builder.js:533
+msgid "Grid size (px)"
+msgstr "Rastergrootte (px)"
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:27
+#: dist/admin-template-builder.js:533
+msgid "Pricing mode"
+msgstr "Prijsmodus"
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:33
+#: dist/admin-template-builder.js:533
+msgid "Per element"
+msgstr "Per element"
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:34
+#: dist/admin-template-builder.js:533
+msgid "Tier-based"
+msgstr "Op basis van niveaus"
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:41
+#: dist/admin-template-builder.js:533
+msgid "Element prices"
+msgstr "Elementprijzen"
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:43
+#: admin/js/template-builder/src/components/TreePanel.jsx:235
+#: admin/js/template-builder/src/components/TreePanel.jsx:295
+#: dist/admin-template-builder.js:533
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:39
+msgid "Text"
+msgstr "Tekst"
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:44
+#: dist/admin-template-builder.js:533
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:48
+msgid "Image"
+msgstr "Afbeelding"
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:45
+#: dist/admin-template-builder.js:533
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:57
+msgid "SVG"
+msgstr "SVG"
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:46
+#: dist/admin-template-builder.js:533
+msgid "Extra layer"
+msgstr "Extra laag"
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:63
+#: dist/admin-template-builder.js:533
+msgid "Tiers (element count → surcharge)"
+msgstr "Niveaus (aantal elementen → toeslag)"
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:66
+#: dist/admin-template-builder.js:533
+msgid "Min"
+msgstr "Min"
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:68
+#: dist/admin-template-builder.js:533
+msgid "Max"
+msgstr "Max"
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:74
+#: dist/admin-template-builder.js:533
+msgid "Remove tier"
+msgstr "Niveau verwijderen"
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:82
+#: dist/admin-template-builder.js:533
+msgid "Add Tier"
+msgstr "Niveau Toevoegen"
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:88
+#: dist/admin-template-builder.js:533
+msgid "Surcharge caps"
+msgstr "Toeslaglimieten"
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:90
+#: dist/admin-template-builder.js:533
+msgid "Minimum"
+msgstr "Minimum"
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:97
+#: dist/admin-template-builder.js:533
+msgid "Maximum cap"
+msgstr "Maximale limiet"
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:97
+#: dist/admin-template-builder.js:533
+msgid "leave blank for no cap"
+msgstr "leeg laten voor geen limiet"
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:101
+#: dist/admin-template-builder.js:533
+msgid "No cap"
+msgstr "Geen limiet"
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:22
+#: dist/admin-template-builder.js:533
+msgid "Unnamed Zone"
+msgstr "Naamloze Zone"
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:22
+#: admin/js/template-builder/src/components/TreePanel.jsx:326
+#: dist/admin-template-builder.js:533
+msgid "Layer"
+msgstr "Laag"
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:30
+#: dist/admin-template-builder.js:533
+msgid "Drag to reorder"
+msgstr "Slepen om te herschikken"
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:43
+#: dist/admin-template-builder.js:533
+msgid "Add layer"
+msgstr "Laag toevoegen"
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:49
+#: dist/admin-template-builder.js:533
+msgid "Show"
+msgstr "Tonen"
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:49
+#: dist/admin-template-builder.js:533
+msgid "Hide"
+msgstr "Verbergen"
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:54
+#: dist/admin-template-builder.js:533
+msgid "Unlock"
+msgstr "Ontgrendelen"
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:54
+#: dist/admin-template-builder.js:533
+msgid "Lock"
+msgstr "Vergrendelen"
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:59
+#: dist/admin-template-builder.js:533
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:56
+msgid "Delete"
+msgstr "Verwijderen"
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:125
+#: dist/admin-template-builder.js:533
+msgid "Add a boundary first to place layers."
+msgstr "Voeg eerst een begrenzing toe om lagen te plaatsen."
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:173
+#: dist/admin-template-builder.js:533
+msgid "+ Add Boundary"
+msgstr "+ Begrenzing Toevoegen"
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:175
+#: dist/admin-template-builder.js:533
+msgid "Saved Boundary"
+msgstr "Opgeslagen Begrenzing"
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:240
+#: dist/admin-template-builder.js:533
+msgid "Select SVG"
+msgstr "SVG Selecteren"
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:240
+#: dist/admin-template-builder.js:533
+msgid "Select Image"
+msgstr "Afbeelding Selecteren"
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:241
+#: dist/admin-template-builder.js:533
+msgid "Use"
+msgstr "Gebruiken"
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:268
+#: dist/admin-template-builder.js:533
+msgid "Layer name"
+msgstr "Laagtitel"
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:277
+#: admin/js/template-builder/src/components/ZoneForm.jsx:229
+#: dist/admin-template-builder.js:533
+msgid "Cancel"
+msgstr "Annuleren"
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:293
+#: dist/admin-template-builder.js:533
+msgid "Text Properties"
+msgstr "Teksteigenschappen"
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:299
+#: dist/admin-template-builder.js:533
+msgid "Font Size"
+msgstr "Lettergrootte"
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:303
+#: dist/admin-template-builder.js:533
+msgid "Font Family"
+msgstr "Lettertype"
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:311
+#: dist/admin-template-builder.js:533
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:128
+msgid "Color"
+msgstr "Kleur"
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:315
+#: admin/js/template-builder/src/components/TreePanel.jsx:341
+#: dist/admin-template-builder.js:533
+msgid "X"
+msgstr "X"
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:319
+#: admin/js/template-builder/src/components/TreePanel.jsx:345
+#: dist/admin-template-builder.js:533
+msgid "Y"
+msgstr "Y"
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:330
+#: dist/admin-template-builder.js:533
+msgid "Properties"
+msgstr "Eigenschappen"
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:332
+#: admin/js/template-builder/src/components/ZoneForm.jsx:58
+#: dist/admin-template-builder.js:533
+msgid "Name"
+msgstr "Naam"
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:337
+#: dist/admin-template-builder.js:533
+msgid "Preview"
+msgstr "Voorbeeld"
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:349
+#: dist/admin-template-builder.js:533
+msgid "Scale X"
+msgstr "Schaal X"
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:353
+#: dist/admin-template-builder.js:533
+msgid "Scale Y"
+msgstr "Schaal Y"
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:357
+#: admin/js/template-builder/src/components/ZoneForm.jsx:168
+#: dist/admin-template-builder.js:533
+msgid "Rotation"
+msgstr "Rotatie"
+
+#. translators: %d is the view number
+#: admin/js/template-builder/src/components/ViewTabs.jsx:18
+#: dist/admin-template-builder.js:529
+msgid "View"
+msgstr "Weergave"
+
+#: admin/js/template-builder/src/components/ViewTabs.jsx:80
+#: dist/admin-template-builder.js:529
+msgid "Double-click to rename"
+msgstr "Dubbelklikken om te hernoemen"
+
+#: admin/js/template-builder/src/components/ViewTabs.jsx:87
+#: admin/js/template-builder/src/components/ZoneForm.jsx:108
+#: dist/admin-template-builder.js:529
+#: dist/admin-template-builder.js:533
+msgid "Remove"
+msgstr "Verwijderen"
+
+#. translators: %s is the view name
+#: admin/js/template-builder/src/components/ViewTabs.jsx:92
+#: dist/admin-template-builder.js:529
+msgid "Remove view"
+msgstr "Weergave verwijderen"
+
+#: admin/js/template-builder/src/components/ViewTabs.jsx:107
+#: dist/admin-template-builder.js:529
+msgid "Add view"
+msgstr "Weergave toevoegen"
+
+#: admin/js/template-builder/src/components/ViewTabs.jsx:110
+#: dist/admin-template-builder.js:529
+msgid "+ Add View"
+msgstr "+ Weergave Toevoegen"
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:63
+#: dist/admin-template-builder.js:533
+msgid "e.g. Front Print Area"
+msgstr "bijv. Voorste Afdrukgebied"
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:70
+#: dist/admin-template-builder.js:533
+msgid "Type"
+msgstr "Type"
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:72
+#: dist/admin-template-builder.js:533
+msgid "Safe Area"
+msgstr "Veilig Gebied"
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:73
+#: dist/admin-template-builder.js:533
+msgid "Upload Zone"
+msgstr "Uploadzone"
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:77
+#: dist/admin-template-builder.js:533
+msgid "Behavior"
+msgstr "Gedrag"
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:79
+#: dist/admin-template-builder.js:533
+msgid "Restrict (can't leave)"
+msgstr "Beperken (kan zone niet verlaten)"
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:80
+#: dist/admin-template-builder.js:533
+msgid "Clip at boundary"
+msgstr "Afsnijden bij begrenzing"
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:87
+#: dist/admin-template-builder.js:533
+msgid "Boundary"
+msgstr "Begrenzing"
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:92
+#: dist/admin-template-builder.js:533
+msgid "Rectangle"
+msgstr "Rechthoek"
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:93
+#: dist/admin-template-builder.js:533
+msgid "SVG Shape"
+msgstr "SVG-vorm"
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:102
+#: dist/admin-template-builder.js:533
+msgid "Zone shape"
+msgstr "Zonevorm"
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:108
+#: dist/admin-template-builder.js:533
+msgid "Remove"
+msgstr "Verwijderen"
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:117
+#: dist/admin-template-builder.js:533
+msgid "Select SVG Zone Shape"
+msgstr "SVG-zonevorm Selecteren"
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:118
+#: dist/admin-template-builder.js:533
+msgid "Use Shape"
+msgstr "Vorm Gebruiken"
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:129
+#: dist/admin-template-builder.js:533
+msgid "Could not parse SVG file."
+msgstr "SVG-bestand kon niet worden verwerkt."
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:148
+#: dist/admin-template-builder.js:533
+msgid "Failed to parse SVG file."
+msgstr "SVG-bestand verwerken mislukt."
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:154
+#: dist/admin-template-builder.js:533
+msgid "Upload SVG Shape"
+msgstr "SVG-vorm Uploaden"
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:160
+#: dist/admin-template-builder.js:533
+msgid "Scale"
+msgstr "Schaal"
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:192
+#: dist/admin-template-builder.js:533
+msgid "Resize the SVG on canvas or change Scale to adjust"
+msgstr "Verklein of vergroot de SVG op het canvas of pas Schaal aan"
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:200
+#: dist/admin-template-builder.js:533
+msgid "Allowed element types"
+msgstr "Toegestane elementtypen"
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:216
+#: dist/admin-template-builder.js:533
+msgid "Mask SVG URL"
+msgstr "SVG-masker URL"
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:228
+#: dist/admin-template-builder.js:533
+msgid "Save Boundary"
+msgstr "Begrenzing Opslaan"
+
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/components/DesignerCanvas.jsx:412
+msgid "Your text here"
+msgstr "Uw tekst hier"
+
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:30
+msgid "Add Element"
+msgstr "Element Toevoegen"
+
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:37
+msgid "Add text"
+msgstr "Tekst toevoegen"
+
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:37
+msgid "Text not allowed on this view"
+msgstr "Tekst niet toegestaan in deze weergave"
+
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:46
+msgid "Add image (jpg, png, webp)"
+msgstr "Afbeelding toevoegen (jpg, png, webp)"
+
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:46
+msgid "Images not allowed on this view"
+msgstr "Afbeeldingen niet toegestaan in deze weergave"
+
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:55
+msgid "Add SVG"
+msgstr "SVG toevoegen"
+
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:55
+msgid "SVGs not allowed on this view"
+msgstr "SVG's niet toegestaan in deze weergave"
+
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:12
+msgid "Select an element"
+msgstr "Selecteer een element"
+
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:20
+msgid " Properties"
+msgstr " Eigenschappen"
+
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:94
+msgid "Font"
+msgstr "Lettertype"
+
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:111
+msgid "Size"
+msgstr "Grootte"
+
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:232
+msgid "Tint Color"
+msgstr "Tintkleur"
+
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/components/tabs/ViewsTab.jsx:26
+#, js-format
+msgid "View %d"
+msgstr "Weergave %d"
+
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/components/Sidebar.jsx:37
+msgid "Element"
+msgstr "Element"
+
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/App.jsx:29
+msgid "No template configured for this product."
+msgstr "Geen sjabloon geconfigureerd voor dit product."
+
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/App.jsx:166
+msgid "Loading designer..."
+msgstr "Designer laden..."
+
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/App.jsx:170
+msgid "Template not available."
+msgstr "Sjabloon niet beschikbaar."
+
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/App.jsx:201
+msgid "Saving..."
+msgstr "Opslaan..."
+
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/App.jsx:201
+msgid "Saved!"
+msgstr "Opgeslagen!"
+
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/App.jsx:201
+msgid "Save Design"
+msgstr "Ontwerp Opslaan"
+
+#: dist/frontend-designer.js:560
+#: frontend/js/designer/src/App.jsx:209
+msgid "Close Designer"
+msgstr "Designer Sluiten"
