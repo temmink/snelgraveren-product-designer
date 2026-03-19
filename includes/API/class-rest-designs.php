@@ -15,21 +15,32 @@ class RestDesigns {
         $this->repo = new DesignRepository();
     }
 
+    /**
+     * Verify the WP REST nonce is present and valid.
+     * This prevents CSRF on write operations.
+     */
+    public function verify_nonce(): bool {
+        return (bool) wp_verify_nonce(
+            sanitize_text_field($_SERVER['HTTP_X_WP_NONCE'] ?? ''),
+            'wp_rest'
+        );
+    }
+
     public function register_routes(): void {
         $ns = 'pd/v1';
 
         register_rest_route($ns, '/designs', [
-            ['methods' => 'POST', 'callback' => [$this, 'create_design'], 'permission_callback' => '__return_true'],
+            ['methods' => 'POST', 'callback' => [$this, 'create_design'], 'permission_callback' => [$this, 'verify_nonce']],
         ]);
 
         register_rest_route($ns, '/designs/(?P<hash>[a-f0-9]{32})', [
             ['methods' => 'GET',    'callback' => [$this, 'get_design'],    'permission_callback' => '__return_true'],
-            ['methods' => 'PUT',    'callback' => [$this, 'update_design'],  'permission_callback' => '__return_true'],
-            ['methods' => 'DELETE', 'callback' => [$this, 'delete_design'],  'permission_callback' => '__return_true'],
+            ['methods' => 'PUT',    'callback' => [$this, 'update_design'],  'permission_callback' => [$this, 'verify_nonce']],
+            ['methods' => 'DELETE', 'callback' => [$this, 'delete_design'],  'permission_callback' => [$this, 'verify_nonce']],
         ]);
 
         register_rest_route($ns, '/designs/(?P<hash>[a-f0-9]{32})/views', [
-            ['methods' => 'POST', 'callback' => [$this, 'upsert_view'], 'permission_callback' => '__return_true'],
+            ['methods' => 'POST', 'callback' => [$this, 'upsert_view'], 'permission_callback' => [$this, 'verify_nonce']],
         ]);
 
         // Admin-only: list all designs
@@ -131,10 +142,15 @@ class RestDesigns {
         $upload_dir = wp_upload_dir();
         $pd_dir     = $upload_dir['basedir'] . '/pd-thumbnails';
 
-        if (!is_dir($pd_dir)) {
-            wp_mkdir_p($pd_dir);
-            // Protect directory from browsing
+        // Create directory if needed (wp_mkdir_p is safe to call if it already exists)
+        wp_mkdir_p($pd_dir);
+
+        // Protect directory from browsing — write guards unconditionally to avoid TOCTOU race
+        if (!file_exists($pd_dir . '/index.php')) {
             file_put_contents($pd_dir . '/index.php', '<?php // Silence is golden.');
+        }
+        if (!file_exists($pd_dir . '/.htaccess')) {
+            file_put_contents($pd_dir . '/.htaccess', 'Options -Indexes');
         }
 
         $base64  = str_replace('data:image/png;base64,', '', $data_url);
@@ -154,17 +170,11 @@ class RestDesigns {
     }
 
     public function admin_list(\WP_REST_Request $request): \WP_REST_Response {
-        global $wpdb;
-        $table    = $wpdb->prefix . 'pd_designs';
         $per_page = (int) ($request['per_page'] ?? 20);
         $page     = (int) ($request['page'] ?? 1);
-        $offset   = ($page - 1) * $per_page;
 
-        $rows  = $wpdb->get_results(
-            $wpdb->prepare("SELECT * FROM {$table} ORDER BY created_at DESC LIMIT %d OFFSET %d", $per_page, $offset),
-            ARRAY_A
-        ) ?: [];
-        $total = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table}");
+        $rows  = $this->repo->list($per_page, $page);
+        $total = $this->repo->count();
 
         $response = rest_ensure_response($rows);
         $response->header('X-WP-Total', $total);

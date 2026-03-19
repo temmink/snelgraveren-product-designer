@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "VITE_ENTRY=admin vite build && VITE_ENTRY=frontend vite build",
+    "build": "rm -rf dist && VITE_ENTRY=admin vite build && VITE_ENTRY=frontend vite build",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:e2e": "playwright test",

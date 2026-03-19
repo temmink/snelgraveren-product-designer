@@ -4,7 +4,12 @@ import { Canvas as FabricCanvas, Rect, IText, FabricImage, filters, Path, loadSV
 import useDesignerStore from '../store/useDesignerStore';
 import { uploadFile } from '../api/designerApi';
 
-const ALLOWED_FABRIC_TYPES = ['IText', 'Image', 'Rect', 'Path', 'Group'];
+// Fabric.js 6.x uses PascalCase in JSON but lowercase-hyphenated at runtime.
+// Accept both forms for safe whitelist filtering.
+const ALLOWED_FABRIC_TYPES = new Set([
+  'IText', 'Image', 'Rect', 'Path', 'Group',
+  'i-text', 'image', 'rect', 'path', 'group',
+]);
 
 // Infer element type from Fabric object type when data.elementType is missing
 // (e.g. designs saved before data serialisation was added).
@@ -21,7 +26,7 @@ function filterFabricJson(json) {
   if (!json || !json.objects) return json;
   return {
     ...json,
-    objects: json.objects.filter((obj) => ALLOWED_FABRIC_TYPES.includes(obj.type)),
+    objects: json.objects.filter((obj) => ALLOWED_FABRIC_TYPES.has(obj.type)),
   };
 }
 

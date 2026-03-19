@@ -16,7 +16,7 @@ class Migration100 {
                 id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
                 title         VARCHAR(255)    NOT NULL DEFAULT '',
                 slug          VARCHAR(255)    NOT NULL DEFAULT '',
-                status        ENUM('draft','published','archived') NOT NULL DEFAULT 'draft',
+                status        ENUM('draft','published','archived','trashed') NOT NULL DEFAULT 'draft',
                 global_config LONGTEXT        NOT NULL DEFAULT '{}',
                 created_at    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

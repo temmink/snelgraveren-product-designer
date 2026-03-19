@@ -11,7 +11,7 @@ const configs = {
     plugins: [react()],
     build: {
       outDir: 'dist',
-      emptyOutDir: true,
+      emptyOutDir: false,
       rollupOptions: {
         external: ['react', 'react-dom', '@wordpress/i18n'],
         input: { 'admin-template-builder': 'admin/js/template-builder/src/index.jsx' },

@@ -21,7 +21,7 @@ class ExportRepository {
             'order_id'  => $order_id,
             'format'    => $format,
             'status'    => 'pending',
-        ]);
+        ], ['%d', '%d', '%s', '%s']);
         return (int) $wpdb->insert_id;
     }
 
@@ -31,7 +31,9 @@ class ExportRepository {
         if (!in_array($status, $allowed, true)) return false;
         $data = ['status' => $status];
         if ($file_path !== '') $data['file_path'] = $file_path;
-        return (bool) $wpdb->update($this->table, $data, ['id' => $id]);
+        $format_arr = ['%s'];
+        if ($file_path !== '') $format_arr[] = '%s';
+        return (bool) $wpdb->update($this->table, $data, ['id' => $id], $format_arr, ['%d']);
     }
 
     public function get_by_order(int $order_id): array {
@@ -61,6 +63,6 @@ class ExportRepository {
 
     public function delete(int $id): bool {
         global $wpdb;
-        return (bool) $wpdb->delete($this->table, ['id' => $id]);
+        return (bool) $wpdb->delete($this->table, ['id' => $id], ['%d']);
     }
 }

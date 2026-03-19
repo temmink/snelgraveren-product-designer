@@ -82,6 +82,10 @@ class RestExports {
             return new \WP_REST_Response(['error' => 'Export not found or not ready'], 404);
         }
 
+        // Sanitize filename: only allow alphanumeric, hyphens, underscores, dots
+        $filename = basename($path);
+        $filename = preg_replace('/[^a-zA-Z0-9._-]/', '_', $filename);
+
         $mime = match (pathinfo($path, PATHINFO_EXTENSION)) {
             'pdf' => 'application/pdf',
             'png' => 'image/png',
@@ -89,12 +93,12 @@ class RestExports {
             default => 'application/octet-stream',
         };
 
-        $filename = basename($path);
-
-        // Stream the file
+        // Stream the file with proper headers
+        nocache_headers();
         header('Content-Type: ' . $mime);
         header('Content-Disposition: attachment; filename="' . $filename . '"');
         header('Content-Length: ' . filesize($path));
+        header('X-Content-Type-Options: nosniff');
         // phpcs:ignore WordPress.WP.AlternativeFunctions
         readfile($path);
         exit;

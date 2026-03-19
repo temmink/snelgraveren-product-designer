@@ -22,7 +22,10 @@ async function renderOffscreenThumbnail(canvasJson, width, height) {
     const dataUrl = offscreen.toDataURL({ format: 'png', multiplier: 0.5 });
     offscreen.dispose();
     return dataUrl;
-  } catch (_) {
+  } catch (err) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('Offscreen thumbnail render failed:', err);
+    }
     return '';
   }
 }

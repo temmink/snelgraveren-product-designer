@@ -63,6 +63,11 @@ class OrderIntegration {
             return;
         }
 
+        // Track which cart item hashes have been assigned to prevent
+        // the same hash being applied to multiple order items when
+        // the same product is in the cart more than once.
+        $assigned_hashes = [];
+
         foreach ($order->get_items() as $item) {
             if (!($item instanceof \WC_Order_Item_Product)) {
                 continue;
@@ -73,9 +78,14 @@ class OrderIntegration {
 
             $product_id = $item->get_product_id();
             foreach ($cart->get_cart() as $cart_item) {
-                if (!empty($cart_item['pd_design_hash']) && (int) $cart_item['product_id'] === $product_id) {
-                    $item->add_meta_data('_pd_design_hash', $cart_item['pd_design_hash'], true);
+                if (empty($cart_item['pd_design_hash'])) {
+                    continue;
+                }
+                $hash = $cart_item['pd_design_hash'];
+                if ((int) $cart_item['product_id'] === $product_id && !in_array($hash, $assigned_hashes, true)) {
+                    $item->add_meta_data('_pd_design_hash', $hash, true);
                     $item->save();
+                    $assigned_hashes[] = $hash;
                     break;
                 }
             }

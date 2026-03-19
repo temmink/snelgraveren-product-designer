@@ -12,8 +12,18 @@ class RestUploads {
         register_rest_route('pd/v1', '/uploads', [
             'methods'             => 'POST',
             'callback'            => [$this, 'handle_upload'],
-            'permission_callback' => '__return_true',
+            'permission_callback' => [$this, 'verify_nonce'],
         ]);
+    }
+
+    /**
+     * Verify the WP REST nonce to prevent unauthenticated uploads.
+     */
+    public function verify_nonce(): bool {
+        return (bool) wp_verify_nonce(
+            sanitize_text_field($_SERVER['HTTP_X_WP_NONCE'] ?? ''),
+            'wp_rest'
+        );
     }
 
     public function handle_upload(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {

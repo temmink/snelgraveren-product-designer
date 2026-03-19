@@ -48,11 +48,14 @@ class TemplateRepository {
             );
         }
         // "All" excludes trashed.
-        return (int) $wpdb->get_var("SELECT COUNT(*) FROM {$this->table} WHERE status != 'trashed'");
+        return (int) $wpdb->get_var(
+            $wpdb->prepare("SELECT COUNT(*) FROM {$this->table} WHERE status != %s", 'trashed')
+        );
     }
 
     public function get_status_counts(): array {
         global $wpdb;
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is internal, no user input
         $rows = $wpdb->get_results(
             "SELECT status, COUNT(*) as cnt FROM {$this->table} GROUP BY status",
             ARRAY_A
@@ -93,7 +96,7 @@ class TemplateRepository {
             'status'        => in_array($data['status'] ?? 'draft', ['draft', 'published', 'archived'], true)
                                 ? $data['status'] : 'draft',
             'global_config' => wp_json_encode($data['global_config'] ?? []),
-        ]);
+        ], ['%s', '%s', '%s', '%s']);
         return (int) $wpdb->insert_id;
     }
 
@@ -107,7 +110,8 @@ class TemplateRepository {
 
         if (empty($update)) return true;
 
-        $result = $wpdb->update($this->table, $update, ['id' => $id]);
+        $format = array_map(fn() => '%s', $update);
+        $result = $wpdb->update($this->table, $update, ['id' => $id], $format, ['%d']);
         delete_transient('pd_template_' . $id);
         return $result !== false;
     }
@@ -123,8 +127,8 @@ class TemplateRepository {
     public function delete(int $id): bool {
         global $wpdb;
         // Delete views first, then the template.
-        $wpdb->delete($this->views_table, ['template_id' => $id]);
-        return (bool) $wpdb->delete($this->table, ['id' => $id]);
+        $wpdb->delete($this->views_table, ['template_id' => $id], ['%d']);
+        return (bool) $wpdb->delete($this->table, ['id' => $id], ['%d']);
     }
 
     public function duplicate(int $id): ?int {
@@ -253,7 +257,7 @@ class TemplateRepository {
             'zones_config'     => wp_json_encode($data['zones_config'] ?? []),
             'layers_config'    => wp_json_encode($data['layers_config'] ?? []),
             'permissions'      => wp_json_encode($data['permissions'] ?? []),
-        ]);
+        ], ['%d', '%s', '%d', '%d', '%d', '%s', '%s', '%s', '%s']);
         delete_transient('pd_template_' . $template_id);
         return (int) $wpdb->insert_id;
     }
@@ -272,10 +276,20 @@ class TemplateRepository {
 
         if (empty($update)) return true;
 
+        // Build format array matching the dynamic update columns
+        $format_map = [
+            'name' => '%s', 'sort_order' => '%d', 'canvas_width' => '%d',
+            'canvas_height' => '%d', 'background_url' => '%s',
+            'zones_config' => '%s', 'layers_config' => '%s', 'permissions' => '%s',
+        ];
+        $format = array_map(fn($k) => $format_map[$k] ?? '%s', array_keys($update));
+
         $result = $wpdb->update(
             $this->views_table,
             $update,
-            ['id' => $view_id, 'template_id' => $template_id]
+            ['id' => $view_id, 'template_id' => $template_id],
+            $format,
+            ['%d', '%d']
         );
         delete_transient('pd_template_' . $template_id);
         // $wpdb->update returns false on error, 0 if no rows changed (data identical).
@@ -286,7 +300,8 @@ class TemplateRepository {
         global $wpdb;
         $result = (bool) $wpdb->delete(
             $this->views_table,
-            ['id' => $view_id, 'template_id' => $template_id]
+            ['id' => $view_id, 'template_id' => $template_id],
+            ['%d', '%d']
         );
         delete_transient('pd_template_' . $template_id);
         return $result;

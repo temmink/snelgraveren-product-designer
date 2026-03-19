@@ -32,10 +32,12 @@ class CartSurcharge {
             return;
         }
 
-        // Prevent infinite loops
-        if (did_action('woocommerce_before_calculate_totals') > 1) {
+        // Prevent re-entrant calls during the same calculate_totals cycle
+        static $running = false;
+        if ($running) {
             return;
         }
+        $running = true;
 
         foreach ($cart->get_cart() as $cart_item_key => $cart_item) {
             if (empty($cart_item['pd_design_hash'])) {
@@ -53,10 +55,12 @@ class CartSurcharge {
             // Add surcharge to the product price
             $product = $cart_item['data'];
             if ($product instanceof \WC_Product) {
-                $base_price = (float) $product->get_regular_price();
+                $base_price = (float) $product->get_price();
                 $product->set_price($base_price + $surcharge);
             }
         }
+
+        $running = false;
     }
 
     /**

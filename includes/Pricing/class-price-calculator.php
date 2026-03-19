@@ -158,12 +158,8 @@ class PriceCalculator {
         $image_price = (float) ($config['image_price'] ?? 0);
         $svg_price   = (float) ($config['svg_price'] ?? 0);
 
-        // Clear existing logs for this design to avoid duplicates on recalculation
-        // (PriceRepository doesn't have a delete method, so we skip if already logged)
-        $existing = $this->price_log->get_for_design($design_id);
-        if (!empty($existing)) {
-            return;
-        }
+        // Clear existing logs so the audit trail reflects the current design state
+        $this->price_log->delete_for_design($design_id);
 
         $element_index = 0;
         foreach ($views as $view) {

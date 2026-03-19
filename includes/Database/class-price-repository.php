@@ -21,7 +21,7 @@ class PriceRepository {
             'element_type' => $type,
             'element_id'   => sanitize_text_field($element_id),
             'price'        => $price,
-        ]);
+        ], ['%d', '%s', '%s', '%f']);
         return (int) $wpdb->insert_id;
     }
 
@@ -31,5 +31,10 @@ class PriceRepository {
             $wpdb->prepare("SELECT * FROM {$this->table} WHERE design_id = %d", $design_id),
             ARRAY_A
         ) ?: [];
+    }
+
+    public function delete_for_design(int $design_id): bool {
+        global $wpdb;
+        return (bool) $wpdb->delete($this->table, ['design_id' => $design_id], ['%d']);
     }
 }

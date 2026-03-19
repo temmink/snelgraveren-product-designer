@@ -58,9 +58,12 @@ class RestTemplates {
         $templates = $this->repo->list($per_page, $page, $status);
         $total     = $this->repo->count($status);
 
+        $template_ids = array_column($templates, 'id');
+        $view_counts  = $this->repo->count_views_batch(array_map('intval', $template_ids));
+
         foreach ($templates as &$t) {
             $t['global_config'] = json_decode($t['global_config'], true) ?: [];
-            $t['view_count']    = $this->repo->count_views((int) $t['id']);
+            $t['view_count']    = $view_counts[(int) $t['id']] ?? 0;
         }
         unset($t);
 
