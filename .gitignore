@@ -8,3 +8,8 @@ dist/
 tests/e2e/.auth/
 test-results/
 playwright-report/
+.phpunit.result.cache
+APP-META.INI
+*.bak
+*.png
+!assets/**/*.png
