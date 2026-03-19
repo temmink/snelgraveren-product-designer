@@ -65,6 +65,12 @@ class TemplateRepository {
     }
 
     public function get(int $id): ?array {
+        $cache_key = 'pd_template_' . $id;
+        $cached    = get_transient($cache_key);
+        if ($cached !== false) {
+            return $cached;
+        }
+
         global $wpdb;
         $row = $wpdb->get_row(
             $wpdb->prepare("SELECT * FROM {$this->table} WHERE id = %d", $id),
@@ -74,6 +80,8 @@ class TemplateRepository {
 
         $row['global_config'] = json_decode($row['global_config'], true) ?: [];
         $row['views']         = $this->get_views($id);
+
+        set_transient($cache_key, $row, 5 * MINUTE_IN_SECONDS);
         return $row;
     }
 
@@ -100,6 +108,7 @@ class TemplateRepository {
         if (empty($update)) return true;
 
         $result = $wpdb->update($this->table, $update, ['id' => $id]);
+        delete_transient('pd_template_' . $id);
         return $result !== false;
     }
 
@@ -156,6 +165,56 @@ class TemplateRepository {
         );
     }
 
+    /**
+     * Count views for multiple templates in a single query.
+     * @return array<int, int> [template_id => count]
+     */
+    public function count_views_batch(array $template_ids): array {
+        global $wpdb;
+        if (empty($template_ids)) {
+            return [];
+        }
+        $ids          = array_map('intval', $template_ids);
+        $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+        $results      = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT template_id, COUNT(*) as cnt FROM {$this->views_table} WHERE template_id IN ($placeholders) GROUP BY template_id",
+                ...$ids
+            ),
+            ARRAY_A
+        );
+        $counts = [];
+        foreach ($results as $row) {
+            $counts[(int) $row['template_id']] = (int) $row['cnt'];
+        }
+        return $counts;
+    }
+
+    /**
+     * Count products using each template in a single query.
+     * @return array<int, int> [template_id => count]
+     */
+    public function count_products_batch(array $template_ids): array {
+        global $wpdb;
+        if (empty($template_ids)) {
+            return [];
+        }
+        $ids          = array_map('intval', $template_ids);
+        $placeholders = implode(',', array_fill(0, count($ids), '%s'));
+        $results      = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT meta_value as template_id, COUNT(*) as cnt FROM {$wpdb->postmeta} WHERE meta_key = '_pd_template_id' AND meta_value IN ($placeholders) GROUP BY meta_value",
+                ...array_map('strval', $ids)
+            ),
+            ARRAY_A
+        );
+        $counts = [];
+        foreach ($results as $row) {
+            $counts[(int) $row['template_id']] = (int) $row['cnt'];
+        }
+        return $counts;
+    }
+
     // ── Views ──────────────────────────────────────────────────────────────────
 
     public function get_views(int $template_id): array {
@@ -195,6 +254,7 @@ class TemplateRepository {
             'layers_config'      => wp_json_encode($data['layers_config'] ?? []),
             'permissions'        => wp_json_encode($data['permissions'] ?? []),
         ]);
+        delete_transient('pd_template_' . $template_id);
         return (int) $wpdb->insert_id;
     }
 
@@ -217,16 +277,19 @@ class TemplateRepository {
             $update,
             ['id' => $view_id, 'template_id' => $template_id]
         );
+        delete_transient('pd_template_' . $template_id);
         // $wpdb->update returns false on error, 0 if no rows changed (data identical).
         return $result !== false;
     }
 
     public function delete_view(int $template_id, int $view_id): bool {
         global $wpdb;
-        return (bool) $wpdb->delete(
+        $result = (bool) $wpdb->delete(
             $this->views_table,
             ['id' => $view_id, 'template_id' => $template_id]
         );
+        delete_transient('pd_template_' . $template_id);
+        return $result;
     }
 
     private function decode_view(array $row): array {

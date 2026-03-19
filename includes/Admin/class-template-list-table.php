@@ -12,6 +12,8 @@ if (!class_exists('WP_List_Table')) {
 class TemplateListTable extends \WP_List_Table {
 
     private TemplateRepository $repo;
+    private array $view_counts    = [];
+    private array $product_counts = [];
 
     public function __construct() {
         parent::__construct([
@@ -20,6 +22,14 @@ class TemplateListTable extends \WP_List_Table {
             'ajax'     => false,
         ]);
         $this->repo = new TemplateRepository();
+    }
+
+    private function is_trash_view(): bool {
+        return ($this->get_current_status() === 'trashed');
+    }
+
+    private function get_current_status(): string {
+        return sanitize_text_field($_GET['pd_status'] ?? '');
     }
 
     public function get_columns(): array {
@@ -42,27 +52,32 @@ class TemplateListTable extends \WP_List_Table {
     }
 
     protected function get_bulk_actions(): array {
+        if ($this->is_trash_view()) {
+            return [
+                'restore'          => __('Restore', 'product-designer'),
+                'delete_permanent' => __('Delete Permanently', 'product-designer'),
+            ];
+        }
         return [
             'publish' => __('Publish', 'product-designer'),
             'archive' => __('Archive', 'product-designer'),
-            'delete'  => __('Delete', 'product-designer'),
+            'trash'   => __('Move to Trash', 'product-designer'),
         ];
     }
 
     public function prepare_items(): void {
-        // Must process bulk actions BEFORE reading items.
         $this->process_bulk_action();
+        $this->process_row_action();
 
         $per_page = 20;
         $page     = $this->get_pagenum();
-        $status   = sanitize_text_field($_GET['pd_status'] ?? '');
+        $status   = $this->get_current_status();
 
         $this->items = $this->repo->list($per_page, $page, $status);
-        foreach ($this->items as &$item) {
-            $item['view_count']    = $this->repo->count_views((int) $item['id']);
-            $item['product_count'] = $this->repo->count_products((int) $item['id']);
-        }
-        unset($item);
+
+        $ids                   = array_map(function ($item) { return (int) $item['id']; }, $this->items);
+        $this->view_counts     = $this->repo->count_views_batch($ids);
+        $this->product_counts  = $this->repo->count_products_batch($ids);
 
         $total = $this->repo->count($status);
         $this->set_pagination_args([
@@ -74,6 +89,36 @@ class TemplateListTable extends \WP_List_Table {
         $this->_column_headers = [$this->get_columns(), [], $this->get_sortable_columns()];
     }
 
+    /**
+     * Handle single-row actions (GET links from row_actions).
+     */
+    private function process_row_action(): void {
+        $action = sanitize_text_field($_GET['action'] ?? '');
+        $id     = (int) ($_GET['template'] ?? 0);
+        if (!$action || !$id) return;
+
+        if ($action === 'trash') {
+            check_admin_referer('trash-template_' . $id);
+            $this->repo->trash($id);
+            wp_safe_redirect(admin_url('admin.php?page=product-designer&trashed=1'));
+            exit;
+        }
+
+        if ($action === 'restore') {
+            check_admin_referer('restore-template_' . $id);
+            $this->repo->restore($id);
+            wp_safe_redirect(admin_url('admin.php?page=product-designer&restored=1'));
+            exit;
+        }
+
+        if ($action === 'delete_permanent') {
+            check_admin_referer('delete-template_' . $id);
+            $this->repo->delete($id);
+            wp_safe_redirect(admin_url('admin.php?page=product-designer&pd_status=trashed&deleted=1'));
+            exit;
+        }
+    }
+
     protected function process_bulk_action(): void {
         $action = $this->current_action();
         if (!$action || empty($_POST['template'])) return;
@@ -83,7 +128,11 @@ class TemplateListTable extends \WP_List_Table {
         $ids = array_map('intval', (array) $_POST['template']);
 
         foreach ($ids as $id) {
-            if ($action === 'delete') {
+            if ($action === 'trash') {
+                $this->repo->trash($id);
+            } elseif ($action === 'restore') {
+                $this->repo->restore($id);
+            } elseif ($action === 'delete_permanent') {
                 $this->repo->delete($id);
             } elseif (in_array($action, ['publish', 'archive'], true)) {
                 $this->repo->update($id, ['status' => $action === 'publish' ? 'published' : 'archived']);
@@ -100,32 +149,59 @@ class TemplateListTable extends \WP_List_Table {
     }
 
     protected function column_title(array $item): string {
-        $edit_url   = admin_url('admin.php?page=pd-template-builder&template_id=' . absint($item['id']));
-        $delete_url = wp_nonce_url(
-            admin_url('admin.php?page=product-designer&action=delete&template=' . absint($item['id'])),
-            'delete-template_' . absint($item['id'])
-        );
-        $title = '<strong><a href="' . esc_url($edit_url) . '">' . esc_html($item['title']) . '</a></strong>';
+        $id = absint($item['id']);
 
-        $actions = [
-            'edit'   => '<a href="' . esc_url($edit_url) . '">' . __('Edit', 'product-designer') . '</a>',
-            'delete' => '<a href="' . esc_url($delete_url) . '" onclick="return confirm(\'Delete this template?\')">'
-                        . __('Delete', 'product-designer') . '</a>',
-        ];
+        if ($this->is_trash_view()) {
+            $title = '<strong>' . esc_html($item['title']) . '</strong>';
+
+            $restore_url = wp_nonce_url(
+                admin_url('admin.php?page=product-designer&action=restore&template=' . $id),
+                'restore-template_' . $id
+            );
+            $delete_url = wp_nonce_url(
+                admin_url('admin.php?page=product-designer&action=delete_permanent&template=' . $id),
+                'delete-template_' . $id
+            );
+
+            $actions = [
+                'restore' => '<a href="' . esc_url($restore_url) . '">' . __('Restore', 'product-designer') . '</a>',
+                'delete'  => '<a href="' . esc_url($delete_url) . '" onclick="return confirm(\'Delete this template permanently?\')">'
+                             . __('Delete Permanently', 'product-designer') . '</a>',
+            ];
+        } else {
+            $edit_url  = admin_url('admin.php?page=pd-template-builder&template_id=' . $id);
+            $trash_url = wp_nonce_url(
+                admin_url('admin.php?page=product-designer&action=trash&template=' . $id),
+                'trash-template_' . $id
+            );
+
+            $title = '<strong><a href="' . esc_url($edit_url) . '">' . esc_html($item['title']) . '</a></strong>';
+
+            $actions = [
+                'edit'  => '<a href="' . esc_url($edit_url) . '">' . __('Edit', 'product-designer') . '</a>',
+                'trash' => '<a href="' . esc_url($trash_url) . '">' . __('Trash', 'product-designer') . '</a>',
+            ];
+        }
+
         return $title . $this->row_actions($actions);
     }
 
     protected function column_status(array $item): string {
-        $labels = ['draft' => __('Draft', 'product-designer'), 'published' => __('Published', 'product-designer'), 'archived' => __('Archived', 'product-designer')];
+        $labels = [
+            'draft'     => __('Draft', 'product-designer'),
+            'published' => __('Published', 'product-designer'),
+            'archived'  => __('Archived', 'product-designer'),
+            'trashed'   => __('Trashed', 'product-designer'),
+        ];
         return esc_html($labels[$item['status']] ?? $item['status']);
     }
 
     protected function column_view_count(array $item): string {
-        return (string) (int) $item['view_count'];
+        return (string) ($this->view_counts[(int) $item['id']] ?? 0);
     }
 
     protected function column_product_count(array $item): string {
-        return (string) (int) $item['product_count'];
+        return (string) ($this->product_counts[(int) $item['id']] ?? 0);
     }
 
     protected function column_created_at(array $item): string {
@@ -133,12 +209,12 @@ class TemplateListTable extends \WP_List_Table {
     }
 
     /**
-     * Render status tabs (All | Draft | Published | Archived).
+     * Render status tabs (All | Draft | Published | Archived | Trash).
      */
     public function render_status_tabs(): void {
         $counts      = $this->repo->get_status_counts();
-        $total       = array_sum($counts);
-        $current     = sanitize_text_field($_GET['pd_status'] ?? '');
+        $total       = $counts['draft'] + $counts['published'] + $counts['archived'];
+        $current     = $this->get_current_status();
         $base_url    = admin_url('admin.php?page=product-designer');
 
         $tabs = [
@@ -147,6 +223,11 @@ class TemplateListTable extends \WP_List_Table {
             'published' => __('Published', 'product-designer') . " ({$counts['published']})",
             'archived'  => __('Archived', 'product-designer') . " ({$counts['archived']})",
         ];
+
+        // Only show Trash tab if there are trashed items.
+        if ($counts['trashed'] > 0) {
+            $tabs['trashed'] = __('Trash', 'product-designer') . " ({$counts['trashed']})";
+        }
 
         echo '<ul class="subsubsub">';
         $links = [];
