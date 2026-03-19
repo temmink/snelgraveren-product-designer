@@ -46,8 +46,10 @@ npm run build                           # Production build → dist/
 ### JavaScript
 - **React 18** with functional components and hooks
 - **Zustand** for state management (not Redux, not Context)
-- **CSS scoping:** All frontend classes use `pd-` prefix with BEM naming. Designer wrapper uses `all: initial` to isolate from theme styles.
+- **CSS scoping:** All frontend classes use `pd-` prefix with BEM naming. Designer wrapper uses `all: initial` to isolate from theme styles. Always set explicit `color` on buttons/inputs to prevent theme overrides.
+- **Fabric.js JSON serialization:** Always use `canvas.toJSON(['data'])` — never bare `toJSON()` — to preserve custom `data` properties (e.g. `elementType`, `zoneIndex`)
 - **Fabric.js JSON validation:** Whitelist allowed object types before `loadFromJSON`
+- **Fabric.js 6.x type names:** Runtime types are lowercase hyphenated (`'i-text'`, `'image'`, `'path'`), but JSON serialization uses PascalCase (`'IText'`, `'Image'`). Use case-insensitive comparison when matching types at runtime.
 
 ### REST API
 - Namespace: `pd/v1`
@@ -84,13 +86,14 @@ All tables use InnoDB engine for foreign key and transaction support.
 ## WooCommerce Integration Points
 
 - Product meta: `_pd_designer_enabled`, `_pd_template_id`, `_pd_display_mode`
-- Cart: `pd_design_hash` in cart item data via hidden input + `woocommerce_add_cart_item_data` filter
-- Cart thumbnails: `woocommerce_cart_item_thumbnail` (classic) + `woocommerce_store_api_cart_item_images` (block cart)
+- Cart: `pd_design_hash` in cart item data via hidden input + `woocommerce_add_cart_item_data` filter; auto-save-before-cart intercepts form submit if design is dirty
+- Cart thumbnails: `woocommerce_cart_item_thumbnail` (classic) + `woocommerce_store_api_cart_item_images` (block cart) — shows **all views** side by side, not just the first
 - Cart permalinks: `woocommerce_cart_item_permalink` appends `?pd_design=HASH` for design reload
 - Product gallery: `woocommerce_single_product_image_thumbnail_html` replaces image when `pd_design` query param present
-- Thumbnails: Saved as PNG files in `wp-content/uploads/pd-thumbnails/` (block cart requires real URLs, not data URIs)
-- Surcharge: via `woocommerce_before_calculate_totals` (not yet implemented)
-- Order: design_hash in order item meta, export triggered on configurable order status (not yet implemented)
+- Thumbnails: Saved as PNG files in `wp-content/uploads/pd-thumbnails/` (block cart requires real URLs, not data URIs). Non-active views generate thumbnails via offscreen Fabric canvas during save.
+- Shortcode: `[product_designer]` renders the designer inline on product pages (auto-detects product context)
+- Surcharge: via `woocommerce_before_calculate_totals`
+- Order: design_hash in order item meta, export triggered on configurable order status
 - HPOS: Compatibility declared in `product-designer.php`
 
 ## Don't

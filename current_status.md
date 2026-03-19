@@ -71,35 +71,47 @@ bash bin/package.sh
 - `TemplateListTable::column_default` — removed PHP type hints from parameters to match parent `WP_List_Table` signature (PHP 8 strict override compatibility)
 - `class-migration-1-0-0.php` renamed to `class-migration100.php` — autoloader maps `Migration100` → `class-migration100.php`
 - WordPress.org false-positive update blocked via `site_transient_update_plugins` filter in `product-designer.php`
+- **Theme CSS overrides:** Buttons/inputs in designer sidebar appeared empty (white text on white) because theme applied `color: white`. Fixed with explicit `color: #1f2937` on all designer interactive elements.
+- **Tab text overflow:** Theme applied `text-transform: uppercase` and `letter-spacing: 2px` to buttons, truncating tab labels. Fixed with `text-transform: none` and `letter-spacing: normal`.
+- **Design reload race condition:** `setTemplate()` triggered canvas re-render before `loadDesign()` completed, overwriting snapshots. Fixed by loading design BEFORE setting template.
+- **View ID type mismatch:** API returned `view_id` as string, template `id` as number. `===` comparison failed. Fixed with `String()` coercion.
+- **Fabric.js `data` not serialized:** `canvas.toJSON()` didn't include custom `data` property. Fixed by using `canvas.toJSON(['data'])` everywhere.
+- **"Unknown Properties" display:** `inferElementType()` checked for `'IText'` (PascalCase) but Fabric.js 6.x runtime type is `'i-text'` (lowercase hyphenated). Fixed with case-insensitive comparison.
+- **Thumbnail overwrite on save:** `upsert_view()` always overwrote thumbnail column even with empty string, clearing previously saved thumbnails for non-active views. Fixed by only including thumbnail in update when non-empty.
 
 ---
 
 ### Phase 3 — Frontend customer designer ✅
-- **PHP:** `includes/Frontend/class-frontend.php` — hooks WooCommerce product page, enqueues assets, renders designer container, localizes `window.pdDesigner` config
+- **PHP:** `includes/Frontend/class-frontend.php` — hooks WooCommerce product page, enqueues assets, renders designer container, localizes `window.pdDesigner` config, `[product_designer]` shortcode with duplicate-render prevention
 - **REST:** `GET /pd/v1/templates/{id}/public` — unauthenticated public endpoint, published templates only, sanitized response
 - **Security:** `RestDesigns::create_design()` validates template_id references a published template
-- **State:** `useDesignerStore.js` (Zustand) — template, design hash, canvas snapshots, tool mode, selected object, error state
-- **API:** `designerApi.js` — loadTemplate, createDesign, saveDesignView, uploadFile helpers
-- **Canvas:** `DesignerCanvas.jsx` — Fabric.js 6.x canvas with zone rendering (restrict/suggest styles), zone enforcement (clamp on move/scale), tool modes (add-text via click, add-image/add-svg via file upload), permissions enforcement, Fabric JSON whitelisting
-- **Sidebar:** Three-tab sidebar (Add / Element / Views) with auto-switch on selection
+- **State:** `useDesignerStore.js` (Zustand) — template, design hash, canvas snapshots, tool mode, selected object, error state, fabricCanvasRef
+- **API:** `designerApi.js` — loadTemplate, loadDesign, createDesign, saveDesignView, uploadFile helpers
+- **Canvas:** `DesignerCanvas.jsx` — Fabric.js 6.x canvas with zone rendering (restrict/suggest styles), zone enforcement (clamp on move/scale), tool modes (add-text via click, add-image/add-svg via file upload), permissions enforcement, Fabric JSON whitelisting, `inferElementType()` for Fabric.js 6.x type detection
+- **Sidebar:** Three-tab sidebar (Views / Element / Add) with auto-switch on selection
   - `AddTab.jsx` — Text/Image/SVG tool buttons with zone-aware disabling
   - `ElementTab.jsx` — Text properties (font, size, color, bold/italic), image/SVG properties (scale, recolor), delete
   - `ViewsTab.jsx` — View switcher with snapshot persistence across view switches
-- **App:** `App.jsx` — template loading, save flow (create design + save views), display modes (embedded/modal), hidden design_hash input
-- **CSS:** `designer.css` — isolation (`all: initial`), layout, modal overlay, BEM naming with `pd-` prefix
+- **App:** `App.jsx` — template loading, design reload from cart (load design BEFORE setting template to avoid race condition), save flow with offscreen thumbnail generation for all views, auto-save-before-cart, customization-required gate, display modes (embedded/modal), hidden design_hash input
+- **CSS:** `designer.css` — isolation (`all: initial`), layout, modal overlay, BEM naming with `pd-` prefix, explicit text colors to prevent theme overrides, tab text overflow protection
 - **Build:** Vite outputs `dist/frontend-designer.js` + `dist/frontend-designer.css`
 
 ### Phase 4 — WooCommerce cart integration ✅
 - **Add to cart:** `pd_design_hash` attached to cart item data via hidden input + `woocommerce_add_cart_item_data` filter
-- **Cart thumbnails (classic):** `woocommerce_cart_item_thumbnail` filter replaces product thumbnail with design thumbnail
-- **Cart thumbnails (block):** `woocommerce_store_api_cart_item_images` filter for WooCommerce Store API block cart
+- **Auto-save before cart:** Form submit intercepted if design is dirty — auto-saves, sets hash, then re-submits
+- **Customization required:** `customization_required` template config blocks add-to-cart when no design exists
+- **Cart thumbnails (classic):** `woocommerce_cart_item_thumbnail` filter replaces product thumbnail with **all view thumbnails** side by side (flex layout)
+- **Cart thumbnails (block):** `woocommerce_store_api_cart_item_images` filter returns all view images for WooCommerce Store API block cart
 - **Cart item label:** `woocommerce_get_item_data` filter shows "Design: Customized" in cart
-- **Thumbnail storage:** Base64 data URL thumbnails saved as PNG files in `wp-content/uploads/pd-thumbnails/` (block cart requires real URLs, not data URIs)
+- **Multi-view thumbnail generation:** Active view captured from live canvas; non-active views rendered via offscreen Fabric canvas (`renderOffscreenThumbnail()`)
+- **Thumbnail storage:** Base64 data URL thumbnails saved as PNG files in `wp-content/uploads/pd-thumbnails/` (block cart requires real URLs, not data URIs). `upsert_view()` preserves existing thumbnails when saving with empty thumbnail string.
 - **Product image update:** After saving, product gallery image on the page updates to show the design thumbnail
 - **Cart → product link:** `woocommerce_cart_item_permalink` filter appends `?pd_design=HASH` to cart item URLs
 - **Design reload from cart:** When returning to product page via cart link, the saved design loads automatically:
   - PHP detects `pd_design` query param, passes `existing_design_hash` + `auto_open` to JS config
   - `loadDesign()` API function fetches saved design via `GET /pd/v1/designs/{hash}`
+  - Design loaded BEFORE setting template (avoids race condition where canvas re-renders with empty snapshots)
+  - View ID comparison uses `String()` coercion (API returns strings, template has numbers)
   - Canvas snapshots populated from saved `canvas_json` per view
   - Designer auto-opens in modal mode
 - **Product gallery override:** `woocommerce_single_product_image_thumbnail_html` filter replaces product gallery image with design thumbnail when `pd_design` is in the URL (no flash of default product image)
