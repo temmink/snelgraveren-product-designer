@@ -61,5 +61,6 @@ class Migration200 {
 
         // Migrate transients (just delete old ones — they'll be rebuilt).
         $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_pd_template_%' OR option_name LIKE '_transient_timeout_pd_template_%'");
+
     }
 }

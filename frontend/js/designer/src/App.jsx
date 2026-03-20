@@ -232,6 +232,18 @@ export default function App() {
         return;
       }
 
+      // Ensure hidden input is present for already-saved designs
+      if (store.designHash) {
+        let input = form.querySelector('input[name="pf_design_hash"]');
+        if (!input) {
+          input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = 'pf_design_hash';
+          form.appendChild(input);
+        }
+        input.value = store.designHash;
+      }
+
       // If there are unsaved changes, auto-save before submitting
       if (store.isDirty && Object.keys(store.canvasSnapshots).length > 0) {
         e.preventDefault();
