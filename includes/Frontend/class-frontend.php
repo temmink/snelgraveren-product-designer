@@ -196,11 +196,12 @@ class Frontend {
         // Enqueue JS
         $js_file = 'frontend-designer.js';
         if (file_exists($dist_path . $js_file)) {
+            $js_version = substr(md5_file($dist_path . $js_file), 0, 8);
             wp_enqueue_script(
                 'pf-frontend-designer',
                 $dist_url . $js_file,
                 ['wp-i18n'],
-                PF_VERSION,
+                $js_version,
                 true
             );
 
@@ -237,7 +238,7 @@ class Frontend {
                 'pf-frontend-designer',
                 $dist_url . $css_file,
                 [],
-                PF_VERSION
+                file_exists($dist_path . $css_file) ? substr(md5_file($dist_path . $css_file), 0, 8) : PF_VERSION
             );
         }
     }

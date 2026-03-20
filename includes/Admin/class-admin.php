@@ -61,13 +61,14 @@ class Admin {
             return;
         }
 
+        $js_file    = PF_PLUGIN_DIR . 'dist/admin-template-builder.js';
         $asset_file = PF_PLUGIN_DIR . 'dist/admin-template-builder.asset.php';
-        $version    = PF_VERSION;
+        $version    = file_exists($js_file) ? substr(md5_file($js_file), 0, 8) : PF_VERSION;
         $deps       = ['react', 'react-dom', 'wp-i18n'];
 
         if (file_exists($asset_file)) {
             $asset   = include $asset_file;
-            $version = $asset['version'] ?? PF_VERSION;
+            $version = $asset['version'] ?? $version;
             $deps    = array_unique(array_merge($asset['dependencies'] ?? [], ['wp-i18n']));
         }
 
