@@ -16,6 +16,12 @@ class ProductForge {
     }
 
     private function init(): void {
+        // Run pending migrations on every admin load so version bumps
+        // are picked up without requiring manual reactivation.
+        if (is_admin()) {
+            Database\DbManager::run_migrations();
+        }
+
         add_filter('user_has_cap', [$this, 'grant_template_cap'], 10, 4);
 
         if (is_admin()) {

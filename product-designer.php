@@ -40,8 +40,7 @@ add_action('before_woocommerce_init', function () {
 });
 
 // Prevent WordPress.org from offering updates for this custom plugin.
-// The slug 'productforge' exists on the public repo; without this filter
-// WordPress would overwrite this codebase with someone else's plugin.
+// The file slug 'product-designer' may match an unrelated public plugin.
 add_filter('site_transient_update_plugins', function ($transient) {
     $basename = plugin_basename(__FILE__);
     if (isset($transient->response[$basename])) {
@@ -49,6 +48,20 @@ add_filter('site_transient_update_plugins', function ($transient) {
     }
     return $transient;
 });
+
+// Also block the API check itself so WP never even queries for this slug.
+add_filter('http_request_args', function ($args, $url) {
+    if (strpos($url, 'api.wordpress.org/plugins/update-check') === false) {
+        return $args;
+    }
+    if (isset($args['body']['plugins'])) {
+        $plugins = json_decode($args['body']['plugins'], true);
+        $basename = plugin_basename(PF_PLUGIN_FILE);
+        unset($plugins['plugins'][$basename], $plugins['active'][array_search($basename, $plugins['active'] ?? [])]);
+        $args['body']['plugins'] = wp_json_encode($plugins);
+    }
+    return $args;
+}, 10, 2);
 
 // Load plugin text domain before booting so translated strings in plugins_loaded work
 add_action('plugins_loaded', function () {
