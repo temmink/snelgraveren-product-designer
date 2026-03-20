@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { __ } from '@wordpress/i18n';
 import useDesignerStore from '../../store/useDesignerStore';
+import { alignElement } from '../../../../../../shared/js/alignElement';
 
 export default function ElementTab() {
   const { selectedObject, template, snapshotView, currentViewIndex } = useDesignerStore();
@@ -39,6 +40,8 @@ export default function ElementTab() {
           currentViewIndex={currentViewIndex}
         />
       )}
+
+      <AlignmentButtons fabricObj={fabricObj} template={template} currentViewIndex={currentViewIndex} snapshotView={snapshotView} />
 
       {perms.delete !== false && (
         <button
@@ -187,6 +190,75 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
         >
           I
         </button>
+      </div>
+    </div>
+  );
+}
+
+function AlignmentButtons({ fabricObj, template, currentViewIndex, snapshotView }) {
+  const groupRef = useRef(null);
+  const fabricObjRef = useRef(fabricObj);
+  fabricObjRef.current = fabricObj;
+
+  const handleAlign = useCallback((dir) => {
+    const obj = fabricObjRef.current;
+    if (!obj) return;
+    const canvas = obj.canvas;
+    const view = template?.views?.[currentViewIndex];
+    const zi = obj.data?.zoneIndex;
+
+    // Use the Fabric zone object's bounding rect for SVG boundaries.
+    let bounds;
+    if (zi != null && canvas) {
+      const zoneObj = canvas.getObjects().find(
+        (o) => o.data?.isZone && o.data?.zoneIndex === zi
+      );
+      if (zoneObj) {
+        const r = zoneObj.getBoundingRect();
+        bounds = { x: r.left, y: r.top, width: r.width, height: r.height };
+      }
+    }
+    if (!bounds) {
+      const zones = view?.zones_config || [];
+      const zone = (zi != null && zones[zi]) ? zones[zi] : null;
+      bounds = zone || { x: 0, y: 0, width: view?.canvas_width || 800, height: view?.canvas_height || 600 };
+    }
+
+    alignElement(obj, dir, bounds);
+    canvas?.renderAll();
+    snapshotView(currentViewIndex, canvas?.toJSON(['data']));
+  }, [template, currentViewIndex, snapshotView]);
+
+  useEffect(() => {
+    const el = groupRef.current;
+    if (!el) return;
+    const onMouseDown = (e) => {
+      const dir = e.target.dataset?.align;
+      if (!dir) return;
+      e.preventDefault();
+      e.stopPropagation();
+      handleAlign(dir);
+    };
+    el.addEventListener('mousedown', onMouseDown, true);
+    return () => el.removeEventListener('mousedown', onMouseDown, true);
+  }, [handleAlign]);
+
+  const dirs = [
+    ['left', '⬅', __('Align left', 'productforge')],
+    ['center', '↔', __('Align center', 'productforge')],
+    ['right', '➡', __('Align right', 'productforge')],
+    ['top', '⬆', __('Align top', 'productforge')],
+    ['middle', '↕', __('Align middle', 'productforge')],
+    ['bottom', '⬇', __('Align bottom', 'productforge')],
+  ];
+
+  return (
+    <div className="pf-element__align">
+      <span className="pf-element__align-label">{__('Align', 'productforge')}</span>
+      <div className="pf-element__align-btns" ref={groupRef}>
+        {dirs.map(([dir, icon, title]) => (
+          <button key={dir} type="button" className="pf-element__align-btn" data-align={dir} title={title}>{icon}</button>
+        ))}
       </div>
     </div>
   );

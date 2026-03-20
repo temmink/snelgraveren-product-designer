@@ -284,6 +284,38 @@
   color: #2563eb;
 }
 
+.pf-element__align {
+  margin-top: 0.75rem;
+}
+
+.pf-element__align-label {
+  font-size: 12px;
+  color: #64748b;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.pf-element__align-btns {
+  display: flex;
+  gap: 4px;
+}
+
+.pf-element__align-btn {
+  padding: 4px 8px;
+  font-size: 14px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  cursor: pointer;
+  line-height: 1;
+  color: #334155;
+}
+
+.pf-element__align-btn:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+}
+
 .pf-element__delete-btn {
   margin-top: 0.75rem;
   padding: 0.4rem 0.75rem;

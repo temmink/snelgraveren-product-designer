@@ -3,6 +3,7 @@ import { __ } from '@wordpress/i18n';
 import { Canvas as FabricCanvas, Rect, FabricImage, FabricText, loadSVGFromString, util } from 'fabric';
 import useTemplateStore from '../store/useTemplateStore';
 import { parseSvgToFabric } from '../utils/svgPathUtils';
+import { alignElement } from '../../../../../shared/js/alignElement';
 
 const ALLOWED_FABRIC_TYPES = new Set([
   'IText', 'Image', 'Rect', 'Path', 'Group', 'FabricText',
@@ -33,6 +34,11 @@ export default function Canvas() {
   // Background editing state
   const [editingBg, setEditingBg] = useState(false);
   const bgObjectRef = useRef(null);
+
+  // Selected element tracking (for alignment toolbar).
+  // Use both a ref (stable for handlers) and state (for conditional rendering).
+  const selectedObjRef = useRef(null);
+  const [hasSelection, setHasSelection] = useState(false);
 
   const {
     views, currentViewIndex,
@@ -213,6 +219,25 @@ export default function Canvas() {
     canvas.on('object:scaling', (e) => {
       if (e.target?.data?.isZone) return;
       clampScaleRef.current?.(e.target);
+    });
+
+    canvas.on('selection:created', (e) => {
+      const obj = e.selected?.[0];
+      const sel = obj?.data?.isZone ? null : obj || null;
+      selectedObjRef.current = sel;
+      setHasSelection(!!sel);
+    });
+    canvas.on('selection:updated', (e) => {
+      const obj = e.selected?.[0];
+      const sel = obj?.data?.isZone ? null : obj || null;
+      selectedObjRef.current = sel;
+      setHasSelection(!!sel);
+    });
+    canvas.on('selection:cleared', () => {
+      // Don't clear the ref — alignment buttons read it on mousedown,
+      // which fires after Fabric clears the selection. The ref gets
+      // overwritten on the next selection:created/updated anyway.
+      setHasSelection(false);
     });
 
     canvas.on('text:changed', (e) => {
@@ -892,6 +917,47 @@ export default function Canvas() {
     }
   };
 
+  const handleAlign = useCallback((dir) => {
+    const canvas = fabricRef.current;
+    const obj = selectedObjRef.current;
+    if (!obj || !canvas || obj.data?.isZone) return;
+
+    // Find the zone boundary: use the Fabric zone object's bounding rect
+    // so SVG boundaries align within the actual SVG shape, not just the config rect.
+    const zi = obj.data?.zoneIndex;
+    let bounds;
+    if (zi != null) {
+      const zoneObj = canvas.getObjects().find(
+        (o) => o.data?.isZone && o.data?.zoneIndex === zi
+      );
+      if (zoneObj) {
+        const r = zoneObj.getBoundingRect();
+        bounds = { x: r.left, y: r.top, width: r.width, height: r.height };
+      }
+    }
+    if (!bounds) {
+      const zones = views[currentViewIndex]?.zones_config || [];
+      const zone = (zi != null && zones[zi]) ? zones[zi] : null;
+      bounds = zone || { x: 0, y: 0, width: currentView?.canvas_width || 800, height: currentView?.canvas_height || 600 };
+    }
+
+    alignElement(obj, dir, bounds);
+
+    // Persist position to Zustand store so the layer-sync effect doesn't reset it.
+    if (obj.data?.zoneIndex != null && obj.data?.layerIndex != null) {
+      updateLayer(currentViewIndex, obj.data.zoneIndex, obj.data.layerIndex, {
+        left: Math.round(obj.left),
+        top:  Math.round(obj.top),
+      });
+    }
+
+    // Re-select so the object stays active for further alignment clicks.
+    canvas.setActiveObject(obj);
+    canvas.renderAll();
+    setHasSelection(true);
+    pushHistory(viewKey, canvas.toJSON(['data']));
+  }, [views, currentViewIndex, currentView, updateLayer, pushHistory, viewKey]);
+
   return (
     <div className="pf-canvas-wrap">
       <div className="pf-canvas-toolbar">
@@ -952,10 +1018,65 @@ export default function Canvas() {
         >
           { __( '↪ Redo', 'productforge' ) }
         </button>
+        {!editingBg && (
+          <AlignToolbar hasSelection={hasSelection} handleAlign={handleAlign} />
+        )}
       </div>
       <div className="pf-canvas-scroll">
         <canvas ref={canvasEl} />
       </div>
     </div>
+  );
+}
+
+/**
+ * Alignment toolbar that uses native capture-phase mousedown listeners
+ * to fire before Fabric.js clears the canvas selection.
+ */
+function AlignToolbar({ hasSelection, handleAlign }) {
+  const groupRef = useRef(null);
+  const handleAlignRef = useRef(handleAlign);
+  handleAlignRef.current = handleAlign;
+
+  useEffect(() => {
+    const el = groupRef.current;
+    if (!el) return;
+
+    const onMouseDown = (e) => {
+      const dir = e.target.dataset?.align;
+      if (!dir) return;
+      e.preventDefault();
+      e.stopPropagation();
+      handleAlignRef.current(dir);
+    };
+
+    // Capture phase fires before Fabric's document-level listener.
+    el.addEventListener('mousedown', onMouseDown, true);
+    return () => el.removeEventListener('mousedown', onMouseDown, true);
+  }, []);
+
+  const dirs = [
+    ['left', '⬅', __('Align left', 'productforge')],
+    ['center', '↔', __('Align center', 'productforge')],
+    ['right', '➡', __('Align right', 'productforge')],
+    ['top', '⬆', __('Align top', 'productforge')],
+    ['middle', '↕', __('Align middle', 'productforge')],
+    ['bottom', '⬇', __('Align bottom', 'productforge')],
+  ];
+
+  return (
+    <span className="pf-canvas-toolbar__group" ref={groupRef}>
+      <span className="pf-canvas-toolbar__sep" />
+      {dirs.map(([dir, icon, title]) => (
+        <button
+          key={dir}
+          className={`pf-canvas-toolbar__btn${hasSelection ? '' : ' pf-canvas-toolbar__btn--dim'}`}
+          data-align={dir}
+          title={title}
+        >
+          {icon}
+        </button>
+      ))}
+    </span>
   );
 }

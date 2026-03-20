@@ -287,7 +287,8 @@
   border-color: #50575e;
 }
 
-.pf-canvas-toolbar__btn:disabled {
+.pf-canvas-toolbar__btn:disabled,
+.pf-canvas-toolbar__btn--dim {
   opacity: 0.4;
   cursor: default;
 }
@@ -301,6 +302,19 @@
 .pf-canvas-toolbar__btn--active:hover {
   background: #135e96;
   border-color: #135e96;
+}
+
+.pf-canvas-toolbar__group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.pf-canvas-toolbar__sep {
+  width: 1px;
+  height: 20px;
+  background: #c3c4c7;
+  margin: 0 4px;
 }
 
 .pf-canvas-scroll {
