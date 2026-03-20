@@ -153,12 +153,15 @@ class RestTemplates {
             $global_config = json_decode($global_config, true) ?: [];
         }
 
-        return rest_ensure_response([
+        $response = rest_ensure_response([
             'id'            => (int) $template['id'],
             'title'         => $template['title'],
             'global_config' => $global_config,
             'views'         => $sanitized_views,
         ]);
+        // Prevent caching by LiteSpeed / CDN / browser so edits appear immediately.
+        $response->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+        return $response;
     }
 
     public function list_views(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {

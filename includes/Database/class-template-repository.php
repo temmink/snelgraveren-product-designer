@@ -68,12 +68,6 @@ class TemplateRepository {
     }
 
     public function get(int $id): ?array {
-        $cache_key = 'pf_template_' . $id;
-        $cached    = get_transient($cache_key);
-        if ($cached !== false) {
-            return $cached;
-        }
-
         global $wpdb;
         $row = $wpdb->get_row(
             $wpdb->prepare("SELECT * FROM {$this->table} WHERE id = %d", $id),
@@ -84,7 +78,6 @@ class TemplateRepository {
         $row['global_config'] = json_decode($row['global_config'], true) ?: [];
         $row['views']         = $this->get_views($id);
 
-        set_transient($cache_key, $row, 5 * MINUTE_IN_SECONDS);
         return $row;
     }
 
@@ -112,7 +105,7 @@ class TemplateRepository {
 
         $format = array_map(fn() => '%s', $update);
         $result = $wpdb->update($this->table, $update, ['id' => $id], $format, ['%d']);
-        delete_transient('pf_template_' . $id);
+
         return $result !== false;
     }
 
@@ -259,7 +252,7 @@ class TemplateRepository {
             'layers_config'    => wp_json_encode($data['layers_config'] ?? []),
             'permissions'      => wp_json_encode($data['permissions'] ?? []),
         ], ['%d', '%s', '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s']);
-        delete_transient('pf_template_' . $template_id);
+
         return (int) $wpdb->insert_id;
     }
 
@@ -293,7 +286,7 @@ class TemplateRepository {
             $format,
             ['%d', '%d']
         );
-        delete_transient('pf_template_' . $template_id);
+
         // $wpdb->update returns false on error, 0 if no rows changed (data identical).
         return $result !== false;
     }
@@ -305,7 +298,7 @@ class TemplateRepository {
             ['id' => $view_id, 'template_id' => $template_id],
             ['%d', '%d']
         );
-        delete_transient('pf_template_' . $template_id);
+
         return $result;
     }
 
