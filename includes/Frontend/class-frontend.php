@@ -204,7 +204,10 @@ class Frontend {
                 true
             );
 
-            wp_set_script_translations('pf-frontend-designer', 'productforge', PF_PLUGIN_DIR . 'languages');
+            // Load translations inline to work with JS-combining caches (LiteSpeed, etc.)
+            // wp_set_script_translations breaks when caching plugins rewrite the JS URL,
+            // because WordPress can't match the hash to find the JSON file.
+            $this->inline_script_translations('pf-frontend-designer', 'productforge', 'dist/frontend-designer.js');
 
             $js_config = [
                 'template_id'     => $template_id,
@@ -300,5 +303,45 @@ class Frontend {
         $this->designer_rendered = true;
 
         return '<div id="pf-designer-root" data-mode="embedded"></div>';
+    }
+
+    /**
+     * Inline script translations to work with JS-combining caches (LiteSpeed, WP Rocket, etc.).
+     *
+     * wp_set_script_translations relies on matching the JS file path to a JSON hash,
+     * which breaks when caching plugins rewrite or combine the JS URL.
+     * This loads the JSON directly and inlines it via wp_add_inline_script.
+     */
+    private function inline_script_translations(string $handle, string $domain, string $relative_path): void {
+        $lang = determine_locale();
+        $hash = md5($domain . $relative_path);
+        $json_file = PF_PLUGIN_DIR . "languages/{$domain}-{$lang}-{$hash}.json";
+
+        if (!file_exists($json_file)) {
+            // Fall back to base language (nl_NL from nl_NL_formal, etc.)
+            $base_lang = substr($lang, 0, 5);
+            $json_file = PF_PLUGIN_DIR . "languages/{$domain}-{$base_lang}-{$hash}.json";
+        }
+
+        if (!file_exists($json_file)) {
+            return;
+        }
+
+        $json = file_get_contents($json_file);
+        if (!$json) {
+            return;
+        }
+
+        $script = <<<JS
+(function(domain, translations) {
+    var localeData = translations.locale_data.messages || translations.locale_data[domain];
+    if (localeData) {
+        localeData[""].domain = domain;
+        wp.i18n.setLocaleData(localeData, domain);
+    }
+})("{$domain}", {$json});
+JS;
+
+        wp_add_inline_script($handle, $script, 'before');
     }
 }

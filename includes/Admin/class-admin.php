@@ -81,7 +81,8 @@ class Admin {
             true
         );
 
-        wp_set_script_translations('pf-template-builder', 'productforge', PF_PLUGIN_DIR . 'languages');
+        // Inline translations to work with JS-combining caches.
+        $this->inline_script_translations('pf-template-builder', 'productforge', 'dist/admin-template-builder.js');
 
         $css_file = PF_PLUGIN_DIR . 'dist/admin-template-builder.css';
         if (file_exists($css_file)) {
@@ -155,4 +156,35 @@ class Admin {
         return $file;
     }
 
+    private function inline_script_translations(string $handle, string $domain, string $relative_path): void {
+        $lang = determine_locale();
+        $hash = md5($domain . $relative_path);
+        $json_file = PF_PLUGIN_DIR . "languages/{$domain}-{$lang}-{$hash}.json";
+
+        if (!file_exists($json_file)) {
+            $base_lang = substr($lang, 0, 5);
+            $json_file = PF_PLUGIN_DIR . "languages/{$domain}-{$base_lang}-{$hash}.json";
+        }
+
+        if (!file_exists($json_file)) {
+            return;
+        }
+
+        $json = file_get_contents($json_file);
+        if (!$json) {
+            return;
+        }
+
+        $script = <<<JS
+(function(domain, translations) {
+    var localeData = translations.locale_data.messages || translations.locale_data[domain];
+    if (localeData) {
+        localeData[""].domain = domain;
+        wp.i18n.setLocaleData(localeData, domain);
+    }
+})("{$domain}", {$json});
+JS;
+
+        wp_add_inline_script($handle, $script, 'before');
+    }
 }
