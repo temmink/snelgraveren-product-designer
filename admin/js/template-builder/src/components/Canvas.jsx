@@ -837,7 +837,8 @@ export default function Canvas() {
         });
         // Hide the real background while editing
         canvas.backgroundImage = undefined;
-        canvas.insertAt(img, 0);
+        canvas.add(img);
+        canvas.sendObjectToBack(img);
         canvas.setActiveObject(img);
         canvas.renderAll();
         bgObjectRef.current = img;
