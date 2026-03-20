@@ -50,6 +50,8 @@ npm run build                           # Production build → dist/
 - **Fabric.js JSON serialization:** Always use `canvas.toJSON(['data'])` — never bare `toJSON()` — to preserve custom `data` properties (e.g. `elementType`, `zoneIndex`)
 - **Fabric.js JSON validation:** Whitelist allowed object types before `loadFromJSON`
 - **Fabric.js 6.x type names:** Runtime types are lowercase hyphenated (`'i-text'`, `'image'`, `'path'`), but JSON serialization uses PascalCase (`'IText'`, `'Image'`). Use case-insensitive comparison when matching types at runtime.
+- **No `stopPropagation` on `#pf-designer-root`:** The designer renders inside a WooCommerce product tab via `[productforge]` shortcode. Never add blanket `stopPropagation` on the designer root — it blocks Fabric.js's `document`-level `pointerup` listener, causing dragged objects to stick to the cursor.
+- **Verify hook imports:** When adding React components that use hooks (`useRef`, `useState`, etc.), always verify the hook is imported. Missing hook imports cause `ReferenceError` that crashes the entire React tree with no visible error on the page.
 
 ### REST API
 - Namespace: `pf/v1`

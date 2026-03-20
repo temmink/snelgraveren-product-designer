@@ -1,6 +1,6 @@
 # ProductForge — Current Status
 
-**Last updated:** 2026-03-19
+**Last updated:** 2026-03-20
 **Plugin version:** 1.0.0
 **Docker environment:** Running (WordPress 6.7, WooCommerce 10.6.1, MariaDB 11)
 
@@ -77,6 +77,8 @@ bash bin/package.sh
 - **Fabric.js `data` not serialized:** `canvas.toJSON()` didn't include custom `data` property. Fixed by using `canvas.toJSON(['data'])` everywhere.
 - **"Unknown Properties" display:** `inferElementType()` checked for `'IText'` (PascalCase) but Fabric.js 6.x runtime type is `'i-text'` (lowercase hyphenated). Fixed with case-insensitive comparison.
 - **Thumbnail overwrite on save:** `upsert_view()` always overwrote thumbnail column even with empty string, clearing previously saved thumbnails for non-active views. Fixed by only including thumbnail in update when non-empty.
+- **Alignment position resets after use (admin):** `handleAlign` in admin Canvas.jsx called `pushHistory` but not `updateLayer`, so the Zustand layer-sync effect reverted aligned positions. Fixed by calling `updateLayer()` after `alignElement()`.
+- **Designer crashes on text element click (live site):** `ElementTab.jsx` used `useRef` in the `AlignmentButtons` component without importing it, causing a `ReferenceError` that unmounted the entire React component tree when selecting a text element. Fixed by adding `useRef` to the import. Root cause was diagnosed via Playwright MCP browser debugging on the live site.
 
 ---
 
@@ -89,7 +91,7 @@ bash bin/package.sh
 - **Canvas:** `DesignerCanvas.jsx` — Fabric.js 6.x canvas with zone rendering (restrict/suggest styles), zone enforcement (clamp on move/scale), tool modes (add-text via click, add-image/add-svg via file upload), permissions enforcement, Fabric JSON whitelisting, `inferElementType()` for Fabric.js 6.x type detection
 - **Sidebar:** Three-tab sidebar (Views / Element / Add) with auto-switch on selection
   - `AddTab.jsx` — Text/Image/SVG tool buttons with zone-aware disabling
-  - `ElementTab.jsx` — Text properties (font, size, color, bold/italic), image/SVG properties (scale, recolor), delete
+  - `ElementTab.jsx` — Text properties (font, size, color, bold/italic), image/SVG properties (scale, recolor), alignment buttons, delete
   - `ViewsTab.jsx` — View switcher with snapshot persistence across view switches
 - **App:** `App.jsx` — template loading, design reload from cart (load design BEFORE setting template to avoid race condition), save flow with offscreen thumbnail generation for all views, auto-save-before-cart, customization-required gate, display modes (embedded/modal), hidden design_hash input
 - **CSS:** `designer.css` — isolation (`all: initial`), layout, modal overlay, BEM naming with `pf-` prefix, explicit text colors to prevent theme overrides, tab text overflow protection

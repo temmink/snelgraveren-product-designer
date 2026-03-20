@@ -18,6 +18,8 @@
 
 No critical security vulnerabilities. The plugin correctly avoids the CVE-2024-51919 (RCE) and CVE-2024-51818 (SQLi) classes that affected Fancy Product Designer. The highest-impact findings are frontend correctness bugs (stale closures, missing `['data']` in `toJSON`) and performance N+1 patterns.
 
+**Fixes applied:** Missing `useRef` import in `ElementTab.jsx` (critical — crashed designer on text click, fixed 2026-03-20).
+
 ---
 
 ## Critical Findings (Fix First)
@@ -41,6 +43,11 @@ No critical security vulnerabilities. The plugin correctly avoids the CVE-2024-5
 **File:** `frontend/js/designer/src/components/DesignerCanvas.jsx` lines 339–357
 **Impact:** Old event handlers fire with stale `currentViewIndex`, corrupting canvas data for the wrong view.
 **Fix:** Use a ref for `currentViewIndex` or read from store state inside handlers.
+
+### ~~Frontend: Missing `useRef` import crashes designer on text click~~ ✅ FIXED (2026-03-20)
+**File:** `frontend/js/designer/src/components/tabs/ElementTab.jsx` line 1
+**Impact:** `AlignmentButtons` component used `useRef` without importing it. Clicking any text element threw `ReferenceError: useRef is not defined`, which unmounted the entire React component tree — making the designer disappear on the live site.
+**Fix:** Added `useRef` to the React import. Commit `7d77821`.
 
 ### Frontend: Race condition on rapid Save (double design creation)
 **File:** `frontend/js/designer/src/App.jsx` lines 299–363

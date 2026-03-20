@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+**Status:** ✅ Complete — deployed to live site (snelgraveren.nl) on 2026-03-20. Post-deployment fixes: missing `useRef` import in `ElementTab.jsx` (crashed designer on text click), alignment button position persistence in admin builder.
+
 **Goal:** Make the ProductForge plugin production-ready with i18n (Dutch + infrastructure), accessibility, performance optimizations, and comprehensive tests.
 
 **Architecture:** Four independent workstreams executed in order: i18n first (touches most files), accessibility second (uses i18n for labels), performance (independent), testing last (covers final state). Each task produces a self-contained commit.

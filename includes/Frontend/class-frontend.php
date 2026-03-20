@@ -286,10 +286,6 @@ class Frontend {
      * Auto-detects product context on product pages.
      */
     public function shortcode(array $atts = []): string {
-        if ($this->designer_rendered) {
-            return '';
-        }
-
         if (!is_product()) {
             return '';
         }
@@ -301,6 +297,10 @@ class Frontend {
             return '';
         }
 
+        // Allow the shortcode to render on every the_content call.
+        // Plugins/themes (Rank Math, Astra) may call the_content before
+        // WooCommerce renders the description tab — their output is
+        // discarded or stripped. Only the tab render produces visible HTML.
         $this->designer_rendered = true;
 
         return '<div id="pf-designer-root" data-mode="embedded"></div>';
