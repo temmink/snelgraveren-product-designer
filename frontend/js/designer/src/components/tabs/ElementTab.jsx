@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { __ } from '@wordpress/i18n';
 import useDesignerStore from '../../store/useDesignerStore';
 import { alignElement } from '../../../../../../shared/js/alignElement';

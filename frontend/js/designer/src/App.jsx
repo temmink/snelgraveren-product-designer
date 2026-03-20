@@ -398,7 +398,6 @@ export default function App() {
       aria-modal={isModal ? 'true' : undefined}
       aria-label={isModal ? __('ProductForge designer', 'productforge') : undefined}
       onClick={isModal ? (e) => { e.stopPropagation(); setDesignerOpen(false); } : undefined}
-      onMouseDown={isModal ? (e) => e.stopPropagation() : undefined}
     >
       <div className="pf-designer__layout" onClick={isModal ? (e) => e.stopPropagation() : undefined}>
         <DesignerCanvas />
