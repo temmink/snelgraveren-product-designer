@@ -172,6 +172,12 @@ class RestDesigns {
         }
 
         $base64  = str_replace('data:image/png;base64,', '', $data_url);
+
+        // Cap base64 payload at ~5 MB decoded (≈6.67 MB base64) to prevent memory exhaustion
+        if (strlen($base64) > 7_000_000) {
+            return '';
+        }
+
         $decoded = base64_decode($base64, true);
         if (!$decoded) {
             return '';

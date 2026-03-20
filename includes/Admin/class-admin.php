@@ -10,6 +10,7 @@ class Admin {
         add_action('admin_enqueue_scripts', [$this, 'enqueue_scripts']);
         add_filter('upload_mimes',         [$this, 'allow_svg_upload']);
         add_filter('wp_check_filetype_and_ext', [$this, 'fix_svg_filetype'], 10, 5);
+        add_filter('wp_handle_upload_prefilter', [$this, 'sanitize_svg_upload']);
 
         new ProductIntegration();
     }
@@ -119,6 +120,39 @@ class Admin {
             $data['type'] = 'image/svg+xml';
         }
         return $data;
+    }
+
+    /**
+     * Sanitize SVG uploads via the enshrined/svg-sanitize library before they enter the Media Library.
+     * Strips <script>, on* attributes, <foreignObject>, and other dangerous SVG elements.
+     */
+    public function sanitize_svg_upload(array $file): array {
+        if (($file['type'] ?? '') !== 'image/svg+xml') {
+            return $file;
+        }
+
+        if (!class_exists(\enshrined\svgSanitize\Sanitizer::class)) {
+            $file['error'] = __('SVG sanitization library not available.', 'product-designer');
+            return $file;
+        }
+
+        $svg_content = file_get_contents($file['tmp_name']);
+        if ($svg_content === false) {
+            $file['error'] = __('Could not read SVG file.', 'product-designer');
+            return $file;
+        }
+
+        $sanitizer = new \enshrined\svgSanitize\Sanitizer();
+        $clean = $sanitizer->sanitize($svg_content);
+        if ($clean === false || $clean === '') {
+            $file['error'] = __('SVG file contains disallowed content and was rejected.', 'product-designer');
+            return $file;
+        }
+
+        // Overwrite the temp file with the sanitized version
+        file_put_contents($file['tmp_name'], $clean);
+
+        return $file;
     }
 
 }

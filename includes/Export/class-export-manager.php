@@ -233,10 +233,14 @@ class ExportManager {
         $dir = $upload_dir['basedir'] . '/pd-exports/' . $format . '/';
         wp_mkdir_p($dir);
 
-        // Add index.php for security
+        // Add index.php and .htaccess for security
         $index = $dir . 'index.php';
         if (!file_exists($index)) {
             file_put_contents($index, '<?php // Silence is golden.');
+        }
+        $htaccess = $dir . '.htaccess';
+        if (!file_exists($htaccess)) {
+            file_put_contents($htaccess, "Options -Indexes\nDeny from all");
         }
 
         return $dir;
