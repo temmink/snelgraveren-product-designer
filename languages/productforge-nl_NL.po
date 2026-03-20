@@ -4,8 +4,8 @@
 # Martin Temmink <martin@example.com>, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: Product Designer for WooCommerce 1.0.0\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/product-designer\n"
+"Project-Id-Version: ProductForge 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/productforge\n"
 "POT-Creation-Date: 2026-03-19T13:15:57+00:00\n"
 "PO-Revision-Date: 2026-03-19 14:00+0000\n"
 "Last-Translator: Martin Temmink <martin@example.com>\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Manual\n"
-"X-Domain: product-designer\n"
+"X-Domain: productforge\n"
 
 #. Plugin Name of the plugin
 #: product-designer.php
@@ -803,10 +803,6 @@ msgstr "SVG-vorm"
 msgid "Zone shape"
 msgstr "Zonevorm"
 
-#: admin/js/template-builder/src/components/ZoneForm.jsx:108
-#: dist/admin-template-builder.js:533
-msgid "Remove"
-msgstr "Verwijderen"
 
 #: admin/js/template-builder/src/components/ZoneForm.jsx:117
 #: dist/admin-template-builder.js:533

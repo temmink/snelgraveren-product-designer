@@ -132,7 +132,11 @@ class Frontend {
      */
     public function cart_item_permalink(string $permalink, array $cart_item, string $cart_item_key): string {
         if (!empty($cart_item['pf_design_hash']) && !empty($permalink)) {
-            $permalink = add_query_arg('pf_design', $cart_item['pf_design_hash'], $permalink);
+            // Use the canonical product permalink to avoid SEO plugin redirects
+            // stripping query parameters during URL normalization.
+            $product = wc_get_product($cart_item['product_id'] ?? 0);
+            $base = $product ? $product->get_permalink() : $permalink;
+            $permalink = add_query_arg('pf_design', $cart_item['pf_design_hash'], $base);
         }
         return $permalink;
     }
