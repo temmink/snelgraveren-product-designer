@@ -9,18 +9,6 @@ class CapabilityChecker {
         return current_user_can( 'edit_pd_templates' ) || current_user_can( 'manage_woocommerce' );
     }
 
-    public static function can_manage_settings(): bool {
-        return current_user_can( 'manage_pd_settings' );
-    }
-
-    public static function can_view_exports(): bool {
-        return current_user_can( 'view_pd_exports' );
-    }
-
-    public static function can_manage_woocommerce(): bool {
-        return current_user_can( 'manage_woocommerce' );
-    }
-
     /**
      * Get or create the guest session ID from a cookie.
      *

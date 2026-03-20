@@ -45,32 +45,3 @@ export async function extractSvgBoundingBox(svgString) {
   return { width: result.width, height: result.height };
 }
 
-// Keep backward-compat exports used by ZoneForm.
-
-/**
- * @deprecated Use extractSvgBoundingBox instead.
- */
-export function extractClosedPath(svgString) {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(svgString, 'image/svg+xml');
-  if (doc.querySelector('parsererror')) return null;
-
-  const svgEl = doc.querySelector('svg');
-  const viewBox = svgEl?.getAttribute('viewBox') || '';
-
-  const paths = doc.querySelectorAll('path');
-  for (const pathEl of paths) {
-    const d = (pathEl.getAttribute('d') || '').trim();
-    if (!d) continue;
-    if (!/[Zz]\s*$/.test(d)) continue;
-    return { pathData: d, viewBox };
-  }
-  return null;
-}
-
-/**
- * @deprecated Use extractSvgBoundingBox instead.
- */
-export function pathToBoundingBox() {
-  return { x: 0, y: 0, width: 200, height: 200 };
-}

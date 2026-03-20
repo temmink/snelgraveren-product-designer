@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 import { __ } from '@wordpress/i18n';
-import { Canvas as FabricCanvas, Rect, IText, FabricImage, filters, Path, loadSVGFromString, util } from 'fabric';
+import { Canvas as FabricCanvas, Rect, IText, FabricImage, loadSVGFromString, util } from 'fabric';
 import useDesignerStore from '../store/useDesignerStore';
 import { uploadFile } from '../api/designerApi';
 

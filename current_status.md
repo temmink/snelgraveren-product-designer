@@ -33,9 +33,9 @@ bash bin/package.sh
 ## What's complete
 
 ### Phase 0 — Project scaffold ✅
-- Docker: `docker-compose.yml`, `docker/wordpress/Dockerfile`, `docker/setup.sh`
+- Docker: `docker-compose.yml`, `docker/Dockerfile`, `docker/setup.sh`
   - Dockerfile permanently sets `chown -R www-data:www-data /var/www/html/wp-content` to prevent upgrade-dir permission errors
-- Build: `vite.config.js` with dual entry points (`admin-template-builder`, `frontend-designer`)
+- Build: `vite.config.mjs` with dual entry points (`admin-template-builder`, `frontend-designer`)
 - Dependencies: `composer.json` (tcpdf, enshrined/svg-sanitize, intervention/image), `package.json` (fabric 6.x, react 18, zustand 4, vite 5)
 - `bin/package.sh` — builds JS, runs composer via Docker fallback, zips for distribution
 
@@ -47,8 +47,8 @@ bash bin/package.sh
   - ⚠️ Migration class is `Migration100` → file is `class-migration100.php` (NOT `class-migration-1-0-0.php` — autoloader can't handle that)
   - Creates 6 InnoDB tables: `wp_pd_templates`, `wp_pd_template_views`, `wp_pd_designs`, `wp_pd_design_views`, `wp_pd_exports`, `wp_pd_price_log`
 - **Repositories:** TemplateRepository, DesignRepository, ExportRepository, PriceRepository
-- **Security:** CapabilityChecker (session ID cookie, CSPRNG), NonceManager, UploadValidator (finfo MIME + enshrined SVG sanitizer, rate-limited 10/min)
-- **REST API** (`pd/v1`): RestTemplates (10 routes), RestDesigns (8 routes), RestUploads, RestFonts (stub), RestExports (stub)
+- **Security:** CapabilityChecker (session ID cookie, CSPRNG), UploadValidator (finfo MIME + enshrined SVG sanitizer, rate-limited 10/min)
+- **REST API** (`pd/v1`): RestTemplates (10 routes), RestDesigns (8 routes), RestUploads, RestFonts (stub), RestExports (4 routes)
 - **Admin:** class-admin.php (menus, enqueue, `user_has_cap` filter granting `edit_pd_templates` to `manage_woocommerce` users), TemplateListTable (WP_List_Table with status tabs + bulk actions), TemplateBuilder
 
 ### Phase 2 — Admin template builder React UI ✅
@@ -61,8 +61,7 @@ bash bin/package.sh
 - **ViewTabs.jsx** — `cancelledRef` guards Escape cancel vs onBlur race; disabled during save; `key={view.id || view._clientId}`
 - **Canvas.jsx** — Fabric.js 6.x; `disposed` flag guards async background-image callbacks; zone draw mode; keyboard undo/redo (INPUT/TEXTAREA guarded)
 - **ZoneForm.jsx** — validates width/height ≥ 1; conditional mask_svg_url field
-- **ZoneList.jsx** — `editingKey` string (not numeric index); `key={zone._key}`
-- **LayerPanel.jsx** — Add Layer disabled when no views; `key={layer._key}`; z_order re-indexed on remove
+- ~~ZoneList.jsx and LayerPanel.jsx~~ — removed, replaced by TreePanel + TreeNode
 - **PermissionsPanel.jsx** — text extras include `recolor` and `change_font`
 - **PricingPanel.jsx** — currency symbol from `window.pdTemplateBuilder?.currency_symbol || '€'`
 - **GlobalSettings.jsx** — `pendingColor` state + explicit Add button (no drag-fire)
@@ -259,7 +258,6 @@ product-designer/
 │   │   └── class-price-repository.php
 │   ├── Security/
 │   │   ├── class-capability-checker.php
-│   │   ├── class-nonce-manager.php
 │   │   └── class-upload-validator.php
 │   ├── Frontend/
 │   │   ├── class-frontend.php       # WooCommerce product page hooks, asset enqueue
@@ -326,7 +324,7 @@ product-designer/
     ├── php/
     │   ├── bootstrap.php
     │   ├── Database/             # TemplateRepositoryTest, DesignRepositoryTest
-    │   ├── Security/             # UploadValidatorTest, CapabilityCheckerTest, NonceManagerTest
+    │   ├── Security/             # UploadValidatorTest, CapabilityCheckerTest
     │   ├── Pricing/              # PriceCalculatorTest
     │   ├── Export/               # SvgExporterTest, PdfExporterTest, PngExporterTest
     │   └── API/                  # TemplateEndpointTest, DesignEndpointTest

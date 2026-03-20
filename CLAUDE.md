@@ -6,10 +6,9 @@ A WooCommerce plugin that lets customers design text, images, and SVGs onto prod
 
 ## Key Documents
 
-- **Design spec:** `docs/superpowers/specs/2026-03-18-product-designer-plugin-design.md` — the complete technical specification. Read this before making architectural changes.
 - **Current status:** `current_status.md` — what's done, what's next, how to run the environment.
-- **Implementation plan:** `.claude/plans/lazy-finding-panda.md` — phased build plan (Phase 0-6).
 - **Admin builder redesign:** `docs/superpowers/specs/2026-03-18-admin-builder-redesign-design.md` — 3-phase redesign (zone enforcement, tree UI, SVG boundaries)
+- **Code audit:** `CODE_AUDIT.md` — 81 findings across security, performance, dead code, and frontend correctness
 
 ## Architecture
 
