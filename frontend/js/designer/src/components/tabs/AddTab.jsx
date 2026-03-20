@@ -29,36 +29,39 @@ export default function AddTab() {
     <div className="pd-sidebar__tab-content">
       <h3 className="pd-sidebar__heading">{__('Add Element', 'product-designer')}</h3>
       <div className="pd-add-tools">
-        <button
-          type="button"
-          className={`pd-add-tools__btn${activeTool === 'add-text' ? ' pd-add-tools__btn--active' : ''}`}
-          disabled={!isTypeAllowed('text')}
-          onClick={() => handleToolClick('add-text')}
-          aria-label={!isTypeAllowed('text') ? __('Text not allowed on this view', 'product-designer') : __('Add text element', 'product-designer')}
-          title={!isTypeAllowed('text') ? __('Text not allowed on this view', 'product-designer') : __('Add text', 'product-designer')}
-        >
-          {__('Text', 'product-designer')}
-        </button>
-        <button
-          type="button"
-          className={`pd-add-tools__btn${activeTool === 'add-image' ? ' pd-add-tools__btn--active' : ''}`}
-          disabled={!isTypeAllowed('image')}
-          onClick={() => handleToolClick('add-image')}
-          aria-label={!isTypeAllowed('image') ? __('Images not allowed on this view', 'product-designer') : __('Add image element', 'product-designer')}
-          title={!isTypeAllowed('image') ? __('Images not allowed on this view', 'product-designer') : __('Add image (jpg, png, webp)', 'product-designer')}
-        >
-          {__('Image', 'product-designer')}
-        </button>
-        <button
-          type="button"
-          className={`pd-add-tools__btn${activeTool === 'add-svg' ? ' pd-add-tools__btn--active' : ''}`}
-          disabled={!isTypeAllowed('svg')}
-          onClick={() => handleToolClick('add-svg')}
-          aria-label={!isTypeAllowed('svg') ? __('SVGs not allowed on this view', 'product-designer') : __('Add SVG element', 'product-designer')}
-          title={!isTypeAllowed('svg') ? __('SVGs not allowed on this view', 'product-designer') : __('Add SVG', 'product-designer')}
-        >
-          {__('SVG', 'product-designer')}
-        </button>
+        {isTypeAllowed('text') && (
+          <button
+            type="button"
+            className={`pd-add-tools__btn${activeTool === 'add-text' ? ' pd-add-tools__btn--active' : ''}`}
+            onClick={() => handleToolClick('add-text')}
+            aria-label={__('Add text element', 'product-designer')}
+            title={__('Add text', 'product-designer')}
+          >
+            {__('Text', 'product-designer')}
+          </button>
+        )}
+        {isTypeAllowed('image') && (
+          <button
+            type="button"
+            className={`pd-add-tools__btn${activeTool === 'add-image' ? ' pd-add-tools__btn--active' : ''}`}
+            onClick={() => handleToolClick('add-image')}
+            aria-label={__('Add image element', 'product-designer')}
+            title={__('Add image (jpg, png, webp)', 'product-designer')}
+          >
+            {__('Image', 'product-designer')}
+          </button>
+        )}
+        {isTypeAllowed('svg') && (
+          <button
+            type="button"
+            className={`pd-add-tools__btn${activeTool === 'add-svg' ? ' pd-add-tools__btn--active' : ''}`}
+            onClick={() => handleToolClick('add-svg')}
+            aria-label={__('Add SVG element', 'product-designer')}
+            title={__('Add SVG', 'product-designer')}
+          >
+            {__('SVG', 'product-designer')}
+          </button>
+        )}
       </div>
     </div>
   );
