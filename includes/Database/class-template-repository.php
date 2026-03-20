@@ -254,10 +254,11 @@ class TemplateRepository {
             'canvas_width'     => max(1, (int) ($data['canvas_width'] ?? 800)),
             'canvas_height'    => max(1, (int) ($data['canvas_height'] ?? 600)),
             'background_url'   => esc_url_raw($data['background_url'] ?? ''),
+            'background_transform' => wp_json_encode($data['background_transform'] ?? new \stdClass()),
             'zones_config'     => wp_json_encode($data['zones_config'] ?? []),
             'layers_config'    => wp_json_encode($data['layers_config'] ?? []),
             'permissions'      => wp_json_encode($data['permissions'] ?? []),
-        ], ['%d', '%s', '%d', '%d', '%d', '%s', '%s', '%s', '%s']);
+        ], ['%d', '%s', '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s']);
         delete_transient('pf_template_' . $template_id);
         return (int) $wpdb->insert_id;
     }
@@ -269,7 +270,8 @@ class TemplateRepository {
         if (isset($data['sort_order']))       $update['sort_order']       = (int) $data['sort_order'];
         if (isset($data['canvas_width']))     $update['canvas_width']     = max(1, (int) $data['canvas_width']);
         if (isset($data['canvas_height']))    $update['canvas_height']    = max(1, (int) $data['canvas_height']);
-        if (isset($data['background_url']))   $update['background_url']   = esc_url_raw($data['background_url']);
+        if (isset($data['background_url']))       $update['background_url']       = esc_url_raw($data['background_url']);
+        if (isset($data['background_transform'])) $update['background_transform'] = wp_json_encode($data['background_transform']);
         if (isset($data['zones_config']))     $update['zones_config']       = wp_json_encode($data['zones_config']);
         if (isset($data['layers_config']))    $update['layers_config']      = wp_json_encode($data['layers_config']);
         if (isset($data['permissions']))      $update['permissions']        = wp_json_encode($data['permissions']);
@@ -279,7 +281,7 @@ class TemplateRepository {
         // Build format array matching the dynamic update columns
         $format_map = [
             'name' => '%s', 'sort_order' => '%d', 'canvas_width' => '%d',
-            'canvas_height' => '%d', 'background_url' => '%s',
+            'canvas_height' => '%d', 'background_url' => '%s', 'background_transform' => '%s',
             'zones_config' => '%s', 'layers_config' => '%s', 'permissions' => '%s',
         ];
         $format = array_map(fn($k) => $format_map[$k] ?? '%s', array_keys($update));
@@ -308,9 +310,10 @@ class TemplateRepository {
     }
 
     private function decode_view(array $row): array {
-        $row['zones_config']  = json_decode($row['zones_config'] ?? '', true)  ?: [];
-        $row['layers_config'] = json_decode($row['layers_config'] ?? '', true) ?: [];
-        $row['permissions']   = json_decode($row['permissions'] ?? '', true)   ?: [];
+        $row['zones_config']          = json_decode($row['zones_config'] ?? '', true)  ?: [];
+        $row['layers_config']         = json_decode($row['layers_config'] ?? '', true) ?: [];
+        $row['permissions']           = json_decode($row['permissions'] ?? '', true)   ?: [];
+        $row['background_transform']  = json_decode($row['background_transform'] ?? '', true) ?: new \stdClass();
 
         // Migrate: if zones don't have nested layers but layers_config exists, merge them.
         if (!empty($row['layers_config']) && is_array($row['layers_config'])) {

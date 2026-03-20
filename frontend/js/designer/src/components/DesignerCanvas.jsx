@@ -295,8 +295,13 @@ export default function DesignerCanvas() {
       FabricImage.fromURL(currentView.background_url, { crossOrigin: 'anonymous' })
         .then((img) => {
           if (disposed) return;
+          const t = currentView.background_transform || {};
           img.set({ selectable: false, evented: false });
-          img.scaleToWidth(width);
+          if (t.scaleX) {
+            img.set({ scaleX: t.scaleX, scaleY: t.scaleY || t.scaleX, left: t.left || 0, top: t.top || 0 });
+          } else {
+            img.scaleToWidth(width);
+          }
           canvas.backgroundImage = img;
           canvas.renderAll();
         })

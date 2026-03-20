@@ -141,7 +141,8 @@ class RestTemplates {
                 'name'            => $v['name'] ?? '',
                 'canvas_width'    => (int) ($v['canvas_width'] ?? 800),
                 'canvas_height'   => (int) ($v['canvas_height'] ?? 600),
-                'background_url'  => $v['background_url'] ?? '',
+                'background_url'       => $v['background_url'] ?? '',
+                'background_transform' => $v['background_transform'] ?? new \stdClass(),
                 'zones_config'    => $v['zones_config'] ?? [],
                 'layers_config'   => $v['layers_config'] ?? [],
             ];

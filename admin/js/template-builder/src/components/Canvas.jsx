@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { __ } from '@wordpress/i18n';
 import { Canvas as FabricCanvas, Rect, FabricImage, FabricText, loadSVGFromString, util } from 'fabric';
 import useTemplateStore from '../store/useTemplateStore';
@@ -29,6 +29,10 @@ export default function Canvas() {
 
   // Ref for applyZoneClip so async callbacks can use the latest version.
   const applyZoneClipRef   = useRef(null);
+
+  // Background editing state
+  const [editingBg, setEditingBg] = useState(false);
+  const bgObjectRef = useRef(null);
 
   const {
     views, currentViewIndex,
@@ -228,7 +232,12 @@ export default function Canvas() {
       FabricImage.fromURL(currentView.background_url, { crossOrigin: 'anonymous' })
         .then((img) => {
           if (disposed) return;
-          img.scaleToWidth(width);
+          const t = currentView.background_transform || {};
+          if (t.scaleX) {
+            img.set({ scaleX: t.scaleX, scaleY: t.scaleY || t.scaleX, left: t.left || 0, top: t.top || 0 });
+          } else {
+            img.scaleToWidth(width);
+          }
           canvas.backgroundImage = img;
           canvas.renderAll();
           pushHistory(viewKey, canvas.toJSON(['data']));
@@ -772,10 +781,15 @@ export default function Canvas() {
       const attachment = frame.state().get('selection').first().toJSON();
       const url = attachment.url;
 
-      updateView(currentViewIndex, { background_url: url });
+      // Reset transform when changing background image
+      updateView(currentViewIndex, { background_url: url, background_transform: {} });
 
       const canvas = fabricRef.current;
       if (canvas) {
+        // Clean up any editing state
+        if (bgObjectRef.current) { canvas.remove(bgObjectRef.current); bgObjectRef.current = null; }
+        setEditingBg(false);
+
         FabricImage.fromURL(url, { crossOrigin: 'anonymous' })
           .then((img) => {
             img.scaleToWidth(canvas.width);
@@ -790,14 +804,76 @@ export default function Canvas() {
   }, [currentViewIndex, updateView, pushHistory]);
 
   const removeBackground = useCallback(() => {
-    updateView(currentViewIndex, { background_url: '' });
+    if (editingBg) setEditingBg(false);
+    updateView(currentViewIndex, { background_url: '', background_transform: {} });
     const canvas = fabricRef.current;
     if (canvas) {
+      if (bgObjectRef.current) { canvas.remove(bgObjectRef.current); bgObjectRef.current = null; }
       canvas.backgroundImage = undefined;
       canvas.renderAll();
       pushHistory(viewKey, canvas.toJSON(['data']));
     }
-  }, [currentViewIndex, updateView, pushHistory]);
+  }, [currentViewIndex, updateView, pushHistory, editingBg]);
+
+  // Enter background editing: convert backgroundImage to a selectable object
+  const enterBgEdit = useCallback(() => {
+    const canvas = fabricRef.current;
+    if (!canvas || !canvas.backgroundImage) return;
+
+    const bg = canvas.backgroundImage;
+    const { scaleX, scaleY, left, top } = bg;
+
+    FabricImage.fromURL(currentView.background_url, { crossOrigin: 'anonymous' })
+      .then((img) => {
+        img.set({
+          scaleX, scaleY, left: left || 0, top: top || 0,
+          lockUniScaling: true,
+          hasControls: true,
+          hasBorders: true,
+          selectable: true,
+          evented: true,
+          data: { elementType: '_background' },
+          opacity: 0.85,
+        });
+        // Hide the real background while editing
+        canvas.backgroundImage = undefined;
+        canvas.insertAt(img, 0);
+        canvas.setActiveObject(img);
+        canvas.renderAll();
+        bgObjectRef.current = img;
+        setEditingBg(true);
+      });
+  }, [currentView?.background_url]);
+
+  // Exit background editing: apply transform back to backgroundImage
+  const exitBgEdit = useCallback(() => {
+    const canvas = fabricRef.current;
+    const obj = bgObjectRef.current;
+    if (!canvas || !obj) return;
+
+    const transform = {
+      scaleX: obj.scaleX,
+      scaleY: obj.scaleY,
+      left: obj.left,
+      top: obj.top,
+    };
+
+    // Remove the temp object and restore as backgroundImage
+    canvas.remove(obj);
+    bgObjectRef.current = null;
+
+    FabricImage.fromURL(currentView.background_url, { crossOrigin: 'anonymous' })
+      .then((img) => {
+        img.set(transform);
+        canvas.backgroundImage = img;
+        canvas.renderAll();
+        pushHistory(viewKey, canvas.toJSON(['data']));
+      });
+
+    // Save transform to view config
+    updateView(currentViewIndex, { background_transform: transform });
+    setEditingBg(false);
+  }, [currentView?.background_url, currentViewIndex, updateView, pushHistory]);
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -832,6 +908,24 @@ export default function Canvas() {
         >
           { currentView?.background_url ? __( 'Change Background', 'productforge' ) : __( 'Set Background', 'productforge' ) }
         </button>
+        {currentView?.background_url && !editingBg && (
+          <button
+            className="pf-canvas-toolbar__btn"
+            onClick={enterBgEdit}
+            title={ __( 'Resize and reposition the background image', 'productforge' ) }
+          >
+            { __( 'Resize BG', 'productforge' ) }
+          </button>
+        )}
+        {editingBg && (
+          <button
+            className="pf-canvas-toolbar__btn pf-canvas-toolbar__btn--active"
+            onClick={exitBgEdit}
+            title={ __( 'Apply background position', 'productforge' ) }
+          >
+            { __( 'Done', 'productforge' ) }
+          </button>
+        )}
         {currentView?.background_url && (
           <button
             className="pf-canvas-toolbar__btn"
