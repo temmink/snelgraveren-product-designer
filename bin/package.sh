@@ -1,12 +1,13 @@
 #!/bin/bash
-# Package the Product Designer plugin into a distributable WordPress zip.
+# Package the ProductForge plugin into a distributable WordPress zip.
 # Usage: bash bin/package.sh
 set -e
 
-PLUGIN_SLUG="product-designer"
-PLUGIN_FILE="product-designer.php"
+PLUGIN_SLUG="productforge"
+PLUGIN_FILE="productforge.php"
 VERSION=$(grep "Version:" "$PLUGIN_FILE" | head -1 | awk '{print $NF}')
 OUTPUT="${PLUGIN_SLUG}-${VERSION}.zip"
+STAGE_DIR="/tmp/${PLUGIN_SLUG}-package"
 
 echo "Building version ${VERSION}..."
 
@@ -22,23 +23,28 @@ else
         "cd /var/www/html/wp-content/plugins/product-designer && composer install --no-dev --optimize-autoloader --quiet"
 fi
 
-# 3. Remove any previous package
-rm -f "${OUTPUT}"
+# 3. Stage files into a folder named after the slug
+rm -rf "${STAGE_DIR}"
+mkdir -p "${STAGE_DIR}/${PLUGIN_SLUG}"
 
-# 4. Create the zip — include only production files
-zip -r "${OUTPUT}" \
-    "${PLUGIN_FILE}" \
-    uninstall.php \
-    includes/ \
-    vendor/ \
-    dist/ \
-    assets/ \
-    languages/ \
-    -x "*.DS_Store" \
-    -x "*/.gitkeep" \
-    -x "*/node_modules/*" \
-    -x "*/test/*" \
-    -x "*/tests/*"
+cp "${PLUGIN_FILE}" "${STAGE_DIR}/${PLUGIN_SLUG}/"
+cp uninstall.php "${STAGE_DIR}/${PLUGIN_SLUG}/"
+cp -r includes/ "${STAGE_DIR}/${PLUGIN_SLUG}/includes/"
+cp -r vendor/ "${STAGE_DIR}/${PLUGIN_SLUG}/vendor/"
+cp -r dist/ "${STAGE_DIR}/${PLUGIN_SLUG}/dist/"
+[ -d assets/ ] && cp -r assets/ "${STAGE_DIR}/${PLUGIN_SLUG}/assets/"
+[ -d languages/ ] && cp -r languages/ "${STAGE_DIR}/${PLUGIN_SLUG}/languages/"
+
+# 4. Clean unwanted files
+find "${STAGE_DIR}" -name '.DS_Store' -delete
+find "${STAGE_DIR}" -name '.gitkeep' -delete
+
+# 5. Create the zip
+rm -f "${OUTPUT}"
+(cd "${STAGE_DIR}" && zip -r - "${PLUGIN_SLUG}") > "${OUTPUT}"
+
+# 6. Clean up staging dir
+rm -rf "${STAGE_DIR}"
 
 echo ""
 echo "Package created: ${OUTPUT}"
