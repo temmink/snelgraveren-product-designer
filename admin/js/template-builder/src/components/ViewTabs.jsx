@@ -15,7 +15,7 @@ export default function ViewTabs() {
   const handleAdd = () => {
     addView({
       /* translators: %d is the view number */
-      name:            `${ __( 'View', 'product-designer' ) } ${views.length + 1}`,
+      name:            `${ __( 'View', 'productforge' ) } ${views.length + 1}`,
       canvas_width:         800,
       canvas_height:        600,
       background_url: '',
@@ -47,18 +47,18 @@ export default function ViewTabs() {
   };
 
   return (
-    <div className="pd-builder__view-tabs" role="tablist" aria-label="Product views">
+    <div className="pf-builder__view-tabs" role="tablist" aria-label="Product views">
       {views.map((view, index) => (
         <div
           key={view.id || view._clientId}
           role="tab"
           aria-selected={index === currentViewIndex}
-          className={`pd-builder__view-tab${index === currentViewIndex ? ' pd-builder__view-tab--active' : ''}`}
+          className={`pf-builder__view-tab${index === currentViewIndex ? ' pf-builder__view-tab--active' : ''}`}
           onClick={() => setCurrentViewIndex(index)}
         >
           {editingIndex === index ? (
             <input
-              className="pd-builder__view-tab-input"
+              className="pf-builder__view-tab-input"
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
               onBlur={() => commitRename(index)}
@@ -75,21 +75,21 @@ export default function ViewTabs() {
           ) : (
             <>
               <span
-                className="pd-builder__view-tab-name"
+                className="pf-builder__view-tab-name"
                 onDoubleClick={(e) => startRename(e, index)}
-                title={ __( 'Double-click to rename', 'product-designer' ) }
+                title={ __( 'Double-click to rename', 'productforge' ) }
               >
                 {view.name}
               </span>
               {views.length > 1 && (
                 <button
-                  className="pd-builder__view-tab-remove"
-                  aria-label={ `${ __( 'Remove', 'product-designer' ) } ${view.name}` }
+                  className="pf-builder__view-tab-remove"
+                  aria-label={ `${ __( 'Remove', 'productforge' ) } ${view.name}` }
                   disabled={isSaving}
                   onClick={(e) => {
                     e.stopPropagation();
                     /* translators: %s is the view name */
-                    if (window.confirm( `${ __( 'Remove view', 'product-designer' ) } "${view.name}"?` )) {
+                    if (window.confirm( `${ __( 'Remove view', 'productforge' ) } "${view.name}"?` )) {
                       removeView(index);
                     }
                   }}
@@ -102,12 +102,12 @@ export default function ViewTabs() {
         </div>
       ))}
       <button
-        className="pd-builder__view-tab-add"
+        className="pf-builder__view-tab-add"
         onClick={handleAdd}
-        aria-label={ __( 'Add view', 'product-designer' ) }
+        aria-label={ __( 'Add view', 'productforge' ) }
         disabled={isSaving}
       >
-        { __( '+ Add View', 'product-designer' ) }
+        { __( '+ Add View', 'productforge' ) }
       </button>
     </div>
   );

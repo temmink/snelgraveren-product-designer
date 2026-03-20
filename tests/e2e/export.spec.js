@@ -14,9 +14,9 @@ test.describe('Export Flow', () => {
         const firstOrderLink = page.locator('.wp-list-table tbody tr a').first();
         if (await firstOrderLink.isVisible({ timeout: 3000 }).catch(() => false)) {
             await firstOrderLink.click();
-            const exportSection = page.locator('.pd-export-actions');
+            const exportSection = page.locator('.pf-export-actions');
             if (await exportSection.isVisible({ timeout: 3000 }).catch(() => false)) {
-                await expect(page.locator('.pd-export-btn').first()).toBeVisible();
+                await expect(page.locator('.pf-export-btn').first()).toBeVisible();
             }
         }
         // Test passes gracefully if no orders exist yet
@@ -35,10 +35,10 @@ test.describe('Export Flow', () => {
         const firstOrderLink = page.locator('.wp-list-table tbody tr a').first();
         if (await firstOrderLink.isVisible({ timeout: 3000 }).catch(() => false)) {
             await firstOrderLink.click();
-            const pdfBtn = page.locator('.pd-export-btn[data-format="pdf"]').first();
+            const pdfBtn = page.locator('.pf-export-btn[data-format="pdf"]').first();
             if (await pdfBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
                 const responsePromise = page.waitForResponse(
-                    (r) => r.url().includes('/pd/v1/exports/'),
+                    (r) => r.url().includes('/pf/v1/exports/'),
                     { timeout: 10000 }
                 ).catch(() => null);
                 await pdfBtn.click();

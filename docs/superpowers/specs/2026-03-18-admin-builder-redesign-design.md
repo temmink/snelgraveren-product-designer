@@ -115,7 +115,7 @@ The migration is idempotent — it runs on every load until the template is save
 
 ### DB Schema & REST API Changes
 
-The `zones_config` JSON column in `wp_pd_template_views` absorbs the nested layers. The `layers_config` column remains in the DB for backward compatibility but is no longer written to for new saves.
+The `zones_config` JSON column in `wp_pf_template_views` absorbs the nested layers. The `layers_config` column remains in the DB for backward compatibility but is no longer written to for new saves.
 
 **Save flow changes:**
 - The save handler in `App.jsx` serializes the nested structure: `zones_config` includes each zone's `layers` array. The `layers_config` field is omitted from the API payload (or sent as an empty array).

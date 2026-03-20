@@ -1,5 +1,5 @@
 <?php
-namespace ProductDesigner\Export;
+namespace ProductForge\Export;
 
 defined('ABSPATH') || exit;
 
@@ -22,8 +22,8 @@ class PdfExporter {
 
         try {
             $pdf = new \TCPDF('P', 'pt', 'A4', true, 'UTF-8', false);
-            $pdf->SetCreator('Product Designer');
-            $pdf->SetAuthor('Product Designer for WooCommerce');
+            $pdf->SetCreator('ProductForge');
+            $pdf->SetAuthor('ProductForge for WooCommerce');
             $pdf->SetTitle('Design Export');
             $pdf->setPrintHeader(false);
             $pdf->setPrintFooter(false);

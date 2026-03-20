@@ -1,6 +1,6 @@
 <?php
 use PHPUnit\Framework\TestCase;
-use ProductDesigner\Database\TemplateRepository;
+use ProductForge\Database\TemplateRepository;
 
 class TemplateEndpointTest extends TestCase {
     private $server;
@@ -16,7 +16,7 @@ class TemplateEndpointTest extends TestCase {
 
     public function test_list_templates_requires_admin(): void {
         wp_set_current_user(0);
-        $request  = new \WP_REST_Request('GET', '/pd/v1/templates');
+        $request  = new \WP_REST_Request('GET', '/pf/v1/templates');
         $response = $this->server->dispatch($request);
         // WP REST returns 401 for unauthenticated and 403 for authenticated-but-unauthorized
         $this->assertContains($response->get_status(), [401, 403]);
@@ -24,7 +24,7 @@ class TemplateEndpointTest extends TestCase {
 
     public function test_create_template_requires_admin(): void {
         wp_set_current_user(0);
-        $request = new \WP_REST_Request('POST', '/pd/v1/templates');
+        $request = new \WP_REST_Request('POST', '/pf/v1/templates');
         $request->set_header('Content-Type', 'application/json');
         $request->set_body(json_encode(['title' => 'Unauthorized Test', 'status' => 'draft']));
         $response = $this->server->dispatch($request);
@@ -34,14 +34,14 @@ class TemplateEndpointTest extends TestCase {
 
     public function test_admin_can_list_templates(): void {
         wp_set_current_user(1);
-        $request  = new \WP_REST_Request('GET', '/pd/v1/templates');
+        $request  = new \WP_REST_Request('GET', '/pf/v1/templates');
         $response = $this->server->dispatch($request);
         $this->assertContains($response->get_status(), [200, 204]);
     }
 
     public function test_admin_can_create_template(): void {
         wp_set_current_user(1);
-        $request = new \WP_REST_Request('POST', '/pd/v1/templates');
+        $request = new \WP_REST_Request('POST', '/pf/v1/templates');
         $request->set_header('Content-Type', 'application/json');
         $request->set_body(json_encode([
             'title'  => 'API Test Template ' . uniqid(),
@@ -56,7 +56,7 @@ class TemplateEndpointTest extends TestCase {
 
     public function test_create_template_requires_title(): void {
         wp_set_current_user(1);
-        $request = new \WP_REST_Request('POST', '/pd/v1/templates');
+        $request = new \WP_REST_Request('POST', '/pf/v1/templates');
         $request->set_header('Content-Type', 'application/json');
         $request->set_body(json_encode(['status' => 'draft']));
         $response = $this->server->dispatch($request);
@@ -65,7 +65,7 @@ class TemplateEndpointTest extends TestCase {
 
     public function test_list_returns_pagination_headers(): void {
         wp_set_current_user(1);
-        $request = new \WP_REST_Request('GET', '/pd/v1/templates');
+        $request = new \WP_REST_Request('GET', '/pf/v1/templates');
         $request->set_param('per_page', 5);
         $request->set_param('page', 1);
         $response = $this->server->dispatch($request);
@@ -76,7 +76,7 @@ class TemplateEndpointTest extends TestCase {
 
     public function test_get_template_not_found_returns_404(): void {
         wp_set_current_user(1);
-        $request  = new \WP_REST_Request('GET', '/pd/v1/templates/999999');
+        $request  = new \WP_REST_Request('GET', '/pf/v1/templates/999999');
         $response = $this->server->dispatch($request);
         $this->assertEquals(404, $response->get_status());
     }
@@ -90,7 +90,7 @@ class TemplateEndpointTest extends TestCase {
         ]);
         $this->created_ids[] = $id;
 
-        $request  = new \WP_REST_Request('GET', '/pd/v1/templates/' . $id);
+        $request  = new \WP_REST_Request('GET', '/pf/v1/templates/' . $id);
         $response = $this->server->dispatch($request);
         $this->assertEquals(200, $response->get_status());
         $data = $response->get_data();
@@ -106,7 +106,7 @@ class TemplateEndpointTest extends TestCase {
         $this->created_ids[] = $id;
 
         wp_set_current_user(0);
-        $request  = new \WP_REST_Request('GET', '/pd/v1/templates/' . $id . '/public');
+        $request  = new \WP_REST_Request('GET', '/pf/v1/templates/' . $id . '/public');
         $response = $this->server->dispatch($request);
         // Draft templates are not publicly accessible
         $this->assertEquals(404, $response->get_status());
@@ -122,7 +122,7 @@ class TemplateEndpointTest extends TestCase {
         $this->created_ids[] = $id;
 
         wp_set_current_user(0);
-        $request  = new \WP_REST_Request('GET', '/pd/v1/templates/' . $id . '/public');
+        $request  = new \WP_REST_Request('GET', '/pf/v1/templates/' . $id . '/public');
         $response = $this->server->dispatch($request);
         $this->assertEquals(200, $response->get_status());
         $data = $response->get_data();

@@ -368,7 +368,7 @@ export default function Canvas() {
                 }
               });
             })
-            .catch((err) => console.warn('[PD] SVG boundary load failed:', err));
+            .catch((err) => console.warn('[PF] SVG boundary load failed:', err));
         }
       } else {
         // Rect boundary.
@@ -593,7 +593,7 @@ export default function Canvas() {
             })
             .catch((err) => {
               pendingLoads.current.delete(layer._key);
-              console.warn('[PD] SVG layer load failed:', err);
+              console.warn('[PF] SVG layer load failed:', err);
             });
         }
       }
@@ -762,8 +762,8 @@ export default function Canvas() {
     if (!window.wp?.media) return;
 
     const frame = window.wp.media({
-      title: __( 'Select Background Image', 'product-designer' ),
-      button: { text: __( 'Set Background', 'product-designer' ) },
+      title: __( 'Select Background Image', 'productforge' ),
+      button: { text: __( 'Set Background', 'productforge' ) },
       multiple: false,
       library: { type: 'image' },
     });
@@ -816,49 +816,49 @@ export default function Canvas() {
   };
 
   return (
-    <div className="pd-canvas-wrap">
-      <div className="pd-canvas-toolbar">
+    <div className="pf-canvas-wrap">
+      <div className="pf-canvas-toolbar">
         <button
-          className={`pd-canvas-toolbar__btn${isFreeMove ? ' pd-canvas-toolbar__btn--active' : ''}`}
+          className={`pf-canvas-toolbar__btn${isFreeMove ? ' pf-canvas-toolbar__btn--active' : ''}`}
           onClick={isFreeMove ? disableFreeMove : enableFreeMove}
-          title={ isFreeMove ? __( 'Enable zone enforcement', 'product-designer' ) : __( 'Disable zone enforcement for free positioning', 'product-designer' ) }
+          title={ isFreeMove ? __( 'Enable zone enforcement', 'productforge' ) : __( 'Disable zone enforcement for free positioning', 'productforge' ) }
         >
-          { isFreeMove ? __( 'Enforce Zones', 'product-designer' ) : __( 'Free Move', 'product-designer' ) }
+          { isFreeMove ? __( 'Enforce Zones', 'productforge' ) : __( 'Free Move', 'productforge' ) }
         </button>
         <button
-          className="pd-canvas-toolbar__btn"
+          className="pf-canvas-toolbar__btn"
           onClick={openMediaPicker}
-          title={ __( 'Set background image', 'product-designer' ) }
+          title={ __( 'Set background image', 'productforge' ) }
         >
-          { currentView?.background_url ? __( 'Change Background', 'product-designer' ) : __( 'Set Background', 'product-designer' ) }
+          { currentView?.background_url ? __( 'Change Background', 'productforge' ) : __( 'Set Background', 'productforge' ) }
         </button>
         {currentView?.background_url && (
           <button
-            className="pd-canvas-toolbar__btn"
+            className="pf-canvas-toolbar__btn"
             onClick={removeBackground}
-            title={ __( 'Remove background image', 'product-designer' ) }
+            title={ __( 'Remove background image', 'productforge' ) }
           >
-            { __( 'Remove BG', 'product-designer' ) }
+            { __( 'Remove BG', 'productforge' ) }
           </button>
         )}
         <button
-          className="pd-canvas-toolbar__btn"
+          className="pf-canvas-toolbar__btn"
           onClick={applyUndo}
           disabled={!canUndo(viewKey)}
-          title={ __( 'Undo (Ctrl+Z)', 'product-designer' ) }
+          title={ __( 'Undo (Ctrl+Z)', 'productforge' ) }
         >
-          { __( '↩ Undo', 'product-designer' ) }
+          { __( '↩ Undo', 'productforge' ) }
         </button>
         <button
-          className="pd-canvas-toolbar__btn"
+          className="pf-canvas-toolbar__btn"
           onClick={applyRedo}
           disabled={!canRedo(viewKey)}
-          title={ __( 'Redo (Ctrl+Shift+Z)', 'product-designer' ) }
+          title={ __( 'Redo (Ctrl+Shift+Z)', 'productforge' ) }
         >
-          { __( '↪ Redo', 'product-designer' ) }
+          { __( '↪ Redo', 'productforge' ) }
         </button>
       </div>
-      <div className="pd-canvas-scroll">
+      <div className="pf-canvas-scroll">
         <canvas ref={canvasEl} />
       </div>
     </div>

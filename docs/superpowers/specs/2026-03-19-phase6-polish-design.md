@@ -12,11 +12,11 @@ Phase 6 covers four areas: internationalization, accessibility, performance, and
 
 ### 1.1 PHP text domain loading
 
-Add `load_plugin_textdomain` in `product-designer.php` on the `init` hook:
+Add `load_plugin_textdomain` in `productforge.php` on the `init` hook:
 
 ```php
 add_action('init', function () {
-    load_plugin_textdomain('product-designer', false, 'product-designer/languages');
+    load_plugin_textdomain('productforge', false, 'productforge/languages');
 });
 ```
 
@@ -28,7 +28,7 @@ Audit these files for any remaining unwrapped strings:
 - `includes/Frontend/class-frontend.php` — bare "Customize Product" button text in `render_designer()`
 - Any admin notice or error message that currently uses bare strings
 
-The 7 PHP files that already use `__('...', 'product-designer')` are correct and need no changes.
+The 7 PHP files that already use `__('...', 'productforge')` are correct and need no changes.
 
 ### 1.2 JavaScript i18n
 
@@ -41,13 +41,13 @@ The 7 PHP files that already use `__('...', 'product-designer')` are correct and
 **Admin scripts** (`includes/Admin/class-admin.php`): After `wp_enqueue_script`, call:
 
 ```php
-wp_set_script_translations('pd-template-builder', 'product-designer', PD_PLUGIN_DIR . 'languages');
+wp_set_script_translations('pf-template-builder', 'productforge', PF_PLUGIN_DIR . 'languages');
 ```
 
 **Frontend scripts** (`includes/Frontend/class-frontend.php`): Same pattern:
 
 ```php
-wp_set_script_translations('pd-frontend-designer', 'product-designer', PD_PLUGIN_DIR . 'languages');
+wp_set_script_translations('pf-frontend-designer', 'productforge', PF_PLUGIN_DIR . 'languages');
 ```
 
 **JSX files to wrap:** Every user-facing string in these directories gets `__()` or `_x()`:
@@ -83,26 +83,26 @@ Generate the `.pot` file from the project root:
 
 ```bash
 docker compose exec wordpress wp i18n make-pot \
-  wp-content/plugins/product-designer \
-  wp-content/plugins/product-designer/languages/product-designer.pot
+  wp-content/plugins/productforge \
+  wp-content/plugins/productforge/languages/productforge.pot
 ```
 
-Create `languages/product-designer-nl_NL.po` with Dutch translations for all extracted strings. Compile to `.mo`:
+Create `languages/productforge-nl_NL.po` with Dutch translations for all extracted strings. Compile to `.mo`:
 
 ```bash
 docker compose exec wordpress wp i18n make-mo \
-  wp-content/plugins/product-designer/languages/product-designer-nl_NL.po
+  wp-content/plugins/productforge/languages/productforge-nl_NL.po
 ```
 
 For JS strings, also generate the JSON translation file:
 
 ```bash
 docker compose exec wordpress wp i18n make-json \
-  wp-content/plugins/product-designer/languages/ \
+  wp-content/plugins/productforge/languages/ \
   --no-purge
 ```
 
-This produces `product-designer-nl_NL-<hash>.json` files that `wp_set_script_translations` picks up automatically.
+This produces `productforge-nl_NL-<hash>.json` files that `wp_set_script_translations` picks up automatically.
 
 All strings must be translated to Dutch. Other languages can be added later by contributors creating new `.po` files — the infrastructure supports it without code changes.
 
@@ -110,16 +110,16 @@ All strings must be translated to Dutch. Other languages can be added later by c
 
 | File | Action |
 |------|--------|
-| `product-designer.php` | Add `load_plugin_textdomain` |
+| `productforge.php` | Add `load_plugin_textdomain` |
 | `vite.config.mjs` | Externalize `@wordpress/i18n` |
 | `includes/Admin/class-admin.php` | Add `wp_set_script_translations` |
 | `includes/Frontend/class-frontend.php` | Add `wp_set_script_translations` |
 | ~15 JSX files | Wrap strings in `__()` / `_x()` |
 | Remaining PHP files | Wrap any bare strings |
-| `languages/product-designer.pot` | Generated |
-| `languages/product-designer-nl_NL.po` | Dutch translations |
-| `languages/product-designer-nl_NL.mo` | Compiled Dutch translations |
-| `languages/product-designer-nl_NL-*.json` | JS Dutch translations |
+| `languages/productforge.pot` | Generated |
+| `languages/productforge-nl_NL.po` | Dutch translations |
+| `languages/productforge-nl_NL.mo` | Compiled Dutch translations |
+| `languages/productforge-nl_NL-*.json` | JS Dutch translations |
 
 ---
 
@@ -143,10 +143,10 @@ The frontend designer currently has no ARIA attributes or keyboard support. Fix 
 **Focus styles:** Add `:focus-visible` outlines to all interactive elements in `frontend/js/designer/src/designer.css`:
 
 ```css
-.pd-designer button:focus-visible,
-.pd-designer [role="tab"]:focus-visible,
-.pd-designer input:focus-visible,
-.pd-designer select:focus-visible {
+.pf-designer button:focus-visible,
+.pf-designer [role="tab"]:focus-visible,
+.pf-designer input:focus-visible,
+.pf-designer select:focus-visible {
     outline: 2px solid #1e88e5;
     outline-offset: 2px;
 }
@@ -155,7 +155,7 @@ The frontend designer currently has no ARIA attributes or keyboard support. Fix 
 **Screen-reader utility:** Add to `frontend/js/designer/src/designer.css`:
 
 ```css
-.pd-sr-only {
+.pf-sr-only {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -191,7 +191,7 @@ No keyboard controls for the Fabric.js canvas. This is a visual drag-and-drop to
 |------|--------|
 | Frontend sidebar/tabs components | Add ARIA roles and attributes |
 | Frontend button components | Add `aria-label` to all icon buttons |
-| `frontend/js/designer/src/designer.css` | Add `:focus-visible` styles, `.pd-sr-only` |
+| `frontend/js/designer/src/designer.css` | Add `:focus-visible` styles, `.pf-sr-only` |
 | Frontend modal component | Add focus trapping and focus restore |
 | Admin zone/layer button components | Add `aria-label` |
 | `admin/js/template-builder/src/builder.css` | Add `:focus-visible` styles |
@@ -229,7 +229,7 @@ In `class-template-list-table.php`, after fetching the page of templates in `pre
 **Fix:** In `TemplateRepository`, wrap the `get($template_id)` method (which fetches the template and its views, used by the frontend public endpoint) with a WordPress transient:
 
 ```php
-$cache_key = 'pd_template_' . $template_id;
+$cache_key = 'pf_template_' . $template_id;
 $cached = get_transient($cache_key);
 if ($cached !== false) {
     return $cached;
@@ -242,7 +242,7 @@ return $result;
 Invalidate the transient whenever a template is saved or updated:
 
 ```php
-delete_transient('pd_template_' . $template_id);
+delete_transient('pf_template_' . $template_id);
 ```
 
 Add this call in the `save()` and `update()` methods of `TemplateRepository`, and in the REST API's template update endpoint.
@@ -274,9 +274,9 @@ Add this call in the `save()` and `update()` methods of `TemplateRepository`, an
 - Rate limits: allows 10 uploads, blocks the 11th within 60 seconds
 
 `tests/php/Security/CapabilityCheckerTest.php`:
-- Admin user has `edit_pd_templates`
-- Shop manager has `edit_pd_templates`
-- Customer does not have `edit_pd_templates`
+- Admin user has `edit_pf_templates`
+- Shop manager has `edit_pf_templates`
+- Customer does not have `edit_pf_templates`
 
 `tests/php/Security/NonceManagerTest.php`:
 - Valid nonce passes verification
@@ -312,8 +312,8 @@ Add this call in the `save()` and `update()` methods of `TemplateRepository`, an
 - Delete cascades to design views
 
 `tests/php/API/TemplateEndpointTest.php`:
-- `POST pd/v1/templates` creates template (admin only)
-- `GET pd/v1/templates` lists templates with pagination headers
+- `POST pf/v1/templates` creates template (admin only)
+- `GET pf/v1/templates` lists templates with pagination headers
 - Unauthenticated requests are rejected
 - Missing nonce returns 403
 
@@ -365,7 +365,7 @@ Add this call in the `save()` and `update()` methods of `TemplateRepository`, an
 **Setup:** `tests/e2e/global-setup.js` logs in as admin and stores auth state. Tests reuse this session.
 
 `tests/e2e/admin-template.spec.js` — Admin template lifecycle:
-1. Navigate to Product Designer admin page
+1. Navigate to ProductForge admin page
 2. Click "Add New Template"
 3. Enter template title
 4. Add a view, set canvas dimensions

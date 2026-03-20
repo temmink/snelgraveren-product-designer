@@ -1,5 +1,5 @@
 <?php
-namespace ProductDesigner\Admin;
+namespace ProductForge\Admin;
 
 defined('ABSPATH') || exit;
 
@@ -17,30 +17,30 @@ class Admin {
 
     public function register_menus(): void {
         add_menu_page(
-            __('Product Designer', 'product-designer'),
-            __('Product Designer', 'product-designer'),
-            'edit_pd_templates',
-            'product-designer',
+            __('ProductForge', 'productforge'),
+            __('ProductForge', 'productforge'),
+            'edit_pf_templates',
+            'productforge',
             [$this, 'render_list_page'],
             'dashicons-edit',
             56
         );
 
         add_submenu_page(
-            'product-designer',
-            __('Templates', 'product-designer'),
-            __('Templates', 'product-designer'),
-            'edit_pd_templates',
-            'product-designer',
+            'productforge',
+            __('Templates', 'productforge'),
+            __('Templates', 'productforge'),
+            'edit_pf_templates',
+            'productforge',
             [$this, 'render_list_page']
         );
 
         add_submenu_page(
-            'product-designer',
-            __('Template Builder', 'product-designer'),
-            __('Add New', 'product-designer'),
-            'edit_pd_templates',
-            'pd-template-builder',
+            'productforge',
+            __('Template Builder', 'productforge'),
+            __('Add New', 'productforge'),
+            'edit_pf_templates',
+            'pf-template-builder',
             [$this, 'render_builder_page']
         );
     }
@@ -48,7 +48,7 @@ class Admin {
     public function render_list_page(): void {
         $list_table = new TemplateListTable();
         $list_table->prepare_items();
-        include PD_PLUGIN_DIR . 'includes/Admin/views/template-list.php';
+        include PF_PLUGIN_DIR . 'includes/Admin/views/template-list.php';
     }
 
     public function render_builder_page(): void {
@@ -57,37 +57,37 @@ class Admin {
     }
 
     public function enqueue_scripts(string $hook): void {
-        if (!in_array($hook, ['toplevel_page_product-designer', 'product-designer_page_pd-template-builder'], true)) {
+        if (!in_array($hook, ['toplevel_page_productforge', 'productforge_page_pf-template-builder'], true)) {
             return;
         }
 
-        $asset_file = PD_PLUGIN_DIR . 'dist/admin-template-builder.asset.php';
-        $version    = PD_VERSION;
+        $asset_file = PF_PLUGIN_DIR . 'dist/admin-template-builder.asset.php';
+        $version    = PF_VERSION;
         $deps       = ['react', 'react-dom', 'wp-i18n'];
 
         if (file_exists($asset_file)) {
             $asset   = include $asset_file;
-            $version = $asset['version'] ?? PD_VERSION;
+            $version = $asset['version'] ?? PF_VERSION;
             $deps    = array_unique(array_merge($asset['dependencies'] ?? [], ['wp-i18n']));
         }
 
         wp_enqueue_media();
 
         wp_enqueue_script(
-            'pd-template-builder',
-            PD_PLUGIN_URL . 'dist/admin-template-builder.js',
+            'pf-template-builder',
+            PF_PLUGIN_URL . 'dist/admin-template-builder.js',
             $deps,
             $version,
             true
         );
 
-        wp_set_script_translations('pd-template-builder', 'product-designer', PD_PLUGIN_DIR . 'languages');
+        wp_set_script_translations('pf-template-builder', 'productforge', PF_PLUGIN_DIR . 'languages');
 
-        $css_file = PD_PLUGIN_DIR . 'dist/admin-template-builder.css';
+        $css_file = PF_PLUGIN_DIR . 'dist/admin-template-builder.css';
         if (file_exists($css_file)) {
             wp_enqueue_style(
-                'pd-template-builder',
-                PD_PLUGIN_URL . 'dist/admin-template-builder.css',
+                'pf-template-builder',
+                PF_PLUGIN_URL . 'dist/admin-template-builder.css',
                 [],
                 $version
             );
@@ -95,11 +95,11 @@ class Admin {
 
         $template_id = (int) ($_GET['template_id'] ?? 0);
 
-        wp_localize_script('pd-template-builder', 'pdTemplateBuilder', [
+        wp_localize_script('pf-template-builder', 'pfTemplateBuilder', [
             'restUrl'         => esc_url_raw(rest_url()),
             'nonce'           => wp_create_nonce('wp_rest'),
             'templateId'      => $template_id,
-            'pluginUrl'       => PD_PLUGIN_URL,
+            'pluginUrl'       => PF_PLUGIN_URL,
             'currency_symbol' => get_woocommerce_currency_symbol(),
         ]);
     }
@@ -132,20 +132,20 @@ class Admin {
         }
 
         if (!class_exists(\enshrined\svgSanitize\Sanitizer::class)) {
-            $file['error'] = __('SVG sanitization library not available.', 'product-designer');
+            $file['error'] = __('SVG sanitization library not available.', 'productforge');
             return $file;
         }
 
         $svg_content = file_get_contents($file['tmp_name']);
         if ($svg_content === false) {
-            $file['error'] = __('Could not read SVG file.', 'product-designer');
+            $file['error'] = __('Could not read SVG file.', 'productforge');
             return $file;
         }
 
         $sanitizer = new \enshrined\svgSanitize\Sanitizer();
         $clean = $sanitizer->sanitize($svg_content);
         if ($clean === false || $clean === '') {
-            $file['error'] = __('SVG file contains disallowed content and was rejected.', 'product-designer');
+            $file['error'] = __('SVG file contains disallowed content and was rejected.', 'productforge');
             return $file;
         }
 

@@ -15,7 +15,7 @@ includes/Frontend/class-frontend.php
 
 ### New REST route
 ```
-GET /pd/v1/templates/{id}/public   — unauthenticated; published templates only
+GET /pf/v1/templates/{id}/public   — unauthenticated; published templates only
 ```
 
 ### New JS files (`frontend/js/designer/src/`)
@@ -31,7 +31,7 @@ components/tabs/ViewsTab.jsx       — View switcher
 ```
 
 ### Data flow
-`window.pdDesigner` (PHP-localized) → `App.jsx` fetches `/templates/{id}/public` → initializes `useDesignerStore` → `DesignerCanvas` renders zones and handles tools → customer edits → "Save Design" writes to `POST /pd/v1/designs` + `POST /pd/v1/designs/{hash}/views`.
+`window.pfDesigner` (PHP-localized) → `App.jsx` fetches `/templates/{id}/public` → initializes `useDesignerStore` → `DesignerCanvas` renders zones and handles tools → customer edits → "Save Design" writes to `POST /pf/v1/designs` + `POST /pf/v1/designs/{hash}/views`.
 
 ---
 
@@ -40,24 +40,24 @@ components/tabs/ViewsTab.jsx       — View switcher
 ### `includes/Frontend/class-frontend.php`
 
 Hooks:
-- `wp_enqueue_scripts` — enqueues `frontend-designer` JS/CSS only on product pages where `_pd_designer_enabled` meta is set. Localizes `window.pdDesigner`:
+- `wp_enqueue_scripts` — enqueues `frontend-designer` JS/CSS only on product pages where `_pf_designer_enabled` meta is set. Localizes `window.pfDesigner`:
   ```js
   {
     template_id:     int,
     product_id:      int,      // current WC product ID
     display_mode:    'embedded' | 'modal' | 'full-page',
     nonce:           string,   // wp_create_nonce('wp_rest')
-    api_base:        string,   // rest_url('pd/v1')
+    api_base:        string,   // rest_url('pf/v1')
     currency_symbol: string,
   }
   ```
-- `woocommerce_before_add_to_cart_button` — renders `<div id="pd-designer-root" data-mode="{mode}">`. For `modal` mode, also renders a "Customize Product" `<button class="pd-open-designer">`.
+- `woocommerce_before_add_to_cart_button` — renders `<div id="pf-designer-root" data-mode="{mode}">`. For `modal` mode, also renders a "Customize Product" `<button class="pf-open-designer">`.
 - `woocommerce_add_cart_item_data` — stub, returns data unchanged (Phase 4 attaches design_hash here).
 
 ### New product meta field
-`_pd_display_mode` — values: `embedded` | `modal` | `full-page`. Phase 3 reads it with fallback `embedded`. Admin UI setting deferred to Phase 4.
+`_pf_display_mode` — values: `embedded` | `modal` | `full-page`. Phase 3 reads it with fallback `embedded`. Admin UI setting deferred to Phase 4.
 
-### `GET /pd/v1/templates/{id}/public`
+### `GET /pf/v1/templates/{id}/public`
 Added to `RestTemplates::register_routes()`:
 - `permission_callback`: `__return_true`
 - Guard: template `status` must equal `'published'`; otherwise `WP_Error('not_found', …, 404)`
@@ -119,7 +119,7 @@ Elements placed in a `suggest` zone or on a view with no zones move freely.
 
 ### Tool modes
 - `add-text`: on next canvas click, adds `IText("Your text here")` at click point. Zone assignment: if click is inside a `restrict` zone whose `allowed_types` includes `'text'`, element is assigned to that zone. Resets to `select` after add.
-- `add-image`: clicking tool triggers `<input type="file" accept="image/jpeg,image/png,image/webp,image/gif">`. On file select, `POST /pd/v1/uploads` → add `FabricImage`. Zone assignment: centered on the first `restrict` zone whose `allowed_types` includes `'image'`; if no matching zone exists, centered on the full canvas. Resets to `select` after add.
+- `add-image`: clicking tool triggers `<input type="file" accept="image/jpeg,image/png,image/webp,image/gif">`. On file select, `POST /pf/v1/uploads` → add `FabricImage`. Zone assignment: centered on the first `restrict` zone whose `allowed_types` includes `'image'`; if no matching zone exists, centered on the full canvas. Resets to `select` after add.
 - `add-svg`: clicking tool triggers `<input type="file" accept="image/svg+xml">`. Same upload and zone assignment flow as `add-image` (using `'svg'` type). Resets to `select` after add.
 
 If a view's zones have no zone with `allowed_types` including the tool's type, the tool button is disabled.
@@ -176,11 +176,11 @@ List of view name buttons from `template.views`. Clicking switches `currentViewI
 
 "Save Design" button: below sidebar, disabled while `isSaving` or `!isDirty`.
 
-1. If no `designHash`: `POST /pd/v1/designs` with `{ template_id, product_id }` → store `response.design_hash`
-2. For each view with a snapshot in `canvasSnapshots`: `POST /pd/v1/designs/{hash}/views` with `{ view_id, canvas_json, thumbnail: '' }`
+1. If no `designHash`: `POST /pf/v1/designs` with `{ template_id, product_id }` → store `response.design_hash`
+2. For each view with a snapshot in `canvasSnapshots`: `POST /pf/v1/designs/{hash}/views` with `{ view_id, canvas_json, thumbnail: '' }`
    - Thumbnail left empty in Phase 3; populated in Phase 5
 3. Set `isDirty = false`, `isSaving = false`
-4. Store `designHash` in a hidden `<input name="pd_design_hash">` inside the WooCommerce add-to-cart form — Phase 4 reads it
+4. Store `designHash` in a hidden `<input name="pf_design_hash">` inside the WooCommerce add-to-cart form — Phase 4 reads it
 
 Errors surface as a dismissible inline message above the Save button.
 
@@ -188,15 +188,15 @@ Errors surface as a dismissible inline message above the Save button.
 
 ## 7. Display Modes
 
-Read from `window.pdDesigner.display_mode`:
+Read from `window.pfDesigner.display_mode`:
 
 | Mode | Behavior |
 |---|---|
 | `embedded` | Designer renders inline below product images |
-| `modal` | Mounted but hidden; "Customize Product" button toggles `.pd-designer--open` CSS class showing a fixed overlay; close button inside modal hides it |
+| `modal` | Mounted but hidden; "Customize Product" button toggles `.pf-designer--open` CSS class showing a fixed overlay; close button inside modal hides it |
 | `full-page` | Deferred to Phase 4 (requires WP page registration + template) |
 
-**CSS isolation:** `.pd-designer { all: initial; box-sizing: border-box; }`. All classes use `pd-` prefix with BEM naming.
+**CSS isolation:** `.pf-designer { all: initial; box-sizing: border-box; }`. All classes use `pf-` prefix with BEM naming.
 
 ---
 
@@ -220,7 +220,7 @@ Read from `window.pdDesigner.display_mode`:
 ## Out of Scope for Phase 3
 
 - Full-page display mode (Phase 4)
-- Admin UI for `_pd_display_mode` setting (Phase 4)
+- Admin UI for `_pf_display_mode` setting (Phase 4)
 - Design surcharge / price calculation (Phase 4)
 - Export thumbnails (Phase 5)
 - Undo/redo for customer canvas

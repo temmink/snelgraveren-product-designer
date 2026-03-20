@@ -1,6 +1,6 @@
 <?php
 use PHPUnit\Framework\TestCase;
-use ProductDesigner\Export\PngExporter;
+use ProductForge\Export\PngExporter;
 
 class PngExporterTest extends TestCase {
 
@@ -10,7 +10,7 @@ class PngExporterTest extends TestCase {
 
     public function test_exports_png_file(): void {
         $exporter = $this->make_exporter();
-        $path = sys_get_temp_dir() . '/pd-test-' . uniqid() . '.png';
+        $path = sys_get_temp_dir() . '/pf-test-' . uniqid() . '.png';
         $result = $exporter->export(
             ['background' => '#ffffff', 'objects' => []],
             800,
@@ -24,7 +24,7 @@ class PngExporterTest extends TestCase {
 
     public function test_exported_file_has_png_magic_bytes(): void {
         $exporter = $this->make_exporter();
-        $path = sys_get_temp_dir() . '/pd-test-' . uniqid() . '.png';
+        $path = sys_get_temp_dir() . '/pf-test-' . uniqid() . '.png';
         $result = $exporter->export(
             ['background' => '#ffffff', 'objects' => []],
             200,
@@ -40,7 +40,7 @@ class PngExporterTest extends TestCase {
 
     public function test_exported_file_is_not_empty(): void {
         $exporter = $this->make_exporter();
-        $path = sys_get_temp_dir() . '/pd-test-' . uniqid() . '.png';
+        $path = sys_get_temp_dir() . '/pf-test-' . uniqid() . '.png';
         $exporter->export(
             ['background' => '#ff0000', 'objects' => []],
             100,
@@ -53,7 +53,7 @@ class PngExporterTest extends TestCase {
 
     public function test_exports_with_text_object(): void {
         $exporter = $this->make_exporter();
-        $path = sys_get_temp_dir() . '/pd-test-' . uniqid() . '.png';
+        $path = sys_get_temp_dir() . '/pf-test-' . uniqid() . '.png';
         $result = $exporter->export(
             [
                 'background' => '#ffffff',
@@ -79,8 +79,8 @@ class PngExporterTest extends TestCase {
 
     public function test_exports_with_custom_dpi(): void {
         $exporter = $this->make_exporter();
-        $path_72  = sys_get_temp_dir() . '/pd-test-' . uniqid() . '-72dpi.png';
-        $path_150 = sys_get_temp_dir() . '/pd-test-' . uniqid() . '-150dpi.png';
+        $path_72  = sys_get_temp_dir() . '/pf-test-' . uniqid() . '-72dpi.png';
+        $path_150 = sys_get_temp_dir() . '/pf-test-' . uniqid() . '-150dpi.png';
 
         $canvas = ['background' => '#cccccc', 'objects' => []];
 
@@ -103,7 +103,7 @@ class PngExporterTest extends TestCase {
 
     public function test_export_none_background(): void {
         $exporter = $this->make_exporter();
-        $path = sys_get_temp_dir() . '/pd-test-' . uniqid() . '.png';
+        $path = sys_get_temp_dir() . '/pf-test-' . uniqid() . '.png';
         // 'none' background should still produce a valid PNG (fallback to white)
         $result = $exporter->export(
             ['background' => 'none', 'objects' => []],

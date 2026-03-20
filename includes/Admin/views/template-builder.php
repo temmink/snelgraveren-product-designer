@@ -1,6 +1,6 @@
 <?php
-namespace ProductDesigner\Admin;
+namespace ProductForge\Admin;
 
 defined('ABSPATH') || exit;
 ?>
-<div id="pd-template-builder-root"></div>
+<div id="pf-template-builder-root"></div>

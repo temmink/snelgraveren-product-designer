@@ -13,7 +13,7 @@ export function loadGoogleFonts(fontFamilies) {
   const googleFonts = fontFamilies.filter((f) => !WEB_SAFE.includes(f));
   if (googleFonts.length === 0) return;
 
-  const linkId = 'pd-google-fonts';
+  const linkId = 'pf-google-fonts';
   let link = document.getElementById(linkId);
 
   const families = googleFonts

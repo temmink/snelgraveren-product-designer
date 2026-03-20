@@ -1,5 +1,5 @@
 <?php
-namespace ProductDesigner\Database;
+namespace ProductForge\Database;
 
 defined('ABSPATH') || exit;
 
@@ -9,7 +9,7 @@ class ExportRepository {
 
     public function __construct() {
         global $wpdb;
-        $this->table = $wpdb->prefix . 'pd_exports';
+        $this->table = $wpdb->prefix . 'pf_exports';
     }
 
     public function create(int $design_id, int $order_id, string $format): int {

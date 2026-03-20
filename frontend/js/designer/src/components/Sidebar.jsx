@@ -19,56 +19,56 @@ export default function Sidebar() {
   }, [selectedObject]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="pd-sidebar">
-      <div className="pd-sidebar__tabs" role="tablist" aria-label={__('Designer tools', 'product-designer')}>
+    <div className="pf-sidebar">
+      <div className="pf-sidebar__tabs" role="tablist" aria-label={__('Designer tools', 'productforge')}>
         <button
           type="button"
           role="tab"
-          id="pd-tab-views"
+          id="pf-tab-views"
           aria-selected={activeTab === 'views'}
-          aria-controls="pd-panel-views"
-          className={`pd-sidebar__tab${activeTab === 'views' ? ' pd-sidebar__tab--active' : ''}`}
+          aria-controls="pf-panel-views"
+          className={`pf-sidebar__tab${activeTab === 'views' ? ' pf-sidebar__tab--active' : ''}`}
           onClick={() => setActiveTab('views')}
         >
-          {__('Views', 'product-designer')}
+          {__('Views', 'productforge')}
         </button>
         <button
           type="button"
           role="tab"
-          id="pd-tab-element"
+          id="pf-tab-element"
           aria-selected={activeTab === 'element'}
-          aria-controls="pd-panel-element"
-          className={`pd-sidebar__tab${activeTab === 'element' ? ' pd-sidebar__tab--active' : ''}`}
+          aria-controls="pf-panel-element"
+          className={`pf-sidebar__tab${activeTab === 'element' ? ' pf-sidebar__tab--active' : ''}`}
           onClick={() => setActiveTab('element')}
           disabled={!selectedObject}
         >
-          {__('Element', 'product-designer')}
+          {__('Element', 'productforge')}
         </button>
         <button
           type="button"
           role="tab"
-          id="pd-tab-add"
+          id="pf-tab-add"
           aria-selected={activeTab === 'add'}
-          aria-controls="pd-panel-add"
-          className={`pd-sidebar__tab${activeTab === 'add' ? ' pd-sidebar__tab--active' : ''}`}
+          aria-controls="pf-panel-add"
+          className={`pf-sidebar__tab${activeTab === 'add' ? ' pf-sidebar__tab--active' : ''}`}
           onClick={() => setActiveTab('add')}
         >
-          {__('Add', 'product-designer')}
+          {__('Add', 'productforge')}
         </button>
       </div>
-      <div className="pd-sidebar__content">
+      <div className="pf-sidebar__content">
         {activeTab === 'views' && (
-          <div role="tabpanel" id="pd-panel-views" aria-labelledby="pd-tab-views">
+          <div role="tabpanel" id="pf-panel-views" aria-labelledby="pf-tab-views">
             <ViewsTab />
           </div>
         )}
         {activeTab === 'element' && (
-          <div role="tabpanel" id="pd-panel-element" aria-labelledby="pd-tab-element">
+          <div role="tabpanel" id="pf-panel-element" aria-labelledby="pf-tab-element">
             <ElementTab />
           </div>
         )}
         {activeTab === 'add' && (
-          <div role="tabpanel" id="pd-panel-add" aria-labelledby="pd-tab-add">
+          <div role="tabpanel" id="pf-panel-add" aria-labelledby="pf-tab-add">
             <AddTab />
           </div>
         )}

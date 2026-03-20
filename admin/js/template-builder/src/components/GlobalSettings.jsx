@@ -37,62 +37,62 @@ export default function GlobalSettings() {
   };
 
   return (
-    <div className="pd-settings">
+    <div className="pf-settings">
 
-      <fieldset className="pd-settings__fieldset">
-        <legend>{ __( 'Cart Behavior', 'product-designer' ) }</legend>
-        <label className="pd-settings__check">
+      <fieldset className="pf-settings__fieldset">
+        <legend>{ __( 'Cart Behavior', 'productforge' ) }</legend>
+        <label className="pf-settings__check">
           <input type="checkbox" checked={customization_required}
             onChange={(e) => update('customization_required', e.target.checked)} />
-          { __( 'Require customization before adding to cart', 'product-designer' ) }
+          { __( 'Require customization before adding to cart', 'productforge' ) }
         </label>
-        <p className="pd-settings__note">
-          { __( 'When enabled, customers must save a design before they can add the product to their cart.', 'product-designer' ) }
+        <p className="pf-settings__note">
+          { __( 'When enabled, customers must save a design before they can add the product to their cart.', 'productforge' ) }
         </p>
       </fieldset>
 
-      <fieldset className="pd-settings__fieldset">
-        <legend>{ __( 'Color Picker', 'product-designer' ) }</legend>
-        <label className="pd-settings__check">
+      <fieldset className="pf-settings__fieldset">
+        <legend>{ __( 'Color Picker', 'productforge' ) }</legend>
+        <label className="pf-settings__check">
           <input type="checkbox" checked={colors_enabled}
             onChange={(e) => update('colors_enabled', e.target.checked)} />
-          { __( 'Enable color picker', 'product-designer' ) }
+          { __( 'Enable color picker', 'productforge' ) }
         </label>
         {colors_enabled && (
           <>
-            <label className="pd-settings__check">
+            <label className="pf-settings__check">
               <input type="checkbox" checked={any_color}
                 onChange={(e) => update('any_color', e.target.checked)} />
-              { __( 'Allow any color (full picker)', 'product-designer' ) }
+              { __( 'Allow any color (full picker)', 'productforge' ) }
             </label>
             {!any_color && (
-              <div className="pd-settings__swatches">
+              <div className="pf-settings__swatches">
                 {allowed_colors.map((color) => (
                   <button
                     key={color}
-                    className="pd-settings__swatch"
+                    className="pf-settings__swatch"
                     style={{ background: color }}
                     title={`Remove ${color}`}
                     onClick={() => update('allowed_colors', allowed_colors.filter((c) => c !== color))}
                     aria-label={`Remove color ${color}`}
                   />
                 ))}
-                <div className="pd-settings__color-add">
+                <div className="pf-settings__color-add">
                   <input
                     type="color"
-                    className="pd-settings__color-input"
+                    className="pf-settings__color-input"
                     value={pendingColor}
                     onChange={(e) => setPendingColor(e.target.value)}
-                    title={ __( 'Pick a color', 'product-designer' ) }
-                    aria-label={ __( 'Pick a color', 'product-designer' ) }
+                    title={ __( 'Pick a color', 'productforge' ) }
+                    aria-label={ __( 'Pick a color', 'productforge' ) }
                   />
                   <button
                     type="button"
                     className="button button-small"
                     onClick={() => addColor(pendingColor)}
-                    aria-label={ __( 'Add selected color', 'product-designer' ) }
+                    aria-label={ __( 'Add selected color', 'productforge' ) }
                   >
-                    { __( 'Add', 'product-designer' ) }
+                    { __( 'Add', 'productforge' ) }
                   </button>
                 </div>
               </div>
@@ -101,12 +101,12 @@ export default function GlobalSettings() {
         )}
       </fieldset>
 
-      <fieldset className="pd-settings__fieldset">
-        <legend>{ __( 'Font Picker', 'product-designer' ) }</legend>
-        <label className="pd-settings__check">
+      <fieldset className="pf-settings__fieldset">
+        <legend>{ __( 'Font Picker', 'productforge' ) }</legend>
+        <label className="pf-settings__check">
           <input type="checkbox" checked={fonts_enabled}
             onChange={(e) => update('fonts_enabled', e.target.checked)} />
-          { __( 'Enable font picker', 'product-designer' ) }
+          { __( 'Enable font picker', 'productforge' ) }
         </label>
         {fonts_enabled && (
           <FontSelector
@@ -116,40 +116,40 @@ export default function GlobalSettings() {
         )}
       </fieldset>
 
-      <fieldset className="pd-settings__fieldset">
-        <legend>{ __( 'Image Upload Restrictions', 'product-designer' ) }</legend>
-        <label className="pd-settings__label">
-          { __( 'Max file size (MB)', 'product-designer' ) }
+      <fieldset className="pf-settings__fieldset">
+        <legend>{ __( 'Image Upload Restrictions', 'productforge' ) }</legend>
+        <label className="pf-settings__label">
+          { __( 'Max file size (MB)', 'productforge' ) }
           <input type="number" min="1" value={max_file_size_mb}
             onChange={(e) => update('max_file_size_mb', parseInt(e.target.value, 10) || 10)}
-            className="pd-settings__number"
+            className="pf-settings__number"
           />
         </label>
-        <label className="pd-settings__label">
-          { __( 'Min width (px)', 'product-designer' ) }
+        <label className="pf-settings__label">
+          { __( 'Min width (px)', 'productforge' ) }
           <input type="number" min="0" value={min_width}
             onChange={(e) => update('min_width', parseInt(e.target.value, 10) || 0)}
-            className="pd-settings__number"
+            className="pf-settings__number"
           />
         </label>
-        <label className="pd-settings__label">
-          { __( 'Min height (px)', 'product-designer' ) }
+        <label className="pf-settings__label">
+          { __( 'Min height (px)', 'productforge' ) }
           <input type="number" min="0" value={min_height}
             onChange={(e) => update('min_height', parseInt(e.target.value, 10) || 0)}
-            className="pd-settings__number"
+            className="pf-settings__number"
           />
         </label>
-        <label className="pd-settings__label">
-          { __( 'Min DPI', 'product-designer' ) }
+        <label className="pf-settings__label">
+          { __( 'Min DPI', 'productforge' ) }
           <input type="number" min="0" value={min_dpi}
             onChange={(e) => update('min_dpi', parseInt(e.target.value, 10) || 0)}
-            className="pd-settings__number"
+            className="pf-settings__number"
           />
         </label>
-        <div className="pd-settings__types">
-          <span className="pd-settings__types-label">{ __( 'Allowed types:', 'product-designer' ) }</span>
+        <div className="pf-settings__types">
+          <span className="pf-settings__types-label">{ __( 'Allowed types:', 'productforge' ) }</span>
           {IMAGE_TYPES.map((type) => (
-            <label key={type} className="pd-settings__check">
+            <label key={type} className="pf-settings__check">
               <input type="checkbox"
                 checked={allowed_image_types.includes(type)}
                 onChange={() => toggleImageType(type)} />
@@ -179,15 +179,15 @@ function FontSelector({ allowed, onChange }) {
   };
 
   return (
-    <div className="pd-settings__fonts">
+    <div className="pf-settings__fonts">
       {allowed.length > 0 && (
-        <div className="pd-settings__font-list">
+        <div className="pf-settings__font-list">
           {allowed.map((family) => (
-            <div key={family} className="pd-settings__font-item">
+            <div key={family} className="pf-settings__font-item">
               <span>{family}</span>
               <button
                 type="button"
-                className="pd-settings__font-remove"
+                className="pf-settings__font-remove"
                 onClick={() => removeFont(family)}
                 aria-label={`Remove ${family}`}
               >
@@ -197,12 +197,12 @@ function FontSelector({ allowed, onChange }) {
           ))}
         </div>
       )}
-      <div className="pd-settings__font-add">
+      <div className="pf-settings__font-add">
         <select
           value={adding}
           onChange={(e) => addFont(e.target.value)}
         >
-          <option value="">{ __( 'Add a font...', 'product-designer' ) }</option>
+          <option value="">{ __( 'Add a font...', 'productforge' ) }</option>
           {available.map((f) => (
             <option key={f.family} value={f.family}>
               {f.family} ({f.category})
@@ -211,8 +211,8 @@ function FontSelector({ allowed, onChange }) {
         </select>
       </div>
       {allowed.length === 0 && (
-        <p className="pd-settings__note">
-          { __( "No fonts selected. Customers won't be able to change fonts.", 'product-designer' ) }
+        <p className="pf-settings__note">
+          { __( "No fonts selected. Customers won't be able to change fonts.", 'productforge' ) }
         </p>
       )}
     </div>

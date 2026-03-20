@@ -1,5 +1,5 @@
 <?php
-namespace ProductDesigner\Database;
+namespace ProductForge\Database;
 
 defined('ABSPATH') || exit;
 
@@ -13,8 +13,8 @@ class DesignRepository {
 
     public function __construct() {
         global $wpdb;
-        $this->table       = $wpdb->prefix . 'pd_designs';
-        $this->views_table = $wpdb->prefix . 'pd_design_views';
+        $this->table       = $wpdb->prefix . 'pf_designs';
+        $this->views_table = $wpdb->prefix . 'pf_design_views';
     }
 
     public function list(int $per_page = 20, int $page = 1): array {

@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Run Full Test Suite
 
-Execute all three test runners for the Product Designer plugin.
+Execute all three test runners for the ProductForge plugin.
 
 ## Test Runners (run sequentially)
 
@@ -18,7 +18,7 @@ Expected: ~71 tests across stores and components.
 
 ### 2. PHPUnit (PHP unit tests via Docker)
 ```bash
-docker compose exec wordpress bash -c "cd /var/www/html/wp-content/plugins/product-designer && vendor/bin/phpunit"
+docker compose exec wordpress bash -c "cd /var/www/html/wp-content/plugins/productforge && vendor/bin/phpunit"
 ```
 Expected: ~44 tests across repositories, security, pricing, exporters, API.
 

@@ -1,15 +1,15 @@
 <?php
-namespace ProductDesigner\API;
+namespace ProductForge\API;
 
 defined('ABSPATH') || exit;
 
-use ProductDesigner\Security\CapabilityChecker;
-use ProductDesigner\Security\UploadValidator;
+use ProductForge\Security\CapabilityChecker;
+use ProductForge\Security\UploadValidator;
 
 class RestUploads {
 
     public function register_routes(): void {
-        register_rest_route('pd/v1', '/uploads', [
+        register_rest_route('pf/v1', '/uploads', [
             'methods'             => 'POST',
             'callback'            => [$this, 'handle_upload'],
             'permission_callback' => [$this, 'verify_nonce'],

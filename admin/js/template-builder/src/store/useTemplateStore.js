@@ -66,7 +66,7 @@ function migrateViewToNestedLayers(view) {
     if (bestIdx < 0) {
       // No zone contains this layer — assign to first zone.
       if (zonesWithLayers.length > 0) {
-        console.warn('[PD] Layer outside all zones, assigning to first zone:', layer.name || layer.type);
+        console.warn('[PF] Layer outside all zones, assigning to first zone:', layer.name || layer.type);
         bestIdx = 0;
       } else {
         return; // No zones at all — drop the layer (shouldn't happen with the guard).

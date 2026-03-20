@@ -21,7 +21,7 @@ These notes apply across tasks — read before starting:
 3. **ZoneForm props**: The existing `ZoneForm.jsx` uses `{ initialData, onSubmit, onCancel }`. TreePanel must use these names (not `zone`/`onSave`). The `isEditing` prop is not needed — ZoneForm already works for both add and edit via `initialData`.
 4. **Store + Canvas atomic updates**: When changing store action signatures (Task 6), also update all Canvas.jsx callers in the same task to avoid broken intermediate states.
 5. **Text layers have no width/height**: Migration center-point calculation should use `(left, top)` directly for text layers since they have no explicit width/height fields. This falls back to top-left, which is acceptable.
-6. **CSS**: All new tree components use `pd-tree-*` BEM classes. CSS must be added to `admin/css/template-builder.css` (or the existing admin stylesheet).
+6. **CSS**: All new tree components use `pf-tree-*` BEM classes. CSS must be added to `admin/css/template-builder.css` (or the existing admin stylesheet).
 
 ---
 
@@ -326,7 +326,7 @@ Expected: Build succeeds.
 
 - [ ] **Step 6: Manual test in browser**
 
-1. Open http://localhost:8080/wp-admin/ → Product Designer → edit a template with zones
+1. Open http://localhost:8080/wp-admin/ → ProductForge → edit a template with zones
 2. Add a text layer inside a zone
 3. Drag the text — it should clamp to the zone boundary
 4. Scale the text — it should not exceed the zone
@@ -351,7 +351,7 @@ In the JSX return, add a Free Move toggle button to the toolbar (after the Draw 
 
 ```jsx
 <button
-  className={`pd-canvas-toolbar__btn${isFreeMove ? ' pd-canvas-toolbar__btn--active' : ''}`}
+  className={`pf-canvas-toolbar__btn${isFreeMove ? ' pf-canvas-toolbar__btn--active' : ''}`}
   onClick={() => {
     const next = !isFreeMove;
     setFreeMove(next);
@@ -675,37 +675,37 @@ export default function TreeNode({ node, nodeType, isSelected, onSelect, onActio
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
       <div
-        className={`pd-tree-node pd-tree-node--${nodeType}${isSelected ? ' pd-tree-node--selected' : ''}`}
+        className={`pf-tree-node pf-tree-node--${nodeType}${isSelected ? ' pf-tree-node--selected' : ''}`}
         onClick={() => onSelect(node, nodeType)}
       >
-        <span className="pd-tree-node__drag" {...listeners} title="Drag to reorder">⠿</span>
-        <span className="pd-tree-node__icon">{icon}</span>
-        <span className="pd-tree-node__label">{label}</span>
+        <span className="pf-tree-node__drag" {...listeners} title="Drag to reorder">⠿</span>
+        <span className="pf-tree-node__icon">{icon}</span>
+        <span className="pf-tree-node__label">{label}</span>
 
         {isZone && (
-          <span className="pd-tree-node__badge">{node.behavior}</span>
+          <span className="pf-tree-node__badge">{node.behavior}</span>
         )}
 
-        <span className="pd-tree-node__actions">
+        <span className="pf-tree-node__actions">
           {isZone && (
             <button
-              className="pd-tree-node__action"
+              className="pf-tree-node__action"
               onClick={(e) => { e.stopPropagation(); onAction('add-layer', node); }}
               title="Add layer"
             >+</button>
           )}
           <button
-            className="pd-tree-node__action"
+            className="pf-tree-node__action"
             onClick={(e) => { e.stopPropagation(); onAction('toggle-visibility', node); }}
             title={node.visible === false ? 'Show' : 'Hide'}
           >{node.visible === false ? '\u25CB' : '\u25C9'}</button>
           <button
-            className="pd-tree-node__action"
+            className="pf-tree-node__action"
             onClick={(e) => { e.stopPropagation(); onAction('toggle-lock', node); }}
             title={node.locked ? 'Unlock' : 'Lock'}
           >{node.locked ? '\u{1F512}' : '\u{1F513}'}</button>
           <button
-            className="pd-tree-node__action pd-tree-node__action--danger"
+            className="pf-tree-node__action pf-tree-node__action--danger"
             onClick={(e) => { e.stopPropagation(); onAction('delete', node); }}
             title="Delete"
           >&times;</button>
@@ -850,16 +850,16 @@ export default function TreePanel() {
   ];
 
   return (
-    <div className="pd-tree-panel">
+    <div className="pf-tree-panel">
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={allSortableKeys} strategy={verticalListSortingStrategy}>
           {zones.length === 0 && (
-            <p className="pd-tree-panel__empty">Add a zone first to place layers.</p>
+            <p className="pf-tree-panel__empty">Add a zone first to place layers.</p>
           )}
           {zones.map((zone, zoneIndex) => {
             const isExpanded = expandedZones[zone._key] !== false; // Default expanded.
             return (
-              <div key={zone._key} className="pd-tree-panel__zone-group">
+              <div key={zone._key} className="pf-tree-panel__zone-group">
                 <TreeNode
                   node={zone}
                   nodeType="zone"
@@ -869,7 +869,7 @@ export default function TreePanel() {
                   depth={0}
                 >
                   {isExpanded && (
-                    <div className="pd-tree-panel__children">
+                    <div className="pf-tree-panel__children">
                       {(zone.layers || []).map((layer, layerIndex) => (
                         <TreeNode
                           key={layer._key}
@@ -897,9 +897,9 @@ export default function TreePanel() {
         </SortableContext>
       </DndContext>
 
-      <div className="pd-tree-panel__footer">
+      <div className="pf-tree-panel__footer">
         <button
-          className="pd-tree-panel__add-zone-btn"
+          className="pf-tree-panel__add-zone-btn"
           onClick={() => setIsAddingZone(true)}
         >
           + Add Zone
@@ -914,7 +914,7 @@ export default function TreePanel() {
       )}
 
       {selectedNode && (
-        <div className="pd-tree-panel__detail">
+        <div className="pf-tree-panel__detail">
           {selectedNode.nodeType === 'zone' && (
             <ZoneForm
               key={selectedNode.node._key}
@@ -949,7 +949,7 @@ function AddLayerInline({ zone, onAdd, onCancel }) {
   const allowedTypes = zone.allowed_types || ['text', 'image', 'svg'];
 
   return (
-    <div className="pd-tree-panel__add-layer" style={{ paddingLeft: '32px' }}>
+    <div className="pf-tree-panel__add-layer" style={{ paddingLeft: '32px' }}>
       <input
         type="text"
         placeholder="Layer name"
@@ -971,7 +971,7 @@ function AddLayerInline({ zone, onAdd, onCancel }) {
 function LayerDetail({ layer, onChange }) {
   if (layer.type === 'text') {
     return (
-      <div className="pd-tree-panel__layer-detail">
+      <div className="pf-tree-panel__layer-detail">
         <h4>Text Properties</h4>
         <label>
           Text
@@ -1002,7 +1002,7 @@ function LayerDetail({ layer, onChange }) {
   }
 
   return (
-    <div className="pd-tree-panel__layer-detail">
+    <div className="pf-tree-panel__layer-detail">
       <h4>{(layer.type || 'Layer').charAt(0).toUpperCase() + (layer.type || '').slice(1)} Properties</h4>
       <label>
         Name
@@ -1318,7 +1318,7 @@ After the existing "Behavior" dropdown field, add:
 
 ```jsx
 {/* Boundary Type */}
-<label className="pd-zone-form__field">
+<label className="pf-zone-form__field">
   <span>Boundary</span>
   <select
     value={zone.boundary_type || 'rect'}
@@ -1331,9 +1331,9 @@ After the existing "Behavior" dropdown field, add:
 
 {/* SVG Upload — only shown when boundary_type is 'svg' */}
 {zone.boundary_type === 'svg' && (
-  <div className="pd-zone-form__svg-upload">
+  <div className="pf-zone-form__svg-upload">
     {zone.svg_url ? (
-      <div className="pd-zone-form__svg-preview">
+      <div className="pf-zone-form__svg-preview">
         <img src={zone.svg_url} alt="Zone shape" style={{ maxWidth: '100%', maxHeight: '80px' }} />
         <button type="button" onClick={() => setZone({ ...zone, svg_url: '', svg_path_data: '' })}>
           Remove
@@ -1380,7 +1380,7 @@ After the existing "Behavior" dropdown field, add:
     )}
     {zone.svg_path_data && (
       <>
-        <label className="pd-zone-form__field">
+        <label className="pf-zone-form__field">
           <span>Scale</span>
           <input
             type="number" step="0.1" min="0.1" max="10"
@@ -1392,7 +1392,7 @@ After the existing "Behavior" dropdown field, add:
             }}
           />
         </label>
-        <label className="pd-zone-form__field">
+        <label className="pf-zone-form__field">
           <span>Rotation</span>
           <input
             type="number" step="1" min="0" max="360"

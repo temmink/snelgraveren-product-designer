@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Package Plugin for Distribution
 
-Build a production-ready zip file for the Product Designer WordPress plugin.
+Build a production-ready zip file for the ProductForge WordPress plugin.
 
 ## Steps
 
@@ -14,7 +14,7 @@ Build a production-ready zip file for the Product Designer WordPress plugin.
 2. Run composer install via Docker (no dev dependencies):
    ```bash
    docker compose exec wordpress bash -c \
-     "cd /var/www/html/wp-content/plugins/product-designer && composer install --no-dev --optimize-autoloader"
+     "cd /var/www/html/wp-content/plugins/productforge && composer install --no-dev --optimize-autoloader"
    ```
 3. Run `bash bin/package.sh` to create the zip
 4. Report the output zip file name and size

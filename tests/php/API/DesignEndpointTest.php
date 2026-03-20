@@ -1,7 +1,7 @@
 <?php
 use PHPUnit\Framework\TestCase;
-use ProductDesigner\Database\TemplateRepository;
-use ProductDesigner\Database\DesignRepository;
+use ProductForge\Database\TemplateRepository;
+use ProductForge\Database\DesignRepository;
 
 class DesignEndpointTest extends TestCase {
     private $server;
@@ -31,7 +31,7 @@ class DesignEndpointTest extends TestCase {
     }
 
     public function test_create_design_requires_template_id(): void {
-        $request = new \WP_REST_Request('POST', '/pd/v1/designs');
+        $request = new \WP_REST_Request('POST', '/pf/v1/designs');
         $request->set_header('Content-Type', 'application/json');
         $request->set_body(json_encode(['product_id' => 1]));
         $response = $this->server->dispatch($request);
@@ -46,7 +46,7 @@ class DesignEndpointTest extends TestCase {
         ]);
         $this->template_ids[] = $draft_id;
 
-        $request = new \WP_REST_Request('POST', '/pd/v1/designs');
+        $request = new \WP_REST_Request('POST', '/pf/v1/designs');
         $request->set_header('Content-Type', 'application/json');
         $request->set_body(json_encode(['template_id' => $draft_id, 'product_id' => 1]));
         $response = $this->server->dispatch($request);
@@ -56,7 +56,7 @@ class DesignEndpointTest extends TestCase {
     public function test_create_design_with_published_template_returns_hash(): void {
         $template_id = $this->create_published_template();
 
-        $request = new \WP_REST_Request('POST', '/pd/v1/designs');
+        $request = new \WP_REST_Request('POST', '/pf/v1/designs');
         $request->set_header('Content-Type', 'application/json');
         $request->set_body(json_encode(['template_id' => $template_id, 'product_id' => 1]));
         $response = $this->server->dispatch($request);
@@ -70,7 +70,7 @@ class DesignEndpointTest extends TestCase {
     }
 
     public function test_get_design_returns_404_for_nonexistent(): void {
-        $request  = new \WP_REST_Request('GET', '/pd/v1/designs/' . str_repeat('a', 32));
+        $request  = new \WP_REST_Request('GET', '/pf/v1/designs/' . str_repeat('a', 32));
         $response = $this->server->dispatch($request);
         $this->assertEquals(404, $response->get_status());
     }
@@ -91,7 +91,7 @@ class DesignEndpointTest extends TestCase {
         // Request as a different user with no matching session
         wp_set_current_user(0);
         // The session won't match since CapabilityChecker::current_session_id() returns a different value
-        $request  = new \WP_REST_Request('GET', '/pd/v1/designs/' . $design['design_hash']);
+        $request  = new \WP_REST_Request('GET', '/pf/v1/designs/' . $design['design_hash']);
         $response = $this->server->dispatch($request);
         // Either 200 (if session matches) or 403 (if session doesn't match)
         // We just ensure it's not a 5xx error
@@ -103,7 +103,7 @@ class DesignEndpointTest extends TestCase {
         $template_id = $this->create_published_template();
 
         // Create design as admin (user 1)
-        $request = new \WP_REST_Request('POST', '/pd/v1/designs');
+        $request = new \WP_REST_Request('POST', '/pf/v1/designs');
         $request->set_header('Content-Type', 'application/json');
         $request->set_body(json_encode(['template_id' => $template_id, 'product_id' => 1]));
         $create_response = $this->server->dispatch($request);
@@ -112,15 +112,15 @@ class DesignEndpointTest extends TestCase {
         $hash = $create_response->get_data()['design_hash'];
         $this->design_hashes[] = $hash;
 
-        // Admin can always read any design (has edit_pd_templates)
-        $request  = new \WP_REST_Request('GET', '/pd/v1/designs/' . $hash);
+        // Admin can always read any design (has edit_pf_templates)
+        $request  = new \WP_REST_Request('GET', '/pf/v1/designs/' . $hash);
         $response = $this->server->dispatch($request);
         $this->assertEquals(200, $response->get_status());
     }
 
     public function test_admin_list_requires_capability(): void {
         wp_set_current_user(0);
-        $request  = new \WP_REST_Request('GET', '/pd/v1/admin/designs');
+        $request  = new \WP_REST_Request('GET', '/pf/v1/admin/designs');
         $response = $this->server->dispatch($request);
         // WP REST returns 401 for unauthenticated and 403 for authenticated-but-unauthorized
         $this->assertContains($response->get_status(), [401, 403]);
@@ -128,7 +128,7 @@ class DesignEndpointTest extends TestCase {
 
     public function test_admin_can_list_designs(): void {
         wp_set_current_user(1);
-        $request  = new \WP_REST_Request('GET', '/pd/v1/admin/designs');
+        $request  = new \WP_REST_Request('GET', '/pf/v1/admin/designs');
         $response = $this->server->dispatch($request);
         $this->assertContains($response->get_status(), [200, 204]);
         $headers = $response->get_headers();
@@ -137,7 +137,7 @@ class DesignEndpointTest extends TestCase {
 
     public function test_admin_list_supports_pagination(): void {
         wp_set_current_user(1);
-        $request = new \WP_REST_Request('GET', '/pd/v1/admin/designs');
+        $request = new \WP_REST_Request('GET', '/pf/v1/admin/designs');
         $request->set_param('per_page', 5);
         $request->set_param('page', 1);
         $response = $this->server->dispatch($request);

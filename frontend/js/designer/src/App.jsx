@@ -30,7 +30,7 @@ async function renderOffscreenThumbnail(canvasJson, width, height) {
   }
 }
 
-const config = window.pdDesigner || {};
+const config = window.pfDesigner || {};
 
 export default function App() {
   const {
@@ -55,7 +55,7 @@ export default function App() {
   // Load template on mount, then load existing design if hash is present
   useEffect(() => {
     if (!config.template_id) {
-      setError(__('No template configured for this product.', 'product-designer'));
+      setError(__('No template configured for this product.', 'productforge'));
       setLoading(false);
       return;
     }
@@ -113,7 +113,7 @@ export default function App() {
       setDesignerOpen(true);
     }
 
-    const btn = document.querySelector('.pd-open-designer');
+    const btn = document.querySelector('.pf-open-designer');
     if (!btn) return;
 
     const handler = () => setDesignerOpen(true);
@@ -182,11 +182,11 @@ export default function App() {
   // Sync design hash to hidden input
   useEffect(() => {
     if (!designHash) return;
-    let input = document.querySelector('input[name="pd_design_hash"]');
+    let input = document.querySelector('input[name="pf_design_hash"]');
     if (!input) {
       input = document.createElement('input');
       input.type = 'hidden';
-      input.name = 'pd_design_hash';
+      input.name = 'pf_design_hash';
       const form = document.querySelector('form.cart');
       if (form) form.appendChild(input);
     }
@@ -205,15 +205,15 @@ export default function App() {
     if (!btn) return;
 
     if (customizationRequired && !designSaved) {
-      btn.classList.add('pd-design-required');
-      btn.setAttribute('data-pd-original-text', btn.textContent);
+      btn.classList.add('pf-design-required');
+      btn.setAttribute('data-pf-original-text', btn.textContent);
       // Don't disable — just add a class and intercept via the submit handler
     } else {
-      btn.classList.remove('pd-design-required');
+      btn.classList.remove('pf-design-required');
     }
 
     return () => {
-      btn.classList.remove('pd-design-required');
+      btn.classList.remove('pf-design-required');
     };
   }, [template, customizationRequired, designSaved]);
 
@@ -228,7 +228,7 @@ export default function App() {
       // If customization is required but no design was saved, block submission
       if (customizationRequired && !store.designHash && Object.keys(store.canvasSnapshots).length === 0) {
         e.preventDefault();
-        setError(__('Please customize your product before adding to cart.', 'product-designer'));
+        setError(__('Please customize your product before adding to cart.', 'productforge'));
         return;
       }
 
@@ -268,11 +268,11 @@ export default function App() {
           }
 
           // Sync hash to hidden input
-          let input = document.querySelector('input[name="pd_design_hash"]');
+          let input = document.querySelector('input[name="pf_design_hash"]');
           if (!input) {
             input = document.createElement('input');
             input.type = 'hidden';
-            input.name = 'pd_design_hash';
+            input.name = 'pf_design_hash';
             form.appendChild(input);
           }
           input.value = hash;
@@ -285,7 +285,7 @@ export default function App() {
           form.submit();
         } catch (err) {
           savingForCartRef.current = false;
-          setError(__('Failed to save design. Please try again.', 'product-designer'));
+          setError(__('Failed to save design. Please try again.', 'productforge'));
         }
         return;
       }
@@ -364,18 +364,18 @@ export default function App() {
   };
 
   if (loading) {
-    return <div className="pd-designer pd-designer--loading">{__('Loading designer...', 'product-designer')}</div>;
+    return <div className="pf-designer pf-designer--loading">{__('Loading designer...', 'productforge')}</div>;
   }
 
   if (!template) {
-    return <div className="pd-designer pd-designer--error">{error || __('Template not available.', 'product-designer')}</div>;
+    return <div className="pf-designer pf-designer--error">{error || __('Template not available.', 'productforge')}</div>;
   }
 
   const isModal = config.display_mode === 'modal';
   const wrapperClass = [
-    'pd-designer',
-    `pd-designer--${config.display_mode || 'embedded'}`,
-    isModal && designerOpen ? 'pd-designer--open' : '',
+    'pf-designer',
+    `pf-designer--${config.display_mode || 'embedded'}`,
+    isModal && designerOpen ? 'pf-designer--open' : '',
   ].filter(Boolean).join(' ');
 
   return (
@@ -384,36 +384,36 @@ export default function App() {
       className={wrapperClass}
       role={isModal ? 'dialog' : undefined}
       aria-modal={isModal ? 'true' : undefined}
-      aria-label={isModal ? __('Product designer', 'product-designer') : undefined}
+      aria-label={isModal ? __('ProductForge designer', 'productforge') : undefined}
       onClick={isModal ? (e) => { e.stopPropagation(); setDesignerOpen(false); } : undefined}
       onMouseDown={isModal ? (e) => e.stopPropagation() : undefined}
     >
-      <div className="pd-designer__layout" onClick={isModal ? (e) => e.stopPropagation() : undefined}>
+      <div className="pf-designer__layout" onClick={isModal ? (e) => e.stopPropagation() : undefined}>
         <DesignerCanvas />
-        <div className="pd-designer__sidebar-wrap">
+        <div className="pf-designer__sidebar-wrap">
           <Sidebar />
           {error && (
-            <div className="pd-designer__error" onClick={clearError}>
+            <div className="pf-designer__error" onClick={clearError}>
               {error}
             </div>
           )}
           <button
             type="button"
-            className={`pd-designer__save-btn${savedRecently ? ' pd-designer__save-btn--saved' : ''}`}
+            className={`pf-designer__save-btn${savedRecently ? ' pf-designer__save-btn--saved' : ''}`}
             onClick={handleSave}
             disabled={isSaving || !isDirty}
           >
             <span aria-live="polite">
-              {isSaving ? __('Saving...', 'product-designer') : savedRecently ? __('Saved!', 'product-designer') : __('Save Design', 'product-designer')}
+              {isSaving ? __('Saving...', 'productforge') : savedRecently ? __('Saved!', 'productforge') : __('Save Design', 'productforge')}
             </span>
           </button>
           {isModal && (
             <button
               type="button"
-              className="pd-designer__close-btn"
+              className="pf-designer__close-btn"
               onClick={(e) => { e.stopPropagation(); setDesignerOpen(false); }}
             >
-              {__('Close Designer', 'product-designer')}
+              {__('Close Designer', 'productforge')}
             </button>
           )}
         </div>

@@ -1,5 +1,5 @@
 <?php
-namespace ProductDesigner\Security;
+namespace ProductForge\Security;
 
 defined('ABSPATH') || exit;
 
@@ -33,7 +33,7 @@ class UploadValidator {
     }
 
     private static function check_rate_limit(string $session_id): void {
-        $key   = 'pd_upload_count_' . md5($session_id);
+        $key   = 'pf_upload_count_' . md5($session_id);
         $count = (int) get_transient($key);
         if ($count >= self::RATE_LIMIT) {
             throw new \RuntimeException('Upload rate limit exceeded. Please wait a minute.', 429);
@@ -75,7 +75,7 @@ class UploadValidator {
 
     private static function move_file(array $file, string $mime): array {
         $upload_dir = wp_upload_dir();
-        $subdir     = '/product-designer/' . date('Y/m');
+        $subdir     = '/productforge/' . date('Y/m');
         $dir        = $upload_dir['basedir'] . $subdir;
         wp_mkdir_p($dir);
 

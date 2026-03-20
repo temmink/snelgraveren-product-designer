@@ -1,10 +1,10 @@
 <?php
-namespace ProductDesigner\API;
+namespace ProductForge\API;
 
 defined('ABSPATH') || exit;
 
-use ProductDesigner\Export\ExportManager;
-use ProductDesigner\Database\ExportRepository;
+use ProductForge\Export\ExportManager;
+use ProductForge\Database\ExportRepository;
 
 class RestExports {
 
@@ -19,7 +19,7 @@ class RestExports {
 
     public function register_routes(): void {
         // Trigger export for a design
-        register_rest_route('pd/v1', '/exports/(?P<hash>[a-f0-9]{32})', [
+        register_rest_route('pf/v1', '/exports/(?P<hash>[a-f0-9]{32})', [
             'methods'             => 'POST',
             'callback'            => [$this, 'trigger_export'],
             'permission_callback' => [$this, 'admin_permission'],
@@ -37,21 +37,21 @@ class RestExports {
         ]);
 
         // Download an export file
-        register_rest_route('pd/v1', '/exports/(?P<id>\d+)/download', [
+        register_rest_route('pf/v1', '/exports/(?P<id>\d+)/download', [
             'methods'             => 'GET',
             'callback'            => [$this, 'download_export'],
             'permission_callback' => [$this, 'admin_permission'],
         ]);
 
         // List exports for an order
-        register_rest_route('pd/v1', '/orders/(?P<order_id>\d+)/exports', [
+        register_rest_route('pf/v1', '/orders/(?P<order_id>\d+)/exports', [
             'methods'             => 'GET',
             'callback'            => [$this, 'list_order_exports'],
             'permission_callback' => [$this, 'admin_permission'],
         ]);
 
         // Delete an export
-        register_rest_route('pd/v1', '/exports/(?P<id>\d+)', [
+        register_rest_route('pf/v1', '/exports/(?P<id>\d+)', [
             'methods'             => 'DELETE',
             'callback'            => [$this, 'delete_export'],
             'permission_callback' => [$this, 'admin_permission'],
@@ -59,7 +59,7 @@ class RestExports {
     }
 
     public function admin_permission(): bool {
-        return current_user_can('edit_pd_templates');
+        return current_user_can('edit_pf_templates');
     }
 
     public function trigger_export(\WP_REST_Request $request): \WP_REST_Response {

@@ -1,4 +1,4 @@
-const config = window.pdDesigner || {};
+const config = window.pfDesigner || {};
 
 function apiUrl(path) {
   return `${config.api_base}${path}`;

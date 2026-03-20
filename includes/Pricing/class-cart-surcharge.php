@@ -1,5 +1,5 @@
 <?php
-namespace ProductDesigner\Pricing;
+namespace ProductForge\Pricing;
 
 defined('ABSPATH') || exit;
 
@@ -41,17 +41,17 @@ class CartSurcharge {
 
         try {
             foreach ($cart->get_cart() as $cart_item_key => $cart_item) {
-                if (empty($cart_item['pd_design_hash'])) {
+                if (empty($cart_item['pf_design_hash'])) {
                     continue;
                 }
 
-                $surcharge = $this->calculator()->calculate($cart_item['pd_design_hash']);
+                $surcharge = $this->calculator()->calculate($cart_item['pf_design_hash']);
                 if ($surcharge <= 0) {
                     continue;
                 }
 
                 // Store surcharge in cart item for display
-                $cart->cart_contents[$cart_item_key]['pd_surcharge'] = $surcharge;
+                $cart->cart_contents[$cart_item_key]['pf_surcharge'] = $surcharge;
 
                 // Add surcharge to the product price
                 $product = $cart_item['data'];
@@ -69,10 +69,10 @@ class CartSurcharge {
      * Display surcharge amount in cart item data (below "Design: Customized").
      */
     public function display_surcharge(array $item_data, array $cart_item): array {
-        if (!empty($cart_item['pd_surcharge']) && $cart_item['pd_surcharge'] > 0) {
+        if (!empty($cart_item['pf_surcharge']) && $cart_item['pf_surcharge'] > 0) {
             $item_data[] = [
-                'key'   => __('Design surcharge', 'product-designer'),
-                'value' => wc_price($cart_item['pd_surcharge']),
+                'key'   => __('Design surcharge', 'productforge'),
+                'value' => wc_price($cart_item['pf_surcharge']),
             ];
         }
         return $item_data;

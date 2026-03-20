@@ -26,40 +26,40 @@ export default function AddTab() {
   };
 
   return (
-    <div className="pd-sidebar__tab-content">
-      <h3 className="pd-sidebar__heading">{__('Add Element', 'product-designer')}</h3>
-      <div className="pd-add-tools">
+    <div className="pf-sidebar__tab-content">
+      <h3 className="pf-sidebar__heading">{__('Add Element', 'productforge')}</h3>
+      <div className="pf-add-tools">
         {isTypeAllowed('text') && (
           <button
             type="button"
-            className={`pd-add-tools__btn${activeTool === 'add-text' ? ' pd-add-tools__btn--active' : ''}`}
+            className={`pf-add-tools__btn${activeTool === 'add-text' ? ' pf-add-tools__btn--active' : ''}`}
             onClick={() => handleToolClick('add-text')}
-            aria-label={__('Add text element', 'product-designer')}
-            title={__('Add text', 'product-designer')}
+            aria-label={__('Add text element', 'productforge')}
+            title={__('Add text', 'productforge')}
           >
-            {__('Text', 'product-designer')}
+            {__('Text', 'productforge')}
           </button>
         )}
         {isTypeAllowed('image') && (
           <button
             type="button"
-            className={`pd-add-tools__btn${activeTool === 'add-image' ? ' pd-add-tools__btn--active' : ''}`}
+            className={`pf-add-tools__btn${activeTool === 'add-image' ? ' pf-add-tools__btn--active' : ''}`}
             onClick={() => handleToolClick('add-image')}
-            aria-label={__('Add image element', 'product-designer')}
-            title={__('Add image (jpg, png, webp)', 'product-designer')}
+            aria-label={__('Add image element', 'productforge')}
+            title={__('Add image (jpg, png, webp)', 'productforge')}
           >
-            {__('Image', 'product-designer')}
+            {__('Image', 'productforge')}
           </button>
         )}
         {isTypeAllowed('svg') && (
           <button
             type="button"
-            className={`pd-add-tools__btn${activeTool === 'add-svg' ? ' pd-add-tools__btn--active' : ''}`}
+            className={`pf-add-tools__btn${activeTool === 'add-svg' ? ' pf-add-tools__btn--active' : ''}`}
             onClick={() => handleToolClick('add-svg')}
-            aria-label={__('Add SVG element', 'product-designer')}
-            title={__('Add SVG', 'product-designer')}
+            aria-label={__('Add SVG element', 'productforge')}
+            title={__('Add SVG', 'productforge')}
           >
-            {__('SVG', 'product-designer')}
+            {__('SVG', 'productforge')}
           </button>
         )}
       </div>

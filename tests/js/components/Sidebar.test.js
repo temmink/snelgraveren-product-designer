@@ -73,7 +73,7 @@ describe('Sidebar — tab switching', () => {
     it('clicking Views tab gives it the active CSS class', () => {
         render(<Sidebar />);
         fireEvent.click(screen.getByRole('tab', { name: 'Views' }));
-        expect(screen.getByRole('tab', { name: 'Views' })).toHaveClass('pd-sidebar__tab--active');
+        expect(screen.getByRole('tab', { name: 'Views' })).toHaveClass('pf-sidebar__tab--active');
     });
 });
 

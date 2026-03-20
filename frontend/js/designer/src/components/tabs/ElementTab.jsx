@@ -9,15 +9,15 @@ export default function ElementTab() {
   const permissions  = globalConfig.permissions || {};
 
   if (!selectedObject) {
-    return <div className="pd-sidebar__tab-content"><p>{__('Select an element', 'product-designer')}</p></div>;
+    return <div className="pf-sidebar__tab-content"><p>{__('Select an element', 'productforge')}</p></div>;
   }
 
   const { type, fabricObj } = selectedObject;
   const perms = permissions[type] || {};
 
   return (
-    <div className="pd-sidebar__tab-content">
-      <h3 className="pd-sidebar__heading">{type.charAt(0).toUpperCase() + type.slice(1)}{__(' Properties', 'product-designer')}</h3>
+    <div className="pf-sidebar__tab-content">
+      <h3 className="pf-sidebar__heading">{type.charAt(0).toUpperCase() + type.slice(1)}{__(' Properties', 'productforge')}</h3>
 
       {type === 'text' && (
         <TextProperties
@@ -43,7 +43,7 @@ export default function ElementTab() {
       {perms.delete !== false && (
         <button
           type="button"
-          className="pd-element__delete-btn"
+          className="pf-element__delete-btn"
           onClick={() => {
             const canvas = fabricObj.canvas;
             if (canvas) {
@@ -53,7 +53,7 @@ export default function ElementTab() {
             }
           }}
         >
-          {__('Delete', 'product-designer')}
+          {__('Delete', 'productforge')}
         </button>
       )}
     </div>
@@ -87,11 +87,11 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
   const anyColor = globalConfig.any_color || false;
 
   return (
-    <div className="pd-element__props">
+    <div className="pf-element__props">
       {/* Font family */}
       {perms.change_font !== false && allowedFonts.length > 0 && (
-        <label className="pd-element__field">
-          <span>{__('Font', 'product-designer')}</span>
+        <label className="pf-element__field">
+          <span>{__('Font', 'productforge')}</span>
           <select
             value={fontFamily}
             onChange={(e) => {
@@ -107,8 +107,8 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
       )}
 
       {/* Font size */}
-      <label className="pd-element__field">
-        <span>{__('Size', 'product-designer')}</span>
+      <label className="pf-element__field">
+        <span>{__('Size', 'productforge')}</span>
         <input
           type="number"
           min="8"
@@ -124,8 +124,8 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
 
       {/* Color */}
       {perms.recolor !== false && (
-        <label className="pd-element__field">
-          <span>{__('Color', 'product-designer')}</span>
+        <label className="pf-element__field">
+          <span>{__('Color', 'productforge')}</span>
           {anyColor ? (
             <input
               type="color"
@@ -136,12 +136,12 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
               }}
             />
           ) : allowedColors.length > 0 ? (
-            <div className="pd-element__color-swatches">
+            <div className="pf-element__color-swatches">
               {allowedColors.map((c) => (
                 <button
                   type="button"
                   key={c}
-                  className={`pd-element__swatch${fill === c ? ' pd-element__swatch--active' : ''}`}
+                  className={`pf-element__swatch${fill === c ? ' pf-element__swatch--active' : ''}`}
                   style={{ backgroundColor: c }}
                   onClick={() => {
                     setFill(c);
@@ -164,10 +164,10 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
       )}
 
       {/* Bold / Italic */}
-      <div className="pd-element__toggles">
+      <div className="pf-element__toggles">
         <button
           type="button"
-          className={`pd-element__toggle${bold ? ' pd-element__toggle--active' : ''}`}
+          className={`pf-element__toggle${bold ? ' pf-element__toggle--active' : ''}`}
           onClick={() => {
             const next = !bold;
             setBold(next);
@@ -178,7 +178,7 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
         </button>
         <button
           type="button"
-          className={`pd-element__toggle${italic ? ' pd-element__toggle--active' : ''}`}
+          className={`pf-element__toggle${italic ? ' pf-element__toggle--active' : ''}`}
           onClick={() => {
             const next = !italic;
             setItalic(next);
@@ -220,16 +220,16 @@ function ImageProperties({ fabricObj, type, perms, globalConfig, snapshotView, c
   }, [fabricObj, snapshotView, currentViewIndex]);
 
   return (
-    <div className="pd-element__props">
-      <div className="pd-element__field">
+    <div className="pf-element__props">
+      <div className="pf-element__field">
         <span>Scale</span>
         <span>{scalePercent}%</span>
       </div>
 
       {/* SVG recolor */}
       {type === 'svg' && perms.recolor !== false && (
-        <label className="pd-element__field">
-          <span>{__('Tint Color', 'product-designer')}</span>
+        <label className="pf-element__field">
+          <span>{__('Tint Color', 'productforge')}</span>
           {anyColor || allowedColors.length === 0 ? (
             <input
               type="color"
@@ -240,12 +240,12 @@ function ImageProperties({ fabricObj, type, perms, globalConfig, snapshotView, c
               }}
             />
           ) : (
-            <div className="pd-element__color-swatches">
+            <div className="pf-element__color-swatches">
               {allowedColors.map((c) => (
                 <button
                   type="button"
                   key={c}
-                  className={`pd-element__swatch${fill === c ? ' pd-element__swatch--active' : ''}`}
+                  className={`pf-element__swatch${fill === c ? ' pf-element__swatch--active' : ''}`}
                   style={{ backgroundColor: c }}
                   onClick={() => {
                     setFill(c);

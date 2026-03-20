@@ -15,7 +15,7 @@
 - `DesignRepository::create()` returns the insert ID — call `get()` or `get_by_hash()` after to get the full row with `design_hash`
 - `RestDesigns::create_design()` already calls `$this->repo->get($id)` after insert, so the response includes `design_hash`
 - Upload endpoint returns `{ url: "..." }` on success (201)
-- API classes register routes inside the `rest_api_init` callback in `class-product-designer.php`
+- API classes register routes inside the `rest_api_init` callback in `class-productforge.php`
 
 ---
 
@@ -62,7 +62,7 @@ git commit -m "fix: output CSS without hash for predictable enqueue paths"
 **Files:**
 - Modify: `includes/API/class-rest-templates.php`
 
-Add `GET /pd/v1/templates/{id}/public` — unauthenticated, returns published templates only with sanitized fields.
+Add `GET /pf/v1/templates/{id}/public` — unauthenticated, returns published templates only with sanitized fields.
 
 - [ ] **Step 1: Add the route registration**
 
@@ -114,7 +114,7 @@ public function get_public_template(\WP_REST_Request $request): \WP_REST_Respons
 
 ```bash
 # Create a published template via admin if none exists, then:
-curl -s http://localhost:8080/wp-json/pd/v1/templates/1/public | jq .
+curl -s http://localhost:8080/wp-json/pf/v1/templates/1/public | jq .
 
 # Should return template data if published, or 404 if draft
 ```
@@ -123,7 +123,7 @@ curl -s http://localhost:8080/wp-json/pd/v1/templates/1/public | jq .
 
 ```bash
 # Set template status to draft via admin, then:
-curl -s http://localhost:8080/wp-json/pd/v1/templates/1/public
+curl -s http://localhost:8080/wp-json/pf/v1/templates/1/public
 # Should return 404
 ```
 
@@ -148,7 +148,7 @@ Guard: `create_design()` must verify `template_id` references a published templa
 Add at the top of `create_design()`, after the existing `template_id` check:
 
 ```php
-$template_repo = new \ProductDesigner\Database\TemplateRepository();
+$template_repo = new \ProductForge\Database\TemplateRepository();
 $template = $template_repo->get((int) $body['template_id']);
 if (!$template || ($template['status'] ?? '') !== 'published') {
     return new \WP_Error('invalid_template', 'Template not found or not published.', ['status' => 400]);
@@ -159,7 +159,7 @@ if (!$template || ($template['status'] ?? '') !== 'published') {
 
 Ensure at top of file:
 ```php
-use ProductDesigner\Database\TemplateRepository;
+use ProductForge\Database\TemplateRepository;
 ```
 
 And update the validation to use just `TemplateRepository`:
@@ -171,7 +171,7 @@ $template_repo = new TemplateRepository();
 
 ```bash
 # Try creating a design with a non-existent template_id:
-curl -s -X POST http://localhost:8080/wp-json/pd/v1/designs \
+curl -s -X POST http://localhost:8080/wp-json/pf/v1/designs \
   -H "Content-Type: application/json" \
   -d '{"template_id": 99999}' | jq .
 # Should return 400 error
@@ -190,7 +190,7 @@ git commit -m "feat: validate template_id is published before creating design"
 
 **Files:**
 - Create: `includes/Frontend/class-frontend.php`
-- Modify: `includes/class-product-designer.php`
+- Modify: `includes/class-productforge.php`
 
 Register the Frontend class that enqueues assets and renders the designer container on WooCommerce product pages.
 
@@ -198,7 +198,7 @@ Register the Frontend class that enqueues assets and renders the designer contai
 
 ```php
 <?php
-namespace ProductDesigner\Frontend;
+namespace ProductForge\Frontend;
 
 defined('ABSPATH') || exit;
 
@@ -225,35 +225,35 @@ class Frontend {
         global $post;
         $product_id = $post->ID;
 
-        if (!get_post_meta($product_id, '_pd_designer_enabled', true)) {
+        if (!get_post_meta($product_id, '_pf_designer_enabled', true)) {
             return;
         }
 
-        $template_id = (int) get_post_meta($product_id, '_pd_template_id', true);
+        $template_id = (int) get_post_meta($product_id, '_pf_template_id', true);
         if (!$template_id) {
             return;
         }
 
-        $dist_path = PD_PLUGIN_DIR . 'dist/';
-        $dist_url  = PD_PLUGIN_URL . 'dist/';
+        $dist_path = PF_PLUGIN_DIR . 'dist/';
+        $dist_url  = PF_PLUGIN_URL . 'dist/';
 
         // Enqueue JS
         $js_file = 'frontend-designer.js';
         if (file_exists($dist_path . $js_file)) {
             wp_enqueue_script(
-                'pd-frontend-designer',
+                'pf-frontend-designer',
                 $dist_url . $js_file,
                 [],
-                PD_VERSION,
+                PF_VERSION,
                 true
             );
 
-            wp_localize_script('pd-frontend-designer', 'pdDesigner', [
+            wp_localize_script('pf-frontend-designer', 'pfDesigner', [
                 'template_id'     => $template_id,
                 'product_id'      => $product_id,
-                'display_mode'    => get_post_meta($product_id, '_pd_display_mode', true) ?: 'embedded',
+                'display_mode'    => get_post_meta($product_id, '_pf_display_mode', true) ?: 'embedded',
                 'nonce'           => wp_create_nonce('wp_rest'),
-                'api_base'        => rest_url('pd/v1'),
+                'api_base'        => rest_url('pf/v1'),
                 'currency_symbol' => function_exists('get_woocommerce_currency_symbol')
                     ? get_woocommerce_currency_symbol()
                     : '€',
@@ -264,10 +264,10 @@ class Frontend {
         $css_file = 'frontend-designer.css';
         if (file_exists($dist_path . $css_file)) {
             wp_enqueue_style(
-                'pd-frontend-designer',
+                'pf-frontend-designer',
                 $dist_url . $css_file,
                 [],
-                PD_VERSION
+                PF_VERSION
             );
         }
     }
@@ -278,15 +278,15 @@ class Frontend {
         }
 
         global $post;
-        if (!get_post_meta($post->ID, '_pd_designer_enabled', true)) {
+        if (!get_post_meta($post->ID, '_pf_designer_enabled', true)) {
             return;
         }
 
-        $mode = get_post_meta($post->ID, '_pd_display_mode', true) ?: 'embedded';
-        echo '<div id="pd-designer-root" data-mode="' . esc_attr($mode) . '"></div>';
+        $mode = get_post_meta($post->ID, '_pf_display_mode', true) ?: 'embedded';
+        echo '<div id="pf-designer-root" data-mode="' . esc_attr($mode) . '"></div>';
 
         if ($mode === 'modal') {
-            echo '<button type="button" class="pd-open-designer button">Customize Product</button>';
+            echo '<button type="button" class="pf-open-designer button">Customize Product</button>';
         }
     }
 }
@@ -294,7 +294,7 @@ class Frontend {
 
 - [ ] **Step 2: Register Frontend in main plugin class**
 
-In `includes/class-product-designer.php`, in the `init()` method, add the frontend init for non-admin context:
+In `includes/class-productforge.php`, in the `init()` method, add the frontend init for non-admin context:
 
 ```php
 if (!is_admin()) {
@@ -303,28 +303,28 @@ if (!is_admin()) {
 }
 ```
 
-Ensure `PD_PLUGIN_DIR` and `PD_PLUGIN_URL` constants exist in `product-designer.php`. Check the bootstrap file — they should already be defined there. If they use different names, match the existing constants.
+Ensure `PF_PLUGIN_DIR` and `PF_PLUGIN_URL` constants exist in `productforge.php`. Check the bootstrap file — they should already be defined there. If they use different names, match the existing constants.
 
 - [ ] **Step 3: Verify constants**
 
 ```bash
 # Check what constants are defined in the bootstrap file:
-grep -n 'define(' product-designer.php
+grep -n 'define(' productforge.php
 ```
 
-Update `class-frontend.php` if the constant names differ (e.g., `PRODUCT_DESIGNER_DIR` instead of `PD_PLUGIN_DIR`).
+Update `class-frontend.php` if the constant names differ (e.g., `PRODUCT_DESIGNER_DIR` instead of `PF_PLUGIN_DIR`).
 
 - [ ] **Step 4: Verify assets enqueue on a product page**
 
-1. In WP admin, edit a product and set `_pd_designer_enabled = 1` and `_pd_template_id = 1` via Custom Fields
+1. In WP admin, edit a product and set `_pf_designer_enabled = 1` and `_pf_template_id = 1` via Custom Fields
 2. Visit the product page in the frontend
-3. View page source — verify `pd-frontend-designer` script is enqueued and `window.pdDesigner` config object is present
-4. Verify `<div id="pd-designer-root">` is rendered before the add-to-cart button
+3. View page source — verify `pf-frontend-designer` script is enqueued and `window.pfDesigner` config object is present
+4. Verify `<div id="pf-designer-root">` is rendered before the add-to-cart button
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add includes/Frontend/class-frontend.php includes/class-product-designer.php
+git add includes/Frontend/class-frontend.php includes/class-productforge.php
 git commit -m "feat: add Frontend class for designer asset loading and container rendering"
 ```
 
@@ -414,7 +414,7 @@ git commit -m "feat: add useDesignerStore Zustand store for customer designer"
 - [ ] **Step 1: Create the API module**
 
 ```js
-const config = window.pdDesigner || {};
+const config = window.pfDesigner || {};
 
 function apiUrl(path) {
   return `${config.api_base}${path}`;
@@ -880,8 +880,8 @@ export default function DesignerCanvas() {
   }, [triggerFileUpload, setTriggerFileUpload]);
 
   return (
-    <div className="pd-canvas-wrap">
-      <div className="pd-canvas-scroll">
+    <div className="pf-canvas-wrap">
+      <div className="pf-canvas-scroll">
         <canvas ref={canvasEl} />
       </div>
       <input
@@ -898,7 +898,7 @@ export default function DesignerCanvas() {
 - [ ] **Step 2: Verify canvas renders with zones**
 
 1. Ensure a template with zones exists (created via admin builder in Phase 2)
-2. Set product meta `_pd_designer_enabled = 1`, `_pd_template_id = <id>`
+2. Set product meta `_pf_designer_enabled = 1`, `_pf_template_id = <id>`
 3. Visit product page — canvas should render with zone overlays
 4. Verify restrict zones show solid blue border, suggest zones show dashed grey
 
@@ -960,11 +960,11 @@ export default function AddTab() {
   };
 
   return (
-    <div className="pd-sidebar__tab-content">
-      <h3 className="pd-sidebar__heading">Add Element</h3>
-      <div className="pd-add-tools">
+    <div className="pf-sidebar__tab-content">
+      <h3 className="pf-sidebar__heading">Add Element</h3>
+      <div className="pf-add-tools">
         <button
-          className={`pd-add-tools__btn${activeTool === 'add-text' ? ' pd-add-tools__btn--active' : ''}`}
+          className={`pf-add-tools__btn${activeTool === 'add-text' ? ' pf-add-tools__btn--active' : ''}`}
           disabled={!isTypeAllowed('text')}
           onClick={() => handleToolClick('add-text')}
           title={!isTypeAllowed('text') ? 'Text not allowed on this view' : 'Add text'}
@@ -972,7 +972,7 @@ export default function AddTab() {
           Text
         </button>
         <button
-          className={`pd-add-tools__btn${activeTool === 'add-image' ? ' pd-add-tools__btn--active' : ''}`}
+          className={`pf-add-tools__btn${activeTool === 'add-image' ? ' pf-add-tools__btn--active' : ''}`}
           disabled={!isTypeAllowed('image')}
           onClick={() => handleToolClick('add-image')}
           title={!isTypeAllowed('image') ? 'Images not allowed on this view' : 'Add image (jpg, png, webp)'}
@@ -980,7 +980,7 @@ export default function AddTab() {
           Image
         </button>
         <button
-          className={`pd-add-tools__btn${activeTool === 'add-svg' ? ' pd-add-tools__btn--active' : ''}`}
+          className={`pf-add-tools__btn${activeTool === 'add-svg' ? ' pf-add-tools__btn--active' : ''}`}
           disabled={!isTypeAllowed('svg')}
           onClick={() => handleToolClick('add-svg')}
           title={!isTypeAllowed('svg') ? 'SVGs not allowed on this view' : 'Add SVG'}
@@ -1014,29 +1014,29 @@ export default function Sidebar() {
   }, [selectedObject]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="pd-sidebar">
-      <div className="pd-sidebar__tabs">
+    <div className="pf-sidebar">
+      <div className="pf-sidebar__tabs">
         <button
-          className={`pd-sidebar__tab${activeTab === 'add' ? ' pd-sidebar__tab--active' : ''}`}
+          className={`pf-sidebar__tab${activeTab === 'add' ? ' pf-sidebar__tab--active' : ''}`}
           onClick={() => setActiveTab('add')}
         >
           Add
         </button>
         <button
-          className={`pd-sidebar__tab${activeTab === 'element' ? ' pd-sidebar__tab--active' : ''}`}
+          className={`pf-sidebar__tab${activeTab === 'element' ? ' pf-sidebar__tab--active' : ''}`}
           onClick={() => setActiveTab('element')}
           disabled={!selectedObject}
         >
           Element
         </button>
         <button
-          className={`pd-sidebar__tab${activeTab === 'views' ? ' pd-sidebar__tab--active' : ''}`}
+          className={`pf-sidebar__tab${activeTab === 'views' ? ' pf-sidebar__tab--active' : ''}`}
           onClick={() => setActiveTab('views')}
         >
           Views
         </button>
       </div>
-      <div className="pd-sidebar__content">
+      <div className="pf-sidebar__content">
         {activeTab === 'add' && <AddTab />}
         {activeTab === 'element' && <ElementTabPlaceholder />}
         {activeTab === 'views' && <ViewsTabPlaceholder />}
@@ -1046,11 +1046,11 @@ export default function Sidebar() {
 }
 
 function ElementTabPlaceholder() {
-  return <div className="pd-sidebar__tab-content"><p>Element properties (Task 8)</p></div>;
+  return <div className="pf-sidebar__tab-content"><p>Element properties (Task 8)</p></div>;
 }
 
 function ViewsTabPlaceholder() {
-  return <div className="pd-sidebar__tab-content"><p>View switcher (Task 9)</p></div>;
+  return <div className="pf-sidebar__tab-content"><p>View switcher (Task 9)</p></div>;
 }
 ```
 
@@ -1082,15 +1082,15 @@ export default function ElementTab() {
   const permissions  = globalConfig.permissions || {};
 
   if (!selectedObject) {
-    return <div className="pd-sidebar__tab-content"><p>Select an element</p></div>;
+    return <div className="pf-sidebar__tab-content"><p>Select an element</p></div>;
   }
 
   const { type, fabricObj } = selectedObject;
   const perms = permissions[type] || {};
 
   return (
-    <div className="pd-sidebar__tab-content">
-      <h3 className="pd-sidebar__heading">{type.charAt(0).toUpperCase() + type.slice(1)} Properties</h3>
+    <div className="pf-sidebar__tab-content">
+      <h3 className="pf-sidebar__heading">{type.charAt(0).toUpperCase() + type.slice(1)} Properties</h3>
 
       {type === 'text' && (
         <TextProperties
@@ -1115,7 +1115,7 @@ export default function ElementTab() {
 
       {perms.delete !== false && (
         <button
-          className="pd-element__delete-btn"
+          className="pf-element__delete-btn"
           onClick={() => {
             const canvas = fabricObj.canvas;
             if (canvas) {
@@ -1159,10 +1159,10 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
   const anyColor = globalConfig.any_color || false;
 
   return (
-    <div className="pd-element__props">
+    <div className="pf-element__props">
       {/* Font family */}
       {perms.change_font !== false && allowedFonts.length > 0 && (
-        <label className="pd-element__field">
+        <label className="pf-element__field">
           <span>Font</span>
           <select
             value={fontFamily}
@@ -1179,7 +1179,7 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
       )}
 
       {/* Font size */}
-      <label className="pd-element__field">
+      <label className="pf-element__field">
         <span>Size</span>
         <input
           type="number"
@@ -1196,7 +1196,7 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
 
       {/* Color */}
       {perms.recolor !== false && (
-        <label className="pd-element__field">
+        <label className="pf-element__field">
           <span>Color</span>
           {anyColor ? (
             <input
@@ -1208,11 +1208,11 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
               }}
             />
           ) : allowedColors.length > 0 ? (
-            <div className="pd-element__color-swatches">
+            <div className="pf-element__color-swatches">
               {allowedColors.map((c) => (
                 <button
                   key={c}
-                  className={`pd-element__swatch${fill === c ? ' pd-element__swatch--active' : ''}`}
+                  className={`pf-element__swatch${fill === c ? ' pf-element__swatch--active' : ''}`}
                   style={{ backgroundColor: c }}
                   onClick={() => {
                     setFill(c);
@@ -1235,9 +1235,9 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
       )}
 
       {/* Bold / Italic */}
-      <div className="pd-element__toggles">
+      <div className="pf-element__toggles">
         <button
-          className={`pd-element__toggle${bold ? ' pd-element__toggle--active' : ''}`}
+          className={`pf-element__toggle${bold ? ' pf-element__toggle--active' : ''}`}
           onClick={() => {
             const next = !bold;
             setBold(next);
@@ -1247,7 +1247,7 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
           B
         </button>
         <button
-          className={`pd-element__toggle${italic ? ' pd-element__toggle--active' : ''}`}
+          className={`pf-element__toggle${italic ? ' pf-element__toggle--active' : ''}`}
           onClick={() => {
             const next = !italic;
             setItalic(next);
@@ -1275,15 +1275,15 @@ function ImageProperties({ fabricObj, type, perms, globalConfig, snapshotView, c
   }, [fabricObj, snapshotView, currentViewIndex]);
 
   return (
-    <div className="pd-element__props">
-      <div className="pd-element__field">
+    <div className="pf-element__props">
+      <div className="pf-element__field">
         <span>Scale</span>
         <span>{scalePercent}%</span>
       </div>
 
       {/* SVG recolor */}
       {type === 'svg' && perms.recolor !== false && (
-        <label className="pd-element__field">
+        <label className="pf-element__field">
           <span>Color</span>
           {anyColor ? (
             <input
@@ -1295,11 +1295,11 @@ function ImageProperties({ fabricObj, type, perms, globalConfig, snapshotView, c
               }}
             />
           ) : allowedColors.length > 0 ? (
-            <div className="pd-element__color-swatches">
+            <div className="pf-element__color-swatches">
               {allowedColors.map((c) => (
                 <button
                   key={c}
-                  className={`pd-element__swatch${fill === c ? ' pd-element__swatch--active' : ''}`}
+                  className={`pf-element__swatch${fill === c ? ' pf-element__swatch--active' : ''}`}
                   style={{ backgroundColor: c }}
                   onClick={() => {
                     setFill(c);
@@ -1370,19 +1370,19 @@ export default function ViewsTab() {
     if (index === currentViewIndex) return;
 
     // Snapshot outgoing view (canvas ref is handled by DesignerCanvas effect cleanup)
-    const canvas = document.querySelector('.pd-canvas-wrap canvas');
+    const canvas = document.querySelector('.pf-canvas-wrap canvas');
     // The actual snapshot happens in DesignerCanvas cleanup — we just trigger the switch
     setCurrentViewIndex(index);
   }, [currentViewIndex, setCurrentViewIndex]);
 
   return (
-    <div className="pd-sidebar__tab-content">
-      <h3 className="pd-sidebar__heading">Views</h3>
-      <div className="pd-views">
+    <div className="pf-sidebar__tab-content">
+      <h3 className="pf-sidebar__heading">Views</h3>
+      <div className="pf-views">
         {views.map((view, i) => (
           <button
             key={view.id || i}
-            className={`pd-views__btn${i === currentViewIndex ? ' pd-views__btn--active' : ''}`}
+            className={`pf-views__btn${i === currentViewIndex ? ' pf-views__btn--active' : ''}`}
             onClick={() => handleSwitch(i)}
           >
             {view.name || `View ${i + 1}`}
@@ -1457,7 +1457,7 @@ import { loadTemplate, createDesign, saveDesignView } from './api/designerApi';
 import DesignerCanvas from './components/DesignerCanvas';
 import Sidebar from './components/Sidebar';
 
-const config = window.pdDesigner || {};
+const config = window.pfDesigner || {};
 
 export default function App() {
   const {
@@ -1495,7 +1495,7 @@ export default function App() {
   useEffect(() => {
     if (config.display_mode !== 'modal') return;
 
-    const btn = document.querySelector('.pd-open-designer');
+    const btn = document.querySelector('.pf-open-designer');
     if (!btn) return;
 
     const handler = () => setDesignerOpen(true);
@@ -1506,11 +1506,11 @@ export default function App() {
   // Sync design hash to hidden input
   useEffect(() => {
     if (!designHash) return;
-    let input = document.querySelector('input[name="pd_design_hash"]');
+    let input = document.querySelector('input[name="pf_design_hash"]');
     if (!input) {
       input = document.createElement('input');
       input.type = 'hidden';
-      input.name = 'pd_design_hash';
+      input.name = 'pf_design_hash';
       const form = document.querySelector('form.cart');
       if (form) form.appendChild(input);
     }
@@ -1550,25 +1550,25 @@ export default function App() {
   };
 
   if (loading) {
-    return <div className="pd-designer pd-designer--loading">Loading designer...</div>;
+    return <div className="pf-designer pf-designer--loading">Loading designer...</div>;
   }
 
   if (!template) {
-    return <div className="pd-designer pd-designer--error">{error || 'Template not available.'}</div>;
+    return <div className="pf-designer pf-designer--error">{error || 'Template not available.'}</div>;
   }
 
   const isModal = config.display_mode === 'modal';
   const wrapperClass = [
-    'pd-designer',
-    `pd-designer--${config.display_mode || 'embedded'}`,
-    isModal && designerOpen ? 'pd-designer--open' : '',
+    'pf-designer',
+    `pf-designer--${config.display_mode || 'embedded'}`,
+    isModal && designerOpen ? 'pf-designer--open' : '',
   ].filter(Boolean).join(' ');
 
   return (
     <div className={wrapperClass}>
       {isModal && (
         <button
-          className="pd-designer__close"
+          className="pf-designer__close"
           onClick={() => setDesignerOpen(false)}
           aria-label="Close designer"
         >
@@ -1576,17 +1576,17 @@ export default function App() {
         </button>
       )}
 
-      <div className="pd-designer__layout">
+      <div className="pf-designer__layout">
         <DesignerCanvas />
-        <div className="pd-designer__sidebar-wrap">
+        <div className="pf-designer__sidebar-wrap">
           <Sidebar />
           {error && (
-            <div className="pd-designer__error" onClick={clearError}>
+            <div className="pf-designer__error" onClick={clearError}>
               {error}
             </div>
           )}
           <button
-            className="pd-designer__save-btn"
+            className="pf-designer__save-btn"
             onClick={handleSave}
             disabled={isSaving || !isDirty}
           >
@@ -1601,15 +1601,15 @@ export default function App() {
 
 - [ ] **Step 2: Verify end-to-end embedded mode**
 
-1. Product with `_pd_designer_enabled = 1`, `_pd_template_id` pointing to a published template
+1. Product with `_pf_designer_enabled = 1`, `_pf_template_id` pointing to a published template
 2. Visit product page — designer should render inline
 3. Add text, change properties, add image
 4. Click Save Design — should create design and save views without errors
-5. Check database: `wp_pd_designs` row should have `design_hash`, `wp_pd_design_views` should have canvas JSON
+5. Check database: `wp_pf_designs` row should have `design_hash`, `wp_pf_design_views` should have canvas JSON
 
 - [ ] **Step 3: Verify modal mode**
 
-1. Set `_pd_display_mode = modal` on the product
+1. Set `_pf_display_mode = modal` on the product
 2. Visit product page — "Customize Product" button should appear, designer hidden
 3. Click button — designer overlay should appear
 4. Close button should hide it
@@ -1634,7 +1634,7 @@ git commit -m "feat: wire up App.jsx with template loading, save flow, and displ
 ```css
 /* ── Reset & isolation ───────────────────────────────────────────────────── */
 
-.pd-designer {
+.pf-designer {
   all: initial;
   display: block;
   box-sizing: border-box;
@@ -1644,46 +1644,46 @@ git commit -m "feat: wire up App.jsx with template loading, save flow, and displ
   color: #1f2937;
 }
 
-.pd-designer *,
-.pd-designer *::before,
-.pd-designer *::after {
+.pf-designer *,
+.pf-designer *::before,
+.pf-designer *::after {
   box-sizing: border-box;
 }
 
 /* ── Loading & error states ──────────────────────────────────────────────── */
 
-.pd-designer--loading,
-.pd-designer--error {
+.pf-designer--loading,
+.pf-designer--error {
   padding: 2rem;
   text-align: center;
   color: #6b7280;
 }
 
-.pd-designer--error {
+.pf-designer--error {
   color: #dc2626;
 }
 
 /* ── Layout ──────────────────────────────────────────────────────────────── */
 
-.pd-designer__layout {
+.pf-designer__layout {
   display: flex;
   gap: 1rem;
   padding: 1rem 0;
 }
 
-.pd-canvas-wrap {
+.pf-canvas-wrap {
   flex: 1;
   min-width: 0;
 }
 
-.pd-canvas-scroll {
+.pf-canvas-scroll {
   overflow: auto;
   border: 1px solid #e5e7eb;
   border-radius: 4px;
   background: #f9fafb;
 }
 
-.pd-designer__sidebar-wrap {
+.pf-designer__sidebar-wrap {
   width: 280px;
   flex-shrink: 0;
   display: flex;
@@ -1693,7 +1693,7 @@ git commit -m "feat: wire up App.jsx with template loading, save flow, and displ
 
 /* ── Modal mode ──────────────────────────────────────────────────────────── */
 
-.pd-designer--modal {
+.pf-designer--modal {
   display: none;
   position: fixed;
   inset: 0;
@@ -1703,11 +1703,11 @@ git commit -m "feat: wire up App.jsx with template loading, save flow, and displ
   overflow-y: auto;
 }
 
-.pd-designer--modal.pd-designer--open {
+.pf-designer--modal.pf-designer--open {
   display: block;
 }
 
-.pd-designer--modal .pd-designer__layout {
+.pf-designer--modal .pf-designer__layout {
   background: #fff;
   border-radius: 8px;
   padding: 1.5rem;
@@ -1716,7 +1716,7 @@ git commit -m "feat: wire up App.jsx with template loading, save flow, and displ
   position: relative;
 }
 
-.pd-designer__close {
+.pf-designer__close {
   position: absolute;
   top: 0.5rem;
   right: 0.75rem;
@@ -1729,31 +1729,31 @@ git commit -m "feat: wire up App.jsx with template loading, save flow, and displ
   line-height: 1;
 }
 
-.pd-designer__close:hover {
+.pf-designer__close:hover {
   color: #1f2937;
 }
 
 /* ── Open designer button (rendered by PHP) ──────────────────────────────── */
 
-.pd-open-designer {
+.pf-open-designer {
   margin: 1rem 0;
 }
 
 /* ── Sidebar ─────────────────────────────────────────────────────────────── */
 
-.pd-sidebar {
+.pf-sidebar {
   border: 1px solid #e5e7eb;
   border-radius: 4px;
   background: #fff;
   overflow: hidden;
 }
 
-.pd-sidebar__tabs {
+.pf-sidebar__tabs {
   display: flex;
   border-bottom: 1px solid #e5e7eb;
 }
 
-.pd-sidebar__tab {
+.pf-sidebar__tab {
   flex: 1;
   padding: 0.5rem;
   background: none;
@@ -1765,32 +1765,32 @@ git commit -m "feat: wire up App.jsx with template loading, save flow, and displ
   border-bottom: 2px solid transparent;
 }
 
-.pd-sidebar__tab:hover:not(:disabled) {
+.pf-sidebar__tab:hover:not(:disabled) {
   color: #1f2937;
 }
 
-.pd-sidebar__tab--active {
+.pf-sidebar__tab--active {
   color: #2563eb;
   border-bottom-color: #2563eb;
 }
 
-.pd-sidebar__tab:disabled {
+.pf-sidebar__tab:disabled {
   opacity: 0.4;
   cursor: default;
 }
 
-.pd-sidebar__content {
+.pf-sidebar__content {
   padding: 0.75rem;
 }
 
-.pd-sidebar__heading {
+.pf-sidebar__heading {
   font-size: 13px;
   font-weight: 600;
   margin: 0 0 0.5rem;
   color: #374151;
 }
 
-.pd-sidebar__tab-content p {
+.pf-sidebar__tab-content p {
   margin: 0;
   color: #6b7280;
   font-size: 13px;
@@ -1798,13 +1798,13 @@ git commit -m "feat: wire up App.jsx with template loading, save flow, and displ
 
 /* ── Add tools ───────────────────────────────────────────────────────────── */
 
-.pd-add-tools {
+.pf-add-tools {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.pd-add-tools__btn {
+.pf-add-tools__btn {
   padding: 0.5rem 0.75rem;
   border: 1px solid #d1d5db;
   border-radius: 4px;
@@ -1814,31 +1814,31 @@ git commit -m "feat: wire up App.jsx with template loading, save flow, and displ
   text-align: left;
 }
 
-.pd-add-tools__btn:hover:not(:disabled) {
+.pf-add-tools__btn:hover:not(:disabled) {
   border-color: #2563eb;
   color: #2563eb;
 }
 
-.pd-add-tools__btn--active {
+.pf-add-tools__btn--active {
   border-color: #2563eb;
   background: #eff6ff;
   color: #2563eb;
 }
 
-.pd-add-tools__btn:disabled {
+.pf-add-tools__btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
 /* ── Element properties ──────────────────────────────────────────────────── */
 
-.pd-element__props {
+.pf-element__props {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.pd-element__field {
+.pf-element__field {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1846,13 +1846,13 @@ git commit -m "feat: wire up App.jsx with template loading, save flow, and displ
   font-size: 13px;
 }
 
-.pd-element__field span {
+.pf-element__field span {
   color: #6b7280;
   flex-shrink: 0;
 }
 
-.pd-element__field select,
-.pd-element__field input[type="number"] {
+.pf-element__field select,
+.pf-element__field input[type="number"] {
   width: 120px;
   padding: 0.25rem 0.5rem;
   border: 1px solid #d1d5db;
@@ -1860,7 +1860,7 @@ git commit -m "feat: wire up App.jsx with template loading, save flow, and displ
   font-size: 13px;
 }
 
-.pd-element__field input[type="color"] {
+.pf-element__field input[type="color"] {
   width: 40px;
   height: 28px;
   padding: 0;
@@ -1869,13 +1869,13 @@ git commit -m "feat: wire up App.jsx with template loading, save flow, and displ
   cursor: pointer;
 }
 
-.pd-element__color-swatches {
+.pf-element__color-swatches {
   display: flex;
   gap: 4px;
   flex-wrap: wrap;
 }
 
-.pd-element__swatch {
+.pf-element__swatch {
   width: 24px;
   height: 24px;
   border: 2px solid #d1d5db;
@@ -1884,17 +1884,17 @@ git commit -m "feat: wire up App.jsx with template loading, save flow, and displ
   padding: 0;
 }
 
-.pd-element__swatch--active {
+.pf-element__swatch--active {
   border-color: #2563eb;
   box-shadow: 0 0 0 1px #2563eb;
 }
 
-.pd-element__toggles {
+.pf-element__toggles {
   display: flex;
   gap: 4px;
 }
 
-.pd-element__toggle {
+.pf-element__toggle {
   width: 32px;
   height: 32px;
   border: 1px solid #d1d5db;
@@ -1905,13 +1905,13 @@ git commit -m "feat: wire up App.jsx with template loading, save flow, and displ
   font-weight: 600;
 }
 
-.pd-element__toggle--active {
+.pf-element__toggle--active {
   background: #eff6ff;
   border-color: #2563eb;
   color: #2563eb;
 }
 
-.pd-element__delete-btn {
+.pf-element__delete-btn {
   margin-top: 0.75rem;
   padding: 0.4rem 0.75rem;
   background: #fee2e2;
@@ -1922,19 +1922,19 @@ git commit -m "feat: wire up App.jsx with template loading, save flow, and displ
   font-size: 13px;
 }
 
-.pd-element__delete-btn:hover {
+.pf-element__delete-btn:hover {
   background: #fecaca;
 }
 
 /* ── Views ───────────────────────────────────────────────────────────────── */
 
-.pd-views {
+.pf-views {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
 }
 
-.pd-views__btn {
+.pf-views__btn {
   padding: 0.4rem 0.75rem;
   border: 1px solid #d1d5db;
   border-radius: 4px;
@@ -1944,7 +1944,7 @@ git commit -m "feat: wire up App.jsx with template loading, save flow, and displ
   text-align: left;
 }
 
-.pd-views__btn--active {
+.pf-views__btn--active {
   border-color: #2563eb;
   background: #eff6ff;
   color: #2563eb;
@@ -1953,7 +1953,7 @@ git commit -m "feat: wire up App.jsx with template loading, save flow, and displ
 
 /* ── Save button ─────────────────────────────────────────────────────────── */
 
-.pd-designer__save-btn {
+.pf-designer__save-btn {
   padding: 0.6rem 1rem;
   background: #2563eb;
   color: #fff;
@@ -1964,18 +1964,18 @@ git commit -m "feat: wire up App.jsx with template loading, save flow, and displ
   font-weight: 500;
 }
 
-.pd-designer__save-btn:hover:not(:disabled) {
+.pf-designer__save-btn:hover:not(:disabled) {
   background: #1d4ed8;
 }
 
-.pd-designer__save-btn:disabled {
+.pf-designer__save-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
 /* ── Error ────────────────────────────────────────────────────────────────── */
 
-.pd-designer__error {
+.pf-designer__error {
   padding: 0.5rem 0.75rem;
   background: #fee2e2;
   color: #dc2626;
@@ -2030,7 +2030,7 @@ Verify no build errors. Check `dist/` contains `frontend-designer.js` and `front
 
 In WP admin:
 1. Create or edit a product
-2. Add custom fields: `_pd_designer_enabled = 1`, `_pd_template_id = <published template ID>`
+2. Add custom fields: `_pf_designer_enabled = 1`, `_pf_template_id = <published template ID>`
 3. Publish the product
 
 - [ ] **Step 3: End-to-end embedded test**
@@ -2046,11 +2046,11 @@ Visit the product page as a non-admin (incognito or logged out):
 8. Click "Image" — file picker opens, upload JPG — image appears on canvas
 9. Click "SVG" — file picker opens, upload SVG — SVG appears on canvas
 10. Click "Save Design" — button shows "Saving...", then design saved
-11. Check database: `wp_pd_designs` has row, `wp_pd_design_views` has canvas JSON
+11. Check database: `wp_pf_designs` has row, `wp_pf_design_views` has canvas JSON
 
 - [ ] **Step 4: End-to-end modal test**
 
-1. Set `_pd_display_mode = modal` on the product
+1. Set `_pf_display_mode = modal` on the product
 2. Visit product page — designer hidden, "Customize Product" button visible
 3. Click button — designer slides in as fixed overlay
 4. Close button works
@@ -2067,11 +2067,11 @@ Visit the product page as a non-admin (incognito or logged out):
 
 ```bash
 # Verify draft template is not accessible:
-curl -s http://localhost:8080/wp-json/pd/v1/templates/999/public | jq .code
+curl -s http://localhost:8080/wp-json/pf/v1/templates/999/public | jq .code
 # Expected: "not_found"
 
 # Verify creating design with invalid template fails:
-curl -s -X POST http://localhost:8080/wp-json/pd/v1/designs \
+curl -s -X POST http://localhost:8080/wp-json/pf/v1/designs \
   -H "Content-Type: application/json" \
   -d '{"template_id": 999}' | jq .code
 # Expected: "invalid_template"

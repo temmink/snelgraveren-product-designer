@@ -1,12 +1,12 @@
 <?php
-namespace ProductDesigner\API;
+namespace ProductForge\API;
 
 defined('ABSPATH') || exit;
 
 class RestFonts {
 
     public function register_routes(): void {
-        register_rest_route('pd/v1', '/fonts', [
+        register_rest_route('pf/v1', '/fonts', [
             'methods'             => 'GET',
             'callback'            => [$this, 'list_fonts'],
             'permission_callback' => '__return_true',

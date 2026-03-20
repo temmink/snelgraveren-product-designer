@@ -1,9 +1,9 @@
 <?php
-namespace ProductDesigner\API;
+namespace ProductForge\API;
 
 defined('ABSPATH') || exit;
 
-use ProductDesigner\Database\TemplateRepository;
+use ProductForge\Database\TemplateRepository;
 
 class RestTemplates {
 
@@ -14,7 +14,7 @@ class RestTemplates {
     }
 
     public function register_routes(): void {
-        $ns = 'pd/v1';
+        $ns = 'pf/v1';
 
         register_rest_route($ns, '/templates', [
             ['methods' => 'GET',  'callback' => [$this, 'list_templates'],   'permission_callback' => [$this, 'admin_permission']],
@@ -47,7 +47,7 @@ class RestTemplates {
     }
 
     public function admin_permission(): bool {
-        return current_user_can('edit_pd_templates');
+        return current_user_can('edit_pf_templates');
     }
 
     public function list_templates(\WP_REST_Request $request): \WP_REST_Response {

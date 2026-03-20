@@ -1,11 +1,11 @@
 <?php
-namespace ProductDesigner\API;
+namespace ProductForge\API;
 
 defined('ABSPATH') || exit;
 
-use ProductDesigner\Database\DesignRepository;
-use ProductDesigner\Database\TemplateRepository;
-use ProductDesigner\Security\CapabilityChecker;
+use ProductForge\Database\DesignRepository;
+use ProductForge\Database\TemplateRepository;
+use ProductForge\Security\CapabilityChecker;
 
 class RestDesigns {
 
@@ -44,7 +44,7 @@ class RestDesigns {
     }
 
     public function register_routes(): void {
-        $ns = 'pd/v1';
+        $ns = 'pf/v1';
 
         register_rest_route($ns, '/designs', [
             ['methods' => 'POST', 'callback' => [$this, 'create_design'], 'permission_callback' => [$this, 'verify_nonce']],
@@ -71,7 +71,7 @@ class RestDesigns {
     }
 
     public function admin_permission(): bool {
-        return current_user_can('edit_pd_templates');
+        return current_user_can('edit_pf_templates');
     }
 
     private function owns_design(array $design): bool {
@@ -80,7 +80,7 @@ class RestDesigns {
 
         if ($user_id && (int) $design['customer_id'] === $user_id) return true;
         if (!empty($session_id) && $design['session_id'] === $session_id) return true;
-        if (current_user_can('edit_pd_templates')) return true;
+        if (current_user_can('edit_pf_templates')) return true;
         return false;
     }
 
@@ -158,17 +158,17 @@ class RestDesigns {
 
     private function save_thumbnail_file(string $hash, int $view_id, string $data_url): string {
         $upload_dir = wp_upload_dir();
-        $pd_dir     = $upload_dir['basedir'] . '/pd-thumbnails';
+        $pf_dir     = $upload_dir['basedir'] . '/pf-thumbnails';
 
         // Create directory if needed (wp_mkdir_p is safe to call if it already exists)
-        wp_mkdir_p($pd_dir);
+        wp_mkdir_p($pf_dir);
 
         // Protect directory from browsing
-        if (!file_exists($pd_dir . '/index.php')) {
-            file_put_contents($pd_dir . '/index.php', '<?php // Silence is golden.');
+        if (!file_exists($pf_dir . '/index.php')) {
+            file_put_contents($pf_dir . '/index.php', '<?php // Silence is golden.');
         }
-        if (!file_exists($pd_dir . '/.htaccess')) {
-            file_put_contents($pd_dir . '/.htaccess', 'Options -Indexes');
+        if (!file_exists($pf_dir . '/.htaccess')) {
+            file_put_contents($pf_dir . '/.htaccess', 'Options -Indexes');
         }
 
         $base64  = str_replace('data:image/png;base64,', '', $data_url);
@@ -189,13 +189,13 @@ class RestDesigns {
         }
 
         $filename = $hash . '-view-' . $view_id . '.png';
-        $filepath = $pd_dir . '/' . $filename;
+        $filepath = $pf_dir . '/' . $filename;
 
         if (file_put_contents($filepath, $decoded) === false) {
             return '';
         }
 
-        return $upload_dir['baseurl'] . '/pd-thumbnails/' . $filename;
+        return $upload_dir['baseurl'] . '/pf-thumbnails/' . $filename;
     }
 
     public function admin_list(\WP_REST_Request $request): \WP_REST_Response {

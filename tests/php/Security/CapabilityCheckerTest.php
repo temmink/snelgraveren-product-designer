@@ -1,6 +1,6 @@
 <?php
 use PHPUnit\Framework\TestCase;
-use ProductDesigner\Security\CapabilityChecker;
+use ProductForge\Security\CapabilityChecker;
 
 class CapabilityCheckerTest extends TestCase {
 
@@ -8,7 +8,7 @@ class CapabilityCheckerTest extends TestCase {
         // User 1 is the WordPress admin — should have manage_woocommerce or be admin.
         wp_set_current_user(1);
         // Admin has 'administrator' role which gives access to most capabilities.
-        // can_manage_templates checks 'edit_pd_templates' OR 'manage_woocommerce'.
+        // can_manage_templates checks 'edit_pf_templates' OR 'manage_woocommerce'.
         // We verify calling it doesn't throw and returns a boolean.
         $result = CapabilityChecker::can_manage_templates();
         $this->assertIsBool($result);

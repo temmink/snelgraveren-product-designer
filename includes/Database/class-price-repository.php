@@ -1,5 +1,5 @@
 <?php
-namespace ProductDesigner\Database;
+namespace ProductForge\Database;
 
 defined('ABSPATH') || exit;
 
@@ -9,7 +9,7 @@ class PriceRepository {
 
     public function __construct() {
         global $wpdb;
-        $this->table = $wpdb->prefix . 'pd_price_log';
+        $this->table = $wpdb->prefix . 'pf_price_log';
     }
 
     public function log(int $design_id, string $element_type, string $element_id, float $price): int {

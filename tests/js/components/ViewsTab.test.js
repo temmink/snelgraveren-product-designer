@@ -77,8 +77,8 @@ describe('ViewsTab — active tab', () => {
             currentViewIndex: 0,
         });
         render(<ViewsTab />);
-        expect(screen.getByText('Front')).toHaveClass('pd-views__btn--active');
-        expect(screen.getByText('Back')).not.toHaveClass('pd-views__btn--active');
+        expect(screen.getByText('Front')).toHaveClass('pf-views__btn--active');
+        expect(screen.getByText('Back')).not.toHaveClass('pf-views__btn--active');
     });
 
     it('second tab has active class when currentViewIndex is 1', () => {
@@ -87,8 +87,8 @@ describe('ViewsTab — active tab', () => {
             currentViewIndex: 1,
         });
         render(<ViewsTab />);
-        expect(screen.getByText('Back')).toHaveClass('pd-views__btn--active');
-        expect(screen.getByText('Front')).not.toHaveClass('pd-views__btn--active');
+        expect(screen.getByText('Back')).toHaveClass('pf-views__btn--active');
+        expect(screen.getByText('Front')).not.toHaveClass('pf-views__btn--active');
     });
 
     it('active tab has aria-selected=true', () => {

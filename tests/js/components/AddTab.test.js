@@ -64,7 +64,7 @@ describe('AddTab — setActiveTool', () => {
     it('active Text button has the active CSS class', () => {
         useDesignerStore.setState({ activeTool: 'add-text' });
         render(<AddTab />);
-        expect(screen.getByText('Text')).toHaveClass('pd-add-tools__btn--active');
+        expect(screen.getByText('Text')).toHaveClass('pf-add-tools__btn--active');
     });
 });
 

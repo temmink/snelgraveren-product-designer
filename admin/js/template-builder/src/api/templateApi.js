@@ -1,8 +1,8 @@
-const base  = () => window.pdTemplateBuilder?.restUrl || '/wp-json/';
-const nonce = () => window.pdTemplateBuilder?.nonce   || '';
+const base  = () => window.pfTemplateBuilder?.restUrl || '/wp-json/';
+const nonce = () => window.pfTemplateBuilder?.nonce   || '';
 
 async function request(method, path, body) {
-  const res = await fetch(`${base()}pd/v1/${path}`, {
+  const res = await fetch(`${base()}pf/v1/${path}`, {
     method,
     headers: {
       'Content-Type': 'application/json',

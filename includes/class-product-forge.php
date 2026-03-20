@@ -1,11 +1,11 @@
 <?php
-namespace ProductDesigner;
+namespace ProductForge;
 
 defined('ABSPATH') || exit;
 
-class ProductDesigner {
+class ProductForge {
 
-    private static ?ProductDesigner $instance = null;
+    private static ?ProductForge $instance = null;
 
     public static function instance(): self {
         if (self::$instance === null) {
@@ -30,13 +30,13 @@ class ProductDesigner {
     }
 
     /**
-     * Dynamically grant edit_pd_templates to users who can manage_woocommerce or manage_options.
+     * Dynamically grant edit_pf_templates to users who can manage_woocommerce or manage_options.
      * Registered here (not in Admin) so it applies in REST API context too.
      */
     public function grant_template_cap(array $allcaps, array $caps, array $args, \WP_User $user): array {
-        if (in_array('edit_pd_templates', $caps, true)) {
+        if (in_array('edit_pf_templates', $caps, true)) {
             if (!empty($allcaps['manage_woocommerce']) || !empty($allcaps['manage_options'])) {
-                $allcaps['edit_pd_templates'] = true;
+                $allcaps['edit_pf_templates'] = true;
             }
         }
         return $allcaps;

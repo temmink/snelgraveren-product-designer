@@ -11,10 +11,10 @@ import GlobalSettings from './components/GlobalSettings';
 import { loadGoogleFonts } from './utils/fonts';
 
 const TABS = [
-  { label: __( 'Structure',   'product-designer' ), Component: TreePanel },
-  { label: __( 'Permissions', 'product-designer' ), Component: PermissionsPanel },
-  { label: __( 'Pricing',     'product-designer' ), Component: PricingPanel },
-  { label: __( 'Settings',    'product-designer' ), Component: GlobalSettings },
+  { label: __( 'Structure',   'productforge' ), Component: TreePanel },
+  { label: __( 'Permissions', 'productforge' ), Component: PermissionsPanel },
+  { label: __( 'Pricing',     'productforge' ), Component: PricingPanel },
+  { label: __( 'Settings',    'productforge' ), Component: GlobalSettings },
 ];
 
 export default function App() {
@@ -29,7 +29,7 @@ export default function App() {
   const [saveError,  setSaveError]  = useState(null);
   const [isLoading,  setIsLoading]  = useState(false);
 
-  const templateId = window.pdTemplateBuilder?.templateId || 0;
+  const templateId = window.pfTemplateBuilder?.templateId || 0;
 
   // Load existing template on mount.
   useEffect(() => {
@@ -45,7 +45,7 @@ export default function App() {
     } else if (views.length === 0) {
       // New template: seed a default "Front" view.
       addView({
-        name: __( 'Front', 'product-designer' ),
+        name: __( 'Front', 'productforge' ),
         canvas_width: 800,
         canvas_height: 600,
         background_url: '',
@@ -67,7 +67,7 @@ export default function App() {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      setSaveError( __( 'Title is required.', 'product-designer' ) );
+      setSaveError( __( 'Title is required.', 'productforge' ) );
       return;
     }
     setSaveError(null);
@@ -121,7 +121,7 @@ export default function App() {
 
       setIsDirty(false);
     } catch (err) {
-      setSaveError( err.message || __( 'Save failed.', 'product-designer' ) );
+      setSaveError( err.message || __( 'Save failed.', 'productforge' ) );
     } finally {
       setIsSaving(false);
     }
@@ -130,70 +130,70 @@ export default function App() {
   const { Component: ActivePanel } = TABS[activeTab];
 
   if (isLoading) {
-    return <div className="pd-builder pd-builder--loading">{ __( 'Loading template…', 'product-designer' ) }</div>;
+    return <div className="pf-builder pf-builder--loading">{ __( 'Loading template…', 'productforge' ) }</div>;
   }
 
   return (
-    <div className="pd-builder">
+    <div className="pf-builder">
 
       {/* ── Header bar ─────────────────────────────────────────────────── */}
-      <div className="pd-builder__header">
-        <a href="?page=product-designer" className="pd-builder__back button">
-          { __( '← Templates', 'product-designer' ) }
+      <div className="pf-builder__header">
+        <a href="?page=productforge" className="pf-builder__back button">
+          { __( '← Templates', 'productforge' ) }
         </a>
         <input
           type="text"
-          className="pd-builder__title-input"
+          className="pf-builder__title-input"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder={ __( 'Template title…', 'product-designer' ) }
+          placeholder={ __( 'Template title…', 'productforge' ) }
         />
         <select
-          className="pd-builder__status-select"
+          className="pf-builder__status-select"
           value={status}
           onChange={(e) => setStatus(e.target.value)}
         >
-          <option value="draft">{ __( 'Draft', 'product-designer' ) }</option>
-          <option value="published">{ __( 'Published', 'product-designer' ) }</option>
-          <option value="archived">{ __( 'Archived', 'product-designer' ) }</option>
+          <option value="draft">{ __( 'Draft', 'productforge' ) }</option>
+          <option value="published">{ __( 'Published', 'productforge' ) }</option>
+          <option value="archived">{ __( 'Archived', 'productforge' ) }</option>
         </select>
         <button
-          className="pd-builder__save-btn button button-primary"
+          className="pf-builder__save-btn button button-primary"
           onClick={handleSave}
           disabled={isSaving}
         >
-          { isSaving ? __( 'Saving…', 'product-designer' ) : isDirty ? __( 'Save', 'product-designer' ) : __( 'Saved ✓', 'product-designer' ) }
+          { isSaving ? __( 'Saving…', 'productforge' ) : isDirty ? __( 'Save', 'productforge' ) : __( 'Saved ✓', 'productforge' ) }
         </button>
-        {saveError && <span className="pd-builder__save-error">{saveError}</span>}
+        {saveError && <span className="pf-builder__save-error">{saveError}</span>}
       </div>
 
       {/* ── View tabs ──────────────────────────────────────────────────── */}
       <ViewTabs />
 
       {/* ── Main body ──────────────────────────────────────────────────── */}
-      <div className="pd-builder__body">
+      <div className="pf-builder__body">
 
         {/* Canvas area */}
-        <div className="pd-builder__canvas-area">
+        <div className="pf-builder__canvas-area">
           <Canvas />
         </div>
 
         {/* Sidebar */}
-        <div className="pd-builder__sidebar">
-          <nav className="pd-builder__sidebar-nav" role="tablist">
+        <div className="pf-builder__sidebar">
+          <nav className="pf-builder__sidebar-nav" role="tablist">
             {TABS.map((tab, i) => (
               <button
                 key={tab.label}
                 role="tab"
                 aria-selected={activeTab === i}
-                className={`pd-builder__sidebar-tab${activeTab === i ? ' pd-builder__sidebar-tab--active' : ''}`}
+                className={`pf-builder__sidebar-tab${activeTab === i ? ' pf-builder__sidebar-tab--active' : ''}`}
                 onClick={() => setActiveTab(i)}
               >
                 {tab.label}
               </button>
             ))}
           </nav>
-          <div className="pd-builder__sidebar-content">
+          <div className="pf-builder__sidebar-content">
             <ActivePanel />
           </div>
         </div>

@@ -1,9 +1,9 @@
 <?php
-namespace ProductDesigner\Admin;
+namespace ProductForge\Admin;
 
 defined('ABSPATH') || exit;
 
-use ProductDesigner\Database\TemplateRepository;
+use ProductForge\Database\TemplateRepository;
 
 class ProductIntegration {
 
@@ -14,9 +14,9 @@ class ProductIntegration {
     }
 
     public function add_product_tab(array $tabs): array {
-        $tabs['product_designer'] = [
-            'label'    => __('Product Designer', 'product-designer'),
-            'target'   => 'pd_product_designer_data',
+        $tabs['productforge'] = [
+            'label'    => __('ProductForge', 'productforge'),
+            'target'   => 'pf_productforge_data',
             'class'    => [],
             'priority' => 80,
         ];
@@ -27,41 +27,41 @@ class ProductIntegration {
         global $post;
         $product_id = $post->ID;
 
-        $enabled      = get_post_meta($product_id, '_pd_designer_enabled', true);
-        $template_id  = (int) get_post_meta($product_id, '_pd_template_id', true);
-        $display_mode = get_post_meta($product_id, '_pd_display_mode', true) ?: 'embedded';
+        $enabled      = get_post_meta($product_id, '_pf_designer_enabled', true);
+        $template_id  = (int) get_post_meta($product_id, '_pf_template_id', true);
+        $display_mode = get_post_meta($product_id, '_pf_display_mode', true) ?: 'embedded';
 
         $repo      = new TemplateRepository();
         $templates = $repo->list(100, 1);
         ?>
-        <div id="pd_product_designer_data" class="panel woocommerce_options_panel hidden">
+        <div id="pf_productforge_data" class="panel woocommerce_options_panel hidden">
             <div class="options_group">
                 <?php
                 woocommerce_wp_checkbox([
-                    'id'          => '_pd_designer_enabled',
-                    'label'       => __('Enable Designer', 'product-designer'),
-                    'description' => __('Allow customers to personalise this product.', 'product-designer'),
+                    'id'          => '_pf_designer_enabled',
+                    'label'       => __('Enable Designer', 'productforge'),
+                    'description' => __('Allow customers to personalise this product.', 'productforge'),
                     'value'       => $enabled ? 'yes' : '',
                 ]);
 
-                $template_options = ['' => __('— Select template —', 'product-designer')];
+                $template_options = ['' => __('— Select template —', 'productforge')];
                 foreach ($templates as $tpl) {
                     $template_options[$tpl['id']] = esc_html($tpl['title']);
                 }
 
                 woocommerce_wp_select([
-                    'id'      => '_pd_template_id',
-                    'label'   => __('Template', 'product-designer'),
+                    'id'      => '_pf_template_id',
+                    'label'   => __('Template', 'productforge'),
                     'options' => $template_options,
                     'value'   => $template_id ?: '',
                 ]);
 
                 woocommerce_wp_select([
-                    'id'      => '_pd_display_mode',
-                    'label'   => __('Display Mode', 'product-designer'),
+                    'id'      => '_pf_display_mode',
+                    'label'   => __('Display Mode', 'productforge'),
                     'options' => [
-                        'embedded' => __('Embedded on product page', 'product-designer'),
-                        'modal'    => __('Open in modal popup', 'product-designer'),
+                        'embedded' => __('Embedded on product page', 'productforge'),
+                        'modal'    => __('Open in modal popup', 'productforge'),
                     ],
                     'value'   => $display_mode,
                 ]);
@@ -73,17 +73,17 @@ class ProductIntegration {
 
     public function save_product_meta(int $product_id): void {
         // phpcs:disable WordPress.Security.NonceVerification -- WooCommerce handles nonce
-        $enabled = isset($_POST['_pd_designer_enabled']) ? 'yes' : '';
-        update_post_meta($product_id, '_pd_designer_enabled', sanitize_text_field($enabled));
+        $enabled = isset($_POST['_pf_designer_enabled']) ? 'yes' : '';
+        update_post_meta($product_id, '_pf_designer_enabled', sanitize_text_field($enabled));
 
-        $template_id = isset($_POST['_pd_template_id']) ? absint($_POST['_pd_template_id']) : 0;
-        update_post_meta($product_id, '_pd_template_id', $template_id);
+        $template_id = isset($_POST['_pf_template_id']) ? absint($_POST['_pf_template_id']) : 0;
+        update_post_meta($product_id, '_pf_template_id', $template_id);
 
-        $display_mode = isset($_POST['_pd_display_mode']) ? sanitize_text_field($_POST['_pd_display_mode']) : 'embedded';
+        $display_mode = isset($_POST['_pf_display_mode']) ? sanitize_text_field($_POST['_pf_display_mode']) : 'embedded';
         if (!in_array($display_mode, ['embedded', 'modal'], true)) {
             $display_mode = 'embedded';
         }
-        update_post_meta($product_id, '_pd_display_mode', $display_mode);
+        update_post_meta($product_id, '_pf_display_mode', $display_mode);
         // phpcs:enable
     }
 }

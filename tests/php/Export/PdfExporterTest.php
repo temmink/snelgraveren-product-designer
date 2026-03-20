@@ -1,6 +1,6 @@
 <?php
 use PHPUnit\Framework\TestCase;
-use ProductDesigner\Export\PdfExporter;
+use ProductForge\Export\PdfExporter;
 
 class PdfExporterTest extends TestCase {
 
@@ -10,13 +10,13 @@ class PdfExporterTest extends TestCase {
 
     public function test_returns_false_for_empty_views(): void {
         $exporter = $this->make_exporter();
-        $result = $exporter->export([], '/tmp/empty-pd-test.pdf');
+        $result = $exporter->export([], '/tmp/empty-pf-test.pdf');
         $this->assertFalse($result);
     }
 
     public function test_exports_single_view_pdf(): void {
         $exporter = $this->make_exporter();
-        $path = sys_get_temp_dir() . '/pd-test-' . uniqid() . '.pdf';
+        $path = sys_get_temp_dir() . '/pf-test-' . uniqid() . '.pdf';
         $result = $exporter->export([
             [
                 'canvas_json' => [
@@ -44,7 +44,7 @@ class PdfExporterTest extends TestCase {
 
     public function test_pdf_file_starts_with_pdf_magic_bytes(): void {
         $exporter = $this->make_exporter();
-        $path = sys_get_temp_dir() . '/pd-test-' . uniqid() . '.pdf';
+        $path = sys_get_temp_dir() . '/pf-test-' . uniqid() . '.pdf';
         $exporter->export([
             [
                 'canvas_json' => ['background' => '#ffffff', 'objects' => []],
@@ -59,7 +59,7 @@ class PdfExporterTest extends TestCase {
 
     public function test_multi_view_produces_multi_page_pdf(): void {
         $exporter = $this->make_exporter();
-        $path = sys_get_temp_dir() . '/pd-test-' . uniqid() . '.pdf';
+        $path = sys_get_temp_dir() . '/pf-test-' . uniqid() . '.pdf';
         $views = [
             [
                 'canvas_json' => ['background' => '#ffffff', 'objects' => []],
@@ -82,7 +82,7 @@ class PdfExporterTest extends TestCase {
 
     public function test_export_single_delegates_correctly(): void {
         $exporter = $this->make_exporter();
-        $path = sys_get_temp_dir() . '/pd-test-' . uniqid() . '.pdf';
+        $path = sys_get_temp_dir() . '/pf-test-' . uniqid() . '.pdf';
         $result = $exporter->export_single(
             ['background' => '#ffffff', 'objects' => []],
             800,
@@ -96,7 +96,7 @@ class PdfExporterTest extends TestCase {
 
     public function test_exports_view_with_rect(): void {
         $exporter = $this->make_exporter();
-        $path = sys_get_temp_dir() . '/pd-test-' . uniqid() . '.pdf';
+        $path = sys_get_temp_dir() . '/pf-test-' . uniqid() . '.pdf';
         $result = $exporter->export([
             [
                 'canvas_json' => [
@@ -123,7 +123,7 @@ class PdfExporterTest extends TestCase {
 
     public function test_exports_view_with_circle(): void {
         $exporter = $this->make_exporter();
-        $path = sys_get_temp_dir() . '/pd-test-' . uniqid() . '.pdf';
+        $path = sys_get_temp_dir() . '/pf-test-' . uniqid() . '.pdf';
         $result = $exporter->export([
             [
                 'canvas_json' => [

@@ -1,4 +1,4 @@
-# Code Audit Report — Product Designer for WooCommerce
+# Code Audit Report — ProductForge for WooCommerce
 
 **Date:** 2026-03-20
 **Scope:** Full codebase (PHP + JS/JSX + CSS)
@@ -87,7 +87,7 @@ No critical security vulnerabilities. The plugin correctly avoids the CVE-2024-5
 | P9 | `Pricing/class-price-calculator.php:64` | DELETE + N INSERTs to price log on every cart recalculation |
 | P10 | `Frontend/class-frontend.php:186` | `file_exists()` on JS/CSS assets on every product page |
 | P11 | `Admin/class-product-integration.php:34` | Unconditional `$repo->list(100, 1)` on every product edit page |
-| P12 | `class-product-designer.php:58` | CartSurcharge/ExportManager registered in admin context unnecessarily |
+| P12 | `class-productforge.php:58` | CartSurcharge/ExportManager registered in admin context unnecessarily |
 | P13 | `API/class-rest-templates.php:163` | Duplicate view fetch in `list_views` endpoint |
 
 ### Frontend (9)
@@ -114,7 +114,7 @@ No critical security vulnerabilities. The plugin correctly avoids the CVE-2024-5
 | D4 | `Database/class-template-repository.php:155,162` | Singular `count_views()`/`count_products()` superseded by batch variants |
 | D5 | `DesignerCanvas.jsx:3` | Unused imports: `filters`, `Path` from fabric |
 | D6 | `svgPathUtils.js:53,74` | `extractClosedPath()` and `pathToBoundingBox()` — deprecated, zero callers |
-| D7 | `CLAUDE.md:9` | References non-existent `docs/superpowers/specs/2026-03-18-product-designer-plugin-design.md` |
+| D7 | `CLAUDE.md:9` | References non-existent `docs/superpowers/specs/2026-03-18-productforge-plugin-design.md` |
 | D8 | `CLAUDE.md:11` | References non-existent `.claude/plans/lazy-finding-panda.md` |
 
 ---
@@ -160,15 +160,15 @@ No critical security vulnerabilities. The plugin correctly avoids the CVE-2024-5
 | ID | File | Issue |
 |----|------|-------|
 | F10 | `designerApi.js:54` | Nonce sent unnecessarily on GET requests |
-| F11 | `designer.css:395` | `.single_add_to_cart_button.pd-design-required` not scoped inside `.pd-designer` |
-| F12 | `builder.css:7` | `.wrap:has(#pd-template-builder-root)` is near-global admin override |
+| F11 | `designer.css:395` | `.single_add_to_cart_button.pf-design-required` not scoped inside `.pf-designer` |
+| F12 | `builder.css:7` | `.wrap:has(#pf-template-builder-root)` is near-global admin override |
 | F13 | `builder.css` | Admin builder missing `all: initial` isolation |
 | F14 | `Canvas.jsx:744` | `viewKey` missing from keyboard undo/redo dep array |
 | F15 | `ElementTab.jsx:225` | Scale label `<span>` has no explicit color class |
 | F16 | `App.jsx (admin):97` | No in-flight guard in admin `handleSave` |
 | F17 | `DesignerCanvas.jsx:281` | No origin validation on background image URL |
 | F18 | `Canvas.jsx:786` | `removeBackground` also missing `['data']` in toJSON |
-| F19 | `designer.css:371` | `.pd-sr-only` class defined but never used |
+| F19 | `designer.css:371` | `.pf-sr-only` class defined but never used |
 
 </details>
 
@@ -177,7 +177,7 @@ No critical security vulnerabilities. The plugin correctly avoids the CVE-2024-5
 
 | ID | File | Issue |
 |----|------|-------|
-| D9 | `designer.css:371` | `.pd-sr-only` utility class never applied |
+| D9 | `designer.css:371` | `.pf-sr-only` utility class never applied |
 | D10 | `current_status.md:38` | Says `vite.config.js`, actual is `vite.config.mjs` |
 | D11 | `current_status.md:36` | Says `docker/wordpress/Dockerfile`, actual is `docker/Dockerfile` |
 | D12 | `current_status.md:51` | Labels `RestExports` as stub (fully implemented) |

@@ -442,7 +442,7 @@ export default function DesignerCanvas() {
       const ptr = canvas.getPointer(opt.e);
       const zoneIdx = findZoneForPoint(ptr.x, ptr.y, 'text');
 
-      const text = new IText(__('Your text here', 'product-designer'), {
+      const text = new IText(__('Your text here', 'productforge'), {
         left: ptr.x,
         top: ptr.y,
         fontSize: 24,
@@ -545,8 +545,8 @@ export default function DesignerCanvas() {
   }, [triggerFileUpload, setTriggerFileUpload]);
 
   return (
-    <div className="pd-canvas-wrap">
-      <div className="pd-canvas-scroll">
+    <div className="pf-canvas-wrap">
+      <div className="pf-canvas-scroll">
         <canvas ref={canvasEl} />
       </div>
       <input

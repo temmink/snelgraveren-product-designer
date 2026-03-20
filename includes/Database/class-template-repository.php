@@ -1,5 +1,5 @@
 <?php
-namespace ProductDesigner\Database;
+namespace ProductForge\Database;
 
 defined('ABSPATH') || exit;
 
@@ -10,8 +10,8 @@ class TemplateRepository {
 
     public function __construct() {
         global $wpdb;
-        $this->table       = $wpdb->prefix . 'pd_templates';
-        $this->views_table = $wpdb->prefix . 'pd_template_views';
+        $this->table       = $wpdb->prefix . 'pf_templates';
+        $this->views_table = $wpdb->prefix . 'pf_template_views';
     }
 
     public function list(int $per_page = 20, int $page = 1, string $status = ''): array {
@@ -68,7 +68,7 @@ class TemplateRepository {
     }
 
     public function get(int $id): ?array {
-        $cache_key = 'pd_template_' . $id;
+        $cache_key = 'pf_template_' . $id;
         $cached    = get_transient($cache_key);
         if ($cached !== false) {
             return $cached;
@@ -112,7 +112,7 @@ class TemplateRepository {
 
         $format = array_map(fn() => '%s', $update);
         $result = $wpdb->update($this->table, $update, ['id' => $id], $format, ['%d']);
-        delete_transient('pd_template_' . $id);
+        delete_transient('pf_template_' . $id);
         return $result !== false;
     }
 
@@ -163,7 +163,7 @@ class TemplateRepository {
         global $wpdb;
         return (int) $wpdb->get_var(
             $wpdb->prepare(
-                "SELECT COUNT(DISTINCT post_id) FROM {$wpdb->postmeta} WHERE meta_key = '_pd_template_id' AND meta_value = %s",
+                "SELECT COUNT(DISTINCT post_id) FROM {$wpdb->postmeta} WHERE meta_key = '_pf_template_id' AND meta_value = %s",
                 (string) $id
             )
         );
@@ -207,7 +207,7 @@ class TemplateRepository {
         $placeholders = implode(',', array_fill(0, count($ids), '%s'));
         $results      = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT meta_value as template_id, COUNT(*) as cnt FROM {$wpdb->postmeta} WHERE meta_key = '_pd_template_id' AND meta_value IN ($placeholders) GROUP BY meta_value",
+                "SELECT meta_value as template_id, COUNT(*) as cnt FROM {$wpdb->postmeta} WHERE meta_key = '_pf_template_id' AND meta_value IN ($placeholders) GROUP BY meta_value",
                 ...array_map('strval', $ids)
             ),
             ARRAY_A
@@ -258,7 +258,7 @@ class TemplateRepository {
             'layers_config'    => wp_json_encode($data['layers_config'] ?? []),
             'permissions'      => wp_json_encode($data['permissions'] ?? []),
         ], ['%d', '%s', '%d', '%d', '%d', '%s', '%s', '%s', '%s']);
-        delete_transient('pd_template_' . $template_id);
+        delete_transient('pf_template_' . $template_id);
         return (int) $wpdb->insert_id;
     }
 
@@ -291,7 +291,7 @@ class TemplateRepository {
             $format,
             ['%d', '%d']
         );
-        delete_transient('pd_template_' . $template_id);
+        delete_transient('pf_template_' . $template_id);
         // $wpdb->update returns false on error, 0 if no rows changed (data identical).
         return $result !== false;
     }
@@ -303,7 +303,7 @@ class TemplateRepository {
             ['id' => $view_id, 'template_id' => $template_id],
             ['%d', '%d']
         );
-        delete_transient('pd_template_' . $template_id);
+        delete_transient('pf_template_' . $template_id);
         return $result;
     }
 

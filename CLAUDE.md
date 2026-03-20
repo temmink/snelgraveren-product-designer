@@ -1,4 +1,4 @@
-# Product Designer for WooCommerce
+# ProductForge for WooCommerce
 
 ## What is this?
 
@@ -12,12 +12,12 @@ A WooCommerce plugin that lets customers design text, images, and SVGs onto prod
 
 ## Architecture
 
-- **Approach B: Pure custom database tables** (6 tables, no CPTs). All data in `wp_pd_*` tables.
+- **Approach B: Pure custom database tables** (6 tables, no CPTs). All data in `wp_pf_*` tables.
 - **Frontend canvas:** Fabric.js 6.x
 - **UI framework:** React 18 + Zustand state management
 - **Build system:** Vite (single config, dual entry points: admin + frontend)
 - **Export:** Local only — PDF (TCPDF), PNG (Imagick), SVG (Fabric.js toSVG)
-- **PHP autoloading:** PSR-4 via custom autoloader. Namespace `ProductDesigner\` maps to `includes/`.
+- **PHP autoloading:** PSR-4 via custom autoloader. Namespace `ProductForge\` maps to `includes/`.
 
 ## Development Environment
 
@@ -34,7 +34,7 @@ npm run build                           # Production build → dist/
 ## Coding Standards
 
 ### PHP
-- **Namespace:** `ProductDesigner\` with sub-namespaces for each directory (Admin, Frontend, API, Database, Security, Export, Pricing)
+- **Namespace:** `ProductForge\` with sub-namespaces for each directory (Admin, Frontend, API, Database, Security, Export, Pricing)
 - **File naming:** `class-{name}.php` where name is lowercase-hyphenated (e.g., `DbManager` → `class-db-manager.php`)
 - **Namespace before ABSPATH check:** In every PHP file, `namespace` must come before `defined('ABSPATH') || exit;`
 - **All DB queries via `$wpdb->prepare()`** — no exceptions, no raw interpolation
@@ -46,17 +46,17 @@ npm run build                           # Production build → dist/
 ### JavaScript
 - **React 18** with functional components and hooks
 - **Zustand** for state management (not Redux, not Context)
-- **CSS scoping:** All frontend classes use `pd-` prefix with BEM naming. Designer wrapper uses `all: initial` to isolate from theme styles. Always set explicit `color` on buttons/inputs to prevent theme overrides.
+- **CSS scoping:** All frontend classes use `pf-` prefix with BEM naming. Designer wrapper uses `all: initial` to isolate from theme styles. Always set explicit `color` on buttons/inputs to prevent theme overrides.
 - **Fabric.js JSON serialization:** Always use `canvas.toJSON(['data'])` — never bare `toJSON()` — to preserve custom `data` properties (e.g. `elementType`, `zoneIndex`)
 - **Fabric.js JSON validation:** Whitelist allowed object types before `loadFromJSON`
 - **Fabric.js 6.x type names:** Runtime types are lowercase hyphenated (`'i-text'`, `'image'`, `'path'`), but JSON serialization uses PascalCase (`'IText'`, `'Image'`). Use case-insensitive comparison when matching types at runtime.
 
 ### REST API
-- Namespace: `pd/v1`
+- Namespace: `pf/v1`
 - All endpoints require nonce verification
-- Admin endpoints require `edit_pd_templates` or `manage_woocommerce` capability
+- Admin endpoints require `edit_pf_templates` or `manage_woocommerce` capability
 - Customer design endpoints verify ownership (customer_id or session_id)
-- `grant_template_cap` filter lives in `ProductDesigner` main class (not Admin) so it applies in REST API context too
+- `grant_template_cap` filter lives in `ProductForge` main class (not Admin) so it applies in REST API context too
 - List endpoints support pagination (`per_page`, `page`) with `X-WP-Total` headers
 
 ## Security Rules (Critical)
@@ -75,27 +75,27 @@ These exist because FPD had CVE-2024-51919 (arbitrary file upload → RCE) and C
 
 | Table | Purpose |
 |-------|---------|
-| `wp_pd_templates` | Template definitions (title, slug, status, global config) |
-| `wp_pd_template_views` | Per-view config: canvas size, background, zones, layers, permissions. Columns use `name` (not `view_name`) and `background_url` (not `background_image_url`) |
-| `wp_pd_designs` | Customer designs: hash ID, product/template link, status, price |
-| `wp_pd_design_views` | Per-view Fabric.js canvas JSON + thumbnail |
-| `wp_pd_exports` | Export records: format, file path, status per order |
-| `wp_pd_price_log` | Pricing audit trail per design element |
+| `wp_pf_templates` | Template definitions (title, slug, status, global config) |
+| `wp_pf_template_views` | Per-view config: canvas size, background, zones, layers, permissions. Columns use `name` (not `view_name`) and `background_url` (not `background_image_url`) |
+| `wp_pf_designs` | Customer designs: hash ID, product/template link, status, price |
+| `wp_pf_design_views` | Per-view Fabric.js canvas JSON + thumbnail |
+| `wp_pf_exports` | Export records: format, file path, status per order |
+| `wp_pf_price_log` | Pricing audit trail per design element |
 
 All tables use InnoDB engine for foreign key and transaction support.
 
 ## WooCommerce Integration Points
 
-- Product meta: `_pd_designer_enabled`, `_pd_template_id`, `_pd_display_mode`
-- Cart: `pd_design_hash` in cart item data via hidden input + `woocommerce_add_cart_item_data` filter; auto-save-before-cart intercepts form submit if design is dirty
+- Product meta: `_pf_designer_enabled`, `_pf_template_id`, `_pf_display_mode`
+- Cart: `pf_design_hash` in cart item data via hidden input + `woocommerce_add_cart_item_data` filter; auto-save-before-cart intercepts form submit if design is dirty
 - Cart thumbnails: `woocommerce_cart_item_thumbnail` (classic) + `woocommerce_store_api_cart_item_images` (block cart) — shows **all views** side by side, not just the first
-- Cart permalinks: `woocommerce_cart_item_permalink` appends `?pd_design=HASH` for design reload
-- Product gallery: `woocommerce_single_product_image_thumbnail_html` replaces image when `pd_design` query param present
-- Thumbnails: Saved as PNG files in `wp-content/uploads/pd-thumbnails/` (block cart requires real URLs, not data URIs). Non-active views generate thumbnails via offscreen Fabric canvas during save.
-- Shortcode: `[product_designer]` renders the designer inline on product pages (auto-detects product context)
+- Cart permalinks: `woocommerce_cart_item_permalink` appends `?pf_design=HASH` for design reload
+- Product gallery: `woocommerce_single_product_image_thumbnail_html` replaces image when `pf_design` query param present
+- Thumbnails: Saved as PNG files in `wp-content/uploads/pf-thumbnails/` (block cart requires real URLs, not data URIs). Non-active views generate thumbnails via offscreen Fabric canvas during save.
+- Shortcode: `[productforge]` renders the designer inline on product pages (auto-detects product context)
 - Surcharge: via `woocommerce_before_calculate_totals`
 - Order: design_hash in order item meta, export triggered on configurable order status
-- HPOS: Compatibility declared in `product-designer.php`
+- HPOS: Compatibility declared in `productforge.php`
 
 ## Don't
 

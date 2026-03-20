@@ -1,6 +1,6 @@
 <?php
 use PHPUnit\Framework\TestCase;
-use ProductDesigner\Export\SvgExporter;
+use ProductForge\Export\SvgExporter;
 
 class SvgExporterTest extends TestCase {
     private SvgExporter $exporter;
@@ -40,7 +40,7 @@ class SvgExporterTest extends TestCase {
 
     public function test_exports_to_file(): void {
         $canvas_json = ['background' => '#ffffff', 'objects' => []];
-        $path = sys_get_temp_dir() . '/pd-test-' . uniqid() . '.svg';
+        $path = sys_get_temp_dir() . '/pf-test-' . uniqid() . '.svg';
         $result = $this->exporter->export($canvas_json, 800, 600, $path);
         $this->assertTrue($result);
         $this->assertFileExists($path);
@@ -52,7 +52,7 @@ class SvgExporterTest extends TestCase {
             'background' => '#ff0000',
             'objects'    => [],
         ];
-        $path = sys_get_temp_dir() . '/pd-test-' . uniqid() . '.svg';
+        $path = sys_get_temp_dir() . '/pf-test-' . uniqid() . '.svg';
         $this->exporter->export($canvas_json, 400, 300, $path);
         $content = file_get_contents($path);
         $this->assertStringStartsWith('<?xml', $content);

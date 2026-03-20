@@ -1,9 +1,9 @@
 <?php
-namespace ProductDesigner\Admin;
+namespace ProductForge\Admin;
 
 defined('ABSPATH') || exit;
 
-use ProductDesigner\Database\TemplateRepository;
+use ProductForge\Database\TemplateRepository;
 
 if (!class_exists('WP_List_Table')) {
     require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
@@ -29,17 +29,17 @@ class TemplateListTable extends \WP_List_Table {
     }
 
     private function get_current_status(): string {
-        return sanitize_text_field($_GET['pd_status'] ?? '');
+        return sanitize_text_field($_GET['pf_status'] ?? '');
     }
 
     public function get_columns(): array {
         return [
             'cb'           => '<input type="checkbox">',
-            'title'        => __('Title', 'product-designer'),
-            'status'       => __('Status', 'product-designer'),
-            'view_count'   => __('Views', 'product-designer'),
-            'product_count'=> __('Products', 'product-designer'),
-            'created_at'   => __('Created', 'product-designer'),
+            'title'        => __('Title', 'productforge'),
+            'status'       => __('Status', 'productforge'),
+            'view_count'   => __('Views', 'productforge'),
+            'product_count'=> __('Products', 'productforge'),
+            'created_at'   => __('Created', 'productforge'),
         ];
     }
 
@@ -54,14 +54,14 @@ class TemplateListTable extends \WP_List_Table {
     protected function get_bulk_actions(): array {
         if ($this->is_trash_view()) {
             return [
-                'restore'          => __('Restore', 'product-designer'),
-                'delete_permanent' => __('Delete Permanently', 'product-designer'),
+                'restore'          => __('Restore', 'productforge'),
+                'delete_permanent' => __('Delete Permanently', 'productforge'),
             ];
         }
         return [
-            'publish' => __('Publish', 'product-designer'),
-            'archive' => __('Archive', 'product-designer'),
-            'trash'   => __('Move to Trash', 'product-designer'),
+            'publish' => __('Publish', 'productforge'),
+            'archive' => __('Archive', 'productforge'),
+            'trash'   => __('Move to Trash', 'productforge'),
         ];
     }
 
@@ -100,21 +100,21 @@ class TemplateListTable extends \WP_List_Table {
         if ($action === 'trash') {
             check_admin_referer('trash-template_' . $id);
             $this->repo->trash($id);
-            wp_safe_redirect(admin_url('admin.php?page=product-designer&trashed=1'));
+            wp_safe_redirect(admin_url('admin.php?page=productforge&trashed=1'));
             exit;
         }
 
         if ($action === 'restore') {
             check_admin_referer('restore-template_' . $id);
             $this->repo->restore($id);
-            wp_safe_redirect(admin_url('admin.php?page=product-designer&restored=1'));
+            wp_safe_redirect(admin_url('admin.php?page=productforge&restored=1'));
             exit;
         }
 
         if ($action === 'delete_permanent') {
             check_admin_referer('delete-template_' . $id);
             $this->repo->delete($id);
-            wp_safe_redirect(admin_url('admin.php?page=product-designer&pd_status=trashed&deleted=1'));
+            wp_safe_redirect(admin_url('admin.php?page=productforge&pf_status=trashed&deleted=1'));
             exit;
         }
     }
@@ -155,31 +155,31 @@ class TemplateListTable extends \WP_List_Table {
             $title = '<strong>' . esc_html($item['title']) . '</strong>';
 
             $restore_url = wp_nonce_url(
-                admin_url('admin.php?page=product-designer&action=restore&template=' . $id),
+                admin_url('admin.php?page=productforge&action=restore&template=' . $id),
                 'restore-template_' . $id
             );
             $delete_url = wp_nonce_url(
-                admin_url('admin.php?page=product-designer&action=delete_permanent&template=' . $id),
+                admin_url('admin.php?page=productforge&action=delete_permanent&template=' . $id),
                 'delete-template_' . $id
             );
 
             $actions = [
-                'restore' => '<a href="' . esc_url($restore_url) . '">' . __('Restore', 'product-designer') . '</a>',
+                'restore' => '<a href="' . esc_url($restore_url) . '">' . __('Restore', 'productforge') . '</a>',
                 'delete'  => '<a href="' . esc_url($delete_url) . '" onclick="return confirm(\'Delete this template permanently?\')">'
-                             . __('Delete Permanently', 'product-designer') . '</a>',
+                             . __('Delete Permanently', 'productforge') . '</a>',
             ];
         } else {
-            $edit_url  = admin_url('admin.php?page=pd-template-builder&template_id=' . $id);
+            $edit_url  = admin_url('admin.php?page=pf-template-builder&template_id=' . $id);
             $trash_url = wp_nonce_url(
-                admin_url('admin.php?page=product-designer&action=trash&template=' . $id),
+                admin_url('admin.php?page=productforge&action=trash&template=' . $id),
                 'trash-template_' . $id
             );
 
             $title = '<strong><a href="' . esc_url($edit_url) . '">' . esc_html($item['title']) . '</a></strong>';
 
             $actions = [
-                'edit'  => '<a href="' . esc_url($edit_url) . '">' . __('Edit', 'product-designer') . '</a>',
-                'trash' => '<a href="' . esc_url($trash_url) . '">' . __('Trash', 'product-designer') . '</a>',
+                'edit'  => '<a href="' . esc_url($edit_url) . '">' . __('Edit', 'productforge') . '</a>',
+                'trash' => '<a href="' . esc_url($trash_url) . '">' . __('Trash', 'productforge') . '</a>',
             ];
         }
 
@@ -188,10 +188,10 @@ class TemplateListTable extends \WP_List_Table {
 
     protected function column_status(array $item): string {
         $labels = [
-            'draft'     => __('Draft', 'product-designer'),
-            'published' => __('Published', 'product-designer'),
-            'archived'  => __('Archived', 'product-designer'),
-            'trashed'   => __('Trashed', 'product-designer'),
+            'draft'     => __('Draft', 'productforge'),
+            'published' => __('Published', 'productforge'),
+            'archived'  => __('Archived', 'productforge'),
+            'trashed'   => __('Trashed', 'productforge'),
         ];
         return esc_html($labels[$item['status']] ?? $item['status']);
     }
@@ -215,24 +215,24 @@ class TemplateListTable extends \WP_List_Table {
         $counts      = $this->repo->get_status_counts();
         $total       = $counts['draft'] + $counts['published'] + $counts['archived'];
         $current     = $this->get_current_status();
-        $base_url    = admin_url('admin.php?page=product-designer');
+        $base_url    = admin_url('admin.php?page=productforge');
 
         $tabs = [
-            ''          => __('All', 'product-designer') . " ({$total})",
-            'draft'     => __('Draft', 'product-designer') . " ({$counts['draft']})",
-            'published' => __('Published', 'product-designer') . " ({$counts['published']})",
-            'archived'  => __('Archived', 'product-designer') . " ({$counts['archived']})",
+            ''          => __('All', 'productforge') . " ({$total})",
+            'draft'     => __('Draft', 'productforge') . " ({$counts['draft']})",
+            'published' => __('Published', 'productforge') . " ({$counts['published']})",
+            'archived'  => __('Archived', 'productforge') . " ({$counts['archived']})",
         ];
 
         // Only show Trash tab if there are trashed items.
         if ($counts['trashed'] > 0) {
-            $tabs['trashed'] = __('Trash', 'product-designer') . " ({$counts['trashed']})";
+            $tabs['trashed'] = __('Trash', 'productforge') . " ({$counts['trashed']})";
         }
 
         echo '<ul class="subsubsub">';
         $links = [];
         foreach ($tabs as $status => $label) {
-            $url     = $status !== '' ? add_query_arg('pd_status', $status, $base_url) : $base_url;
+            $url     = $status !== '' ? add_query_arg('pf_status', $status, $base_url) : $base_url;
             $class   = $current === $status ? ' class="current"' : '';
             $links[] = '<li><a href="' . esc_url($url) . '"' . $class . '>' . esc_html($label) . '</a>';
         }

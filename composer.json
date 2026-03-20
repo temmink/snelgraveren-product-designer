@@ -1,6 +1,6 @@
 {
-    "name": "martintemmink/product-designer",
-    "description": "WooCommerce Product Designer Plugin",
+    "name": "martintemmink/productforge",
+    "description": "WooCommerce ProductForge Plugin",
     "type": "wordpress-plugin",
     "license": "GPL-2.0-or-later",
     "require": {
@@ -11,7 +11,7 @@
     },
     "autoload": {
         "psr-4": {
-            "ProductDesigner\\": "includes/"
+            "ProductForge\\": "includes/"
         }
     },
     "config": {

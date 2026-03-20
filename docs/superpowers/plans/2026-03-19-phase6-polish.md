@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make the Product Designer plugin production-ready with i18n (Dutch + infrastructure), accessibility, performance optimizations, and comprehensive tests.
+**Goal:** Make the ProductForge plugin production-ready with i18n (Dutch + infrastructure), accessibility, performance optimizations, and comprehensive tests.
 
 **Architecture:** Four independent workstreams executed in order: i18n first (touches most files), accessibility second (uses i18n for labels), performance (independent), testing last (covers final state). Each task produces a self-contained commit.
 
@@ -17,10 +17,10 @@
 ### New files
 | Path | Purpose |
 |------|---------|
-| `languages/product-designer.pot` | Translation template (generated) |
-| `languages/product-designer-nl_NL.po` | Dutch translations |
-| `languages/product-designer-nl_NL.mo` | Compiled Dutch translations (generated) |
-| `languages/product-designer-nl_NL-*.json` | JS Dutch translations (generated) |
+| `languages/productforge.pot` | Translation template (generated) |
+| `languages/productforge-nl_NL.po` | Dutch translations |
+| `languages/productforge-nl_NL.mo` | Compiled Dutch translations (generated) |
+| `languages/productforge-nl_NL-*.json` | JS Dutch translations (generated) |
 | `tests/php/bootstrap.php` | PHPUnit bootstrap |
 | `phpunit.xml` | PHPUnit config |
 | `tests/php/Database/TemplateRepositoryTest.php` | Repository CRUD tests |
@@ -50,7 +50,7 @@
 ### Modified files
 | Path | Changes |
 |------|---------|
-| `product-designer.php` | Add `load_plugin_textdomain` |
+| `productforge.php` | Add `load_plugin_textdomain` |
 | `vite.config.mjs` | Externalize `@wordpress/i18n` in both builds |
 | `includes/Admin/class-admin.php` | Add `wp-i18n` dependency + `wp_set_script_translations` |
 | `includes/Frontend/class-frontend.php` | Add `wp-i18n` dependency + `wp_set_script_translations` + wrap bare string |
@@ -69,7 +69,7 @@
 | `frontend/js/designer/src/components/tabs/AddTab.jsx` | Wrap ~7 strings + add ARIA |
 | `frontend/js/designer/src/components/tabs/ElementTab.jsx` | Wrap ~11 strings |
 | `frontend/js/designer/src/components/tabs/ViewsTab.jsx` | Wrap ~2 strings + add ARIA |
-| `frontend/js/designer/src/designer.css` | Add `:focus-visible`, `.pd-sr-only` |
+| `frontend/js/designer/src/designer.css` | Add `:focus-visible`, `.pf-sr-only` |
 | `admin/js/template-builder/src/builder.css` | Add `:focus-visible` |
 | `includes/Database/class-template-repository.php` | Add batch counts + transient caching |
 | `includes/Admin/class-template-list-table.php` | Use batch counts |
@@ -80,7 +80,7 @@
 ## Task 1: i18n infrastructure — PHP textdomain + Vite externals
 
 **Files:**
-- Modify: `product-designer.php`
+- Modify: `productforge.php`
 - Modify: `vite.config.mjs`
 - Modify: `includes/Admin/class-admin.php`
 - Modify: `includes/Frontend/class-frontend.php`
@@ -88,11 +88,11 @@
 
 - [ ] **Step 1: Add `load_plugin_textdomain` to bootstrap**
 
-In `product-designer.php`, add after the existing `add_action('plugins_loaded', ...)` block (around line 55):
+In `productforge.php`, add after the existing `add_action('plugins_loaded', ...)` block (around line 55):
 
 ```php
 add_action('init', function () {
-    load_plugin_textdomain('product-designer', false, dirname(plugin_basename(__FILE__)) . '/languages');
+    load_plugin_textdomain('productforge', false, dirname(plugin_basename(__FILE__)) . '/languages');
 });
 ```
 
@@ -100,11 +100,11 @@ add_action('init', function () {
 
 In `includes/Frontend/class-frontend.php` line 229, change:
 ```php
-echo '<button type="button" class="pd-open-designer button">Customize Product</button>';
+echo '<button type="button" class="pf-open-designer button">Customize Product</button>';
 ```
 to:
 ```php
-echo '<button type="button" class="pd-open-designer button">' . esc_html__('Customize Product', 'product-designer') . '</button>';
+echo '<button type="button" class="pf-open-designer button">' . esc_html__('Customize Product', 'productforge') . '</button>';
 ```
 
 - [ ] **Step 3: Audit export and order integration files for bare strings**
@@ -152,14 +152,14 @@ In `includes/Admin/class-admin.php`, in the `enqueue_scripts()` method:
 1. Add `'wp-i18n'` to the dependencies array (around line 70, where `['react', 'react-dom']` is set)
 2. After the `wp_enqueue_script` call, add:
 ```php
-wp_set_script_translations('pd-template-builder', 'product-designer', PD_PLUGIN_DIR . 'languages');
+wp_set_script_translations('pf-template-builder', 'productforge', PF_PLUGIN_DIR . 'languages');
 ```
 
 In `includes/Frontend/class-frontend.php`, in the `enqueue_assets()` method:
 1. Change the empty dependency array `[]` on line 177 to `['wp-i18n']`
 2. After the `wp_enqueue_script` call, add:
 ```php
-wp_set_script_translations('pd-frontend-designer', 'product-designer', PD_PLUGIN_DIR . 'languages');
+wp_set_script_translations('pf-frontend-designer', 'productforge', PF_PLUGIN_DIR . 'languages');
 ```
 
 - [ ] **Step 7: Build and verify no errors**
@@ -170,7 +170,7 @@ Expected: Both admin and frontend bundles build without errors.
 - [ ] **Step 8: Commit**
 
 ```bash
-git add product-designer.php vite.config.mjs includes/Admin/class-admin.php includes/Frontend/class-frontend.php package.json package-lock.json
+git add productforge.php vite.config.mjs includes/Admin/class-admin.php includes/Frontend/class-frontend.php package.json package-lock.json
 git commit -m "feat(i18n): add textdomain loading, externalize wp.i18n, wire script translations"
 ```
 
@@ -193,19 +193,19 @@ git commit -m "feat(i18n): add textdomain loading, externalize wp.i18n, wire scr
 
 Add `import { __ } from '@wordpress/i18n';` at the top of each file.
 
-Wrap all user-facing strings with `__('...', 'product-designer')`. Key strings per file:
+Wrap all user-facing strings with `__('...', 'productforge')`. Key strings per file:
 
 **App.jsx** (lines 13-16, 47, 69, 123, 132, 141, 148, 155-157, 164):
-- `'Structure'` → `__('Structure', 'product-designer')`
-- `'Permissions'` → `__('Permissions', 'product-designer')`
-- `'Pricing'` → `__('Pricing', 'product-designer')`
-- `'Settings'` → `__('Settings', 'product-designer')`
-- `'Front'` → `__('Front', 'product-designer')`
-- `'Title is required.'` → `__('Title is required.', 'product-designer')`
-- `'Save failed.'` → `__('Save failed.', 'product-designer')`
-- `'Loading template…'` → `__('Loading template…', 'product-designer')`
-- `'← Templates'` → `__('← Templates', 'product-designer')`
-- `'Template title…'` → `__('Template title…', 'product-designer')` (placeholder)
+- `'Structure'` → `__('Structure', 'productforge')`
+- `'Permissions'` → `__('Permissions', 'productforge')`
+- `'Pricing'` → `__('Pricing', 'productforge')`
+- `'Settings'` → `__('Settings', 'productforge')`
+- `'Front'` → `__('Front', 'productforge')`
+- `'Title is required.'` → `__('Title is required.', 'productforge')`
+- `'Save failed.'` → `__('Save failed.', 'productforge')`
+- `'Loading template…'` → `__('Loading template…', 'productforge')`
+- `'← Templates'` → `__('← Templates', 'productforge')`
+- `'Template title…'` → `__('Template title…', 'productforge')` (placeholder)
 - `'Draft'`, `'Published'`, `'Archived'` → wrap each
 - `'Saving…'`, `'Save'`, `'Saved ✓'` → wrap each
 
@@ -255,17 +255,17 @@ git commit -m "feat(i18n): wrap all admin template builder strings with __()"
 Add `import { __ } from '@wordpress/i18n';` at the top of each file.
 
 **App.jsx** (lines 28, 69, 165, 169, 200, 208):
-- `'No template configured for this product.'` → `__('No template configured for this product.', 'product-designer')`
-- `'Loading designer...'` → `__('Loading designer...', 'product-designer')`
-- `'Template not available.'` → `__('Template not available.', 'product-designer')`
+- `'No template configured for this product.'` → `__('No template configured for this product.', 'productforge')`
+- `'Loading designer...'` → `__('Loading designer...', 'productforge')`
+- `'Template not available.'` → `__('Template not available.', 'productforge')`
 - `'Saving...'`, `'Saved!'`, `'Save Design'` → wrap each
-- `'Close Designer'` → `__('Close Designer', 'product-designer')`
+- `'Close Designer'` → `__('Close Designer', 'productforge')`
 
 **Sidebar.jsx** (lines 28, 36, 43):
 - `'Add'`, `'Element'`, `'Views'` → wrap each
 
 **DesignerCanvas.jsx** (line 411):
-- `'Your text here'` → `__('Your text here', 'product-designer')`
+- `'Your text here'` → `__('Your text here', 'productforge')`
 
 **AddTab.jsx** (lines 29, 36, 38, 45, 54, 56):
 - `'Add Element'` → wrap
@@ -278,7 +278,7 @@ Add `import { __ } from '@wordpress/i18n';` at the top of each file.
 
 **ViewsTab.jsx** (lines 16, 25):
 - `'Views'` → wrap
-- `` `View ${i + 1}` `` — use `sprintf(__('View %d', 'product-designer'), i + 1)` (also import `sprintf` from `@wordpress/i18n`)
+- `` `View ${i + 1}` `` — use `sprintf(__('View %d', 'productforge'), i + 1)` (also import `sprintf` from `@wordpress/i18n`)
 
 - [ ] **Step 2: Build and verify**
 
@@ -297,10 +297,10 @@ git commit -m "feat(i18n): wrap all frontend designer strings with __()"
 ## Task 4: i18n — Generate .pot and Dutch translations
 
 **Files:**
-- Create: `languages/product-designer.pot`
-- Create: `languages/product-designer-nl_NL.po`
-- Create: `languages/product-designer-nl_NL.mo`
-- Create: `languages/product-designer-nl_NL-*.json`
+- Create: `languages/productforge.pot`
+- Create: `languages/productforge-nl_NL.po`
+- Create: `languages/productforge-nl_NL.mo`
+- Create: `languages/productforge-nl_NL-*.json`
 
 - [ ] **Step 1: Build JS so make-pot picks up all strings**
 
@@ -310,16 +310,16 @@ Run: `npm run build`
 
 ```bash
 docker compose exec wordpress wp i18n make-pot \
-  wp-content/plugins/product-designer \
-  wp-content/plugins/product-designer/languages/product-designer.pot \
+  wp-content/plugins/productforge \
+  wp-content/plugins/productforge/languages/productforge.pot \
   --allow-root
 ```
 
-Expected: `languages/product-designer.pot` created with all PHP and JS strings.
+Expected: `languages/productforge.pot` created with all PHP and JS strings.
 
 - [ ] **Step 3: Create Dutch .po file**
 
-Copy the `.pot` file to `languages/product-designer-nl_NL.po`. Set the header:
+Copy the `.pot` file to `languages/productforge-nl_NL.po`. Set the header:
 
 ```
 "Language: nl_NL\n"
@@ -330,7 +330,7 @@ Translate all `msgstr ""` entries to Dutch. Key translations:
 
 | English | Dutch |
 |---------|-------|
-| Product Designer | Product Designer |
+| ProductForge | ProductForge |
 | Templates | Sjablonen |
 | Template Builder | Sjabloon Bewerken |
 | Add New | Nieuw Toevoegen |
@@ -373,7 +373,7 @@ Translate ALL strings in the .po file — these are just the key ones.
 
 ```bash
 docker compose exec wordpress wp i18n make-mo \
-  wp-content/plugins/product-designer/languages/product-designer-nl_NL.po \
+  wp-content/plugins/productforge/languages/productforge-nl_NL.po \
   --allow-root
 ```
 
@@ -381,12 +381,12 @@ docker compose exec wordpress wp i18n make-mo \
 
 ```bash
 docker compose exec wordpress wp i18n make-json \
-  wp-content/plugins/product-designer/languages/ \
+  wp-content/plugins/productforge/languages/ \
   --no-purge \
   --allow-root
 ```
 
-Expected: One or more `product-designer-nl_NL-*.json` files created.
+Expected: One or more `productforge-nl_NL-*.json` files created.
 
 - [ ] **Step 6: Remove .gitkeep from languages directory**
 
@@ -419,13 +419,13 @@ Add `role="tablist"` to the tab button container. On each tab button add `role="
 
 Example pattern:
 ```jsx
-<div className="pd-sidebar__tabs" role="tablist" aria-label={__('Designer tools', 'product-designer')}>
-  <button role="tab" aria-selected={activeTab === 'add'} aria-controls="pd-panel-add" id="pd-tab-add" ...>
-    {__('Add', 'product-designer')}
+<div className="pf-sidebar__tabs" role="tablist" aria-label={__('Designer tools', 'productforge')}>
+  <button role="tab" aria-selected={activeTab === 'add'} aria-controls="pf-panel-add" id="pf-tab-add" ...>
+    {__('Add', 'productforge')}
   </button>
   ...
 </div>
-<div role="tabpanel" id="pd-panel-add" aria-labelledby="pd-tab-add">
+<div role="tabpanel" id="pf-panel-add" aria-labelledby="pf-tab-add">
   ...
 </div>
 ```
@@ -434,7 +434,7 @@ Example pattern:
 
 Add `aria-label` to icon-only or short-text buttons:
 ```jsx
-<button aria-label={__('Add text element', 'product-designer')} ...>
+<button aria-label={__('Add text element', 'productforge')} ...>
 ```
 
 - [ ] **Step 3: Add ARIA to ViewsTab.jsx**
@@ -446,7 +446,7 @@ Add `role="tablist"` to the view list. On each view button add `role="tab"` and 
 Wrap the save button status text in a container with `aria-live="polite"`:
 ```jsx
 <span aria-live="polite">
-  {saving ? __('Saving...', 'product-designer') : saved ? __('Saved!', 'product-designer') : __('Save Design', 'product-designer')}
+  {saving ? __('Saving...', 'productforge') : saved ? __('Saved!', 'productforge') : __('Save Design', 'productforge')}
 </span>
 ```
 
@@ -464,16 +464,16 @@ Add to `frontend/js/designer/src/designer.css`:
 
 ```css
 /* Focus styles for keyboard navigation */
-.pd-designer button:focus-visible,
-.pd-designer [role="tab"]:focus-visible,
-.pd-designer input:focus-visible,
-.pd-designer select:focus-visible {
+.pf-designer button:focus-visible,
+.pf-designer [role="tab"]:focus-visible,
+.pf-designer input:focus-visible,
+.pf-designer select:focus-visible {
     outline: 2px solid #1e88e5;
     outline-offset: 2px;
 }
 
 /* Screen-reader only utility */
-.pd-sr-only {
+.pf-sr-only {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -511,11 +511,11 @@ git commit -m "feat(a11y): add ARIA roles, focus styles, and modal focus trappin
 
 In `TreeNode.jsx`, add `aria-label` to each icon button:
 ```jsx
-<button aria-label={__('Drag to reorder', 'product-designer')} ...>⠿</button>
-<button aria-label={__('Add layer', 'product-designer')} ...>+</button>
-<button aria-label={visible ? __('Hide layer', 'product-designer') : __('Show layer', 'product-designer')} ...>
-<button aria-label={locked ? __('Unlock layer', 'product-designer') : __('Lock layer', 'product-designer')} ...>
-<button aria-label={__('Delete', 'product-designer')} ...>×</button>
+<button aria-label={__('Drag to reorder', 'productforge')} ...>⠿</button>
+<button aria-label={__('Add layer', 'productforge')} ...>+</button>
+<button aria-label={visible ? __('Hide layer', 'productforge') : __('Show layer', 'productforge')} ...>
+<button aria-label={locked ? __('Unlock layer', 'productforge') : __('Lock layer', 'productforge')} ...>
+<button aria-label={__('Delete', 'productforge')} ...>×</button>
 ```
 
 - [ ] **Step 2: Add aria-label to TreePanel action buttons**
@@ -528,16 +528,16 @@ Add to `admin/js/template-builder/src/builder.css`:
 
 ```css
 /* Focus styles for keyboard navigation */
-.pd-builder button:focus-visible,
-.pd-builder [role="tab"]:focus-visible,
-.pd-builder input:focus-visible,
-.pd-builder select:focus-visible {
+.pf-builder button:focus-visible,
+.pf-builder [role="tab"]:focus-visible,
+.pf-builder input:focus-visible,
+.pf-builder select:focus-visible {
     outline: 2px solid #1e88e5;
     outline-offset: 2px;
 }
 ```
 
-(Adjust the root selector `.pd-builder` to match the actual admin wrapper class.)
+(Adjust the root selector `.pf-builder` to match the actual admin wrapper class.)
 
 - [ ] **Step 4: Build and verify**
 
@@ -601,7 +601,7 @@ public function count_products_batch(array $template_ids): array {
     $placeholders = implode(',', array_fill(0, count($ids), '%s'));
     $results = $wpdb->get_results(
         $wpdb->prepare(
-            "SELECT meta_value as template_id, COUNT(*) as cnt FROM {$wpdb->postmeta} WHERE meta_key = '_pd_template_id' AND meta_value IN ($placeholders) GROUP BY meta_value",
+            "SELECT meta_value as template_id, COUNT(*) as cnt FROM {$wpdb->postmeta} WHERE meta_key = '_pf_template_id' AND meta_value IN ($placeholders) GROUP BY meta_value",
             ...array_map('strval', $ids)
         ),
         ARRAY_A
@@ -620,7 +620,7 @@ In `includes/Database/class-template-repository.php`, wrap the `get()` method bo
 
 ```php
 public function get(int $id): ?array {
-    $cache_key = 'pd_template_' . $id;
+    $cache_key = 'pf_template_' . $id;
     $cached = get_transient($cache_key);
     if ($cached !== false) {
         return $cached;
@@ -635,12 +635,12 @@ public function get(int $id): ?array {
 
 Add cache invalidation in `create()` and `update()`:
 ```php
-delete_transient('pd_template_' . $id);
+delete_transient('pf_template_' . $id);
 ```
 
 Also add invalidation in `create_view()`, `update_view()`, `delete_view()` methods:
 ```php
-delete_transient('pd_template_' . $template_id);
+delete_transient('pf_template_' . $template_id);
 ```
 
 - [ ] **Step 3: Update TemplateListTable to use batch methods**
@@ -669,7 +669,7 @@ protected function column_product_count(array $item): string {
 
 - [ ] **Step 4: Verify in browser**
 
-Open `http://localhost:8080/wp-admin/admin.php?page=product-designer` and verify the template list still shows correct view and product counts.
+Open `http://localhost:8080/wp-admin/admin.php?page=productforge` and verify the template list still shows correct view and product counts.
 
 - [ ] **Step 5: Commit**
 
@@ -711,7 +711,7 @@ Create `phpunit.xml` in the project root:
     stopOnFailure="false"
 >
     <testsuites>
-        <testsuite name="ProductDesigner">
+        <testsuite name="ProductForge">
             <directory>tests/php</directory>
         </testsuite>
     </testsuites>
@@ -726,26 +726,26 @@ Create `tests/php/bootstrap.php`:
 <?php
 /**
  * PHPUnit bootstrap — loads WordPress and activates the plugin.
- * Run from Docker: docker compose exec wordpress bash -c "cd wp-content/plugins/product-designer && phpunit"
+ * Run from Docker: docker compose exec wordpress bash -c "cd wp-content/plugins/productforge && phpunit"
  */
 
 // Load WordPress
 require_once '/var/www/html/wp-load.php';
 
 // Activate plugin if not already active
-if (!is_plugin_active('product-designer/product-designer.php')) {
-    activate_plugin('product-designer/product-designer.php');
+if (!is_plugin_active('productforge/productforge.php')) {
+    activate_plugin('productforge/productforge.php');
 }
 
 // Ensure our tables exist
-$db_manager = new ProductDesigner\Database\DbManager();
+$db_manager = new ProductForge\Database\DbManager();
 $db_manager->install();
 ```
 
 - [ ] **Step 4: Verify PHPUnit runs**
 
 ```bash
-docker compose exec wordpress bash -c "cd wp-content/plugins/product-designer && phpunit"
+docker compose exec wordpress bash -c "cd wp-content/plugins/productforge && phpunit"
 ```
 
 Expected: "No tests executed" (no test files yet), but no bootstrap errors.
@@ -789,7 +789,7 @@ Create `tests/php/Database/TemplateRepositoryTest.php`:
 ```php
 <?php
 use PHPUnit\Framework\TestCase;
-use ProductDesigner\Database\TemplateRepository;
+use ProductForge\Database\TemplateRepository;
 
 class TemplateRepositoryTest extends TestCase {
     private TemplateRepository $repo;
@@ -861,7 +861,7 @@ class TemplateRepositoryTest extends TestCase {
 
     protected function tearDown(): void {
         global $wpdb;
-        $table = $wpdb->prefix . 'pd_templates';
+        $table = $wpdb->prefix . 'pf_templates';
         $wpdb->query("DELETE FROM $table WHERE title LIKE 'Test Template%' OR title LIKE '%Update%'");
     }
 }
@@ -874,7 +874,7 @@ Create `tests/php/Database/DesignRepositoryTest.php`:
 ```php
 <?php
 use PHPUnit\Framework\TestCase;
-use ProductDesigner\Database\DesignRepository;
+use ProductForge\Database\DesignRepository;
 
 class DesignRepositoryTest extends TestCase {
     private DesignRepository $repo;
@@ -953,7 +953,7 @@ Create `tests/php/Security/UploadValidatorTest.php`:
 ```php
 <?php
 use PHPUnit\Framework\TestCase;
-use ProductDesigner\Security\UploadValidator;
+use ProductForge\Security\UploadValidator;
 
 class UploadValidatorTest extends TestCase {
     public function test_rejects_php_file(): void {
@@ -1002,7 +1002,7 @@ class UploadValidatorTest extends TestCase {
     public function test_rate_limit_blocks_after_threshold(): void {
         $session = 'rate-limit-test-' . uniqid();
         // Set the transient to simulate 10 uploads already done
-        set_transient('pd_upload_count_' . md5($session), 10, MINUTE_IN_SECONDS);
+        set_transient('pf_upload_count_' . md5($session), 10, MINUTE_IN_SECONDS);
 
         $tmp = tempnam(sys_get_temp_dir(), 'test');
         $img = imagecreatetruecolor(1, 1);
@@ -1026,7 +1026,7 @@ Create `tests/php/Security/CapabilityCheckerTest.php`:
 ```php
 <?php
 use PHPUnit\Framework\TestCase;
-use ProductDesigner\Security\CapabilityChecker;
+use ProductForge\Security\CapabilityChecker;
 
 class CapabilityCheckerTest extends TestCase {
     public function test_admin_can_manage_templates(): void {
@@ -1053,7 +1053,7 @@ Create `tests/php/Security/NonceManagerTest.php`:
 ```php
 <?php
 use PHPUnit\Framework\TestCase;
-use ProductDesigner\Security\NonceManager;
+use ProductForge\Security\NonceManager;
 
 class NonceManagerTest extends TestCase {
     public function test_create_returns_string(): void {
@@ -1082,8 +1082,8 @@ The `PriceCalculator::calculate()` takes a `string $design_hash` and returns `fl
 ```php
 <?php
 use PHPUnit\Framework\TestCase;
-use ProductDesigner\Pricing\PriceCalculator;
-use ProductDesigner\Database\DesignRepository;
+use ProductForge\Pricing\PriceCalculator;
+use ProductForge\Database\DesignRepository;
 
 class PriceCalculatorTest extends TestCase {
     private PriceCalculator $calc;
@@ -1128,7 +1128,7 @@ class PriceCalculatorTest extends TestCase {
 - [ ] **Step 7: Run tests**
 
 ```bash
-docker compose exec wordpress bash -c "cd wp-content/plugins/product-designer && phpunit"
+docker compose exec wordpress bash -c "cd wp-content/plugins/productforge && phpunit"
 ```
 
 Expected: All tests pass.
@@ -1156,7 +1156,7 @@ Create `tests/php/Export/SvgExporterTest.php`:
 ```php
 <?php
 use PHPUnit\Framework\TestCase;
-use ProductDesigner\Export\SvgExporter;
+use ProductForge\Export\SvgExporter;
 
 class SvgExporterTest extends TestCase {
     private SvgExporter $exporter;
@@ -1181,7 +1181,7 @@ class SvgExporterTest extends TestCase {
 
     public function test_exports_to_file(): void {
         $canvas_json = ['background' => '#ffffff', 'objects' => []];
-        $path = sys_get_temp_dir() . '/pd-test-' . uniqid() . '.svg';
+        $path = sys_get_temp_dir() . '/pf-test-' . uniqid() . '.svg';
         $result = $this->exporter->export($canvas_json, 800, 600, $path);
         $this->assertTrue($result);
         $this->assertFileExists($path);
@@ -1207,12 +1207,12 @@ Create `tests/php/Export/PdfExporterTest.php`:
 ```php
 <?php
 use PHPUnit\Framework\TestCase;
-use ProductDesigner\Export\PdfExporter;
+use ProductForge\Export\PdfExporter;
 
 class PdfExporterTest extends TestCase {
     public function test_exports_single_view_pdf(): void {
         $exporter = new PdfExporter();
-        $path = sys_get_temp_dir() . '/pd-test-' . uniqid() . '.pdf';
+        $path = sys_get_temp_dir() . '/pf-test-' . uniqid() . '.pdf';
         $result = $exporter->export([
             [
                 'canvas_json' => ['background' => '#ffffff', 'objects' => [
@@ -1230,7 +1230,7 @@ class PdfExporterTest extends TestCase {
 
     public function test_multi_view_produces_multi_page(): void {
         $exporter = new PdfExporter();
-        $path = sys_get_temp_dir() . '/pd-test-' . uniqid() . '.pdf';
+        $path = sys_get_temp_dir() . '/pf-test-' . uniqid() . '.pdf';
         $views = [
             ['canvas_json' => ['background' => '#fff', 'objects' => []], 'width' => 400, 'height' => 300],
             ['canvas_json' => ['background' => '#eee', 'objects' => []], 'width' => 400, 'height' => 300],
@@ -1255,12 +1255,12 @@ Create `tests/php/Export/PngExporterTest.php`:
 ```php
 <?php
 use PHPUnit\Framework\TestCase;
-use ProductDesigner\Export\PngExporter;
+use ProductForge\Export\PngExporter;
 
 class PngExporterTest extends TestCase {
     public function test_exports_png_file(): void {
         $exporter = new PngExporter();
-        $path = sys_get_temp_dir() . '/pd-test-' . uniqid() . '.png';
+        $path = sys_get_temp_dir() . '/pf-test-' . uniqid() . '.png';
         $result = $exporter->export(
             ['background' => '#ffffff', 'objects' => []],
             800, 600, $path
@@ -1278,7 +1278,7 @@ class PngExporterTest extends TestCase {
 - [ ] **Step 4: Run tests**
 
 ```bash
-docker compose exec wordpress bash -c "cd wp-content/plugins/product-designer && phpunit tests/php/Export/"
+docker compose exec wordpress bash -c "cd wp-content/plugins/productforge && phpunit tests/php/Export/"
 ```
 
 Expected: All export tests pass.
@@ -1317,14 +1317,14 @@ class TemplateEndpointTest extends TestCase {
 
     public function test_list_templates_requires_admin(): void {
         wp_set_current_user(0); // unauthenticated
-        $request = new \WP_REST_Request('GET', '/pd/v1/templates');
+        $request = new \WP_REST_Request('GET', '/pf/v1/templates');
         $response = $this->server->dispatch($request);
         $this->assertEquals(403, $response->get_status());
     }
 
     public function test_create_template_requires_admin(): void {
         wp_set_current_user(0);
-        $request = new \WP_REST_Request('POST', '/pd/v1/templates');
+        $request = new \WP_REST_Request('POST', '/pf/v1/templates');
         $request->set_body_params(['title' => 'Test', 'slug' => 'test']);
         $response = $this->server->dispatch($request);
         $this->assertEquals(403, $response->get_status());
@@ -1332,14 +1332,14 @@ class TemplateEndpointTest extends TestCase {
 
     public function test_admin_can_list_templates(): void {
         wp_set_current_user(1); // admin
-        $request = new \WP_REST_Request('GET', '/pd/v1/templates');
+        $request = new \WP_REST_Request('GET', '/pf/v1/templates');
         $response = $this->server->dispatch($request);
         $this->assertContains($response->get_status(), [200, 204]);
     }
 
     public function test_admin_can_create_template(): void {
         wp_set_current_user(1);
-        $request = new \WP_REST_Request('POST', '/pd/v1/templates');
+        $request = new \WP_REST_Request('POST', '/pf/v1/templates');
         $request->set_body_params([
             'title' => 'API Test Template ' . uniqid(),
             'status' => 'draft',
@@ -1352,7 +1352,7 @@ class TemplateEndpointTest extends TestCase {
 
     public function test_list_returns_pagination_headers(): void {
         wp_set_current_user(1);
-        $request = new \WP_REST_Request('GET', '/pd/v1/templates');
+        $request = new \WP_REST_Request('GET', '/pf/v1/templates');
         $request->set_param('per_page', 5);
         $request->set_param('page', 1);
         $response = $this->server->dispatch($request);
@@ -1386,7 +1386,7 @@ class DesignEndpointTest extends TestCase {
 
     public function test_create_design_returns_hash(): void {
         // Designs can be created by anyone (customers)
-        $request = new \WP_REST_Request('POST', '/pd/v1/designs');
+        $request = new \WP_REST_Request('POST', '/pf/v1/designs');
         $request->set_body_params([
             'template_id' => 1,
             'product_id' => 1,
@@ -1398,14 +1398,14 @@ class DesignEndpointTest extends TestCase {
 
     public function test_admin_list_requires_capability(): void {
         wp_set_current_user(0); // unauthenticated
-        $request = new \WP_REST_Request('GET', '/pd/v1/admin/designs');
+        $request = new \WP_REST_Request('GET', '/pf/v1/admin/designs');
         $response = $this->server->dispatch($request);
         $this->assertEquals(403, $response->get_status());
     }
 
     public function test_admin_can_list_designs(): void {
         wp_set_current_user(1); // admin
-        $request = new \WP_REST_Request('GET', '/pd/v1/admin/designs');
+        $request = new \WP_REST_Request('GET', '/pf/v1/admin/designs');
         $response = $this->server->dispatch($request);
         $this->assertContains($response->get_status(), [200, 204]);
     }
@@ -1420,7 +1420,7 @@ class DesignEndpointTest extends TestCase {
 - [ ] **Step 3: Run tests**
 
 ```bash
-docker compose exec wordpress bash -c "cd wp-content/plugins/product-designer && phpunit tests/php/API/"
+docker compose exec wordpress bash -c "cd wp-content/plugins/productforge && phpunit tests/php/API/"
 ```
 
 Expected: All API endpoint tests pass.
@@ -1816,7 +1816,7 @@ describe('ViewsTab', () => {
     test('active tab has active CSS class', () => {
         render(<ViewsTab />);
         const frontBtn = screen.getByText('Front');
-        expect(frontBtn.className).toContain('pd-views__btn--active');
+        expect(frontBtn.className).toContain('pf-views__btn--active');
     });
 });
 ```
@@ -1910,14 +1910,14 @@ const { test, expect } = require('@playwright/test');
 
 test.describe('Admin Template Management', () => {
     test('can view template list', async ({ page }) => {
-        await page.goto('/wp-admin/admin.php?page=product-designer');
+        await page.goto('/wp-admin/admin.php?page=productforge');
         await expect(page.locator('.wp-list-table')).toBeVisible();
     });
 
     test('can navigate to template builder', async ({ page }) => {
-        await page.goto('/wp-admin/admin.php?page=pd-template-builder');
+        await page.goto('/wp-admin/admin.php?page=pf-template-builder');
         // Wait for React to mount
-        await expect(page.locator('#pd-template-builder')).toBeVisible();
+        await expect(page.locator('#pf-template-builder')).toBeVisible();
     });
 });
 ```
@@ -1963,12 +1963,12 @@ test.describe('Customer Design Flow', () => {
         await page.goto('/product/dog-tag/');
 
         // Look for the Customize button
-        const customizeBtn = page.locator('.pd-open-designer');
+        const customizeBtn = page.locator('.pf-open-designer');
         if (await customizeBtn.isVisible()) {
             await customizeBtn.click();
 
             // Wait for designer to load
-            await expect(page.locator('#pd-designer-root')).toBeVisible();
+            await expect(page.locator('#pf-designer-root')).toBeVisible();
 
             // Verify sidebar tabs are present
             await expect(page.locator('[role="tab"]').first()).toBeVisible();
@@ -1978,10 +1978,10 @@ test.describe('Customer Design Flow', () => {
     test('can add text element', async ({ page }) => {
         await page.goto('/product/dog-tag/');
 
-        const customizeBtn = page.locator('.pd-open-designer');
+        const customizeBtn = page.locator('.pf-open-designer');
         if (await customizeBtn.isVisible()) {
             await customizeBtn.click();
-            await page.waitForSelector('#pd-designer-root');
+            await page.waitForSelector('#pf-designer-root');
 
             // Click Add tab, then Text button
             const addTab = page.locator('button:has-text("Add"), button:has-text("Tekst")').first();
@@ -2000,7 +2000,7 @@ test.describe('Customer Design Flow', () => {
 });
 ```
 
-Note: E2E tests depend on the product having `_pd_designer_enabled` and `_pd_template_id` meta. If not set, the designer won't appear. The test uses conditional checks (`isVisible`) to handle this gracefully. To make tests deterministic, add product meta setup to `docker/setup.sh` or the test's `beforeAll`.
+Note: E2E tests depend on the product having `_pf_designer_enabled` and `_pf_template_id` meta. If not set, the designer won't appear. The test uses conditional checks (`isVisible`) to handle this gracefully. To make tests deterministic, add product meta setup to `docker/setup.sh` or the test's `beforeAll`.
 
 - [ ] **Step 2: Run E2E tests**
 
@@ -2043,11 +2043,11 @@ test.describe('Export Flow', () => {
         if (await firstOrder.isVisible({ timeout: 3000 }).catch(() => false)) {
             await firstOrder.click();
 
-            // Check for export buttons (they appear only if the order item has _pd_design_hash)
-            const exportSection = page.locator('.pd-export-actions');
+            // Check for export buttons (they appear only if the order item has _pf_design_hash)
+            const exportSection = page.locator('.pf-export-actions');
             if (await exportSection.isVisible({ timeout: 3000 }).catch(() => false)) {
                 // Verify PDF, PNG, SVG export buttons exist
-                await expect(page.locator('.pd-export-btn').first()).toBeVisible();
+                await expect(page.locator('.pf-export-btn').first()).toBeVisible();
             }
         }
     });
@@ -2061,11 +2061,11 @@ test.describe('Export Flow', () => {
         if (await firstOrder.isVisible({ timeout: 3000 }).catch(() => false)) {
             await firstOrder.click();
 
-            const pdfBtn = page.locator('.pd-export-btn[data-format="pdf"]').first();
+            const pdfBtn = page.locator('.pf-export-btn[data-format="pdf"]').first();
             if (await pdfBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
                 // Set up response listener
                 const responsePromise = page.waitForResponse(
-                    (r) => r.url().includes('/pd/v1/exports/'),
+                    (r) => r.url().includes('/pf/v1/exports/'),
                     { timeout: 10000 }
                 ).catch(() => null);
 

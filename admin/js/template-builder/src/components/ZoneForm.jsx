@@ -52,60 +52,60 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
   };
 
   return (
-    <form onSubmit={handleSubmit} className="pd-zone-form">
-      <div className="pd-zone-form__row">
-        <label className="pd-zone-form__label">
-          { __( 'Name', 'product-designer' ) }
+    <form onSubmit={handleSubmit} className="pf-zone-form">
+      <div className="pf-zone-form__row">
+        <label className="pf-zone-form__label">
+          { __( 'Name', 'productforge' ) }
           <input
             type="text" value={data.name} required
             onChange={(e) => set('name', e.target.value)}
-            className="pd-zone-form__input"
-            placeholder={ __( 'e.g. Front Print Area', 'product-designer' ) }
+            className="pf-zone-form__input"
+            placeholder={ __( 'e.g. Front Print Area', 'productforge' ) }
           />
         </label>
       </div>
 
-      <div className="pd-zone-form__row">
-        <label className="pd-zone-form__label">
-          { __( 'Type', 'product-designer' ) }
-          <select value={data.type} onChange={(e) => set('type', e.target.value)} className="pd-zone-form__select">
-            <option value="safe_area">{ __( 'Safe Area', 'product-designer' ) }</option>
-            <option value="upload_zone">{ __( 'Upload Zone', 'product-designer' ) }</option>
+      <div className="pf-zone-form__row">
+        <label className="pf-zone-form__label">
+          { __( 'Type', 'productforge' ) }
+          <select value={data.type} onChange={(e) => set('type', e.target.value)} className="pf-zone-form__select">
+            <option value="safe_area">{ __( 'Safe Area', 'productforge' ) }</option>
+            <option value="upload_zone">{ __( 'Upload Zone', 'productforge' ) }</option>
           </select>
         </label>
-        <label className="pd-zone-form__label">
-          { __( 'Behavior', 'product-designer' ) }
-          <select value={data.behavior} onChange={(e) => set('behavior', e.target.value)} className="pd-zone-form__select">
-            <option value="restrict">{ __( "Restrict (can't leave)", 'product-designer' ) }</option>
-            <option value="clip">{ __( 'Clip at boundary', 'product-designer' ) }</option>
+        <label className="pf-zone-form__label">
+          { __( 'Behavior', 'productforge' ) }
+          <select value={data.behavior} onChange={(e) => set('behavior', e.target.value)} className="pf-zone-form__select">
+            <option value="restrict">{ __( "Restrict (can't leave)", 'productforge' ) }</option>
+            <option value="clip">{ __( 'Clip at boundary', 'productforge' ) }</option>
           </select>
         </label>
       </div>
 
       {/* Boundary Type */}
-      <label className="pd-zone-form__field">
-        <span>{ __( 'Boundary', 'product-designer' ) }</span>
+      <label className="pf-zone-form__field">
+        <span>{ __( 'Boundary', 'productforge' ) }</span>
         <select
           value={data.boundary_type || 'rect'}
           onChange={(e) => set('boundary_type', e.target.value)}
         >
-          <option value="rect">{ __( 'Rectangle', 'product-designer' ) }</option>
-          <option value="svg">{ __( 'SVG Shape', 'product-designer' ) }</option>
+          <option value="rect">{ __( 'Rectangle', 'productforge' ) }</option>
+          <option value="svg">{ __( 'SVG Shape', 'productforge' ) }</option>
         </select>
       </label>
 
       {/* SVG Upload — only shown when boundary_type is 'svg' */}
       {data.boundary_type === 'svg' && (
-        <div className="pd-zone-form__svg-upload">
+        <div className="pf-zone-form__svg-upload">
           {data.svg_url ? (
-            <div className="pd-zone-form__svg-preview">
-              <img src={data.svg_url} alt={ __( 'Zone shape', 'product-designer' ) } style={{ maxWidth: '100%', maxHeight: '80px' }} />
+            <div className="pf-zone-form__svg-preview">
+              <img src={data.svg_url} alt={ __( 'Zone shape', 'productforge' ) } style={{ maxWidth: '100%', maxHeight: '80px' }} />
               <button type="button" onClick={() => setData((d) => {
                 const next = { ...d, svg_url: '', svg_path_data: '' };
                 if (onChange) onChange(next);
                 return next;
               })}>
-                { __( 'Remove', 'product-designer' ) }
+                { __( 'Remove', 'productforge' ) }
               </button>
             </div>
           ) : (
@@ -114,8 +114,8 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
               onClick={() => {
                 if (!window.wp?.media) return;
                 const frame = window.wp.media({
-                  title: __( 'Select SVG Zone Shape', 'product-designer' ),
-                  button: { text: __( 'Use Shape', 'product-designer' ) },
+                  title: __( 'Select SVG Zone Shape', 'productforge' ),
+                  button: { text: __( 'Use Shape', 'productforge' ) },
                   multiple: false,
                   library: { type: 'image/svg+xml' },
                 });
@@ -126,7 +126,7 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
                     const svgText = await resp.text();
                     const bbox = await extractSvgBoundingBox(svgText);
                     if (!bbox) {
-                      alert( __( 'Could not parse SVG file.', 'product-designer' ) );
+                      alert( __( 'Could not parse SVG file.', 'productforge' ) );
                       return;
                     }
                     setData((d) => {
@@ -145,27 +145,27 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
                       return next;
                     });
                   } catch {
-                    alert( __( 'Failed to parse SVG file.', 'product-designer' ) );
+                    alert( __( 'Failed to parse SVG file.', 'productforge' ) );
                   }
                 });
                 frame.open();
               }}
             >
-              { __( 'Upload SVG Shape', 'product-designer' ) }
+              { __( 'Upload SVG Shape', 'productforge' ) }
             </button>
           )}
           {data.svg_url && (
             <>
-              <label className="pd-zone-form__field">
-                <span>{ __( 'Scale', 'product-designer' ) }</span>
+              <label className="pf-zone-form__field">
+                <span>{ __( 'Scale', 'productforge' ) }</span>
                 <input
                   type="number" step="any" min="0.1"
                   value={Math.round((data.svg_scale || 1) * 100) / 100}
                   onChange={(e) => set('svg_scale', parseFloat(e.target.value) || 1)}
                 />
               </label>
-              <label className="pd-zone-form__field">
-                <span>{ __( 'Rotation', 'product-designer' ) }</span>
+              <label className="pf-zone-form__field">
+                <span>{ __( 'Rotation', 'productforge' ) }</span>
                 <input
                   type="number" step="1" min="0" max="360"
                   value={data.svg_rotation || 0}
@@ -177,29 +177,29 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
         </div>
       )}
 
-      <div className="pd-zone-form__row pd-zone-form__row--coords">
+      <div className="pf-zone-form__row pf-zone-form__row--coords">
         {[['x','X'], ['y','Y'], ['width','W'], ['height','H']].map(([key, label]) => {
           const isSvgSize = data.boundary_type === 'svg' && (key === 'width' || key === 'height');
           return (
-            <label key={key} className="pd-zone-form__label pd-zone-form__label--coord">
+            <label key={key} className="pf-zone-form__label pf-zone-form__label--coord">
               {label}
               <input
                 type="number" value={data[key]} min={key === 'width' || key === 'height' ? 1 : 0}
                 onChange={(e) => set(key, Number(e.target.value))}
                 readOnly={isSvgSize}
-                className="pd-zone-form__input pd-zone-form__input--number"
+                className="pf-zone-form__input pf-zone-form__input--number"
                 style={isSvgSize ? { opacity: 0.6 } : undefined}
-                title={isSvgSize ? __( 'Resize the SVG on canvas or change Scale to adjust', 'product-designer' ) : undefined}
+                title={isSvgSize ? __( 'Resize the SVG on canvas or change Scale to adjust', 'productforge' ) : undefined}
               />
             </label>
           );
         })}
       </div>
 
-      <fieldset className="pd-zone-form__fieldset">
-        <legend>{ __( 'Allowed element types', 'product-designer' ) }</legend>
+      <fieldset className="pf-zone-form__fieldset">
+        <legend>{ __( 'Allowed element types', 'productforge' ) }</legend>
         {['text', 'image', 'svg'].map((t) => (
-          <label key={t} className="pd-zone-form__checkbox-label">
+          <label key={t} className="pf-zone-form__checkbox-label">
             <input
               type="checkbox"
               checked={data.allowed_types.includes(t)}
@@ -211,22 +211,22 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
       </fieldset>
 
       {data.type === 'upload_zone' && (
-        <div className="pd-zone-form__row">
-          <label className="pd-zone-form__label">
-            { __( 'Mask SVG URL', 'product-designer' ) }
+        <div className="pf-zone-form__row">
+          <label className="pf-zone-form__label">
+            { __( 'Mask SVG URL', 'productforge' ) }
             <input
               type="url" value={data.mask_svg_url || ''}
               onChange={(e) => set('mask_svg_url', e.target.value)}
-              className="pd-zone-form__input"
+              className="pf-zone-form__input"
               placeholder="https://…"
             />
           </label>
         </div>
       )}
 
-      <div className="pd-zone-form__actions">
-        <button type="submit" className="button button-primary">{ __( 'Save Boundary', 'product-designer' ) }</button>
-        <button type="button" className="button" onClick={onCancel}>{ __( 'Cancel', 'product-designer' ) }</button>
+      <div className="pf-zone-form__actions">
+        <button type="submit" className="button button-primary">{ __( 'Save Boundary', 'productforge' ) }</button>
+        <button type="button" className="button" onClick={onCancel}>{ __( 'Cancel', 'productforge' ) }</button>
       </div>
     </form>
   );

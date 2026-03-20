@@ -13,19 +13,19 @@ export default function ViewsTab() {
   }, [currentViewIndex, setCurrentViewIndex]);
 
   return (
-    <div className="pd-sidebar__tab-content">
-      <h3 className="pd-sidebar__heading">{__('Views', 'product-designer')}</h3>
-      <div className="pd-views" role="tablist" aria-label={__('Product views', 'product-designer')}>
+    <div className="pf-sidebar__tab-content">
+      <h3 className="pf-sidebar__heading">{__('Views', 'productforge')}</h3>
+      <div className="pf-views" role="tablist" aria-label={__('Product views', 'productforge')}>
         {views.map((view, i) => (
           <button
             type="button"
             role="tab"
             key={view.id || i}
             aria-selected={i === currentViewIndex}
-            className={`pd-views__btn${i === currentViewIndex ? ' pd-views__btn--active' : ''}`}
+            className={`pf-views__btn${i === currentViewIndex ? ' pf-views__btn--active' : ''}`}
             onClick={() => handleSwitch(i)}
           >
-            {view.name || sprintf(__('View %d', 'product-designer'), i + 1)}
+            {view.name || sprintf(__('View %d', 'productforge'), i + 1)}
           </button>
         ))}
       </div>

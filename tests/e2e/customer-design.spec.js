@@ -3,21 +3,21 @@ const { test, expect } = require('@playwright/test');
 test.describe('Customer Design Flow', () => {
     test('can open designer on product page', async ({ page }) => {
         await page.goto('/product/dog-tags/');
-        const customizeBtn = page.locator('.pd-open-designer');
+        const customizeBtn = page.locator('.pf-open-designer');
         if (await customizeBtn.isVisible()) {
             await customizeBtn.click();
-            await expect(page.locator('#pd-designer-root')).toBeVisible();
+            await expect(page.locator('#pf-designer-root')).toBeVisible();
             await expect(page.locator('[role="tab"]').first()).toBeVisible();
         }
     });
 
     test('can add text element', async ({ page }) => {
         await page.goto('/product/dog-tags/');
-        const customizeBtn = page.locator('.pd-open-designer');
+        const customizeBtn = page.locator('.pf-open-designer');
         if (await customizeBtn.isVisible()) {
             await customizeBtn.click();
-            // Wait for the modal to open — React adds pd-designer--open class when open
-            const openDesigner = page.locator('.pd-designer--open');
+            // Wait for the modal to open — React adds pf-designer--open class when open
+            const openDesigner = page.locator('.pf-designer--open');
             const isOpen = await openDesigner.isVisible({ timeout: 10000 }).catch(() => false);
             if (isOpen) {
                 // Look for a sidebar tab inside the open designer (scoped to avoid matching page buttons)
@@ -50,7 +50,7 @@ test.describe('Customer Design Flow', () => {
         await page.goto('/product/dog-tags/');
         await page.waitForLoadState('networkidle');
         // If the product has the designer enabled, the root container should exist in the DOM
-        const designerRoot = page.locator('#pd-designer-root');
+        const designerRoot = page.locator('#pf-designer-root');
         const isPresent = await designerRoot.count();
         if (isPresent > 0) {
             // Verify data-mode attribute is set

@@ -1,5 +1,5 @@
 <?php
-namespace ProductDesigner;
+namespace ProductForge;
 
 defined('ABSPATH') || exit;
 

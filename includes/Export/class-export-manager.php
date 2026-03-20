@@ -1,11 +1,11 @@
 <?php
-namespace ProductDesigner\Export;
+namespace ProductForge\Export;
 
 defined('ABSPATH') || exit;
 
-use ProductDesigner\Database\DesignRepository;
-use ProductDesigner\Database\ExportRepository;
-use ProductDesigner\Database\TemplateRepository;
+use ProductForge\Database\DesignRepository;
+use ProductForge\Database\ExportRepository;
+use ProductForge\Database\TemplateRepository;
 
 class ExportManager {
 
@@ -30,15 +30,15 @@ class ExportManager {
      * Auto-export designs when order reaches the configured trigger status.
      */
     public function on_order_status_changed(int $order_id, string $from, string $to, \WC_Order $order): void {
-        $trigger_status = get_option('pd_export_trigger_status', 'completed');
+        $trigger_status = get_option('pf_export_trigger_status', 'completed');
         if ($to !== $trigger_status) {
             return;
         }
 
-        $default_format = get_option('pd_export_default_format', 'pdf');
+        $default_format = get_option('pf_export_default_format', 'pdf');
 
         foreach ($order->get_items() as $item) {
-            $hash = $item->get_meta('_pd_design_hash');
+            $hash = $item->get_meta('_pf_design_hash');
             if (empty($hash)) {
                 continue;
             }
@@ -130,7 +130,7 @@ class ExportManager {
         // Ensure path is within the expected export directory to prevent path traversal.
         // realpath() returns false for non-existent paths, so no separate file_exists() needed.
         $upload_dir  = wp_upload_dir();
-        $exports_dir = realpath($upload_dir['basedir'] . '/pd-exports');
+        $exports_dir = realpath($upload_dir['basedir'] . '/pf-exports');
         $real_path   = realpath($path);
         if (!$exports_dir || !$real_path || !str_starts_with($real_path, $exports_dir . '/')) {
             return '';
@@ -230,7 +230,7 @@ class ExportManager {
 
     private function get_export_dir(string $format): string {
         $upload_dir = wp_upload_dir();
-        $dir = $upload_dir['basedir'] . '/pd-exports/' . $format . '/';
+        $dir = $upload_dir['basedir'] . '/pf-exports/' . $format . '/';
         wp_mkdir_p($dir);
 
         // Add index.php and .htaccess for security

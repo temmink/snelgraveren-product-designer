@@ -1,6 +1,6 @@
 /* ── Reset & isolation ───────────────────────────────────────────────────── */
 
-.pd-designer {
+.pf-designer {
   all: initial;
   display: block;
   box-sizing: border-box;
@@ -10,46 +10,46 @@
   color: #1f2937;
 }
 
-.pd-designer *,
-.pd-designer *::before,
-.pd-designer *::after {
+.pf-designer *,
+.pf-designer *::before,
+.pf-designer *::after {
   box-sizing: border-box;
 }
 
 /* ── Loading & error states ──────────────────────────────────────────────── */
 
-.pd-designer--loading,
-.pd-designer--error {
+.pf-designer--loading,
+.pf-designer--error {
   padding: 2rem;
   text-align: center;
   color: #6b7280;
 }
 
-.pd-designer--error {
+.pf-designer--error {
   color: #dc2626;
 }
 
 /* ── Layout ──────────────────────────────────────────────────────────────── */
 
-.pd-designer__layout {
+.pf-designer__layout {
   display: flex;
   gap: 1rem;
   padding: 1rem 0;
 }
 
-.pd-canvas-wrap {
+.pf-canvas-wrap {
   flex: 1;
   min-width: 0;
 }
 
-.pd-canvas-scroll {
+.pf-canvas-scroll {
   overflow: auto;
   border: 1px solid #e5e7eb;
   border-radius: 4px;
   background: #f9fafb;
 }
 
-.pd-designer__sidebar-wrap {
+.pf-designer__sidebar-wrap {
   width: 280px;
   flex-shrink: 0;
   display: flex;
@@ -59,7 +59,7 @@
 
 /* ── Modal mode ──────────────────────────────────────────────────────────── */
 
-.pd-designer--modal {
+.pf-designer--modal {
   display: none;
   position: fixed;
   inset: 0;
@@ -69,11 +69,11 @@
   overflow-y: auto;
 }
 
-.pd-designer--modal.pd-designer--open {
+.pf-designer--modal.pf-designer--open {
   display: block;
 }
 
-.pd-designer--modal .pd-designer__layout {
+.pf-designer--modal .pf-designer__layout {
   background: #fff;
   border-radius: 8px;
   padding: 1.5rem;
@@ -82,7 +82,7 @@
   position: relative;
 }
 
-.pd-designer__close-btn {
+.pf-designer__close-btn {
   padding: 0.6rem 1rem;
   background: #fff;
   color: #374151;
@@ -93,32 +93,32 @@
   font-weight: 500;
 }
 
-.pd-designer__close-btn:hover {
+.pf-designer__close-btn:hover {
   background: #f3f4f6;
   border-color: #9ca3af;
 }
 
 /* ── Open designer button (rendered by PHP) ──────────────────────────────── */
 
-.pd-open-designer {
+.pf-open-designer {
   margin: 1rem 0;
 }
 
 /* ── Sidebar ─────────────────────────────────────────────────────────────── */
 
-.pd-sidebar {
+.pf-sidebar {
   border: 1px solid #e5e7eb;
   border-radius: 4px;
   background: #fff;
   overflow: hidden;
 }
 
-.pd-sidebar__tabs {
+.pf-sidebar__tabs {
   display: flex;
   border-bottom: 1px solid #e5e7eb;
 }
 
-.pd-sidebar__tab {
+.pf-sidebar__tab {
   flex: 1;
   padding: 0.5rem 0.25rem;
   background: none;
@@ -136,32 +136,32 @@
   min-width: 0;
 }
 
-.pd-sidebar__tab:hover:not(:disabled) {
+.pf-sidebar__tab:hover:not(:disabled) {
   color: #1f2937;
 }
 
-.pd-sidebar__tab--active {
+.pf-sidebar__tab--active {
   color: #2563eb;
   border-bottom-color: #2563eb;
 }
 
-.pd-sidebar__tab:disabled {
+.pf-sidebar__tab:disabled {
   opacity: 0.4;
   cursor: default;
 }
 
-.pd-sidebar__content {
+.pf-sidebar__content {
   padding: 0.75rem;
 }
 
-.pd-sidebar__heading {
+.pf-sidebar__heading {
   font-size: 13px;
   font-weight: 600;
   margin: 0 0 0.5rem;
   color: #374151;
 }
 
-.pd-sidebar__tab-content p {
+.pf-sidebar__tab-content p {
   margin: 0;
   color: #6b7280;
   font-size: 13px;
@@ -169,13 +169,13 @@
 
 /* ── Add tools ───────────────────────────────────────────────────────────── */
 
-.pd-add-tools {
+.pf-add-tools {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.pd-add-tools__btn {
+.pf-add-tools__btn {
   padding: 0.5rem 0.75rem;
   border: 1px solid #d1d5db;
   border-radius: 4px;
@@ -186,31 +186,31 @@
   text-align: left;
 }
 
-.pd-add-tools__btn:hover:not(:disabled) {
+.pf-add-tools__btn:hover:not(:disabled) {
   border-color: #2563eb;
   color: #2563eb;
 }
 
-.pd-add-tools__btn--active {
+.pf-add-tools__btn--active {
   border-color: #2563eb;
   background: #eff6ff;
   color: #2563eb;
 }
 
-.pd-add-tools__btn:disabled {
+.pf-add-tools__btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
 /* ── Element properties ──────────────────────────────────────────────────── */
 
-.pd-element__props {
+.pf-element__props {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.pd-element__field {
+.pf-element__field {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -218,13 +218,13 @@
   font-size: 13px;
 }
 
-.pd-element__field span {
+.pf-element__field span {
   color: #6b7280;
   flex-shrink: 0;
 }
 
-.pd-element__field select,
-.pd-element__field input[type="number"] {
+.pf-element__field select,
+.pf-element__field input[type="number"] {
   width: 120px;
   padding: 0.25rem 0.5rem;
   border: 1px solid #d1d5db;
@@ -232,7 +232,7 @@
   font-size: 13px;
 }
 
-.pd-element__field input[type="color"] {
+.pf-element__field input[type="color"] {
   width: 40px;
   height: 28px;
   padding: 0;
@@ -241,13 +241,13 @@
   cursor: pointer;
 }
 
-.pd-element__color-swatches {
+.pf-element__color-swatches {
   display: flex;
   gap: 4px;
   flex-wrap: wrap;
 }
 
-.pd-element__swatch {
+.pf-element__swatch {
   width: 24px;
   height: 24px;
   border: 2px solid #d1d5db;
@@ -256,17 +256,17 @@
   padding: 0;
 }
 
-.pd-element__swatch--active {
+.pf-element__swatch--active {
   border-color: #2563eb;
   box-shadow: 0 0 0 1px #2563eb;
 }
 
-.pd-element__toggles {
+.pf-element__toggles {
   display: flex;
   gap: 4px;
 }
 
-.pd-element__toggle {
+.pf-element__toggle {
   width: 32px;
   height: 32px;
   border: 1px solid #d1d5db;
@@ -278,13 +278,13 @@
   font-weight: 600;
 }
 
-.pd-element__toggle--active {
+.pf-element__toggle--active {
   background: #eff6ff;
   border-color: #2563eb;
   color: #2563eb;
 }
 
-.pd-element__delete-btn {
+.pf-element__delete-btn {
   margin-top: 0.75rem;
   padding: 0.4rem 0.75rem;
   background: #fee2e2;
@@ -295,19 +295,19 @@
   font-size: 13px;
 }
 
-.pd-element__delete-btn:hover {
+.pf-element__delete-btn:hover {
   background: #fecaca;
 }
 
 /* ── Views ───────────────────────────────────────────────────────────────── */
 
-.pd-views {
+.pf-views {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
 }
 
-.pd-views__btn {
+.pf-views__btn {
   padding: 0.4rem 0.75rem;
   border: 1px solid #d1d5db;
   border-radius: 4px;
@@ -318,7 +318,7 @@
   text-align: left;
 }
 
-.pd-views__btn--active {
+.pf-views__btn--active {
   border-color: #2563eb;
   background: #eff6ff;
   color: #2563eb;
@@ -327,7 +327,7 @@
 
 /* ── Save button ─────────────────────────────────────────────────────────── */
 
-.pd-designer__save-btn {
+.pf-designer__save-btn {
   padding: 0.6rem 1rem;
   background: #2563eb;
   color: #fff;
@@ -338,37 +338,37 @@
   font-weight: 500;
 }
 
-.pd-designer__save-btn:hover:not(:disabled) {
+.pf-designer__save-btn:hover:not(:disabled) {
   background: #1d4ed8;
 }
 
-.pd-designer__save-btn:disabled {
+.pf-designer__save-btn:disabled {
   opacity: 0.5;
   cursor: default;
 }
 
-.pd-designer__save-btn--saved {
+.pf-designer__save-btn--saved {
   background: #16a34a;
   opacity: 1 !important;
 }
 
-.pd-designer__save-btn--saved:hover {
+.pf-designer__save-btn--saved:hover {
   background: #16a34a;
 }
 
 /* ── Focus styles for keyboard navigation ────────────────────────────────── */
 
-.pd-designer button:focus-visible,
-.pd-designer [role="tab"]:focus-visible,
-.pd-designer input:focus-visible,
-.pd-designer select:focus-visible {
+.pf-designer button:focus-visible,
+.pf-designer [role="tab"]:focus-visible,
+.pf-designer input:focus-visible,
+.pf-designer select:focus-visible {
   outline: 2px solid #1e88e5;
   outline-offset: 2px;
 }
 
 /* ── Screen-reader only utility ──────────────────────────────────────────── */
 
-.pd-sr-only {
+.pf-sr-only {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -382,7 +382,7 @@
 
 /* ── Error ────────────────────────────────────────────────────────────────── */
 
-.pd-designer__error {
+.pf-designer__error {
   padding: 0.5rem 0.75rem;
   background: #fee2e2;
   color: #dc2626;
@@ -393,7 +393,7 @@
 
 /* ── Cart integration: design-required state ────────────────────────────── */
 
-.single_add_to_cart_button.pd-design-required {
+.single_add_to_cart_button.pf-design-required {
   position: relative;
   opacity: 0.6;
   cursor: not-allowed;
