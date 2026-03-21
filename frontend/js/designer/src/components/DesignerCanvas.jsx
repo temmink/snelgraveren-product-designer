@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 import { __ } from '@wordpress/i18n';
-import { Canvas as FabricCanvas, Rect, IText, FabricImage, loadSVGFromString, util, cache as fabricCache } from 'fabric';
+import { Canvas as FabricCanvas, Rect, IText, FabricImage, PencilBrush, loadSVGFromString, util, cache as fabricCache } from 'fabric';
 import useDesignerStore from '../store/useDesignerStore';
 import { uploadFile } from '../api/designerApi';
 import useCanvasScale from '../hooks/useCanvasScale';
@@ -40,6 +40,7 @@ export default function DesignerCanvas() {
     template, currentViewIndex, activeTool,
     canvasSnapshots, snapshotView, setActiveTool,
     setSelectedObject, setError, setTriggerFileUpload, setFabricCanvasRef,
+    drawingStrokeColor, drawingStrokeWidth,
   } = useDesignerStore();
 
   const currentView = template?.views?.[currentViewIndex];
@@ -77,6 +78,20 @@ export default function DesignerCanvas() {
   }, [undo, redo]);
 
   // ── Zone helpers ──────────────────────────────────────────────────────────
+
+  const findZoneForObject = useCallback((obj) => {
+    const bound = obj.getBoundingRect();
+    const cx = bound.left + bound.width / 2;
+    const cy = bound.top + bound.height / 2;
+    for (let i = 0; i < zones.length; i++) {
+      const z = zones[i];
+      if (z.behavior !== 'restrict') continue;
+      if (cx >= z.x && cx <= z.x + z.width && cy >= z.y && cy <= z.y + z.height) {
+        return i;
+      }
+    }
+    return null;
+  }, [zones]);
 
   const findZoneForPoint = useCallback((x, y, elementType) => {
     for (let i = 0; i < zones.length; i++) {
@@ -692,6 +707,103 @@ export default function DesignerCanvas() {
       setError(err.message);
     }
   }, [findFirstZoneForType, zones, template, applyPermissions, applyZoneClip, clampToZone, snapshotView, currentViewIndex, setError]);
+
+  // ── Tool: draw (PencilBrush) ───────────────────────────────────────────────
+
+  useEffect(() => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+
+    if (activeTool === 'draw') {
+      canvas.isDrawingMode = true;
+      const brush = new PencilBrush(canvas);
+      brush.color = useDesignerStore.getState().drawingStrokeColor;
+      brush.width = useDesignerStore.getState().drawingStrokeWidth;
+      canvas.freeDrawingBrush = brush;
+    } else {
+      canvas.isDrawingMode = false;
+    }
+  }, [activeTool]);
+
+  // Update brush when stroke settings change
+  useEffect(() => {
+    const canvas = fabricRef.current;
+    if (!canvas || !canvas.freeDrawingBrush) return;
+    canvas.freeDrawingBrush.color = drawingStrokeColor;
+    canvas.freeDrawingBrush.width = drawingStrokeWidth;
+  }, [drawingStrokeColor, drawingStrokeWidth]);
+
+  // Handle completed drawn paths
+  useEffect(() => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+
+    const onPathCreated = ({ path }) => {
+      const zi = findZoneForObject(path);
+      path.set({ data: { elementType: 'drawing', zoneIndex: zi } });
+
+      if (zi != null) {
+        applyZoneClip(path, zi);
+      }
+
+      pushHistoryRef.current?.();
+      snapshotViewRef.current?.(currentViewIndexRef.current, canvas.toJSON(['data']));
+    };
+
+    canvas.on('path:created', onPathCreated);
+    return () => {
+      canvas.off('path:created', onPathCreated);
+    };
+  }, [currentViewIndex, findZoneForObject, applyZoneClip]);
+
+  // ── Tool: erase (click drawn paths to remove) ─────────────────────────────
+
+  useEffect(() => {
+    const canvas = fabricRef.current;
+    if (!canvas || activeTool !== 'erase') return;
+
+    let hoveredPath = null;
+
+    const handleMouseMove = (opt) => {
+      const target = canvas.findTarget(opt.e);
+      if (hoveredPath && hoveredPath !== target) {
+        hoveredPath.set({ opacity: 1 });
+        canvas.renderAll();
+      }
+      if (target && target.data?.elementType === 'drawing') {
+        hoveredPath = target;
+        target.set({ opacity: 0.4 });
+        canvas.renderAll();
+      } else {
+        hoveredPath = null;
+      }
+    };
+
+    const handleMouseDown = (opt) => {
+      const target = canvas.findTarget(opt.e);
+      if (target && target.data?.elementType === 'drawing') {
+        pushHistoryRef.current?.();
+        canvas.remove(target);
+        canvas.renderAll();
+        snapshotViewRef.current?.(currentViewIndexRef.current, canvas.toJSON(['data']));
+        hoveredPath = null;
+      }
+    };
+
+    canvas.on('mouse:move', handleMouseMove);
+    canvas.on('mouse:down', handleMouseDown);
+    canvas.defaultCursor = 'crosshair';
+
+    return () => {
+      canvas.off('mouse:move', handleMouseMove);
+      canvas.off('mouse:down', handleMouseDown);
+      canvas.defaultCursor = 'default';
+      if (hoveredPath) {
+        hoveredPath.set({ opacity: 1 });
+        canvas.renderAll();
+      }
+    };
+  }, [activeTool, currentViewIndex]);
 
   // Called by AddTab via store
   const triggerFileUpload = useCallback((elementType) => {
