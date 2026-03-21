@@ -3,6 +3,8 @@ import { __ } from '@wordpress/i18n';
 import { Canvas as FabricCanvas, Rect, IText, FabricImage, loadSVGFromString, util } from 'fabric';
 import useDesignerStore from '../store/useDesignerStore';
 import { uploadFile } from '../api/designerApi';
+import useCanvasScale from '../hooks/useCanvasScale';
+import useIsMobile from '../hooks/useIsMobile';
 
 // Fabric.js 6.x uses PascalCase in JSON but lowercase-hyphenated at runtime.
 // Accept both forms for safe whitelist filtering.
@@ -42,6 +44,10 @@ export default function DesignerCanvas() {
   const snapshotViewRef    = useRef(null);
   const currentViewIndexRef = useRef(0);
 
+  const isMobile = useIsMobile();
+  const isMobileRef = useRef(isMobile);
+  isMobileRef.current = isMobile; // keep ref in sync for event handlers
+
   const {
     template, currentViewIndex, activeTool,
     canvasSnapshots, snapshotView, setActiveTool,
@@ -52,6 +58,10 @@ export default function DesignerCanvas() {
   const zones = currentView?.zones_config || [];
   const globalConfig = template?.global_config || {};
   const permissions = globalConfig.permissions || {};
+
+  const canvasWidth = currentView?.canvas_width || 800;
+  const canvasHeight = currentView?.canvas_height || 600;
+  const { scale, containerRef: scaleContainerRef } = useCanvasScale(canvasWidth);
 
   // ── Zone helpers ──────────────────────────────────────────────────────────
 
@@ -218,6 +228,25 @@ export default function DesignerCanvas() {
     });
     fabricRef.current = canvas;
     setFabricCanvasRef(canvas);
+
+    // Disable multi-select on mobile (too error-prone with touch)
+    if (isMobileRef.current) {
+      canvas.selection = false;
+    }
+
+    // Apply mobile-friendly controls to every object added to the canvas
+    canvas.on('object:added', (e) => {
+      const obj = e.target;
+      if (!isMobileRef.current || !obj || obj.data?.isZoneOverlay) return;
+      obj.set({
+        cornerSize: 28,
+        touchCornerSize: 40,
+        cornerStyle: 'circle',
+        transparentCorners: false,
+        cornerColor: '#2563eb',
+        borderColor: '#2563eb',
+      });
+    });
 
     let disposed = false;
     let canvasReady = false;
@@ -435,6 +464,19 @@ export default function DesignerCanvas() {
     };
   }, [currentViewIndex, template]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Apply responsive zoom via Fabric.js (NOT CSS transform — that breaks pointer math)
+  useEffect(() => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+
+    canvas.setZoom(scale);
+    canvas.setDimensions(
+      { width: canvasWidth * scale, height: canvasHeight * scale },
+      { cssOnly: true }
+    );
+    canvas.renderAll();
+  }, [scale, canvasWidth, canvasHeight]);
+
   // ── Tool: add-text on canvas click ────────────────────────────────────────
 
   useEffect(() => {
@@ -550,7 +592,7 @@ export default function DesignerCanvas() {
   }, [triggerFileUpload, setTriggerFileUpload]);
 
   return (
-    <div className="pf-canvas-wrap">
+    <div className="pf-canvas-wrap" ref={scaleContainerRef}>
       <div className="pf-canvas-scroll">
         <canvas ref={canvasEl} />
       </div>
