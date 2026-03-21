@@ -111,6 +111,8 @@ const useDesignerStore = create((set) => ({
       solidFillColor: null,
       error: null,
       historyByView: {},
+      drawingStrokeWidth: 3,
+      drawingStrokeColor: '#000000',
     }),
 }));
 
