@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { __ } from '@wordpress/i18n';
 import useTemplateStore from '../store/useTemplateStore';
+import UpgradePrompt from './UpgradePrompt';
 import SettingsGeneral from './settings/SettingsGeneral';
 import SettingsColors from './settings/SettingsColors';
 import SettingsFonts from './settings/SettingsFonts';
@@ -9,6 +10,8 @@ import SettingsAssets from './settings/SettingsAssets';
 import SettingsUploads from './settings/SettingsUploads';
 import SettingsPricing from './settings/SettingsPricing';
 import SettingsPermissions from './settings/SettingsPermissions';
+
+const isPremium = window.pfTemplateBuilder?.isPremium;
 
 const SECTIONS = [
   { id: 'general',     label: 'General' },
@@ -32,19 +35,29 @@ export default function GlobalSettings() {
       case 'general':
         return <SettingsGeneral globalConfig={globalConfig} update={update} />;
       case 'colors':
-        return <SettingsColors globalConfig={globalConfig} update={update} colorPalettes={colorPalettes} setColorPalettes={setColorPalettes} />;
+        return isPremium
+          ? <SettingsColors globalConfig={globalConfig} update={update} colorPalettes={colorPalettes} setColorPalettes={setColorPalettes} />
+          : <UpgradePrompt feature="product_colors" description={__('Configure product color palettes and element color modes with Pro.', 'productforge')} />;
       case 'fonts':
-        return <SettingsFonts globalConfig={globalConfig} update={update} />;
+        return isPremium
+          ? <SettingsFonts globalConfig={globalConfig} update={update} />
+          : <UpgradePrompt feature="custom_fonts" description={__('Upload custom fonts for your designs with Pro.', 'productforge')} />;
       case 'tools':
         return <SettingsTools globalConfig={globalConfig} update={update} />;
       case 'assets':
-        return <SettingsAssets globalConfig={globalConfig} update={update} clipartCollections={clipartCollections} setClipartCollections={setClipartCollections} />;
+        return isPremium
+          ? <SettingsAssets globalConfig={globalConfig} update={update} clipartCollections={clipartCollections} setClipartCollections={setClipartCollections} />
+          : <UpgradePrompt feature="clipart" description={__('Create clip art libraries for customers with Pro.', 'productforge')} />;
       case 'uploads':
         return <SettingsUploads globalConfig={globalConfig} update={update} />;
       case 'pricing':
-        return <SettingsPricing globalConfig={globalConfig} update={update} />;
+        return isPremium
+          ? <SettingsPricing globalConfig={globalConfig} update={update} />
+          : <UpgradePrompt feature="pricing" description={__('Add design surcharges and per-element pricing with Pro.', 'productforge')} />;
       case 'permissions':
-        return <SettingsPermissions globalConfig={globalConfig} update={update} />;
+        return isPremium
+          ? <SettingsPermissions globalConfig={globalConfig} update={update} />
+          : <UpgradePrompt feature="permissions" description={__('Fine-tune element permissions per type with Pro.', 'productforge')} />;
       default:
         return null;
     }
