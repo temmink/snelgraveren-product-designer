@@ -10,7 +10,7 @@ export default function Sidebar() {
   const { selectedObject } = useDesignerStore();
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState('views');
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(isMobile);
 
   // Auto-switch to Element tab when object selected
   useEffect(() => {

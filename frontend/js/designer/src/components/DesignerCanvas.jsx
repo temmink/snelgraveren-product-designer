@@ -61,7 +61,7 @@ export default function DesignerCanvas() {
 
   const canvasWidth = currentView?.canvas_width || 800;
   const canvasHeight = currentView?.canvas_height || 600;
-  const { scale, containerRef: scaleContainerRef } = useCanvasScale(canvasWidth);
+  const { scale, containerRef: scaleContainerRef } = useCanvasScale(canvasWidth, canvasHeight);
 
   // ── Zone helpers ──────────────────────────────────────────────────────────
 
@@ -276,10 +276,14 @@ export default function DesignerCanvas() {
               evented:     false,
               data:        { zoneIndex: index, isZoneOverlay: true },
             });
-            // Show a subtle boundary outline so customers can see the design area.
+            // Show a boundary outline so customers can see the design area.
+            // Use stronger visibility on mobile where the canvas is smaller.
             // Child paths get the visible stroke; group stroke is nulled (Fabric draws group stroke as a bounding rect).
+            const zoneFill = isMobileRef.current ? 'rgba(0, 0, 0, 0.06)' : 'rgba(0, 0, 0, 0.03)';
+            const zoneStroke = isMobileRef.current ? '#aaaaaa' : '#cccccc';
+            const zoneStrokeWidth = isMobileRef.current ? 2 : 1;
             if (group.getObjects) {
-              group.getObjects().forEach((c) => c.set({ fill: 'rgba(0, 0, 0, 0.03)', stroke: '#cccccc', strokeWidth: 1, strokeUniform: true }));
+              group.getObjects().forEach((c) => c.set({ fill: zoneFill, stroke: zoneStroke, strokeWidth: zoneStrokeWidth, strokeUniform: true }));
             }
             group.set({ stroke: null, strokeWidth: 0 });
             canvas.add(group);
@@ -465,15 +469,18 @@ export default function DesignerCanvas() {
   }, [currentViewIndex, template]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Apply responsive zoom via Fabric.js (NOT CSS transform — that breaks pointer math)
+  // We change BOTH the backing canvas dimensions AND the zoom level together.
+  // Using cssOnly would cause double-scaling: zoom shrinks objects in the 800px buffer,
+  // then CSS shrinks the 800px buffer again to the target size.
   useEffect(() => {
     const canvas = fabricRef.current;
     if (!canvas) return;
 
     canvas.setZoom(scale);
-    canvas.setDimensions(
-      { width: canvasWidth * scale, height: canvasHeight * scale },
-      { cssOnly: true }
-    );
+    canvas.setDimensions({
+      width: canvasWidth * scale,
+      height: canvasHeight * scale,
+    });
     canvas.renderAll();
   }, [scale, canvasWidth, canvasHeight]);
 
