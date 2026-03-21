@@ -18,6 +18,71 @@ const DEFAULT = {
   svg_fill_editable: false,
 };
 
+function FillColorPicker({ value, onChange, onClear, globalConfig }) {
+  const { colorPalettes } = useTemplateStore();
+
+  // Resolve product color palette if configured
+  const productEnabled = globalConfig.product_colors_enabled || false;
+  const productMode    = globalConfig.product_color_mode || 'individual';
+  const productColors  = globalConfig.product_allowed_colors || [];
+  const paletteId      = globalConfig.product_color_palette_id || '';
+
+  let swatches = [];
+  if (productEnabled) {
+    if (productMode === 'individual' && productColors.length > 0) {
+      swatches = productColors;
+    } else if (productMode === 'palette' && paletteId) {
+      const palette = colorPalettes.find((p) => p.id === paletteId);
+      if (palette?.colors?.length > 0) {
+        swatches = palette.colors;
+      }
+    }
+    // mode === 'all' → no swatches, fall through to free picker
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+      {swatches.length > 0 ? (
+        <>
+          {swatches.map((c) => (
+            <button
+              key={c}
+              type="button"
+              style={{
+                width: 28, height: 28, padding: 0,
+                backgroundColor: c,
+                border: value === c ? '3px solid #2271b1' : '1px solid #8c8f94',
+                borderRadius: 3, cursor: 'pointer',
+              }}
+              title={c}
+              onClick={() => onChange(c)}
+            />
+          ))}
+          {onClear && (
+            <button type="button" className="button button-small" onClick={onClear}>
+              { __( 'Clear', 'productforge' ) }
+            </button>
+          )}
+        </>
+      ) : (
+        <>
+          <input
+            type="color"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            style={{ width: 32, height: 28, padding: 0, border: '1px solid #8c8f94', borderRadius: 3, cursor: 'pointer' }}
+          />
+          {onClear && (
+            <button type="button" className="button button-small" onClick={onClear}>
+              { __( 'Clear', 'productforge' ) }
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChange }) {
   const { globalConfig, customFonts } = useTemplateStore();
   const [data, setData] = useState({ ...DEFAULT, ...initialData });
@@ -179,23 +244,12 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
               </label>
               <label className="pf-zone-form__field">
                 <span>{ __( 'Fill Color', 'productforge' ) }</span>
-                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                  <input
-                    type="color"
-                    value={data.svg_fill_color || '#ffffff'}
-                    onChange={(e) => set('svg_fill_color', e.target.value)}
-                    style={{ width: 32, height: 28, padding: 0, border: '1px solid #8c8f94', borderRadius: 3, cursor: 'pointer' }}
-                  />
-                  {data.svg_fill_color && (
-                    <button
-                      type="button"
-                      className="button button-small"
-                      onClick={() => set('svg_fill_color', '')}
-                    >
-                      { __( 'Clear', 'productforge' ) }
-                    </button>
-                  )}
-                </div>
+                <FillColorPicker
+                  value={data.svg_fill_color || '#ffffff'}
+                  onChange={(color) => set('svg_fill_color', color)}
+                  onClear={data.svg_fill_color ? () => set('svg_fill_color', '') : null}
+                  globalConfig={globalConfig}
+                />
               </label>
               <label className="pf-zone-form__check">
                 <input
