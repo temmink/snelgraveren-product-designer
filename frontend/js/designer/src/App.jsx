@@ -205,12 +205,30 @@ export default function App() {
   // WooCommerce triggers 'added_to_cart' (AJAX) or does a full page reload (non-AJAX).
   useEffect(() => {
     const handleAddedToCart = () => {
-      // Clear canvas on the live Fabric instance
-      const canvas = useDesignerStore.getState().fabricCanvasRef;
+      const store = useDesignerStore.getState();
+      const canvas = store.fabricCanvasRef;
       if (canvas) {
+        // Remove user-added elements
         const userObjects = canvas.getObjects().filter((o) => !o.data?.isZone && !o.data?.isZoneOverlay && !o.data?.isBackground);
         userObjects.forEach((o) => canvas.remove(o));
         canvas.discardActiveObject();
+
+        // Reset zone overlay fill colors to admin defaults
+        const views = store.template?.views || [];
+        const currentView = views[store.currentViewIndex];
+        const zones = currentView?.zones_config || [];
+        canvas.getObjects().forEach((obj) => {
+          if (obj.data?.isZoneOverlay) {
+            const zone = zones[obj.data.zoneIndex];
+            const defaultColor = zone?.svg_fill_color || 'rgba(0, 0, 0, 0.03)';
+            if (obj.getObjects) {
+              obj.getObjects().forEach((c) => c.set({ fill: defaultColor }));
+            }
+            obj.set({ fill: defaultColor });
+            obj.dirty = true;
+          }
+        });
+
         canvas.renderAll();
       }
 
