@@ -31,6 +31,10 @@ class ExportManager {
      * Auto-export designs when order reaches the configured trigger status.
      */
     public function on_order_status_changed(int $order_id, string $from, string $to, \WC_Order $order): void {
+        if ( ! ProductForge::has_feature( 'auto_export' ) ) {
+            return;
+        }
+
         $trigger_status = get_option('pf_export_trigger_status', 'completed');
         if ($to !== $trigger_status) {
             return;
