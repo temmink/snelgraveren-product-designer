@@ -83,3 +83,18 @@ export async function fetchCustomFonts() {
   if (!res.ok) return [];
   return res.json();
 }
+
+export async function fetchClipartCollections() {
+  const res = await fetch(apiUrl('/clipart/collections'));
+  if (!res.ok) return [];
+  const collections = await res.json();
+  // Fetch items for each collection
+  const withItems = await Promise.all(
+    collections.map(async (c) => {
+      const res2 = await fetch(apiUrl(`/clipart/collections/${c.id}`));
+      if (!res2.ok) return { ...c, items: [] };
+      return res2.json();
+    })
+  );
+  return withItems;
+}

@@ -64,6 +64,12 @@ const useDesignerStore = create((set) => ({
 
   setFabricCanvasRef: (ref) => set({ fabricCanvasRef: ref }),
 
+  clipartCollections: [],
+  setClipartCollections: (collections) => set({ clipartCollections: collections }),
+
+  addClipart: null,
+  setAddClipart: (fn) => set({ addClipart: fn }),
+
   setZoneFillColor: (zoneIndex, color) =>
     set((s) => ({
       zoneFillColors: { ...s.zoneFillColors, [zoneIndex]: color },
