@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { __ } from '@wordpress/i18n';
 import { Canvas as FabricCanvas } from 'fabric';
 import useDesignerStore from './store/useDesignerStore';
-import { loadTemplate, loadDesign, createDesign, saveDesignView, fetchCustomFonts } from './api/designerApi';
+import { loadTemplate, loadDesign, createDesign, saveDesignView, fetchCustomFonts, fetchClipartCollections } from './api/designerApi';
 import DesignerCanvas from './components/DesignerCanvas';
 import Sidebar from './components/Sidebar';
 import { loadGoogleFonts, loadCustomFonts } from './utils/fonts';
@@ -106,6 +106,18 @@ export default function App() {
         // Set template last — this triggers DesignerCanvas to initialise,
         // and by now any saved design snapshots are already in the store.
         setTemplate(data);
+
+        // Load clip art collections if enabled
+        if (data.global_config?.clipart_enabled) {
+          fetchClipartCollections().then((collections) => {
+            const allowed = data.global_config.allowed_clipart_collections || [];
+            const filtered = allowed.length > 0
+              ? collections.filter((c) => allowed.includes(c.id))
+              : collections;
+            useDesignerStore.getState().setClipartCollections(filtered);
+          }).catch(() => {});
+        }
+
         setLoading(false);
       })
       .catch((err) => {
