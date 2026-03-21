@@ -5,6 +5,7 @@ import useDesignerStore from './store/useDesignerStore';
 import { loadTemplate, loadDesign, createDesign, saveDesignView, fetchCustomFonts, fetchClipartCollections } from './api/designerApi';
 import DesignerCanvas from './components/DesignerCanvas';
 import Sidebar from './components/Sidebar';
+import Toolbar from './components/Toolbar';
 import { loadGoogleFonts, loadCustomFonts } from './utils/fonts';
 import useIsMobile from './hooks/useIsMobile';
 
@@ -488,6 +489,7 @@ export default function App() {
         aria-label={isModal ? __('ProductForge designer', 'productforge') : undefined}
         onClick={isModal ? (e) => { e.stopPropagation(); setDesignerOpen(false); } : undefined}
       >
+        <Toolbar />
         <div className="pf-designer__layout" onClick={isModal ? (e) => e.stopPropagation() : undefined}>
           <DesignerCanvas />
           <div className="pf-designer__sidebar-wrap">

@@ -5,6 +5,7 @@ import useDesignerStore from '../store/useDesignerStore';
 import { uploadFile } from '../api/designerApi';
 import useCanvasScale from '../hooks/useCanvasScale';
 import useIsMobile from '../hooks/useIsMobile';
+import useCanvasHistory from '../hooks/useCanvasHistory';
 
 // Fabric.js 6.x uses PascalCase in JSON but lowercase-hyphenated at runtime.
 // Accept both forms for safe whitelist filtering.
@@ -42,6 +43,7 @@ export default function DesignerCanvas() {
   const clampScaleRef      = useRef(null);
   const snapToGridRef      = useRef(null);
   const snapshotViewRef    = useRef(null);
+  const pushHistoryRef     = useRef(null);
   const currentViewIndexRef = useRef(0);
 
   const isMobile = useIsMobile();
@@ -62,6 +64,27 @@ export default function DesignerCanvas() {
   const canvasWidth = currentView?.canvas_width || 800;
   const canvasHeight = currentView?.canvas_height || 600;
   const { containerRef: scaleContainerRef } = useCanvasScale(canvasWidth, canvasHeight, fabricRef);
+
+  // Pass fabricRef (the ref object) so useCanvasHistory always reads .current at call time,
+  // avoiding stale closures from null captured at mount.
+  const { pushHistory, undo, redo } = useCanvasHistory(fabricRef, currentViewIndex);
+
+  // ── Keyboard shortcut: undo/redo ──────────────────────────────────────────
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          redo();
+        } else {
+          undo();
+        }
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [undo, redo]);
 
   // ── Zone helpers ──────────────────────────────────────────────────────────
 
@@ -209,6 +232,7 @@ export default function DesignerCanvas() {
   clampScaleRef.current       = clampScaleToZone;
   snapToGridRef.current       = snapToGrid;
   snapshotViewRef.current     = snapshotView;
+  pushHistoryRef.current      = pushHistory;
   currentViewIndexRef.current = currentViewIndex;
 
   // ── Canvas init ───────────────────────────────────────────────────────────
@@ -429,7 +453,10 @@ export default function DesignerCanvas() {
     });
 
     canvas.on('object:modified', () => {
-      if (!disposed) snapshotViewRef.current?.(currentViewIndexRef.current, canvas.toJSON(['data']));
+      if (!disposed) {
+        snapshotViewRef.current?.(currentViewIndexRef.current, canvas.toJSON(['data']));
+        pushHistoryRef.current?.();
+      }
     });
 
     // Enforce max_chars on in-canvas text editing
@@ -446,7 +473,10 @@ export default function DesignerCanvas() {
     });
 
     canvas.on('object:removed', () => {
-      if (!disposed) snapshotViewRef.current?.(currentViewIndexRef.current, canvas.toJSON(['data']));
+      if (!disposed) {
+        snapshotViewRef.current?.(currentViewIndexRef.current, canvas.toJSON(['data']));
+        pushHistoryRef.current?.();
+      }
     });
 
     canvas.on('selection:created', (e) => {

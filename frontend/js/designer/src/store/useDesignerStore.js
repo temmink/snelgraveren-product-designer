@@ -79,6 +79,27 @@ const useDesignerStore = create((set) => ({
   setSolidFillColor: (color) =>
     set({ solidFillColor: color, isDirty: true }),
 
+  // History state for undo/redo (per view)
+  historyByView: {},   // { [viewIndex]: { undoStack: [], redoStack: [] } }
+
+  // Drawing tool state (populated further in Task 3)
+  drawingStrokeWidth: 3,
+  drawingStrokeColor: '#000000',
+  setDrawingStrokeWidth: (w) => set({ drawingStrokeWidth: w }),
+  setDrawingStrokeColor: (c) => set({ drawingStrokeColor: c }),
+
+  pushHistory: (viewIndex, json) =>
+    set((s) => {
+      const viewHistory = s.historyByView[viewIndex] || { undoStack: [], redoStack: [] };
+      const undoStack = [...viewHistory.undoStack, json].slice(-30); // Max 30
+      return {
+        historyByView: {
+          ...s.historyByView,
+          [viewIndex]: { undoStack, redoStack: [] },
+        },
+      };
+    }),
+
   // Reset design state for a fresh customization (after add-to-cart)
   resetDesign: () =>
     set({
@@ -89,6 +110,7 @@ const useDesignerStore = create((set) => ({
       zoneFillColors: {},
       solidFillColor: null,
       error: null,
+      historyByView: {},
     }),
 }));
 
