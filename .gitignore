@@ -5,6 +5,7 @@ dist/
 *.zip
 .DS_Store
 .superpowers/
+.worktrees/
 tests/e2e/.auth/
 test-results/
 playwright-report/
