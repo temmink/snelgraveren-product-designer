@@ -35,3 +35,26 @@ export const templateApi = {
   updateView: (templateId, viewId, data)   => request('PUT',    `templates/${templateId}/views/${viewId}`, data),
   deleteView: (templateId, viewId)         => request('DELETE', `templates/${templateId}/views/${viewId}`),
 };
+
+// Fonts
+export const fontApi = {
+  list: () => request('GET', 'fonts'),
+
+  upload: async (file, family) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('family', family);
+
+    const res = await fetch(`${base()}pf/v1/fonts`, {
+      method: 'POST',
+      headers: { 'X-WP-Nonce': nonce() },
+      body: formData,
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.message || 'Font upload failed');
+    return data;
+  },
+
+  deleteFamily: (family) => request('DELETE', `fonts/family/${encodeURIComponent(family)}`),
+};

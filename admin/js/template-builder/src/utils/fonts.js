@@ -82,3 +82,58 @@ export function loadGoogleFonts(fontFamilies) {
     document.head.appendChild(link);
   }
 }
+
+/**
+ * Escape a string for safe use inside CSS single-quoted values.
+ */
+function cssEscape(str) {
+  return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
+/**
+ * Inject @font-face rules for custom-uploaded fonts.
+ * @param {Array} customFonts — from GET /pf/v1/fonts: [{family, files: [{file_url, format}]}]
+ */
+export function loadCustomFonts(customFonts) {
+  if (!customFonts || customFonts.length === 0) return;
+
+  const styleId = 'pf-custom-fonts';
+  let style = document.getElementById(styleId);
+
+  const css = customFonts
+    .map((font) => {
+      const sources = font.files
+        .map((f) => `url('${cssEscape(f.file_url)}') format('${cssEscape(f.format)}')`)
+        .join(',\n       ');
+      return `@font-face {
+  font-family: '${cssEscape(font.family)}';
+  src: ${sources};
+  font-display: swap;
+}`;
+    })
+    .join('\n\n');
+
+  if (style) {
+    style.textContent = css;
+  } else {
+    style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = css;
+    document.head.appendChild(style);
+  }
+}
+
+/**
+ * Merge custom fonts into AVAILABLE_FONTS for the font picker.
+ * Returns a new array with custom fonts appended.
+ */
+export function mergeCustomFonts(customFonts) {
+  return [
+    ...AVAILABLE_FONTS,
+    ...customFonts.map((f) => ({
+      family: f.family,
+      category: 'custom',
+      source: 'custom',
+    })),
+  ];
+}
