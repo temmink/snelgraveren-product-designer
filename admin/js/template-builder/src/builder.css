@@ -799,6 +799,15 @@
 }
 
 /* ── Settings panel ────────────────────────────────────────────────────── */
+.pf-settings { display: flex; gap: 0; min-height: 400px; }
+.pf-settings__nav { width: 140px; background: #f9fafb; border-right: 1px solid #e5e7eb; padding: 8px 0; flex-shrink: 0; }
+.pf-settings__nav-btn { display: block; width: 100%; padding: 8px 14px; border: none; background: none; text-align: left; cursor: pointer; font-size: 13px; color: #666; }
+.pf-settings__nav-btn--active { background: white; border-left: 3px solid #2271b1; color: #2271b1; font-weight: 600; }
+.pf-settings__nav-btn:hover:not(.pf-settings__nav-btn--active) { background: #f0f0f0; }
+.pf-settings__content { flex: 1; padding: 16px; overflow-y: auto; }
+.pf-settings__section-title { margin: 0 0 4px; font-size: 15px; }
+.pf-settings__section-desc { color: #888; font-size: 12px; margin: 0 0 16px; }
+
 .pf-settings__fieldset {
   border: 1px solid #dcdcde;
   border-radius: 4px;
