@@ -153,27 +153,58 @@ class RestTemplates {
             $global_config = json_decode($global_config, true) ?: [];
         }
 
-        // Resolve palette colors so the frontend always gets a flat allowed_colors array.
-        $color_mode = $global_config['color_mode'] ?? 'individual';
-        if ($color_mode === 'all') {
-            $global_config['any_color'] = true;
-            $global_config['allowed_colors'] = [];
-        } elseif ($color_mode === 'palette') {
+        // Migrate legacy single color picker to split product/element pickers
+        if (!isset($global_config['product_colors_enabled']) && !isset($global_config['element_colors_enabled'])) {
+            $enabled    = $global_config['colors_enabled'] ?? false;
+            $mode       = $global_config['color_mode'] ?? 'individual';
             $palette_id = $global_config['color_palette_id'] ?? '';
-            $palettes   = get_option('pf_color_palettes', []);
-            $palette    = null;
-            foreach ($palettes as $p) {
-                if (($p['id'] ?? '') === $palette_id) {
-                    $palette = $p;
-                    break;
-                }
-            }
-            $global_config['allowed_colors'] = $palette ? ($palette['colors'] ?? []) : [];
-            $global_config['any_color'] = false;
-        }
-        // For 'individual' mode, allowed_colors is already set correctly.
+            $colors     = $global_config['allowed_colors'] ?? [];
 
-        // Remove internal palette fields from public response.
+            $global_config['product_colors_enabled']   = $enabled;
+            $global_config['product_color_mode']       = $mode;
+            $global_config['product_color_palette_id'] = $palette_id;
+            $global_config['product_allowed_colors']   = $colors;
+
+            $global_config['element_colors_enabled']   = $enabled;
+            $global_config['element_color_mode']       = $mode;
+            $global_config['element_color_palette_id'] = $palette_id;
+            $global_config['element_allowed_colors']   = $colors;
+        }
+
+        // Resolve both color pickers to flat arrays for the frontend
+        $palettes = get_option('pf_color_palettes', []);
+
+        foreach (['product', 'element'] as $prefix) {
+            $mode       = $global_config["{$prefix}_color_mode"] ?? 'individual';
+            $palette_id = $global_config["{$prefix}_color_palette_id"] ?? '';
+
+            if ($mode === 'all') {
+                $global_config["{$prefix}_any_color"]      = true;
+                $global_config["{$prefix}_allowed_colors"] = [];
+            } elseif ($mode === 'palette') {
+                $resolved = [];
+                foreach ($palettes as $p) {
+                    if (($p['id'] ?? '') === $palette_id) {
+                        $resolved = $p['colors'] ?? [];
+                        break;
+                    }
+                }
+                $global_config["{$prefix}_allowed_colors"] = $resolved;
+                $global_config["{$prefix}_any_color"]      = false;
+            } else {
+                // individual mode — allowed_colors already set
+                $global_config["{$prefix}_any_color"] = false;
+            }
+
+            // Remove internal fields from public response
+            unset($global_config["{$prefix}_color_mode"], $global_config["{$prefix}_color_palette_id"]);
+        }
+
+        // Also set legacy fields for backwards compatibility with older frontend cache
+        $global_config['any_color']      = $global_config['product_any_color'] ?? false;
+        $global_config['allowed_colors'] = $global_config['product_allowed_colors'] ?? [];
+
+        // Remove legacy internal fields
         unset($global_config['color_mode'], $global_config['color_palette_id']);
 
         $response = rest_ensure_response([

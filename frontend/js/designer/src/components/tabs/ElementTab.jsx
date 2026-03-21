@@ -19,7 +19,7 @@ export default function ElementTab() {
 
   return (
     <div className="pf-sidebar__tab-content">
-      {editableZones.length > 0 && (
+      {(globalConfig.product_colors_enabled || globalConfig.colors_enabled) && editableZones.length > 0 && (
         <ZoneFillSection
           zones={zones}
           editableZones={editableZones}
@@ -115,8 +115,9 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
   }, [fabricObj]);
 
   const allowedFonts = globalConfig.allowed_fonts || [];
-  const allowedColors = globalConfig.allowed_colors || [];
-  const anyColor = globalConfig.any_color || false;
+  const elementColorsEnabled = globalConfig.element_colors_enabled ?? globalConfig.colors_enabled ?? true;
+  const allowedColors = globalConfig.element_allowed_colors || globalConfig.allowed_colors || [];
+  const anyColor = globalConfig.element_any_color ?? globalConfig.any_color ?? false;
 
   return (
     <div className="pf-element__props">
@@ -155,7 +156,7 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
       </label>
 
       {/* Color */}
-      {perms.recolor !== false && (
+      {elementColorsEnabled && perms.recolor !== false && (
         <label className="pf-element__field">
           <span>{__('Color', 'productforge')}</span>
           {anyColor ? (
@@ -296,8 +297,9 @@ function AlignmentButtons({ fabricObj, template, currentViewIndex, snapshotView 
 function ImageProperties({ fabricObj, type, perms, globalConfig, snapshotView, currentViewIndex }) {
   const scalePercent = Math.round((fabricObj.scaleX || 1) * 100);
 
-  const allowedColors = globalConfig.allowed_colors || [];
-  const anyColor = globalConfig.any_color || false;
+  const elementColorsEnabled = globalConfig.element_colors_enabled ?? globalConfig.colors_enabled ?? true;
+  const allowedColors = globalConfig.element_allowed_colors || globalConfig.allowed_colors || [];
+  const anyColor = globalConfig.element_any_color ?? globalConfig.any_color ?? false;
   const [fill, setFill] = useState('');
 
   const applyRecolor = useCallback((color) => {
@@ -328,7 +330,7 @@ function ImageProperties({ fabricObj, type, perms, globalConfig, snapshotView, c
       </div>
 
       {/* SVG recolor */}
-      {type === 'svg' && perms.recolor !== false && !fabricObj.data?.clipartNoRecolor && (
+      {type === 'svg' && elementColorsEnabled && perms.recolor !== false && !fabricObj.data?.clipartNoRecolor && (
         <label className="pf-element__field">
           <span>{__('Tint Color', 'productforge')}</span>
           {anyColor || allowedColors.length === 0 ? (
@@ -363,9 +365,8 @@ function ImageProperties({ fabricObj, type, perms, globalConfig, snapshotView, c
 }
 
 function ZoneFillSection({ zones, editableZones, globalConfig, fabricCanvasRef, zoneFillColors, setZoneFillColor, snapshotView, currentViewIndex }) {
-  const allowedColors = globalConfig.allowed_colors || [];
-  const anyColor = globalConfig.any_color || false;
-  const colorsEnabled = globalConfig.colors_enabled || false;
+  const allowedColors = globalConfig.product_allowed_colors || globalConfig.allowed_colors || [];
+  const anyColor = globalConfig.product_any_color ?? globalConfig.any_color ?? false;
   const isSolid = globalConfig.solid_color || false;
 
   const applyColor = useCallback((zoneIndex, color) => {
@@ -422,7 +423,7 @@ function ZoneFillSection({ zones, editableZones, globalConfig, fabricCanvasRef, 
         return (
           <label key={zoneIndex} className="pf-element__field">
             {!isSolid && <span>{zone.name || `Zone ${zoneIndex + 1}`}</span>}
-            {colorsEnabled && !anyColor && allowedColors.length > 0 ? (
+            {!anyColor && allowedColors.length > 0 ? (
               <div className="pf-element__color-swatches">
                 {allowedColors.map((c) => (
                   <button

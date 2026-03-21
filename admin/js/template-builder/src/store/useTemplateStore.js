@@ -31,9 +31,13 @@ const DEFAULT_GLOBAL_CONFIG = {
 };
 
 /**
- * Migrate old any_color / allowed_colors fields to the new color_mode system.
+ * Migrate old color config fields to the split product/element color picker system.
+ *
+ * Legacy keys (colors_enabled, color_mode, color_palette_id, allowed_colors, any_color)
+ * are migrated to both product_* and element_* namespaces when the new keys are absent.
  */
 function migrateGlobalConfig(config) {
+  // Legacy: derive color_mode from any_color / allowed_colors if not set
   if (!config.color_mode) {
     if (config.any_color) {
       config.color_mode = 'all';
@@ -43,6 +47,25 @@ function migrateGlobalConfig(config) {
       config.color_mode = 'individual';
     }
   }
+
+  // Migrate single color picker to split product/element pickers
+  if (config.product_colors_enabled === undefined && config.element_colors_enabled === undefined) {
+    const enabled   = config.colors_enabled || false;
+    const mode      = config.color_mode || 'individual';
+    const paletteId = config.color_palette_id || '';
+    const colors    = config.allowed_colors || [];
+
+    config.product_colors_enabled   = enabled;
+    config.product_color_mode       = mode;
+    config.product_color_palette_id = paletteId;
+    config.product_allowed_colors   = [...colors];
+
+    config.element_colors_enabled   = enabled;
+    config.element_color_mode       = mode;
+    config.element_color_palette_id = paletteId;
+    config.element_allowed_colors   = [...colors];
+  }
+
   return config;
 }
 

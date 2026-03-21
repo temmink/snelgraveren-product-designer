@@ -10,10 +10,6 @@ export default function GlobalSettings() {
   const { globalConfig, setGlobalConfig, colorPalettes, setColorPalettes, clipartCollections, setClipartCollections } = useTemplateStore();
   const {
     customization_required = false,
-    colors_enabled    = false,
-    color_mode        = 'individual',
-    color_palette_id  = '',
-    allowed_colors    = [],
     fonts_enabled     = false,
     max_file_size_mb  = 10,
     min_width         = 0,
@@ -23,15 +19,7 @@ export default function GlobalSettings() {
   } = globalConfig;
 
   const update = (key, value) => setGlobalConfig({ [key]: value });
-  const [pendingColor, setPendingColor] = useState('#000000');
-  const [showPaletteManager, setShowPaletteManager] = useState(false);
   const [showCollectionManager, setShowCollectionManager] = useState(false);
-
-  const addColor = (hex) => {
-    if (hex && !allowed_colors.includes(hex)) {
-      update('allowed_colors', [...allowed_colors, hex]);
-    }
-  };
 
   const toggleImageType = (type) => {
     const types = allowed_image_types.includes(type)
@@ -67,110 +55,23 @@ export default function GlobalSettings() {
         </p>
       </fieldset>
 
-      <fieldset className="pf-settings__fieldset">
-        <legend>{ __( 'Color Picker', 'productforge' ) }</legend>
-        <label className="pf-settings__check">
-          <input type="checkbox" checked={colors_enabled}
-            onChange={(e) => update('colors_enabled', e.target.checked)} />
-          { __( 'Enable color picker', 'productforge' ) }
-        </label>
-        {colors_enabled && (
-          <>
-            <div className="pf-settings__color-mode">
-              <label className="pf-settings__label">
-                { __( 'Color mode', 'productforge' ) }
-                <select
-                  value={color_mode}
-                  onChange={(e) => update('color_mode', e.target.value)}
-                  className="pf-settings__select"
-                >
-                  <option value="all">{ __( 'All colors (full picker)', 'productforge' ) }</option>
-                  <option value="palette">{ __( 'Use a color palette', 'productforge' ) }</option>
-                  <option value="individual">{ __( 'Individual colors', 'productforge' ) }</option>
-                </select>
-              </label>
-            </div>
+      <ColorModeFieldset
+        legend={__('Colorpicker Product', 'productforge')}
+        prefix="product"
+        globalConfig={globalConfig}
+        update={update}
+        colorPalettes={colorPalettes}
+        setColorPalettes={setColorPalettes}
+      />
 
-            {color_mode === 'palette' && (
-              <div className="pf-settings__palette-select">
-                <label className="pf-settings__label">
-                  { __( 'Palette', 'productforge' ) }
-                  <div className="pf-settings__palette-row">
-                    <select
-                      value={color_palette_id}
-                      onChange={(e) => update('color_palette_id', e.target.value)}
-                      className="pf-settings__select"
-                    >
-                      <option value="">{ __( '— Select a palette —', 'productforge' ) }</option>
-                      {colorPalettes.map((p) => (
-                        <option key={p.id} value={p.id}>{p.name} ({p.colors.length} { __( 'colors', 'productforge' ) })</option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      className="button button-small"
-                      onClick={() => setShowPaletteManager(!showPaletteManager)}
-                    >
-                      { showPaletteManager ? __( 'Close', 'productforge' ) : __( 'Manage Palettes', 'productforge' ) }
-                    </button>
-                  </div>
-                </label>
-                {color_palette_id && (() => {
-                  const selected = colorPalettes.find((p) => p.id === color_palette_id);
-                  if (!selected) return null;
-                  return (
-                    <div className="pf-settings__swatches" style={{ marginTop: 8 }}>
-                      {selected.colors.map((c) => (
-                        <span key={c} className="pf-settings__swatch pf-settings__swatch--preview" style={{ background: c, cursor: 'default' }} title={c} />
-                      ))}
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
-
-            {color_mode === 'individual' && (
-              <div className="pf-settings__swatches">
-                {allowed_colors.map((color) => (
-                  <button
-                    key={color}
-                    className="pf-settings__swatch"
-                    style={{ background: color }}
-                    title={`Remove ${color}`}
-                    onClick={() => update('allowed_colors', allowed_colors.filter((c) => c !== color))}
-                    aria-label={`Remove color ${color}`}
-                  />
-                ))}
-                <div className="pf-settings__color-add">
-                  <input
-                    type="color"
-                    className="pf-settings__color-input"
-                    value={pendingColor}
-                    onChange={(e) => setPendingColor(e.target.value)}
-                    title={ __( 'Pick a color', 'productforge' ) }
-                    aria-label={ __( 'Pick a color', 'productforge' ) }
-                  />
-                  <button
-                    type="button"
-                    className="button button-small"
-                    onClick={() => addColor(pendingColor)}
-                    aria-label={ __( 'Add selected color', 'productforge' ) }
-                  >
-                    { __( 'Add', 'productforge' ) }
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {(color_mode === 'palette' && showPaletteManager) && (
-              <PaletteManager
-                palettes={colorPalettes}
-                onUpdate={setColorPalettes}
-              />
-            )}
-          </>
-        )}
-      </fieldset>
+      <ColorModeFieldset
+        legend={__('Colorpicker Elements', 'productforge')}
+        prefix="element"
+        globalConfig={globalConfig}
+        update={update}
+        colorPalettes={colorPalettes}
+        setColorPalettes={setColorPalettes}
+      />
 
       <fieldset className="pf-settings__fieldset">
         <legend>{ __( 'Font Picker', 'productforge' ) }</legend>
@@ -303,6 +204,129 @@ export default function GlobalSettings() {
         </div>
       </fieldset>
     </div>
+  );
+}
+
+function ColorModeFieldset({ legend, prefix, globalConfig, update, colorPalettes, setColorPalettes }) {
+  const enabled       = globalConfig[`${prefix}_colors_enabled`] || false;
+  const colorMode     = globalConfig[`${prefix}_color_mode`] || 'individual';
+  const paletteId     = globalConfig[`${prefix}_color_palette_id`] || '';
+  const allowedColors = globalConfig[`${prefix}_allowed_colors`] || [];
+
+  const [pendingColor, setPendingColor] = useState('#000000');
+  const [showPaletteManager, setShowPaletteManager] = useState(false);
+
+  const addColor = (hex) => {
+    if (hex && !allowedColors.includes(hex)) {
+      update(`${prefix}_allowed_colors`, [...allowedColors, hex]);
+    }
+  };
+
+  return (
+    <fieldset className="pf-settings__fieldset">
+      <legend>{legend}</legend>
+      <label className="pf-settings__check">
+        <input type="checkbox" checked={enabled}
+          onChange={(e) => update(`${prefix}_colors_enabled`, e.target.checked)} />
+        { __( 'Enable color picker', 'productforge' ) }
+      </label>
+      {enabled && (
+        <>
+          <div className="pf-settings__color-mode">
+            <label className="pf-settings__label">
+              { __( 'Color mode', 'productforge' ) }
+              <select
+                value={colorMode}
+                onChange={(e) => update(`${prefix}_color_mode`, e.target.value)}
+                className="pf-settings__select"
+              >
+                <option value="all">{ __( 'All colors (full picker)', 'productforge' ) }</option>
+                <option value="palette">{ __( 'Use a color palette', 'productforge' ) }</option>
+                <option value="individual">{ __( 'Individual colors', 'productforge' ) }</option>
+              </select>
+            </label>
+          </div>
+
+          {colorMode === 'palette' && (
+            <div className="pf-settings__palette-select">
+              <label className="pf-settings__label">
+                { __( 'Palette', 'productforge' ) }
+                <div className="pf-settings__palette-row">
+                  <select
+                    value={paletteId}
+                    onChange={(e) => update(`${prefix}_color_palette_id`, e.target.value)}
+                    className="pf-settings__select"
+                  >
+                    <option value="">{ __( '— Select a palette —', 'productforge' ) }</option>
+                    {colorPalettes.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name} ({p.colors.length} { __( 'colors', 'productforge' ) })</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="button button-small"
+                    onClick={() => setShowPaletteManager(!showPaletteManager)}
+                  >
+                    { showPaletteManager ? __( 'Close', 'productforge' ) : __( 'Manage Palettes', 'productforge' ) }
+                  </button>
+                </div>
+              </label>
+              {paletteId && (() => {
+                const selected = colorPalettes.find((p) => p.id === paletteId);
+                if (!selected) return null;
+                return (
+                  <div className="pf-settings__swatches" style={{ marginTop: 8 }}>
+                    {selected.colors.map((c) => (
+                      <span key={c} className="pf-settings__swatch pf-settings__swatch--preview" style={{ background: c, cursor: 'default' }} title={c} />
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+          {colorMode === 'individual' && (
+            <div className="pf-settings__swatches">
+              {allowedColors.map((color) => (
+                <button
+                  key={color}
+                  className="pf-settings__swatch"
+                  style={{ background: color }}
+                  title={`Remove ${color}`}
+                  onClick={() => update(`${prefix}_allowed_colors`, allowedColors.filter((c) => c !== color))}
+                  aria-label={`Remove color ${color}`}
+                />
+              ))}
+              <div className="pf-settings__color-add">
+                <input
+                  type="color"
+                  className="pf-settings__color-input"
+                  value={pendingColor}
+                  onChange={(e) => setPendingColor(e.target.value)}
+                  title={ __( 'Pick a color', 'productforge' ) }
+                  aria-label={ __( 'Pick a color', 'productforge' ) }
+                />
+                <button
+                  type="button"
+                  className="button button-small"
+                  onClick={() => addColor(pendingColor)}
+                  aria-label={ __( 'Add selected color', 'productforge' ) }
+                >
+                  { __( 'Add', 'productforge' ) }
+                </button>
+              </div>
+            </div>
+          )}
+
+          {(colorMode === 'palette' && showPaletteManager) && (
+            <PaletteManager
+              palettes={colorPalettes}
+              onUpdate={setColorPalettes}
+            />
+          )}
+        </>
+      )}
+    </fieldset>
   );
 }
 
