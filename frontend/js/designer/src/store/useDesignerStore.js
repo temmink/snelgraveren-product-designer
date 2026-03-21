@@ -78,6 +78,18 @@ const useDesignerStore = create((set) => ({
 
   setSolidFillColor: (color) =>
     set({ solidFillColor: color, isDirty: true }),
+
+  // Reset design state for a fresh customization (after add-to-cart)
+  resetDesign: () =>
+    set({
+      designHash: null,
+      isDirty: false,
+      canvasSnapshots: {},
+      selectedObject: null,
+      zoneFillColors: {},
+      solidFillColor: null,
+      error: null,
+    }),
 }));
 
 export default useDesignerStore;

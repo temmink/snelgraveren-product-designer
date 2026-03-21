@@ -201,6 +201,36 @@ export default function App() {
     }
   }, [designerOpen]);
 
+  // Reset designer after successful add-to-cart so the next customization creates a new design.
+  // WooCommerce triggers 'added_to_cart' (AJAX) or does a full page reload (non-AJAX).
+  useEffect(() => {
+    const handleAddedToCart = () => {
+      // Clear canvas on the live Fabric instance
+      const canvas = useDesignerStore.getState().fabricCanvasRef;
+      if (canvas) {
+        const userObjects = canvas.getObjects().filter((o) => !o.data?.isZone && !o.data?.isZoneOverlay && !o.data?.isBackground);
+        userObjects.forEach((o) => canvas.remove(o));
+        canvas.discardActiveObject();
+        canvas.renderAll();
+      }
+
+      // Remove the hidden input so a fresh design can be created
+      const input = document.querySelector('input[name="pf_design_hash"]');
+      if (input) input.remove();
+
+      // Reset store state
+      useDesignerStore.getState().resetDesign();
+      setDesignSaved(false);
+      setSavedRecently(false);
+    };
+
+    // jQuery event fired by WooCommerce AJAX add-to-cart
+    if (window.jQuery) {
+      window.jQuery(document.body).on('added_to_cart.productforge', handleAddedToCart);
+      return () => window.jQuery(document.body).off('added_to_cart.productforge', handleAddedToCart);
+    }
+  }, []);
+
   // Dispatch viewport events for mobile zoom lock (PHP inline script listens)
   useEffect(() => {
     if (designerOpen) {
