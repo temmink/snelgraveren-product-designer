@@ -310,8 +310,13 @@ export default function DesignerCanvas() {
             // Use stronger visibility on mobile where the canvas is smaller.
             // Child paths get the visible stroke; group stroke is nulled (Fabric draws group stroke as a bounding rect).
             // For solid color products, use the shared color across all views.
-            const solidColor = useDesignerStore.getState().solidFillColor;
+            // If solidFillColor hasn't been set yet, initialize it from this zone's default.
+            let solidColor = useDesignerStore.getState().solidFillColor;
             const isSolid = globalConfig.solid_color;
+            if (isSolid && !solidColor && zone.svg_fill_color && zone.svg_fill_editable) {
+              solidColor = zone.svg_fill_color;
+              useDesignerStore.getState().setSolidFillColor(solidColor);
+            }
             const zoneFill = (isSolid && solidColor) || zone.svg_fill_color || (isMobileRef.current ? 'rgba(0, 0, 0, 0.06)' : 'rgba(0, 0, 0, 0.03)');
             const zoneStroke = isMobileRef.current ? '#aaaaaa' : '#cccccc';
             const zoneStrokeWidth = isMobileRef.current ? 2 : 1;
@@ -321,22 +326,26 @@ export default function DesignerCanvas() {
             group.set({ stroke: null, strokeWidth: 0 });
 
             // Remove any duplicate zone overlay from a loaded snapshot (async SVG fetch
-            // completes after loadFromJSON, creating duplicates). Preserve its fill color
-            // so the customer's color choice is retained.
+            // completes after loadFromJSON, creating duplicates). Match by zone index
+            // or by position. Preserve the customer's fill color from the snapshot.
             const dupes = canvas.getObjects().filter(
-              (o) => o !== group && o.type === 'group' && !o.data?.isZoneOverlay
-                && Math.abs((o.left || 0) - (group.left || 0)) < 2
-                && Math.abs((o.top || 0) - (group.top || 0)) < 2
-                && o._objects?.length === group._objects?.length
+              (o) => o !== group && (o.type === 'group' || o.type === 'Group')
+                && (o.data?.zoneIndex === index
+                  || (Math.abs((o.left || 0) - (group.left || 0)) < 2
+                      && Math.abs((o.top || 0) - (group.top || 0)) < 2
+                      && o._objects?.length === group._objects?.length))
             );
             dupes.forEach((dupe) => {
-              // Carry over the customer-chosen fill color from the snapshot version.
-              const dupeFill = dupe._objects?.[0]?.fill;
-              if (dupeFill && dupeFill !== zoneFill) {
-                group.getObjects().forEach((c) => c.set({ fill: dupeFill }));
-                useDesignerStore.setState((s) => ({
-                  zoneFillColors: { ...s.zoneFillColors, [index]: dupeFill },
-                }));
+              // Carry over the customer-chosen fill color from the snapshot version,
+              // unless we already have the correct solid color.
+              if (!isSolid || !solidColor) {
+                const dupeFill = dupe._objects?.[0]?.fill;
+                if (dupeFill && dupeFill !== zoneFill) {
+                  group.getObjects().forEach((c) => c.set({ fill: dupeFill }));
+                  useDesignerStore.setState((s) => ({
+                    zoneFillColors: { ...s.zoneFillColors, [index]: dupeFill },
+                  }));
+                }
               }
               canvas.remove(dupe);
             });
@@ -424,18 +433,28 @@ export default function DesignerCanvas() {
       const filtered = filterFabricJson(existing);
       canvas.loadFromJSON(filtered).then(() => {
         if (!disposed) {
+          // For solid color products, apply the shared color to all zone overlays
+          // regardless of what the snapshot contained (it may be stale).
+          const latestSolidColor = useDesignerStore.getState().solidFillColor;
+          const isSolidProduct = globalConfig.solid_color;
+
           // Sync zone fill colors from restored zone overlay objects.
           const fills = {};
           canvas.getObjects().forEach((obj) => {
-            if (obj.data?.isZoneOverlay && obj.data?.svgFillEditable) {
+            if (obj.data?.isZoneOverlay) {
               const children = obj.getObjects?.();
-              if (children?.length > 0) {
+              if (isSolidProduct && latestSolidColor && children?.length > 0) {
+                // Override with the solid color for consistency across views
+                children.forEach((c) => c.set({ fill: latestSolidColor }));
+                obj.dirty = true;
+              }
+              if (obj.data?.svgFillEditable && children?.length > 0) {
                 fills[obj.data.zoneIndex] = children[0].fill;
               }
             }
           });
           if (Object.keys(fills).length > 0) {
-            useDesignerStore.getState().setZoneFillColor && Object.entries(fills).forEach(([idx, color]) => {
+            Object.entries(fills).forEach(([idx, color]) => {
               useDesignerStore.setState((s) => ({ zoneFillColors: { ...s.zoneFillColors, [idx]: color } }));
             });
           }

@@ -425,7 +425,8 @@ function ZoneFillSection({ zones, editableZones, globalConfig, fabricCanvasRef, 
         const updated = {
           ...snap,
           objects: snap.objects.map((obj) => {
-            if (obj.type === 'Group' || obj.type === 'group') {
+            // Only recolor zone overlay groups, not clip-art or other groups
+            if ((obj.type === 'Group' || obj.type === 'group') && obj.data?.isZoneOverlay) {
               return {
                 ...obj,
                 fill: color,
