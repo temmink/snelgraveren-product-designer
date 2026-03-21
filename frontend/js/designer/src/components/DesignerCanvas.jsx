@@ -6,13 +6,7 @@ import { uploadFile } from '../api/designerApi';
 import useCanvasScale from '../hooks/useCanvasScale';
 import useIsMobile from '../hooks/useIsMobile';
 import useCanvasHistory from '../hooks/useCanvasHistory';
-
-// Fabric.js 6.x uses PascalCase in JSON but lowercase-hyphenated at runtime.
-// Accept both forms for safe whitelist filtering.
-const ALLOWED_FABRIC_TYPES = new Set([
-  'IText', 'Image', 'Rect', 'Path', 'Group',
-  'i-text', 'image', 'rect', 'path', 'group',
-]);
+import { filterFabricJson } from '../utils/fabricJson';
 
 // Infer element type from Fabric object type when data.elementType is missing
 // (e.g. designs saved before data serialisation was added).
@@ -23,14 +17,6 @@ function inferElementType(obj) {
   if (t === 'image') return 'image';
   if (t === 'path' || t === 'group') return 'svg';
   return 'unknown';
-}
-
-function filterFabricJson(json) {
-  if (!json || !json.objects) return json;
-  return {
-    ...json,
-    objects: json.objects.filter((obj) => ALLOWED_FABRIC_TYPES.has(obj.type)),
-  };
 }
 
 export default function DesignerCanvas() {
@@ -73,6 +59,10 @@ export default function DesignerCanvas() {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // Don't intercept undo/redo during text input or IText editing
+      if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
+      if (fabricRef.current?.getActiveObject()?.isEditing) return;
+
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         e.preventDefault();
         if (e.shiftKey) {

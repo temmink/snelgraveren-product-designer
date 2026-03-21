@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react';
 import useDesignerStore from '../store/useDesignerStore';
+import { filterFabricJson } from '../utils/fabricJson';
 
 export default function useCanvasHistory(fabricCanvasRef, currentViewIndex) {
   const debounceTimer = useRef(null);
@@ -18,7 +19,7 @@ export default function useCanvasHistory(fabricCanvasRef, currentViewIndex) {
   const applySnapshot = useCallback((snapshot) => {
     const canvas = fabricCanvasRef.current;
     if (!canvas || !snapshot) return;
-    canvas.loadFromJSON(snapshot).then(() => {
+    canvas.loadFromJSON(filterFabricJson(snapshot)).then(() => {
       canvas.getObjects().forEach((obj) => {
         if (obj.data?.isZone || obj.data?.isZoneOverlay || obj.data?.isBackground) {
           obj.set({ selectable: false, evented: false });
