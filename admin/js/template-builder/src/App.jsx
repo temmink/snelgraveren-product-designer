@@ -11,10 +11,12 @@ import GlobalSettings from './components/GlobalSettings';
 import { loadGoogleFonts, loadCustomFonts } from './utils/fonts';
 import { fontApi, paletteApi, clipartApi } from './api/templateApi';
 
+const isPremium = window.pfTemplateBuilder?.isPremium;
+
 const TABS = [
   { label: __( 'Structure',   'productforge' ), Component: TreePanel },
-  { label: __( 'Permissions', 'productforge' ), Component: PermissionsPanel },
-  { label: __( 'Pricing',     'productforge' ), Component: PricingPanel },
+  ...(isPremium ? [{ label: __( 'Permissions', 'productforge' ), Component: PermissionsPanel }] : []),
+  ...(isPremium ? [{ label: __( 'Pricing',     'productforge' ), Component: PricingPanel }] : []),
   { label: __( 'Settings',    'productforge' ), Component: GlobalSettings },
 ];
 

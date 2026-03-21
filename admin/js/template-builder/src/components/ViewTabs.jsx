@@ -2,6 +2,8 @@ import React, { useState, useRef } from 'react';
 import { __ } from '@wordpress/i18n';
 import useTemplateStore from '../store/useTemplateStore';
 
+const isPremium = window.pfTemplateBuilder?.isPremium;
+
 export default function ViewTabs() {
   const {
     views, currentViewIndex, isSaving,
@@ -105,9 +107,11 @@ export default function ViewTabs() {
         className="pf-builder__view-tab-add"
         onClick={handleAdd}
         aria-label={ __( 'Add view', 'productforge' ) }
-        disabled={isSaving}
+        disabled={isSaving || (!isPremium && views.length >= 1)}
+        title={!isPremium && views.length >= 1 ? __( 'Multiple views require Pro', 'productforge' ) : ''}
       >
         { __( '+ Add View', 'productforge' ) }
+        {!isPremium && views.length >= 1 && <span style={{ marginLeft: 4, fontSize: 10, opacity: 0.7 }}>Pro</span>}
       </button>
     </div>
   );

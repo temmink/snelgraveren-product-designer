@@ -4,6 +4,8 @@ import { extractSvgBoundingBox } from '../utils/svgPathUtils';
 import useTemplateStore from '../store/useTemplateStore';
 import { AVAILABLE_FONTS, mergeCustomFonts } from '../utils/fonts';
 
+const isPremium = window.pfTemplateBuilder?.isPremium;
+
 const DEFAULT = {
   name: '', type: 'safe_area',
   x: 0, y: 0, width: 200, height: 200,
@@ -160,7 +162,7 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
           onChange={(e) => set('boundary_type', e.target.value)}
         >
           <option value="rect">{ __( 'Rectangle', 'productforge' ) }</option>
-          <option value="svg">{ __( 'SVG Shape', 'productforge' ) }</option>
+          {isPremium && <option value="svg">{ __( 'SVG Shape', 'productforge' ) }</option>}
         </select>
       </label>
 
