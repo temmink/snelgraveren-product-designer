@@ -280,8 +280,59 @@ function AddLayerInline({ zone, onAdd, onCancel }) {
   );
 }
 
+function resolveElementColors(globalConfig, colorPalettes) {
+  const enabled = globalConfig.element_colors_enabled ?? globalConfig.colors_enabled ?? true;
+  if (!enabled) return { enabled: false, anyColor: false, colors: [] };
+
+  const mode = globalConfig.element_color_mode || globalConfig.color_mode || 'all';
+  if (mode === 'all') return { enabled: true, anyColor: true, colors: [] };
+
+  if (mode === 'palette') {
+    const paletteId = globalConfig.element_color_palette_id || globalConfig.color_palette_id || '';
+    const palette = (colorPalettes || []).find((p) => p.id === paletteId);
+    return { enabled: true, anyColor: false, colors: palette ? palette.colors : [] };
+  }
+
+  // individual
+  const colors = globalConfig.element_allowed_colors || globalConfig.allowed_colors || [];
+  return { enabled: true, anyColor: false, colors };
+}
+
+function ColorField({ value, onChange, globalConfig, colorPalettes }) {
+  const { enabled, anyColor, colors } = resolveElementColors(globalConfig, colorPalettes);
+
+  if (!enabled) return null;
+
+  if (anyColor || colors.length === 0) {
+    return (
+      <label>
+        { __( 'Color', 'productforge' ) }
+        <input type="color" value={value || '#000000'} onChange={(e) => onChange(e.target.value)} />
+      </label>
+    );
+  }
+
+  return (
+    <div className="pf-tree-panel__color-field">
+      <span className="pf-tree-panel__color-label">{ __( 'Color', 'productforge' ) }</span>
+      <div className="pf-tree-panel__color-swatches">
+        {colors.map((c) => (
+          <button
+            key={c}
+            type="button"
+            className={`pf-tree-panel__color-swatch${value === c ? ' pf-tree-panel__color-swatch--active' : ''}`}
+            style={{ background: c }}
+            onClick={() => onChange(c)}
+            title={c}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function LayerDetail({ layer, onChange }) {
-  const { globalConfig, customFonts } = useTemplateStore();
+  const { globalConfig, customFonts, colorPalettes } = useTemplateStore();
   const allowedFonts = globalConfig.allowed_fonts || [];
   const allFonts = mergeCustomFonts(customFonts);
   // In admin, show allowed fonts if configured, otherwise show all available fonts (including custom)
@@ -309,10 +360,12 @@ function LayerDetail({ layer, onChange }) {
             ))}
           </select>
         </label>
-        <label>
-          { __( 'Color', 'productforge' ) }
-          <input type="color" value={layer.fill || '#000000'} onChange={(e) => onChange({ fill: e.target.value })} />
-        </label>
+        <ColorField
+          value={layer.fill}
+          onChange={(color) => onChange({ fill: color })}
+          globalConfig={globalConfig}
+          colorPalettes={colorPalettes}
+        />
         <label>
           { __( 'X', 'productforge' ) }
           <input type="number" value={layer.left || 0} onChange={(e) => onChange({ left: parseInt(e.target.value, 10) || 0 })} />

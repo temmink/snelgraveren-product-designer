@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { __ } from '@wordpress/i18n';
 import useTemplateStore from './store/useTemplateStore';
 import { templateApi } from './api/templateApi';
@@ -32,6 +32,47 @@ export default function App() {
   const [activeTab,  setActiveTab]  = useState(0);
   const [saveError,  setSaveError]  = useState(null);
   const [isLoading,  setIsLoading]  = useState(false);
+
+  // Resizable sidebar
+  const SIDEBAR_MIN = 320;
+  const SIDEBAR_MAX = 600;
+  const STORAGE_KEY = 'pf_sidebar_width';
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? Math.max(SIDEBAR_MIN, Math.min(SIDEBAR_MAX, parseInt(saved, 10))) : SIDEBAR_MIN;
+  });
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const startWidth = useRef(SIDEBAR_MIN);
+
+  const onDragStart = useCallback((e) => {
+    e.preventDefault();
+    isDragging.current = true;
+    startX.current = e.clientX;
+    startWidth.current = sidebarWidth;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const onMove = (ev) => {
+      if (!isDragging.current) return;
+      const delta = startX.current - ev.clientX; // dragging left = wider sidebar
+      const newWidth = Math.max(SIDEBAR_MIN, Math.min(SIDEBAR_MAX, startWidth.current + delta));
+      setSidebarWidth(newWidth);
+    };
+    const onUp = () => {
+      isDragging.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      setSidebarWidth((w) => {
+        localStorage.setItem(STORAGE_KEY, String(w));
+        return w;
+      });
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  }, [sidebarWidth]);
 
   const templateId = window.pfTemplateBuilder?.templateId || 0;
 
@@ -204,8 +245,14 @@ export default function App() {
           <Canvas />
         </div>
 
+        {/* Drag handle */}
+        <div
+          className="pf-builder__resize-handle"
+          onMouseDown={onDragStart}
+        />
+
         {/* Sidebar */}
-        <div className="pf-builder__sidebar">
+        <div className="pf-builder__sidebar" style={{ width: sidebarWidth }}>
           <nav className="pf-builder__sidebar-nav" role="tablist">
             {TABS.map((tab, i) => (
               <button

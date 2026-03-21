@@ -202,13 +202,42 @@
   background: #e2e4e7;
 }
 
+.pf-builder__resize-handle {
+  width: 6px;
+  flex-shrink: 0;
+  cursor: col-resize;
+  background: #dcdcde;
+  transition: background 0.15s;
+  position: relative;
+  z-index: 2;
+}
+.pf-builder__resize-handle::after {
+  content: '⋮';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 14px;
+  color: #8c8f94;
+  pointer-events: none;
+  line-height: 1;
+}
+.pf-builder__resize-handle:hover,
+.pf-builder__resize-handle:active {
+  background: #2271b1;
+}
+.pf-builder__resize-handle:hover::after,
+.pf-builder__resize-handle:active::after {
+  color: #fff;
+}
+
 .pf-builder__sidebar {
   width: 320px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   background: #fff;
-  border-left: 1px solid #dcdcde;
+  border-left: none;
   overflow: hidden;
 }
 
@@ -479,6 +508,291 @@
 .pf-zone-form__saved {
   font-size: 12px;
   color: #00a32a;
+}
+
+/* ── Tree panel ────────────────────────────────────────────────────────── */
+.pf-tree-panel {
+  padding: 8px;
+}
+
+.pf-tree-panel__empty {
+  color: #888;
+  font-size: 13px;
+  text-align: center;
+  padding: 24px 12px;
+  margin: 0;
+}
+
+.pf-tree-panel__zone-group {
+  margin-bottom: 2px;
+}
+
+.pf-tree-panel__children {
+  border-left: 2px solid #e5e7eb;
+  margin-left: 14px;
+  padding-left: 0;
+}
+
+.pf-tree-panel__footer {
+  padding: 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pf-tree-panel__add-zone-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: 1px dashed #b4b9be;
+  border-radius: 4px;
+  background: none;
+  color: #2271b1;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  width: 100%;
+  justify-content: center;
+}
+.pf-tree-panel__add-zone-btn:hover {
+  border-color: #2271b1;
+  background: #f0f7fc;
+}
+
+/* ── Tree node ─────────────────────────────────────────────────────────── */
+.pf-tree-node {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.1s;
+  user-select: none;
+}
+.pf-tree-node:hover {
+  background: #f0f0f0;
+}
+.pf-tree-node--selected {
+  background: #e8f0fe;
+  box-shadow: inset 3px 0 0 #2271b1;
+}
+.pf-tree-node--selected:hover {
+  background: #dce8f8;
+}
+
+.pf-tree-node--zone {
+  font-weight: 600;
+}
+
+.pf-tree-node__drag {
+  border: none;
+  background: none;
+  color: #b4b9be;
+  cursor: grab;
+  padding: 0 2px;
+  font-size: 14px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.pf-tree-node__drag:hover {
+  color: #50575e;
+}
+.pf-tree-node__drag:active {
+  cursor: grabbing;
+}
+
+.pf-tree-node__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.pf-tree-node--zone .pf-tree-node__icon {
+  background: #e8f0fe;
+  color: #2271b1;
+  font-weight: 700;
+}
+.pf-tree-node--layer .pf-tree-node__icon {
+  background: #f0f0f0;
+  color: #50575e;
+}
+
+.pf-tree-node__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #1e1e1e;
+}
+
+.pf-tree-node__badge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: #f0f0f0;
+  color: #50575e;
+  flex-shrink: 0;
+}
+
+.pf-tree-node__actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.pf-tree-node:hover .pf-tree-node__actions {
+  opacity: 1;
+}
+.pf-tree-node--selected .pf-tree-node__actions {
+  opacity: 1;
+}
+
+.pf-tree-node__action {
+  border: none;
+  background: none;
+  color: #8c8f94;
+  cursor: pointer;
+  padding: 2px 4px;
+  font-size: 14px;
+  line-height: 1;
+  border-radius: 3px;
+  transition: all 0.1s;
+}
+.pf-tree-node__action:hover {
+  background: #e0e0e0;
+  color: #1e1e1e;
+}
+.pf-tree-node__action--danger:hover {
+  background: #fcecec;
+  color: #d63638;
+}
+
+/* ── Add layer inline ──────────────────────────────────────────────────── */
+.pf-tree-panel__add-layer {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 8px;
+  margin-left: 16px;
+}
+.pf-tree-panel__add-layer input,
+.pf-tree-panel__add-layer select {
+  padding: 4px 8px;
+  font-size: 12px;
+  border: 1px solid #8c8f94;
+  border-radius: 3px;
+}
+.pf-tree-panel__add-layer input {
+  flex: 1;
+  min-width: 0;
+}
+.pf-tree-panel__add-layer button {
+  padding: 4px 10px;
+  font-size: 12px;
+  border: 1px solid #8c8f94;
+  border-radius: 3px;
+  background: #f6f7f7;
+  cursor: pointer;
+}
+.pf-tree-panel__add-layer button:first-of-type {
+  background: #2271b1;
+  color: #fff;
+  border-color: #2271b1;
+}
+
+/* ── Tree detail panel ─────────────────────────────────────────────────── */
+.pf-tree-panel__detail {
+  margin-top: 12px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 12px;
+}
+
+.pf-tree-panel__layer-detail {
+  background: #fff;
+  border: 1px solid #dcdcde;
+  border-radius: 4px;
+  padding: 12px;
+}
+.pf-tree-panel__layer-detail h4 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e1e1e;
+}
+.pf-tree-panel__layer-detail label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #50575e;
+  margin-bottom: 10px;
+}
+.pf-tree-panel__layer-detail input,
+.pf-tree-panel__layer-detail select {
+  padding: 4px 8px;
+  font-size: 13px;
+  border: 1px solid #8c8f94;
+  border-radius: 3px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.pf-tree-panel__layer-detail input[type="color"] {
+  width: 100%;
+  height: 32px;
+  padding: 2px;
+  cursor: pointer;
+}
+.pf-tree-panel__layer-detail input[type="number"] {
+  text-align: center;
+}
+
+/* ── Tree color swatches ───────────────────────────────────────────────── */
+.pf-tree-panel__color-field {
+  margin-bottom: 10px;
+}
+.pf-tree-panel__color-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: #50575e;
+  margin-bottom: 4px;
+}
+.pf-tree-panel__color-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.pf-tree-panel__color-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 2px solid #dcdcde;
+  cursor: pointer;
+  padding: 0;
+  transition: border-color 0.1s, transform 0.1s;
+}
+.pf-tree-panel__color-swatch:hover {
+  border-color: #8c8f94;
+  transform: scale(1.1);
+}
+.pf-tree-panel__color-swatch--active {
+  border-color: #2271b1;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #2271b1;
 }
 
 /* ── Layers panel ──────────────────────────────────────────────────────── */
