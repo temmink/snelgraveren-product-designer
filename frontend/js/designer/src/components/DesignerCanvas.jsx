@@ -306,14 +306,24 @@ export default function DesignerCanvas() {
               evented:     false,
               data:        { zoneIndex: index, isZoneOverlay: true, svgFillEditable: !!zone.svg_fill_editable },
             });
+            // Fabric.js 6.x Group.toObject doesn't serialize custom properties like `data`.
+            // Override toObject to ensure `data` is included in canvas.toJSON(['data']).
+            const _origToObject = group.toObject.bind(group);
+            group.toObject = function(propertiesToInclude) {
+              const obj = _origToObject(propertiesToInclude);
+              if (this.data) obj.data = this.data;
+              return obj;
+            };
             // Show a boundary outline so customers can see the design area.
             // Use stronger visibility on mobile where the canvas is smaller.
             // Child paths get the visible stroke; group stroke is nulled (Fabric draws group stroke as a bounding rect).
             // For solid color products, use the shared color across all views.
-            // If solidFillColor hasn't been set yet, initialize it from this zone's default.
+            // If no solidFillColor is set yet and no snapshot exists (fresh product),
+            // initialize from this zone's default color.
             let solidColor = useDesignerStore.getState().solidFillColor;
             const isSolid = globalConfig.solid_color;
-            if (isSolid && !solidColor && zone.svg_fill_color && zone.svg_fill_editable) {
+            const hasSnapshot = !!useDesignerStore.getState().canvasSnapshots[currentViewIndex];
+            if (isSolid && !solidColor && !hasSnapshot && zone.svg_fill_color && zone.svg_fill_editable) {
               solidColor = zone.svg_fill_color;
               useDesignerStore.getState().setSolidFillColor(solidColor);
             }
@@ -336,15 +346,16 @@ export default function DesignerCanvas() {
                       && o._objects?.length === group._objects?.length))
             );
             dupes.forEach((dupe) => {
-              // Carry over the customer-chosen fill color from the snapshot version,
-              // unless we already have the correct solid color.
-              if (!isSolid || !solidColor) {
-                const dupeFill = dupe._objects?.[0]?.fill;
-                if (dupeFill && dupeFill !== zoneFill) {
-                  group.getObjects().forEach((c) => c.set({ fill: dupeFill }));
-                  useDesignerStore.setState((s) => ({
-                    zoneFillColors: { ...s.zoneFillColors, [index]: dupeFill },
-                  }));
+              // Carry over the customer-chosen fill color from the snapshot version.
+              const dupeFill = dupe._objects?.[0]?.fill;
+              if (dupeFill && dupeFill !== zoneFill) {
+                group.getObjects().forEach((c) => c.set({ fill: dupeFill }));
+                useDesignerStore.setState((s) => ({
+                  zoneFillColors: { ...s.zoneFillColors, [index]: dupeFill },
+                }));
+                // For solid color products, also update the shared color.
+                if (isSolid) {
+                  useDesignerStore.getState().setSolidFillColor(dupeFill);
                 }
               }
               canvas.remove(dupe);
@@ -439,18 +450,48 @@ export default function DesignerCanvas() {
           const isSolidProduct = globalConfig.solid_color;
 
           // Sync zone fill colors from restored zone overlay objects.
+          // Zone overlays may have `data.isZoneOverlay` (new saves) or may be
+          // plain Groups without data (old saves). Match by position with zone config.
           const fills = {};
           canvas.getObjects().forEach((obj) => {
+            if (obj.type !== 'group') return;
+            const children = obj.getObjects?.();
+            if (!children?.length) return;
+
+            // Identify zone overlay: by data flag or by position match with zone config
+            let zoneIdx = -1;
+            let isEditable = false;
             if (obj.data?.isZoneOverlay) {
-              const children = obj.getObjects?.();
-              if (isSolidProduct && latestSolidColor && children?.length > 0) {
-                // Override with the solid color for consistency across views
+              zoneIdx = obj.data.zoneIndex;
+              isEditable = !!obj.data.svgFillEditable;
+            } else {
+              // Legacy: match Group position with zone config
+              for (let zi = 0; zi < zones.length; zi++) {
+                const z = zones[zi];
+                if (z.boundary_type === 'svg' && z.svg_url
+                  && Math.abs((obj.left || 0) - (z.x || 0)) < 2
+                  && Math.abs((obj.top || 0) - (z.y || 0)) < 2) {
+                  zoneIdx = zi;
+                  isEditable = !!z.svg_fill_editable;
+                  break;
+                }
+              }
+            }
+            if (zoneIdx < 0) return;
+
+            if (isSolidProduct) {
+              if (latestSolidColor) {
                 children.forEach((c) => c.set({ fill: latestSolidColor }));
                 obj.dirty = true;
+              } else if (isEditable) {
+                const savedColor = children[0]?.fill;
+                if (savedColor) {
+                  useDesignerStore.getState().setSolidFillColor(savedColor);
+                }
               }
-              if (obj.data?.svgFillEditable && children?.length > 0) {
-                fills[obj.data.zoneIndex] = children[0].fill;
-              }
+            }
+            if (isEditable) {
+              fills[zoneIdx] = children[0].fill;
             }
           });
           if (Object.keys(fills).length > 0) {
