@@ -12,6 +12,7 @@ class DbManager {
             100 => Migration100::class,
             200 => Migration200::class,
             300 => Migration300::class,
+            400 => Migration400::class,
         ];
 
         foreach ($migrations as $version => $class) {
