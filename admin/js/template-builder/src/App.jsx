@@ -8,7 +8,8 @@ import TreePanel from './components/TreePanel';
 import PermissionsPanel from './components/PermissionsPanel';
 import PricingPanel from './components/PricingPanel';
 import GlobalSettings from './components/GlobalSettings';
-import { loadGoogleFonts } from './utils/fonts';
+import { loadGoogleFonts, loadCustomFonts } from './utils/fonts';
+import { fontApi } from './api/templateApi';
 
 const TABS = [
   { label: __( 'Structure',   'productforge' ), Component: TreePanel },
@@ -23,6 +24,7 @@ export default function App() {
     views, globalConfig,
     loadFromApi, setTitle, setStatus, setId, setIsSaving, setIsDirty,
     addView, updateView, removedViewIds, clearRemovedViewIds,
+    setCustomFonts,
   } = useTemplateStore();
 
   const [activeTab,  setActiveTab]  = useState(0);
@@ -65,6 +67,14 @@ export default function App() {
       loadGoogleFonts(fonts);
     }
   }, [globalConfig.allowed_fonts]);
+
+  // Load custom fonts on mount
+  useEffect(() => {
+    fontApi.list().then((fonts) => {
+      setCustomFonts(fonts);
+      loadCustomFonts(fonts);
+    }).catch((err) => console.error('Failed to load custom fonts:', err));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSave = async () => {
     if (!title.trim()) {

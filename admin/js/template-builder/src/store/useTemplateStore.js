@@ -90,6 +90,9 @@ const useTemplateStore = create((set, get) => ({
   views: [],
   currentViewIndex: 0,
 
+  // Custom fonts uploaded by the admin
+  customFonts: [],
+
   // UI state
   isDirty: false,
   isSaving: false,
@@ -103,6 +106,8 @@ const useTemplateStore = create((set, get) => ({
   history: {},
 
   // ── Core setters ──────────────────────────────────────────────────────────
+
+  setCustomFonts:      (fonts)  => set({ customFonts: fonts }),
 
   setId:               (id)     => set({ id }),
   setTitle:            (title)  => set({ title, isDirty: true }),

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { __ } from '@wordpress/i18n';
 import useTemplateStore from '../store/useTemplateStore';
-import { AVAILABLE_FONTS } from '../utils/fonts';
+import { AVAILABLE_FONTS, loadCustomFonts, mergeCustomFonts } from '../utils/fonts';
+import { fontApi } from '../api/templateApi';
 
 const IMAGE_TYPES = ['jpg', 'png', 'svg', 'webp'];
 
@@ -163,9 +164,14 @@ export default function GlobalSettings() {
 }
 
 function FontSelector({ allowed, onChange }) {
+  const { customFonts, setCustomFonts } = useTemplateStore();
   const [adding, setAdding] = useState('');
+  const [uploadFamily, setUploadFamily] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
 
-  const available = AVAILABLE_FONTS.filter((f) => !allowed.includes(f.family));
+  const allFonts = mergeCustomFonts(customFonts);
+  const available = allFonts.filter((f) => !allowed.includes(f.family));
 
   const addFont = (family) => {
     if (family && !allowed.includes(family)) {
@@ -176,6 +182,44 @@ function FontSelector({ allowed, onChange }) {
 
   const removeFont = (family) => {
     onChange(allowed.filter((f) => f !== family));
+  };
+
+  const refreshCustomFonts = async () => {
+    const updated = await fontApi.list();
+    setCustomFonts(updated);
+    loadCustomFonts(updated);
+    return updated;
+  };
+
+  const handleUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !uploadFamily.trim()) return;
+
+    setIsUploading(true);
+    setUploadError(null);
+
+    try {
+      await fontApi.upload(file, uploadFamily.trim());
+      await refreshCustomFonts();
+      setUploadFamily('');
+    } catch (err) {
+      setUploadError(err.message);
+    } finally {
+      setIsUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleDeleteCustomFont = async (family) => {
+    try {
+      await fontApi.deleteFamily(family);
+      await refreshCustomFonts();
+      if (allowed.includes(family)) {
+        onChange(allowed.filter((f) => f !== family));
+      }
+    } catch (err) {
+      setUploadError(err.message);
+    }
   };
 
   return (
@@ -198,10 +242,7 @@ function FontSelector({ allowed, onChange }) {
         </div>
       )}
       <div className="pf-settings__font-add">
-        <select
-          value={adding}
-          onChange={(e) => addFont(e.target.value)}
-        >
+        <select value={adding} onChange={(e) => addFont(e.target.value)}>
           <option value="">{ __( 'Add a font...', 'productforge' ) }</option>
           {available.map((f) => (
             <option key={f.family} value={f.family}>
@@ -210,6 +251,59 @@ function FontSelector({ allowed, onChange }) {
           ))}
         </select>
       </div>
+
+      {/* Custom font upload */}
+      <div className="pf-settings__font-upload">
+        <h4>{ __( 'Upload Custom Font', 'productforge' ) }</h4>
+        <div className="pf-settings__font-upload-row">
+          <input
+            type="text"
+            value={uploadFamily}
+            onChange={(e) => setUploadFamily(e.target.value)}
+            placeholder={ __( 'Font family name', 'productforge' ) }
+            className="pf-settings__font-upload-name"
+          />
+          <label className="button button-small pf-settings__font-upload-btn">
+            {isUploading ? __( 'Uploading…', 'productforge' ) : __( 'Choose File', 'productforge' )}
+            <input
+              type="file"
+              accept=".woff2,.woff,.ttf"
+              onChange={handleUpload}
+              disabled={isUploading || !uploadFamily.trim()}
+              style={{ display: 'none' }}
+            />
+          </label>
+        </div>
+        <p className="pf-settings__note">
+          { __( 'Supported formats: .woff2, .woff, .ttf. You can upload multiple files for the same family name (e.g. regular + bold).', 'productforge' ) }
+        </p>
+        {uploadError && <p className="pf-settings__error">{uploadError}</p>}
+      </div>
+
+      {/* List of uploaded custom fonts */}
+      {customFonts.length > 0 && (
+        <div className="pf-settings__font-custom-list">
+          <h4>{ __( 'Uploaded Fonts', 'productforge' ) }</h4>
+          {customFonts.map((font) => (
+            <div key={font.family} className="pf-settings__font-item">
+              <span style={{ fontFamily: `'${font.family}'` }}>{font.family}</span>
+              <span className="pf-settings__note" style={{ marginLeft: '0.5em' }}>
+                ({font.files.length} {font.files.length === 1 ? 'file' : 'files'})
+              </span>
+              <button
+                type="button"
+                className="pf-settings__font-remove"
+                onClick={() => handleDeleteCustomFont(font.family)}
+                aria-label={`Delete ${font.family}`}
+                title={ __( 'Delete font', 'productforge' ) }
+              >
+                &times;
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {allowed.length === 0 && (
         <p className="pf-settings__note">
           { __( "No fonts selected. Customers won't be able to change fonts.", 'productforge' ) }
