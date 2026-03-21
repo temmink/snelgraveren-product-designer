@@ -9,7 +9,7 @@ import PermissionsPanel from './components/PermissionsPanel';
 import PricingPanel from './components/PricingPanel';
 import GlobalSettings from './components/GlobalSettings';
 import { loadGoogleFonts, loadCustomFonts } from './utils/fonts';
-import { fontApi, paletteApi } from './api/templateApi';
+import { fontApi, paletteApi, clipartApi } from './api/templateApi';
 
 const TABS = [
   { label: __( 'Structure',   'productforge' ), Component: TreePanel },
@@ -26,6 +26,7 @@ export default function App() {
     addView, updateView, removedViewIds, clearRemovedViewIds,
     setCustomFonts,
     setColorPalettes,
+    setClipartCollections,
   } = useTemplateStore();
 
   const [activeTab,  setActiveTab]  = useState(0);
@@ -82,6 +83,11 @@ export default function App() {
     paletteApi.list()
       .then(setColorPalettes)
       .catch((err) => console.error('Failed to load color palettes:', err));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Load clip art collections on mount
+  useEffect(() => {
+    clipartApi.listCollections().then((c) => setClipartCollections(c)).catch(() => {});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSave = async () => {

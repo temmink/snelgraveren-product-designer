@@ -66,3 +66,31 @@ export const paletteApi = {
   update: (id, data)   => request('PUT',    `palettes/${id}`, data),
   delete: (id)         => request('DELETE', `palettes/${id}`),
 };
+
+// Clip Art
+export const clipartApi = {
+  listCollections: () => request('GET', 'clipart/collections'),
+  createCollection: (name) => request('POST', 'clipart/collections', { name }),
+  getCollection: (id) => request('GET', `clipart/collections/${id}`),
+  renameCollection: (id, name) => request('PUT', `clipart/collections/${id}`, { name }),
+  deleteCollection: (id) => request('DELETE', `clipart/collections/${id}`),
+
+  upload: async (file, collectionId, name) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('collection_id', collectionId);
+    if (name) formData.append('name', name);
+
+    const res = await fetch(`${base()}pf/v1/clipart`, {
+      method: 'POST',
+      headers: { 'X-WP-Nonce': nonce() },
+      body: formData,
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.message || 'Clip art upload failed');
+    return data;
+  },
+
+  deleteItem: (id) => request('DELETE', `clipart/${id}`),
+};

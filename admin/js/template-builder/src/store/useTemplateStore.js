@@ -112,6 +112,9 @@ const useTemplateStore = create((set, get) => ({
   // Global color palettes (shared across all templates)
   colorPalettes: [],
 
+  // Clip art collections (shared across all templates)
+  clipartCollections: [],
+
   // UI state
   isDirty: false,
   isSaving: false,
@@ -128,6 +131,7 @@ const useTemplateStore = create((set, get) => ({
 
   setCustomFonts:      (fonts)  => set({ customFonts: fonts }),
   setColorPalettes:    (p)     => set({ colorPalettes: p }),
+  setClipartCollections: (collections) => set({ clipartCollections: collections }),
 
   setId:               (id)     => set({ id }),
   setTitle:            (title)  => set({ title, isDirty: true }),
