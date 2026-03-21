@@ -83,6 +83,7 @@ class ProductForge {
             (new API\RestFonts())->register_routes();
             (new API\RestPalettes())->register_routes();
             (new API\RestExports())->register_routes();
+            (new API\RestClipart())->register_routes();
         });
     }
 }
