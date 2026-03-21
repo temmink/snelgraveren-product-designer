@@ -5,6 +5,7 @@ defined('ABSPATH') || exit;
 
 use ProductForge\Export\ExportManager;
 use ProductForge\Database\ExportRepository;
+use ProductForge\ProductForge;
 
 class RestExports {
 
@@ -66,6 +67,13 @@ class RestExports {
         $hash     = $request->get_param('hash');
         $format   = $request->get_param('format') ?: 'pdf';
         $order_id = (int) ($request->get_param('order_id') ?: 0);
+
+        if ( $format === 'pdf' && ! ProductForge::has_feature( 'pdf_export' ) ) {
+            return new \WP_REST_Response( ['error' => __( 'PDF export requires ProductForge Pro.', 'productforge' )], 403 );
+        }
+        if ( $format === 'svg' && ! ProductForge::has_feature( 'svg_export' ) ) {
+            return new \WP_REST_Response( ['error' => __( 'SVG export requires ProductForge Pro.', 'productforge' )], 403 );
+        }
 
         $result = $this->manager()->generate_export($hash, $format, $order_id);
 

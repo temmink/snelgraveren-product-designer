@@ -3,6 +3,8 @@ namespace ProductForge\Frontend;
 
 defined('ABSPATH') || exit;
 
+use ProductForge\ProductForge;
+
 /**
  * Handles WooCommerce order integration for custom designs.
  * Registered in both admin and frontend contexts so design thumbnails
@@ -190,8 +192,11 @@ class OrderIntegration {
         echo '<div class="pf-export-actions" style="margin-top:8px;">';
         echo '<strong style="display:block;margin-bottom:4px;">' . esc_html__('Export Design:', 'productforge') . '</strong>';
 
-        // Export buttons
-        foreach (['pdf', 'png', 'svg'] as $format) {
+        // Export buttons — gate PDF/SVG for Pro
+        foreach (['png', 'pdf', 'svg'] as $format) {
+            if ( $format !== 'png' && ! ProductForge::has_feature( $format . '_export' ) ) {
+                continue;
+            }
             $label = strtoupper($format);
             echo '<button type="button" class="button button-small pf-export-btn" '
                 . 'data-hash="' . esc_attr($hash) . '" '
@@ -201,6 +206,11 @@ class OrderIntegration {
                 . 'style="margin-right:4px;">'
                 . esc_html($label)
                 . '</button>';
+        }
+
+        if ( ! ProductForge::is_premium() ) {
+            echo '<span style="font-size:11px;color:#666;margin-left:4px;">'
+               . esc_html__( 'Pro: PDF & SVG export', 'productforge' ) . '</span>';
         }
 
         // Show existing exports with download links (latest per format only)

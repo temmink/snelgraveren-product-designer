@@ -6,6 +6,7 @@ defined('ABSPATH') || exit;
 use ProductForge\Database\DesignRepository;
 use ProductForge\Database\ExportRepository;
 use ProductForge\Database\TemplateRepository;
+use ProductForge\ProductForge;
 
 class ExportManager {
 
@@ -53,6 +54,13 @@ class ExportManager {
      * @return array{export_id: int, status: string, file_path: string}|array{error: string}
      */
     public function generate_export(string $design_hash, string $format = 'pdf', int $order_id = 0): array {
+        if ( $format === 'pdf' && ! ProductForge::has_feature( 'pdf_export' ) ) {
+            return [ 'error' => __( 'PDF export requires ProductForge Pro.', 'productforge' ) ];
+        }
+        if ( $format === 'svg' && ! ProductForge::has_feature( 'svg_export' ) ) {
+            return [ 'error' => __( 'SVG export requires ProductForge Pro.', 'productforge' ) ];
+        }
+
         $design = $this->designs->get_by_hash($design_hash);
         if (!$design) {
             return ['error' => 'Design not found'];
