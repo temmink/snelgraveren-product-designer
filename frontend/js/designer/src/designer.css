@@ -430,3 +430,154 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* ── Mobile responsive ──────────────────────────────────────────────────── */
+
+@media (max-width: 767px) {
+  /* Stack layout vertically */
+  .pf-designer__layout {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+  }
+
+  /* Canvas takes full width */
+  .pf-canvas-wrap {
+    width: 100%;
+  }
+
+  /* Canvas scroll container should not overflow horizontally */
+  .pf-canvas-scroll {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  /* Sidebar becomes full-width bottom panel */
+  .pf-designer__sidebar-wrap {
+    width: 100%;
+    flex-shrink: 1;
+    gap: 0.5rem;
+  }
+
+  /* Collapsible sidebar — hide both tabs and content when collapsed */
+  .pf-sidebar--collapsed .pf-sidebar__tabs,
+  .pf-sidebar--collapsed .pf-sidebar__content {
+    display: none;
+  }
+
+  .pf-sidebar__collapse-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    background: #f9fafb;
+    border: none;
+    border-top: 1px solid #e5e7eb;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .pf-sidebar__collapse-toggle::after {
+    content: '▲';
+    font-size: 10px;
+    transition: transform 0.2s;
+  }
+
+  .pf-sidebar--collapsed .pf-sidebar__collapse-toggle::after {
+    transform: rotate(180deg);
+  }
+
+  /* Enlarge all interactive elements for touch (44px min target) */
+  .pf-sidebar__tab {
+    padding: 0.75rem 0.25rem;
+    font-size: 14px;
+    min-height: 44px;
+  }
+
+  .pf-add-tools__btn {
+    padding: 0.75rem;
+    font-size: 14px;
+    min-height: 44px;
+  }
+
+  .pf-element__toggle {
+    width: 44px;
+    height: 44px;
+    font-size: 15px;
+  }
+
+  .pf-element__swatch {
+    width: 32px;
+    height: 32px;
+  }
+
+  .pf-element__align-btn {
+    padding: 8px 12px;
+    font-size: 16px;
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .pf-element__delete-btn {
+    padding: 0.75rem;
+    font-size: 14px;
+    min-height: 44px;
+  }
+
+  .pf-views__btn {
+    padding: 0.75rem;
+    font-size: 14px;
+    min-height: 44px;
+  }
+
+  .pf-designer__save-btn {
+    padding: 0.75rem 1rem;
+    font-size: 15px;
+    min-height: 48px;
+  }
+
+  .pf-designer__close-btn {
+    padding: 0.75rem 1rem;
+    font-size: 15px;
+    min-height: 48px;
+  }
+
+  .pf-element__field select,
+  .pf-element__field input[type="number"] {
+    width: 100%;
+    padding: 0.5rem;
+    font-size: 14px;
+    min-height: 40px;
+  }
+
+  .pf-element__field input[type="color"] {
+    width: 48px;
+    height: 40px;
+  }
+
+  .pf-element__field {
+    flex-wrap: wrap;
+  }
+
+  /* Modal: reduce padding on mobile, fill more screen */
+  .pf-designer--modal {
+    padding: 0.5rem;
+  }
+
+  .pf-designer--modal .pf-designer__layout {
+    padding: 0.75rem;
+    border-radius: 4px;
+    max-height: 100dvh;
+    overflow-y: auto;
+  }
+}
+
+/* Hide collapse toggle on desktop */
+@media (min-width: 768px) {
+  .pf-sidebar__collapse-toggle {
+    display: none;
+  }
+}
