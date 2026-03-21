@@ -219,6 +219,7 @@ class Frontend {
                 'currency_symbol' => function_exists('get_woocommerce_currency_symbol')
                     ? get_woocommerce_currency_symbol()
                     : '€',
+                'isPremium'       => \ProductForge\ProductForge::is_premium(),
             ];
 
             // If returning from cart with an existing design, pass the hash and auto-open

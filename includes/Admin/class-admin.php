@@ -116,6 +116,8 @@ class Admin {
             'templateId'      => $template_id,
             'pluginUrl'       => PF_PLUGIN_URL,
             'currency_symbol' => get_woocommerce_currency_symbol(),
+            'isPremium'       => \ProductForge\ProductForge::is_premium(),
+            'upgradeUrl'      => function_exists( 'pf_fs' ) ? pf_fs()->get_upgrade_url() : '',
         ]);
     }
 
