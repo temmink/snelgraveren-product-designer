@@ -153,6 +153,29 @@ class RestTemplates {
             $global_config = json_decode($global_config, true) ?: [];
         }
 
+        // Resolve palette colors so the frontend always gets a flat allowed_colors array.
+        $color_mode = $global_config['color_mode'] ?? 'individual';
+        if ($color_mode === 'all') {
+            $global_config['any_color'] = true;
+            $global_config['allowed_colors'] = [];
+        } elseif ($color_mode === 'palette') {
+            $palette_id = $global_config['color_palette_id'] ?? '';
+            $palettes   = get_option('pf_color_palettes', []);
+            $palette    = null;
+            foreach ($palettes as $p) {
+                if (($p['id'] ?? '') === $palette_id) {
+                    $palette = $p;
+                    break;
+                }
+            }
+            $global_config['allowed_colors'] = $palette ? ($palette['colors'] ?? []) : [];
+            $global_config['any_color'] = false;
+        }
+        // For 'individual' mode, allowed_colors is already set correctly.
+
+        // Remove internal palette fields from public response.
+        unset($global_config['color_mode'], $global_config['color_palette_id']);
+
         $response = rest_ensure_response([
             'id'            => (int) $template['id'],
             'title'         => $template['title'],

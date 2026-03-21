@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { __ } from '@wordpress/i18n';
 import { extractSvgBoundingBox } from '../utils/svgPathUtils';
+import useTemplateStore from '../store/useTemplateStore';
+import { AVAILABLE_FONTS, mergeCustomFonts } from '../utils/fonts';
 
 const DEFAULT = {
   name: '', type: 'safe_area',
@@ -12,9 +14,12 @@ const DEFAULT = {
   svg_path_data: '',
   svg_scale: 1,
   svg_rotation: 0,
+  svg_fill_color: '',
+  svg_fill_editable: false,
 };
 
 export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChange }) {
+  const { globalConfig, customFonts } = useTemplateStore();
   const [data, setData] = useState({ ...DEFAULT, ...initialData });
 
   // Re-sync local state when store data changes externally (e.g. canvas drag/resize).
@@ -172,6 +177,34 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
                   onChange={(e) => set('svg_rotation', parseInt(e.target.value, 10) || 0)}
                 />
               </label>
+              <label className="pf-zone-form__field">
+                <span>{ __( 'Fill Color', 'productforge' ) }</span>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <input
+                    type="color"
+                    value={data.svg_fill_color || '#ffffff'}
+                    onChange={(e) => set('svg_fill_color', e.target.value)}
+                    style={{ width: 32, height: 28, padding: 0, border: '1px solid #8c8f94', borderRadius: 3, cursor: 'pointer' }}
+                  />
+                  {data.svg_fill_color && (
+                    <button
+                      type="button"
+                      className="button button-small"
+                      onClick={() => set('svg_fill_color', '')}
+                    >
+                      { __( 'Clear', 'productforge' ) }
+                    </button>
+                  )}
+                </div>
+              </label>
+              <label className="pf-zone-form__check">
+                <input
+                  type="checkbox"
+                  checked={data.svg_fill_editable || false}
+                  onChange={(e) => set('svg_fill_editable', e.target.checked)}
+                />
+                { __( 'Customer can change fill color', 'productforge' ) }
+              </label>
             </>
           )}
         </div>
@@ -209,6 +242,33 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
           </label>
         ))}
       </fieldset>
+
+      {data.allowed_types.includes('text') && (() => {
+        const allowedFonts = globalConfig.allowed_fonts || [];
+        const allFonts = mergeCustomFonts(customFonts);
+        const fontOptions = allowedFonts.length > 0
+          ? allFonts.filter((f) => allowedFonts.includes(f.family))
+          : allFonts;
+        return (
+          <div className="pf-zone-form__row">
+            <label className="pf-zone-form__label">
+              { __( 'Default Font', 'productforge' ) }
+              <select
+                value={data.defaultFontFamily || ''}
+                onChange={(e) => set('defaultFontFamily', e.target.value)}
+                className="pf-zone-form__select"
+              >
+                <option value="">{ __( 'Default (Arial)', 'productforge' ) }</option>
+                {fontOptions.map((f) => (
+                  <option key={f.family} value={f.family}>
+                    {f.family} ({f.category})
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        );
+      })()}
 
       {data.type === 'upload_zone' && (
         <div className="pf-zone-form__row">

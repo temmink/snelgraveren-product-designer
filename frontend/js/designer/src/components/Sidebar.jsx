@@ -7,16 +7,22 @@ import ElementTab from './tabs/ElementTab';
 import ViewsTab from './tabs/ViewsTab';
 
 export default function Sidebar() {
-  const { selectedObject } = useDesignerStore();
+  const { selectedObject, template, currentViewIndex } = useDesignerStore();
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState('views');
   const [collapsed, setCollapsed] = useState(isMobile);
+
+  // Check if there are editable SVG zone fills (element tab should stay accessible)
+  const currentView = template?.views?.[currentViewIndex];
+  const hasEditableZones = (currentView?.zones_config || []).some(
+    (z) => z.boundary_type === 'svg' && z.svg_url && z.svg_fill_editable
+  );
 
   // Auto-switch to Element tab when object selected
   useEffect(() => {
     if (selectedObject) {
       setActiveTab('element');
-    } else if (activeTab === 'element') {
+    } else if (activeTab === 'element' && !hasEditableZones) {
       setActiveTab('views');
     }
   }, [selectedObject]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -66,7 +72,7 @@ export default function Sidebar() {
           aria-controls="pf-panel-element"
           className={`pf-sidebar__tab${activeTab === 'element' ? ' pf-sidebar__tab--active' : ''}`}
           onClick={() => setActiveTab('element')}
-          disabled={!selectedObject}
+          disabled={!selectedObject && !hasEditableZones}
         >
           {__('Element', 'productforge')}
         </button>

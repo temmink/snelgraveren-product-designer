@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 import { __ } from '@wordpress/i18n';
-import { Canvas as FabricCanvas, Rect, IText, FabricImage, loadSVGFromString, util } from 'fabric';
+import { Canvas as FabricCanvas, Rect, IText, FabricImage, loadSVGFromString, util, cache as fabricCache } from 'fabric';
 import useDesignerStore from '../store/useDesignerStore';
 import { uploadFile } from '../api/designerApi';
 import useCanvasScale from '../hooks/useCanvasScale';
@@ -274,18 +274,43 @@ export default function DesignerCanvas() {
               angle:       zone.svg_rotation || 0,
               selectable:  false,
               evented:     false,
-              data:        { zoneIndex: index, isZoneOverlay: true },
+              data:        { zoneIndex: index, isZoneOverlay: true, svgFillEditable: !!zone.svg_fill_editable },
             });
             // Show a boundary outline so customers can see the design area.
             // Use stronger visibility on mobile where the canvas is smaller.
             // Child paths get the visible stroke; group stroke is nulled (Fabric draws group stroke as a bounding rect).
-            const zoneFill = isMobileRef.current ? 'rgba(0, 0, 0, 0.06)' : 'rgba(0, 0, 0, 0.03)';
+            // For solid color products, use the shared color across all views.
+            const solidColor = useDesignerStore.getState().solidFillColor;
+            const isSolid = globalConfig.solid_color;
+            const zoneFill = (isSolid && solidColor) || zone.svg_fill_color || (isMobileRef.current ? 'rgba(0, 0, 0, 0.06)' : 'rgba(0, 0, 0, 0.03)');
             const zoneStroke = isMobileRef.current ? '#aaaaaa' : '#cccccc';
             const zoneStrokeWidth = isMobileRef.current ? 2 : 1;
             if (group.getObjects) {
               group.getObjects().forEach((c) => c.set({ fill: zoneFill, stroke: zoneStroke, strokeWidth: zoneStrokeWidth, strokeUniform: true }));
             }
             group.set({ stroke: null, strokeWidth: 0 });
+
+            // Remove any duplicate zone overlay from a loaded snapshot (async SVG fetch
+            // completes after loadFromJSON, creating duplicates). Preserve its fill color
+            // so the customer's color choice is retained.
+            const dupes = canvas.getObjects().filter(
+              (o) => o !== group && o.type === 'group' && !o.data?.isZoneOverlay
+                && Math.abs((o.left || 0) - (group.left || 0)) < 2
+                && Math.abs((o.top || 0) - (group.top || 0)) < 2
+                && o._objects?.length === group._objects?.length
+            );
+            dupes.forEach((dupe) => {
+              // Carry over the customer-chosen fill color from the snapshot version.
+              const dupeFill = dupe._objects?.[0]?.fill;
+              if (dupeFill && dupeFill !== zoneFill) {
+                group.getObjects().forEach((c) => c.set({ fill: dupeFill }));
+                useDesignerStore.setState((s) => ({
+                  zoneFillColors: { ...s.zoneFillColors, [index]: dupeFill },
+                }));
+              }
+              canvas.remove(dupe);
+            });
+
             canvas.add(group);
             canvas.sendObjectToBack(group);
             canvas.renderAll();
@@ -369,6 +394,21 @@ export default function DesignerCanvas() {
       const filtered = filterFabricJson(existing);
       canvas.loadFromJSON(filtered).then(() => {
         if (!disposed) {
+          // Sync zone fill colors from restored zone overlay objects.
+          const fills = {};
+          canvas.getObjects().forEach((obj) => {
+            if (obj.data?.isZoneOverlay && obj.data?.svgFillEditable) {
+              const children = obj.getObjects?.();
+              if (children?.length > 0) {
+                fills[obj.data.zoneIndex] = children[0].fill;
+              }
+            }
+          });
+          if (Object.keys(fills).length > 0) {
+            useDesignerStore.getState().setZoneFillColor && Object.entries(fills).forEach(([idx, color]) => {
+              useDesignerStore.setState((s) => ({ zoneFillColors: { ...s.zoneFillColors, [idx]: color } }));
+            });
+          }
           canvas.renderAll();
           canvasReady = true;
         }
@@ -471,6 +511,27 @@ export default function DesignerCanvas() {
   // Responsive zoom is handled directly by useCanvasScale via ResizeObserver
   // (no React state in the loop — instant, no visible grow/shrink animation)
 
+  // ── Re-measure text objects after fonts load ────────────────────────────
+  useEffect(() => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+
+    const onFontLoad = () => {
+      fabricCache.clearFontCache();
+      canvas.getObjects().forEach((obj) => {
+        if (obj.type === 'text' || obj.type === 'i-text') {
+          obj.initDimensions();
+          obj.setCoords();
+        }
+      });
+      canvas.renderAll();
+    };
+
+    document.fonts.ready.then(onFontLoad);
+    document.fonts.addEventListener('loadingdone', onFontLoad);
+    return () => document.fonts.removeEventListener('loadingdone', onFontLoad);
+  }, []);
+
   // ── Tool: add-text on canvas click ────────────────────────────────────────
 
   useEffect(() => {
@@ -483,9 +544,13 @@ export default function DesignerCanvas() {
       const ptr = canvas.getPointer(opt.e);
       const zoneIdx = findZoneForPoint(ptr.x, ptr.y, 'text');
 
+      const zone = zoneIdx >= 0 ? zones[zoneIdx] : null;
+      const defaultFont = zone?.defaultFontFamily || 'Arial';
+
       const text = new IText(__('Your text here', 'productforge'), {
         left: ptr.x,
         top: ptr.y,
+        fontFamily: defaultFont,
         fontSize: 24,
         fill: '#000000',
         data: {

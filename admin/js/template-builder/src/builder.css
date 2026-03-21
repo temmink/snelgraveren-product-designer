@@ -895,6 +895,93 @@
   margin-bottom: 4px;
 }
 
+/* ── Color palette manager ────────────────────────────────────────────── */
+
+.pf-settings__color-mode {
+  margin-top: 8px;
+}
+
+.pf-settings__palette-select {
+  margin-top: 8px;
+}
+
+.pf-settings__palette-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.pf-settings__palette-row select {
+  flex: 1;
+}
+
+.pf-settings__swatch--preview {
+  cursor: default !important;
+}
+
+.pf-settings__swatch--preview:hover {
+  border-color: #dcdcde !important;
+}
+
+.pf-palette-manager {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f6f7f7;
+  border: 1px solid #dcdcde;
+  border-radius: 4px;
+}
+
+.pf-palette-manager h4 {
+  margin: 0 0 10px;
+  font-size: 13px;
+}
+
+.pf-palette-manager__item {
+  padding: 8px 0;
+  border-bottom: 1px solid #dcdcde;
+}
+
+.pf-palette-manager__item:last-child {
+  border-bottom: none;
+}
+
+.pf-palette-manager__row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pf-palette-manager__row strong {
+  font-size: 13px;
+}
+
+.pf-palette-manager__edit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pf-palette-manager__actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.pf-palette-manager__new {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #dcdcde;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pf-palette-manager__new h5 {
+  margin: 0;
+  font-size: 12px;
+}
+
 /* ── Shared utilities ──────────────────────────────────────────────────── */
 .pf-btn--danger {
   color: #d63638 !important;

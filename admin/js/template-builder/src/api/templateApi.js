@@ -58,3 +58,11 @@ export const fontApi = {
 
   deleteFamily: (family) => request('DELETE', `fonts/family/${encodeURIComponent(family)}`),
 };
+
+// Color Palettes
+export const paletteApi = {
+  list:   ()           => request('GET',    'palettes'),
+  create: (data)       => request('POST',   'palettes', data),
+  update: (id, data)   => request('PUT',    `palettes/${id}`, data),
+  delete: (id)         => request('DELETE', `palettes/${id}`),
+};

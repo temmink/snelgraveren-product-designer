@@ -261,6 +261,18 @@
   box-shadow: 0 0 0 1px #2563eb;
 }
 
+.pf-zone-fill {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.pf-element__hint {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 12px;
+}
+
 .pf-element__toggles {
   display: flex;
   gap: 4px;

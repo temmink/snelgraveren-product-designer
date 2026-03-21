@@ -30,6 +30,22 @@ const DEFAULT_GLOBAL_CONFIG = {
   },
 };
 
+/**
+ * Migrate old any_color / allowed_colors fields to the new color_mode system.
+ */
+function migrateGlobalConfig(config) {
+  if (!config.color_mode) {
+    if (config.any_color) {
+      config.color_mode = 'all';
+    } else if (config.allowed_colors?.length > 0) {
+      config.color_mode = 'individual';
+    } else {
+      config.color_mode = 'individual';
+    }
+  }
+  return config;
+}
+
 function migrateViewToNestedLayers(view) {
   const zones = view.zones_config || [];
   const allMigrated = zones.length > 0 && zones.every((z) => Array.isArray(z.layers));
@@ -93,6 +109,9 @@ const useTemplateStore = create((set, get) => ({
   // Custom fonts uploaded by the admin
   customFonts: [],
 
+  // Global color palettes (shared across all templates)
+  colorPalettes: [],
+
   // UI state
   isDirty: false,
   isSaving: false,
@@ -108,6 +127,7 @@ const useTemplateStore = create((set, get) => ({
   // ── Core setters ──────────────────────────────────────────────────────────
 
   setCustomFonts:      (fonts)  => set({ customFonts: fonts }),
+  setColorPalettes:    (p)     => set({ colorPalettes: p }),
 
   setId:               (id)     => set({ id }),
   setTitle:            (title)  => set({ title, isDirty: true }),
@@ -303,7 +323,7 @@ const useTemplateStore = create((set, get) => ({
       title:        data.title  || '',
       slug:         data.slug   || '',
       status:       data.status || 'draft',
-      globalConfig: { ...DEFAULT_GLOBAL_CONFIG, ...(data.global_config || {}) },
+      globalConfig: migrateGlobalConfig({ ...DEFAULT_GLOBAL_CONFIG, ...(data.global_config || {}) }),
       views:        (data.views || []).map((v) => {
         const migrated = migrateViewToNestedLayers(v);
         return {

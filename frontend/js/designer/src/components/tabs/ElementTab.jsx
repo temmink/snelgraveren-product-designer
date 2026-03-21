@@ -1,63 +1,85 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { __ } from '@wordpress/i18n';
+import { cache as fabricCache } from 'fabric';
 import useDesignerStore from '../../store/useDesignerStore';
 import { alignElement } from '../../../../../../shared/js/alignElement';
 
 export default function ElementTab() {
-  const { selectedObject, template, snapshotView, currentViewIndex } = useDesignerStore();
+  const { selectedObject, template, snapshotView, currentViewIndex, fabricCanvasRef, zoneFillColors, setZoneFillColor } = useDesignerStore();
 
   const globalConfig = template?.global_config || {};
   const permissions  = globalConfig.permissions || {};
+  const views = template?.views || [];
+  const currentView = views[currentViewIndex];
+  const zones = currentView?.zones_config || [];
+  const editableZones = zones.filter((z) => z.boundary_type === 'svg' && z.svg_url && z.svg_fill_editable);
 
-  if (!selectedObject) {
-    return <div className="pf-sidebar__tab-content"><p>{__('Select an element', 'productforge')}</p></div>;
-  }
-
-  const { type, fabricObj } = selectedObject;
-  const perms = permissions[type] || {};
+  const { type, fabricObj } = selectedObject || {};
+  const perms = type ? (permissions[type] || {}) : {};
 
   return (
     <div className="pf-sidebar__tab-content">
-      <h3 className="pf-sidebar__heading">{type.charAt(0).toUpperCase() + type.slice(1)}{__(' Properties', 'productforge')}</h3>
-
-      {type === 'text' && (
-        <TextProperties
-          fabricObj={fabricObj}
-          perms={perms}
+      {editableZones.length > 0 && (
+        <ZoneFillSection
+          zones={zones}
+          editableZones={editableZones}
           globalConfig={globalConfig}
+          fabricCanvasRef={fabricCanvasRef}
+          zoneFillColors={zoneFillColors}
+          setZoneFillColor={setZoneFillColor}
           snapshotView={snapshotView}
           currentViewIndex={currentViewIndex}
         />
       )}
 
-      {(type === 'image' || type === 'svg') && (
-        <ImageProperties
-          fabricObj={fabricObj}
-          type={type}
-          perms={perms}
-          globalConfig={globalConfig}
-          snapshotView={snapshotView}
-          currentViewIndex={currentViewIndex}
-        />
+      {!selectedObject && (
+        <p className="pf-element__hint">{__('Select an element to edit its properties', 'productforge')}</p>
       )}
 
-      <AlignmentButtons fabricObj={fabricObj} template={template} currentViewIndex={currentViewIndex} snapshotView={snapshotView} />
+      {selectedObject && (
+        <>
+          <h3 className="pf-sidebar__heading">{type.charAt(0).toUpperCase() + type.slice(1)}{__(' Properties', 'productforge')}</h3>
 
-      {perms.delete !== false && (
-        <button
-          type="button"
-          className="pf-element__delete-btn"
-          onClick={() => {
-            const canvas = fabricObj.canvas;
-            if (canvas) {
-              canvas.remove(fabricObj);
-              canvas.discardActiveObject();
-              canvas.renderAll();
-            }
-          }}
-        >
-          {__('Delete', 'productforge')}
-        </button>
+          {type === 'text' && (
+            <TextProperties
+              fabricObj={fabricObj}
+              perms={perms}
+              globalConfig={globalConfig}
+              snapshotView={snapshotView}
+              currentViewIndex={currentViewIndex}
+            />
+          )}
+
+          {(type === 'image' || type === 'svg') && (
+            <ImageProperties
+              fabricObj={fabricObj}
+              type={type}
+              perms={perms}
+              globalConfig={globalConfig}
+              snapshotView={snapshotView}
+              currentViewIndex={currentViewIndex}
+            />
+          )}
+
+          <AlignmentButtons fabricObj={fabricObj} template={template} currentViewIndex={currentViewIndex} snapshotView={snapshotView} />
+
+          {perms.delete !== false && (
+            <button
+              type="button"
+              className="pf-element__delete-btn"
+              onClick={() => {
+                const canvas = fabricObj.canvas;
+                if (canvas) {
+                  canvas.remove(fabricObj);
+                  canvas.discardActiveObject();
+                  canvas.renderAll();
+                }
+              }}
+            >
+              {__('Delete', 'productforge')}
+            </button>
+          )}
+        </>
       )}
     </div>
   );
@@ -71,7 +93,14 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
   const [fontFamily, setFontFamily] = useState(fabricObj.fontFamily || 'Arial');
 
   const update = useCallback((props) => {
+    if ('fontFamily' in props) {
+      fabricCache.clearFontCache(props.fontFamily);
+    }
     fabricObj.set(props);
+    if ('fontFamily' in props || 'fontSize' in props) {
+      fabricObj.initDimensions();
+      fabricObj.setCoords();
+    }
     fabricObj.canvas?.renderAll();
     snapshotView(currentViewIndex, fabricObj.canvas?.toJSON(['data']));
   }, [fabricObj, snapshotView, currentViewIndex]);
@@ -329,6 +358,92 @@ function ImageProperties({ fabricObj, type, perms, globalConfig, snapshotView, c
           )}
         </label>
       )}
+    </div>
+  );
+}
+
+function ZoneFillSection({ zones, editableZones, globalConfig, fabricCanvasRef, zoneFillColors, setZoneFillColor, snapshotView, currentViewIndex }) {
+  const allowedColors = globalConfig.allowed_colors || [];
+  const anyColor = globalConfig.any_color || false;
+  const colorsEnabled = globalConfig.colors_enabled || false;
+  const isSolid = globalConfig.solid_color || false;
+
+  const applyColor = useCallback((zoneIndex, color) => {
+    // Update current canvas
+    const canvas = fabricCanvasRef;
+    if (!canvas) return;
+    canvas.getObjects().forEach((obj) => {
+      if (obj.data?.isZoneOverlay) {
+        if (obj.getObjects) {
+          obj.getObjects().forEach((c) => c.set({ fill: color }));
+        }
+        obj.set({ fill: color });
+        obj.dirty = true;
+      }
+    });
+    canvas.renderAll();
+    snapshotView(currentViewIndex, canvas.toJSON(['data']));
+
+    setZoneFillColor(zoneIndex, color);
+
+    // For solid color products: update snapshots of other views too
+    if (isSolid) {
+      useDesignerStore.getState().setSolidFillColor(color);
+      const snapshots = useDesignerStore.getState().canvasSnapshots;
+      Object.entries(snapshots).forEach(([viewIdx, snap]) => {
+        if (Number(viewIdx) === currentViewIndex || !snap?.objects) return;
+        const updated = {
+          ...snap,
+          objects: snap.objects.map((obj) => {
+            if (obj.type === 'Group' || obj.type === 'group') {
+              return {
+                ...obj,
+                fill: color,
+                objects: (obj.objects || []).map((c) => ({ ...c, fill: color })),
+              };
+            }
+            return obj;
+          }),
+        };
+        useDesignerStore.getState().snapshotView(Number(viewIdx), updated);
+      });
+    }
+  }, [fabricCanvasRef, snapshotView, currentViewIndex, isSolid, setZoneFillColor]);
+
+  // For solid color: use the shared color across all zones
+  const solidColor = useDesignerStore.getState().solidFillColor;
+
+  return (
+    <div className="pf-zone-fill">
+      <h3 className="pf-sidebar__heading">{__('Product Color', 'productforge')}</h3>
+      {editableZones.map((zone) => {
+        const zoneIndex = zones.indexOf(zone);
+        const currentColor = (isSolid && solidColor) ? solidColor : (zoneFillColors[zoneIndex] || zone.svg_fill_color || '#ffffff');
+        return (
+          <label key={zoneIndex} className="pf-element__field">
+            {!isSolid && <span>{zone.name || `Zone ${zoneIndex + 1}`}</span>}
+            {colorsEnabled && !anyColor && allowedColors.length > 0 ? (
+              <div className="pf-element__color-swatches">
+                {allowedColors.map((c) => (
+                  <button
+                    type="button"
+                    key={c}
+                    className={`pf-element__swatch${currentColor === c ? ' pf-element__swatch--active' : ''}`}
+                    style={{ backgroundColor: c }}
+                    onClick={() => applyColor(zoneIndex, c)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <input
+                type="color"
+                value={currentColor}
+                onChange={(e) => applyColor(zoneIndex, e.target.value)}
+              />
+            )}
+          </label>
+        );
+      })}
     </div>
   );
 }

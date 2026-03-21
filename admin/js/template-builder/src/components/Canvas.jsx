@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { __ } from '@wordpress/i18n';
-import { Canvas as FabricCanvas, Rect, FabricImage, FabricText, loadSVGFromString, util } from 'fabric';
+import { Canvas as FabricCanvas, Rect, FabricImage, FabricText, loadSVGFromString, util, cache as fabricCache } from 'fabric';
 import useTemplateStore from '../store/useTemplateStore';
 import { parseSvgToFabric } from '../utils/svgPathUtils';
 import { alignElement } from '../../../../../shared/js/alignElement';
@@ -311,7 +311,7 @@ export default function Canvas() {
     const handledKeys = new Set();
 
     const zoneStyleFor = (zone) => ({
-      fill:           isFreeMove ? 'transparent' : 'rgba(59, 130, 246, 0.08)',
+      fill:           isFreeMove ? 'transparent' : (zone.svg_fill_color || 'rgba(59, 130, 246, 0.08)'),
       stroke:         '#3b82f6',
       strokeWidth:    2,
       strokeUniform:  true,
@@ -498,27 +498,35 @@ export default function Canvas() {
           return;
         }
 
+        const fontFamily = layer.fontFamily || 'Arial';
+
         if (existing) {
+          if (existing.fontFamily !== fontFamily) {
+            fabricCache.clearFontCache(fontFamily);
+          }
           existing.set({
             text:       layer.text,
             left:       layer.left       || 100,
             top:        layer.top        || 100,
             fontSize:   layer.fontSize   || 24,
-            fontFamily: layer.fontFamily || 'Arial',
+            fontFamily,
             fill:       layer.fill       || '#000000',
             scaleX:     1,
             scaleY:     1,
             selectable: !layer.locked,
             evented:    !layer.locked,
           });
+          existing.initDimensions();
+          existing.setCoords();
           existing.data = { ...existing.data, layerIndex: layer._layerIndex, zoneIndex: layer._zoneIndex };
           applyClipAndClamp(existing, layer);
         } else {
+          fabricCache.clearFontCache(fontFamily);
           const text = new FabricText(layer.text, {
             left:       layer.left       || 100,
             top:        layer.top        || 100,
             fontSize:   layer.fontSize   || 24,
-            fontFamily: layer.fontFamily || 'Arial',
+            fontFamily,
             fill:       layer.fill       || '#000000',
             selectable: !layer.locked,
             evented:    !layer.locked,
@@ -663,6 +671,30 @@ export default function Canvas() {
 
     canvas.renderAll();
   }, [layers]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Re-measure text objects after fonts load ────────────────────────────
+  // Custom fonts may load asynchronously. When loaded, Fabric's static char
+  // width cache contains stale measurements from fallback fonts, causing
+  // bounding box mismatches. Clear the cache and re-init dimensions.
+  useEffect(() => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+
+    const onFontLoad = () => {
+      fabricCache.clearFontCache();
+      canvas.getObjects().forEach((obj) => {
+        if (obj.type === 'text' || obj.type === 'i-text') {
+          obj.initDimensions();
+          obj.setCoords();
+        }
+      });
+      canvas.renderAll();
+    };
+
+    document.fonts.ready.then(onFontLoad);
+    document.fonts.addEventListener('loadingdone', onFontLoad);
+    return () => document.fonts.removeEventListener('loadingdone', onFontLoad);
+  }, []);
 
   // ── Sync canvas object moves back to store ──────────────────────────────
   // When the user drags/resizes a text object on the canvas, update the

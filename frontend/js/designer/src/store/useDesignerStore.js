@@ -20,6 +20,12 @@ const useDesignerStore = create((set) => ({
   // Selected element
   selectedObject: null,
 
+  // Zone fill colors changed by customer (keyed by zoneIndex)
+  zoneFillColors: {},
+
+  // Solid color: single color applied across all views
+  solidFillColor: null,
+
   // Error message
   error: null,
 
@@ -57,6 +63,15 @@ const useDesignerStore = create((set) => ({
   setTriggerFileUpload: (fn) => set({ triggerFileUpload: fn }),
 
   setFabricCanvasRef: (ref) => set({ fabricCanvasRef: ref }),
+
+  setZoneFillColor: (zoneIndex, color) =>
+    set((s) => ({
+      zoneFillColors: { ...s.zoneFillColors, [zoneIndex]: color },
+      isDirty: true,
+    })),
+
+  setSolidFillColor: (color) =>
+    set({ solidFillColor: color, isDirty: true }),
 }));
 
 export default useDesignerStore;

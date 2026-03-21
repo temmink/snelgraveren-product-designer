@@ -7,7 +7,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import useTemplateStore from '../store/useTemplateStore';
 import TreeNode from './TreeNode';
 import ZoneForm from './ZoneForm';
-import { AVAILABLE_FONTS } from '../utils/fonts';
+import { AVAILABLE_FONTS, mergeCustomFonts } from '../utils/fonts';
 
 export default function TreePanel() {
   const {
@@ -281,12 +281,13 @@ function AddLayerInline({ zone, onAdd, onCancel }) {
 }
 
 function LayerDetail({ layer, onChange }) {
-  const { globalConfig } = useTemplateStore();
+  const { globalConfig, customFonts } = useTemplateStore();
   const allowedFonts = globalConfig.allowed_fonts || [];
-  // In admin, show allowed fonts if configured, otherwise show all available fonts
+  const allFonts = mergeCustomFonts(customFonts);
+  // In admin, show allowed fonts if configured, otherwise show all available fonts (including custom)
   const fontOptions = allowedFonts.length > 0
     ? allowedFonts
-    : AVAILABLE_FONTS.map((f) => f.family);
+    : allFonts.map((f) => f.family);
 
   if (layer.type === 'text') {
     return (
