@@ -84,6 +84,7 @@ class ProductForge {
             (new API\RestPalettes())->register_routes();
             (new API\RestExports())->register_routes();
             (new API\RestClipart())->register_routes();
+            (new API\RestDesignTemplates())->register_routes();
         });
     }
 }

@@ -3,6 +3,8 @@ import { __ } from '@wordpress/i18n';
 import { cache as fabricCache } from 'fabric';
 import useDesignerStore from '../../store/useDesignerStore';
 import { alignElement } from '../../../../../../shared/js/alignElement';
+import ImageFilters from '../ImageFilters';
+import CurvedTextProperties from '../CurvedTextProperties';
 
 export default function ElementTab() {
   const { selectedObject, template, snapshotView, currentViewIndex, fabricCanvasRef, zoneFillColors, setZoneFillColor } = useDesignerStore();
@@ -48,6 +50,23 @@ export default function ElementTab() {
               snapshotView={snapshotView}
               currentViewIndex={currentViewIndex}
             />
+          )}
+
+          {type === 'curved-text' && (
+            <>
+              <CurvedTextProperties
+                fabricObj={fabricObj}
+                snapshotView={snapshotView}
+                currentViewIndex={currentViewIndex}
+              />
+              <TextProperties
+                fabricObj={fabricObj}
+                perms={perms}
+                globalConfig={globalConfig}
+                snapshotView={snapshotView}
+                currentViewIndex={currentViewIndex}
+              />
+            </>
           )}
 
           {(type === 'image' || type === 'svg') && (
@@ -359,6 +378,16 @@ function ImageProperties({ fabricObj, type, perms, globalConfig, snapshotView, c
             </div>
           )}
         </label>
+      )}
+
+      {/* Image filters */}
+      {type === 'image' && globalConfig.filters_enabled && (
+        <ImageFilters
+          fabricObj={fabricObj}
+          allowedFilters={globalConfig.allowed_filters || ['Brightness', 'Contrast', 'Saturation', 'Grayscale', 'Sepia']}
+          snapshotView={snapshotView}
+          currentViewIndex={currentViewIndex}
+        />
       )}
     </div>
   );

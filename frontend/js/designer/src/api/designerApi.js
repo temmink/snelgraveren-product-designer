@@ -84,6 +84,24 @@ export async function fetchCustomFonts() {
   return res.json();
 }
 
+export async function fetchDesignTemplates(templateId, allowedIds) {
+  let url = apiUrl('/design-templates');
+  const params = [];
+  if (templateId) params.push(`template_id=${templateId}`);
+  if (allowedIds?.length) params.push(`ids=${allowedIds.join(',')}`);
+  if (params.length) url += `?${params.join('&')}`;
+
+  const res = await fetch(url, { headers: headers() });
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export async function fetchDesignTemplateDetail(id) {
+  const res = await fetch(apiUrl(`/design-templates/${id}`), { headers: headers() });
+  if (!res.ok) return null;
+  return res.json();
+}
+
 export async function fetchClipartCollections() {
   const res = await fetch(apiUrl('/clipart/collections'));
   if (!res.ok) return [];

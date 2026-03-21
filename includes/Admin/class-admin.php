@@ -43,12 +43,25 @@ class Admin {
             'pf-template-builder',
             [$this, 'render_builder_page']
         );
+
+        add_submenu_page(
+            'productforge',
+            __('Design Templates', 'productforge'),
+            __('Design Templates', 'productforge'),
+            'edit_pf_templates',
+            'pf-design-templates',
+            [$this, 'render_design_templates_page']
+        );
     }
 
     public function render_list_page(): void {
         $list_table = new TemplateListTable();
         $list_table->prepare_items();
         include PF_PLUGIN_DIR . 'includes/Admin/views/template-list.php';
+    }
+
+    public function render_design_templates_page(): void {
+        include PF_PLUGIN_DIR . 'includes/Admin/views/design-templates.php';
     }
 
     public function render_builder_page(): void {
