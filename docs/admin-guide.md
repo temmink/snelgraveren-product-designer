@@ -35,7 +35,8 @@
 9. [Global Settings](#global-settings)
    - [Cart Behavior](#cart-behavior)
    - [Product Color](#product-color)
-   - [Color Picker](#color-picker)
+   - [Colorpicker Product](#colorpicker-product)
+   - [Colorpicker Elements](#colorpicker-elements)
    - [Color Palettes](#color-palettes)
    - [Font Picker](#font-picker)
    - [Custom Fonts](#custom-fonts)
@@ -88,15 +89,15 @@ ProductForge is a WooCommerce plugin that adds a drag-and-drop product designer 
 ## Installation & Requirements
 
 ### Server Requirements
-- PHP 7.4 or higher
-- WordPress 5.8 or higher
-- WooCommerce 6.0 or higher
+- PHP 8.1 or higher
+- WordPress 6.4 or higher
+- WooCommerce 8.0 or higher
 - PHP extensions: `finfo` (for MIME detection), `gd` or `imagick` (for PNG export)
 - Composer dependency: `enshrined/svg-sanitize` (included in the plugin)
 
 ### Installation
 
-1. Upload the `ProductDesigner` folder to `wp-content/plugins/`.
+1. Upload the `productforge` folder to `wp-content/plugins/`.
 2. Activate the plugin in **Plugins → Installed Plugins**.
 3. The plugin automatically:
    - Creates the required database tables (8 tables).
@@ -418,13 +419,13 @@ This is useful for products where customization is mandatory (e.g. personalized 
 |---------|-------------|
 | **Solid color product** | Enable for products where all views share the same material color (e.g. a dog tag where front and back are the same metal). When enabled, changing the color on one view automatically updates all other views. This applies to SVG zone fills that have "Customer can change fill color" enabled. |
 
-### Color Picker
+### Colorpicker Product
 
-Controls how customers choose colors for text elements, SVG tints, and product colors.
+Controls how customers choose the product background/fill color (SVG zone fills). This is the color applied to the product surface itself (e.g. gold, silver, black for a dog tag).
 
 | Setting | Description |
 |---------|-------------|
-| **Enable color picker** | Master toggle for the color picker feature. |
+| **Enable product color picker** | Master toggle for the product color picker. When enabled, a "Product Color" section appears in the frontend Element tab for zones with "Customer can change fill color" enabled. |
 | **Color mode** | How colors are presented to the customer (see below). |
 
 **Color modes:**
@@ -435,11 +436,24 @@ Controls how customers choose colors for text elements, SVG tints, and product c
 | **Use a color palette** | Customer chooses from a predefined palette. Select a palette from the dropdown. Colors are shown as swatches. |
 | **Individual colors** | Admin manually adds specific hex colors. Only these exact colors are available to the customer. |
 
+The product color palette is also used in the **Zone Configuration** fill color picker. When a product color palette is configured, the admin zone fill color field shows the same swatches instead of the full color picker.
+
+### Colorpicker Elements
+
+Controls how customers choose colors for text elements and SVG tint colors. This is independent from the product color picker.
+
+| Setting | Description |
+|---------|-------------|
+| **Enable element color picker** | Master toggle for element colors. When disabled, customers cannot change text color or SVG tint. |
+| **Color mode** | How element colors are presented to the customer (same modes as product color picker: all colors, palette, or individual). |
+
+**Note:** Both color pickers can use different palettes or modes. For example, you might offer a limited set of product colors (gold, silver, black) but allow any color for text elements.
+
 ### Color Palettes
 
 Palettes are reusable sets of colors that can be shared across templates.
 
-**Managing palettes** (click "Manage Palettes" in the Color Picker section):
+**Managing palettes** (click "Manage Palettes" in either color picker section):
 - **Create palette**: Enter a name, add colors using the color picker, click Create.
 - **Edit palette**: Click a palette to expand it. Add or remove individual colors. Rename the palette.
 - **Delete palette**: Remove a palette (does not affect templates already using it — they retain the colors that were resolved at save time).
@@ -631,6 +645,7 @@ When a customized product is in the cart:
 | **Cart item label** | "Design: Customized" appears in cart item details. |
 | **Cart item permalink** | Product link appended with `?pf_design=HASH` so the customer can return to edit. |
 | **Surcharge display** | "Design surcharge: €X.XX" shown in cart item data. |
+| **Multiple customizations** | After adding a customized product to cart (via AJAX), the designer automatically resets: all user elements are removed, zone fill colors revert to admin defaults, and the design hash is cleared. The customer can immediately start a new customization of the same product and add it as a separate cart item. |
 
 ### Order Processing
 

@@ -129,7 +129,7 @@ Click on any element on the canvas to select it. The sidebar automatically switc
 |----------|-------------|
 | **Font** | Choose from the available fonts (dropdown). Only shown if the shop has configured fonts. |
 | **Size** | Adjust the text size (8–200). |
-| **Color** | Pick a text color. Depending on the product, you may have a full color picker, a set of color swatches, or the color may be fixed. |
+| **Color** | Pick a text color. The shop owner configures which colors are available — you may see a full color picker, a set of color swatches, or no color option at all. Element colors (text and SVG tint) are configured separately from product colors. |
 | **Bold** | Toggle bold style (B button). |
 | **Italic** | Toggle italic style (I button). |
 
@@ -146,7 +146,7 @@ To edit the text content itself, double-click the text element on the canvas.
 | Property | Description |
 |----------|-------------|
 | **Scale** | Shows the current scale percentage. |
-| **Tint Color** | Apply a color tint to the SVG. Available as a full picker or swatches depending on the product configuration. Not available for all clip art items. |
+| **Tint Color** | Apply a color tint to the SVG. Available as a full picker or swatches depending on the element color configuration set by the shop. Not available for all clip art items. |
 
 ### Common Controls
 
@@ -181,9 +181,9 @@ The clip art is placed on the canvas like any other SVG element. Depending on th
 
 ## Changing the Product Color
 
-Some products allow you to change the base color of the product itself (e.g. changing a dog tag from silver to gold).
+Some products allow you to change the base color of the product itself (e.g. changing a dog tag from silver to gold). This is separate from element colors (text color, SVG tint) — the shop configures each independently.
 
-When available, a **Product Color** section appears at the top of the **Element** tab. It shows color swatches or a color picker. Click a color to change the product appearance.
+When available, a **Product Color** section appears at the top of the **Element** tab. It shows color swatches or a color picker, depending on what the shop has configured. Click a color to change the product appearance.
 
 For **solid color products** (like dog tags where front and back are the same material), changing the color on one view automatically updates all other views.
 
@@ -221,11 +221,16 @@ If you have unsaved changes when clicking Add to Cart, the system will automatic
 
 Some products **require customization** — the Add to Cart button won't work until you've saved a design. If you see an error message asking you to customize the product first, open the designer and create your design.
 
+### Adding Multiple Customizations
+
+You can add the same product with different customizations to your cart. After adding a customized product to cart, the designer automatically resets — all your elements are removed, the product color returns to its default, and you get a fresh canvas for a new customization. Each customization is a separate cart item with its own design.
+
 ### What Appears in Your Cart
 
 - Your customized product shows a thumbnail preview of your design (all views are shown side by side if the product has multiple views).
 - A "Design: Customized" label appears under the product.
 - If applicable, a design surcharge is added to the product price.
+- Each customization appears as a separate line item, even for the same product.
 
 ---
 
