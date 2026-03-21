@@ -48,6 +48,57 @@ class ProductForge {
         return $allcaps;
     }
 
+    /**
+     * Check if the Pro license is active.
+     */
+    public static function is_premium(): bool {
+        return function_exists( 'pf_fs' ) && pf_fs()->is_paying();
+    }
+
+    /**
+     * Check if a specific premium feature is available.
+     *
+     * Unknown features are always available (fail-open for core features).
+     */
+    public static function has_feature( string $feature ): bool {
+        static $premium_features = [
+            'unlimited_templates',
+            'multi_view',
+            'svg_boundaries',
+            'product_colors',
+            'color_palettes',
+            'custom_fonts',
+            'clipart',
+            'pdf_export',
+            'svg_export',
+            'pricing',
+            'permissions',
+            'solid_color',
+            'upload_restrictions',
+            'auto_export',
+        ];
+
+        if ( ! in_array( $feature, $premium_features, true ) ) {
+            return true;
+        }
+
+        return self::is_premium();
+    }
+
+    /**
+     * Create a WP_Error for premium-required responses.
+     */
+    public static function premium_error( string $feature, string $message = '' ): \WP_Error {
+        if ( ! $message ) {
+            $message = __( 'This feature requires ProductForge Pro.', 'productforge' );
+        }
+        return new \WP_Error(
+            'pf_premium_required',
+            $message,
+            [ 'status' => 403, 'feature' => $feature ]
+        );
+    }
+
     private function init_admin(): void {
         new Admin\Admin();
     }
