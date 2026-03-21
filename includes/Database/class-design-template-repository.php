@@ -135,13 +135,20 @@ class DesignTemplateRepository {
     public static function create(array $data): int {
         global $wpdb;
 
-        $wpdb->insert(self::templates_table(), [
+        $fields  = [
             'name'          => $data['name'],
             'category'      => $data['category'] ?? '',
             'thumbnail_url' => $data['thumbnail_url'] ?? '',
-            'template_id'   => $data['template_id'] ?? null,
             'status'        => $data['status'] ?? 'active',
-        ], ['%s', '%s', '%s', '%d', '%s']);
+        ];
+        $formats = ['%s', '%s', '%s', '%s'];
+
+        if (!empty($data['template_id'])) {
+            $fields['template_id'] = (int) $data['template_id'];
+            $formats[]             = '%d';
+        }
+
+        $wpdb->insert(self::templates_table(), $fields, $formats);
 
         $id = (int) $wpdb->insert_id;
 
