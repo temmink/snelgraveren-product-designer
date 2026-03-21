@@ -68,6 +68,18 @@ export default function AddTab() {
             {__('SVG', 'productforge')}
           </button>
         )}
+        {globalConfig.curved_text_enabled && isTypeAllowed('text') && (
+          <button
+            type="button"
+            className={`pf-add-tools__btn${activeTool === 'add-curved-text' ? ' pf-add-tools__btn--active' : ''}`}
+            onClick={() => handleToolClick('add-curved-text')}
+            aria-label={__('Add curved text element', 'productforge')}
+            title={__('Add curved text', 'productforge')}
+            style={{ color: activeTool === 'add-curved-text' ? '#2271b1' : '#333' }}
+          >
+            ⌒ {__('Curved', 'productforge')}
+          </button>
+        )}
       </div>
 
       {showClipart && (

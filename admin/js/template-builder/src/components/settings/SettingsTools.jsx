@@ -81,6 +81,17 @@ export default function SettingsTools({ globalConfig, update }) {
           </div>
         )}
       </fieldset>
+      <fieldset className="pf-settings__fieldset">
+        <legend>{__('Curved Text', 'productforge')}</legend>
+        <label className="pf-settings__check">
+          <input
+            type="checkbox"
+            checked={globalConfig.curved_text_enabled || false}
+            onChange={(e) => update('curved_text_enabled', e.target.checked)}
+          />
+          {__('Enable curved text tool', 'productforge')}
+        </label>
+      </fieldset>
     </>
   );
 }

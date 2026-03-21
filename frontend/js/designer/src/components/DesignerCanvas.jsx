@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 import { __ } from '@wordpress/i18n';
-import { Canvas as FabricCanvas, Rect, IText, FabricImage, PencilBrush, loadSVGFromString, util, cache as fabricCache } from 'fabric';
+import { Canvas as FabricCanvas, Rect, IText, FabricImage, Path as FabricPath, PencilBrush, loadSVGFromString, util, cache as fabricCache } from 'fabric';
+import { archUpPath } from '../utils/curvePresets';
 import useDesignerStore from '../store/useDesignerStore';
 import { uploadFile } from '../api/designerApi';
 import useCanvasScale from '../hooks/useCanvasScale';
@@ -612,6 +613,61 @@ export default function DesignerCanvas() {
       canvas.defaultCursor = 'default';
     };
   }, [activeTool, currentViewIndex, findZoneForPoint, applyPermissions, applyZoneClip, clampToZone, snapshotView, setActiveTool]);
+
+  // ── Tool: add-curved-text on canvas click ─────────────────────────────────
+
+  useEffect(() => {
+    const canvas = fabricRef.current;
+    if (!canvas || activeTool !== 'add-curved-text') return;
+
+    canvas.defaultCursor = 'crosshair';
+
+    const onClick = (opt) => {
+      const ptr = canvas.getPointer(opt.e);
+      const zoneIdx = findZoneForPoint(ptr.x, ptr.y, 'text');
+
+      const zone = zoneIdx >= 0 ? zones[zoneIdx] : null;
+      const defaultFont = zone?.defaultFontFamily || 'Arial';
+
+      const defaultText = __('Your text here', 'productforge');
+      const pathWidth = 200;
+      const pathStr = archUpPath(pathWidth, 60);
+      const pathObj = new FabricPath(pathStr, { visible: false });
+
+      const text = new IText(defaultText, {
+        left: ptr.x,
+        top: ptr.y,
+        fontFamily: defaultFont,
+        fontSize: 24,
+        fill: '#000000',
+        path: pathObj,
+        data: {
+          elementType: 'curved-text',
+          curvePreset: 'arch-up',
+          curveIntensity: 60,
+          zoneIndex: zoneIdx,
+        },
+      });
+
+      applyPermissions(text, 'text');
+      if (zoneIdx >= 0) applyZoneClip(text, zoneIdx);
+      canvas.add(text);
+      canvas.setActiveObject(text);
+
+      if (zoneIdx >= 0) clampToZone(text);
+
+      pushHistoryRef.current?.();
+      canvas.renderAll();
+      snapshotView(currentViewIndex, canvas.toJSON(['data']));
+      setActiveTool('select');
+    };
+
+    canvas.on('mouse:down', onClick);
+    return () => {
+      canvas.off('mouse:down', onClick);
+      canvas.defaultCursor = 'default';
+    };
+  }, [activeTool, currentViewIndex, zones, findZoneForPoint, applyPermissions, applyZoneClip, clampToZone, snapshotView, setActiveTool]);
 
   // ── Tool: add-image / add-svg via file input ──────────────────────────────
 

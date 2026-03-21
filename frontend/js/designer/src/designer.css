@@ -642,3 +642,9 @@
 .pf-filters__slider { display: block; margin-bottom: 6px; }
 .pf-filters__slider-header { display: flex; justify-content: space-between; font-size: 11px; color: #666; margin-bottom: 2px; }
 .pf-filters__slider input[type="range"] { width: 100%; }
+
+/* Curved Text */
+.pf-curved-text__presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 10px; }
+.pf-curved-text__preset { padding: 6px; border: 1px solid #ddd; border-radius: 4px; background: white; cursor: pointer; text-align: center; font-size: 9px; color: #666; }
+.pf-curved-text__preset--active { border-color: #2271b1; background: #e8f0fe; color: #2271b1; }
+.pf-curved-text__preset svg { display: block; margin: 0 auto 2px; }

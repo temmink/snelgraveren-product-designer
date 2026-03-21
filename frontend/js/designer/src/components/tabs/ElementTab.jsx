@@ -4,6 +4,7 @@ import { cache as fabricCache } from 'fabric';
 import useDesignerStore from '../../store/useDesignerStore';
 import { alignElement } from '../../../../../../shared/js/alignElement';
 import ImageFilters from '../ImageFilters';
+import CurvedTextProperties from '../CurvedTextProperties';
 
 export default function ElementTab() {
   const { selectedObject, template, snapshotView, currentViewIndex, fabricCanvasRef, zoneFillColors, setZoneFillColor } = useDesignerStore();
@@ -49,6 +50,23 @@ export default function ElementTab() {
               snapshotView={snapshotView}
               currentViewIndex={currentViewIndex}
             />
+          )}
+
+          {type === 'curved-text' && (
+            <>
+              <CurvedTextProperties
+                fabricObj={fabricObj}
+                snapshotView={snapshotView}
+                currentViewIndex={currentViewIndex}
+              />
+              <TextProperties
+                fabricObj={fabricObj}
+                perms={perms}
+                globalConfig={globalConfig}
+                snapshotView={snapshotView}
+                currentViewIndex={currentViewIndex}
+              />
+            </>
           )}
 
           {(type === 'image' || type === 'svg') && (
