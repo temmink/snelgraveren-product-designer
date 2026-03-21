@@ -14,7 +14,13 @@ class FileUtils {
         $base_dir = $upload_dir['basedir'];
 
         if (str_starts_with($url, $base_url)) {
-            return str_replace($base_url, $base_dir, $url);
+            $path = str_replace($base_url, $base_dir, $url);
+            $real = realpath($path);
+            $real_base = realpath($base_dir);
+            if ($real && $real_base && str_starts_with($real, $real_base . '/')) {
+                return $real;
+            }
+            return '';
         }
 
         $site_url = site_url();
@@ -22,8 +28,10 @@ class FileUtils {
         if (str_starts_with($url, $site_url)) {
             $relative = str_replace($site_url, '', $url);
             $path = $abspath . ltrim($relative, '/');
-            if (file_exists($path)) {
-                return $path;
+            $real = realpath($path);
+            $real_abspath = realpath($abspath);
+            if ($real && $real_abspath && str_starts_with($real, $real_abspath . '/')) {
+                return $real;
             }
         }
 

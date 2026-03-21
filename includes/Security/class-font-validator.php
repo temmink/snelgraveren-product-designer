@@ -7,6 +7,12 @@ class FontValidator {
 
     private const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
+    private const MAGIC_BYTES = [
+        'woff2'    => 'wOF2',
+        'woff'     => 'wOFF',
+        'truetype' => "\x00\x01\x00\x00",
+    ];
+
     private const MIME_MAP = [
         'font/woff2'                => 'woff2',
         'font/woff'                 => 'woff',
@@ -49,7 +55,15 @@ class FontValidator {
         if (isset(self::MIME_MAP[$mime])) {
             $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
             if (isset(self::EXT_MAP[$ext])) {
-                return self::EXT_MAP[$ext];
+                $format = self::EXT_MAP[$ext];
+                // Verify magic bytes to prevent arbitrary files with font extensions
+                if (isset(self::MAGIC_BYTES[$format])) {
+                    $header = file_get_contents($file['tmp_name'], false, null, 0, 4);
+                    if ($header !== self::MAGIC_BYTES[$format]) {
+                        throw new \RuntimeException("Font file content does not match expected format.", 400);
+                    }
+                }
+                return $format;
             }
         }
 

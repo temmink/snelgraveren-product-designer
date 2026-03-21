@@ -120,7 +120,8 @@ class RestFonts {
     private static function delete_file(string $url): void {
         $upload_dir = wp_upload_dir();
         $path = str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $url);
-        if (file_exists($path)) {
+        $expected_dir = $upload_dir['basedir'] . '/pf-fonts/';
+        if (strpos($path, $expected_dir) === 0 && file_exists($path)) {
             unlink($path);
         }
     }

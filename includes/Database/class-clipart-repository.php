@@ -20,6 +20,7 @@ class ClipartRepository {
         $ct = self::collections_table();
         $it = self::items_table();
 
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- no user input, table names only
         return $wpdb->get_results(
             "SELECT c.id, c.name, c.created_at, COUNT(i.id) AS item_count
              FROM `{$ct}` c

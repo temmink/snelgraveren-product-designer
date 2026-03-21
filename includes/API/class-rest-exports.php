@@ -128,9 +128,14 @@ class RestExports {
             return new \WP_REST_Response(['error' => 'Export not found'], 404);
         }
 
-        // Delete file from disk
-        if (!empty($export['file_path']) && file_exists($export['file_path'])) {
-            @unlink($export['file_path']);
+        // Delete file from disk (with path traversal protection)
+        if (!empty($export['file_path'])) {
+            $upload_dir  = wp_upload_dir();
+            $exports_dir = realpath($upload_dir['basedir'] . '/pf-exports');
+            $real_path   = realpath($export['file_path']);
+            if ($exports_dir && $real_path && str_starts_with($real_path, $exports_dir . '/')) {
+                @unlink($real_path);
+            }
         }
 
         $repo->delete($export_id);

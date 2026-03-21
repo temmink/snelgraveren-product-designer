@@ -14,6 +14,7 @@ class FontRepository {
         global $wpdb;
         $table = self::table();
 
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- no user input, table name only
         $rows = $wpdb->get_results(
             "SELECT id, family, file_url, format, created_at FROM `{$table}` ORDER BY family, id",
             ARRAY_A

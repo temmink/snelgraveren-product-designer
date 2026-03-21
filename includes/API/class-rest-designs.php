@@ -216,6 +216,10 @@ class RestDesigns {
 
         $body = $request->get_json_params();
         $new_status = $body['status'] ?? 'draft';
+        $allowed_statuses = ['draft', 'active', 'completed', 'archived'];
+        if (!in_array($new_status, $allowed_statuses, true)) {
+            return new \WP_Error('invalid_status', 'Invalid status. Allowed: ' . implode(', ', $allowed_statuses), ['status' => 400]);
+        }
         $this->repo->update_status((int) $design['id'], $new_status);
         $design['status'] = $new_status;
         return rest_ensure_response($design);
