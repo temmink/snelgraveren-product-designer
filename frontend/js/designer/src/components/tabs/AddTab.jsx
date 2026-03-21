@@ -1,6 +1,7 @@
 import React from 'react';
 import { __ } from '@wordpress/i18n';
 import useDesignerStore from '../../store/useDesignerStore';
+import DesignTemplates from '../DesignTemplates';
 
 export default function AddTab() {
   const { template, currentViewIndex, activeTool, setActiveTool, triggerFileUpload, clipartCollections, addClipart } = useDesignerStore();
@@ -81,6 +82,10 @@ export default function AddTab() {
           </button>
         )}
       </div>
+
+      {globalConfig.design_templates_enabled && (
+        <DesignTemplates templateId={template?.id} allowedIds={globalConfig.allowed_design_templates} />
+      )}
 
       {showClipart && (
         <div className="pf-clipart-section">

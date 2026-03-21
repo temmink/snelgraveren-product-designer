@@ -294,6 +294,20 @@ export default function SettingsAssets({ globalConfig, update, clipartCollection
           </>
         )}
       </fieldset>
+
+      <fieldset className="pf-settings__fieldset">
+        <legend>{__('Design Templates', 'productforge')}</legend>
+        <label className="pf-settings__check">
+          <input type="checkbox" checked={globalConfig.design_templates_enabled || false}
+            onChange={(e) => update('design_templates_enabled', e.target.checked)} />
+          {__('Enable design templates', 'productforge')}
+        </label>
+        {globalConfig.design_templates_enabled && (
+          <p className="pf-settings__hint">
+            {__('Manage design templates from the ProductForge \u2192 Design Templates admin page.', 'productforge')}
+          </p>
+        )}
+      </fieldset>
     </>
   );
 }
