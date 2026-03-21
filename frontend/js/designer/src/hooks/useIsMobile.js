@@ -1,30 +1,33 @@
 import { useState, useEffect } from 'react';
 
 const MOBILE_BREAKPOINT = 768;
-const MQL = typeof window !== 'undefined'
-  ? window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
-  : null;
 
 /**
  * Reactive mobile breakpoint hook.
  *
- * Uses matchMedia for BOTH the initial state and change detection.
- * This avoids a Safari iOS timing issue where window.innerWidth briefly
- * reports the default layout viewport (980px) before the <meta viewport>
- * tag is applied — matchMedia respects the viewport meta from the start.
+ * Checks multiple signals to reliably detect mobile on all browsers:
+ * 1. matchMedia (created inside useEffect, not at module level — Safari iOS
+ *    can misreport matchMedia when evaluated before DOM is ready)
+ * 2. screen.width as fallback (always reports device CSS pixels,
+ *    unaffected by viewport meta tag timing)
  */
 export default function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(() => MQL ? MQL.matches : false);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    // Use screen.width as initial value — it's stable and unaffected by
+    // viewport meta timing issues that plague window.innerWidth on Safari iOS
+    return window.screen.width < MOBILE_BREAKPOINT;
+  });
 
   useEffect(() => {
-    if (!MQL) return;
+    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
 
-    // Sync in case the value changed between useState init and effect
-    setIsMobile(MQL.matches);
+    // Sync with matchMedia (now that DOM is ready, this should be accurate)
+    setIsMobile(mql.matches || window.screen.width < MOBILE_BREAKPOINT);
 
     const handler = (e) => setIsMobile(e.matches);
-    MQL.addEventListener('change', handler);
-    return () => MQL.removeEventListener('change', handler);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
   }, []);
 
   return isMobile;
