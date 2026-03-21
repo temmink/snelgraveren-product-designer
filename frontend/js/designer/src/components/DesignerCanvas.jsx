@@ -61,7 +61,7 @@ export default function DesignerCanvas() {
 
   const canvasWidth = currentView?.canvas_width || 800;
   const canvasHeight = currentView?.canvas_height || 600;
-  const { scale, containerRef: scaleContainerRef } = useCanvasScale(canvasWidth, canvasHeight);
+  const { containerRef: scaleContainerRef } = useCanvasScale(canvasWidth, canvasHeight, fabricRef);
 
   // ── Zone helpers ──────────────────────────────────────────────────────────
 
@@ -468,21 +468,8 @@ export default function DesignerCanvas() {
     };
   }, [currentViewIndex, template]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Apply responsive zoom via Fabric.js (NOT CSS transform — that breaks pointer math)
-  // We change BOTH the backing canvas dimensions AND the zoom level together.
-  // Using cssOnly would cause double-scaling: zoom shrinks objects in the 800px buffer,
-  // then CSS shrinks the 800px buffer again to the target size.
-  useEffect(() => {
-    const canvas = fabricRef.current;
-    if (!canvas) return;
-
-    canvas.setZoom(scale);
-    canvas.setDimensions({
-      width: canvasWidth * scale,
-      height: canvasHeight * scale,
-    });
-    canvas.renderAll();
-  }, [scale, canvasWidth, canvasHeight]);
+  // Responsive zoom is handled directly by useCanvasScale via ResizeObserver
+  // (no React state in the loop — instant, no visible grow/shrink animation)
 
   // ── Tool: add-text on canvas click ────────────────────────────────────────
 

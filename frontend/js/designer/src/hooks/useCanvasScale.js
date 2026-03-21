@@ -1,51 +1,56 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 /**
- * Observe a container element and return the scale factor needed
- * to fit a canvas of `canvasWidth` × `canvasHeight` into the container.
- * Returns { scale, containerRef } where containerRef is attached to the wrapper div.
+ * Observe a container element and apply responsive zoom directly to a
+ * Fabric.js canvas — no React state in the loop, so resizes are instant
+ * with no visible "grow/shrink" animation between frames.
  *
- * Fits to whichever dimension is more constrained (width or height),
- * so the full canvas is always visible without scrolling.
+ * @param {number} canvasWidth   Logical canvas width  (e.g. 800)
+ * @param {number} canvasHeight  Logical canvas height (e.g. 600)
+ * @param {React.MutableRefObject} fabricRef  Ref to the Fabric.js canvas instance
  *
  * IMPORTANT: Do NOT use CSS transform to scale the canvas.
  * Fabric.js calculates pointer positions from the DOM element's bounding rect.
  * A CSS transform on a parent causes pointer position mismatch.
- * Instead, apply the returned scale via canvas.setZoom() + canvas.setDimensions(cssOnly).
  */
-export default function useCanvasScale(canvasWidth, canvasHeight) {
+export default function useCanvasScale(canvasWidth, canvasHeight, fabricRef) {
   const containerRef = useRef(null);
-  const [scale, setScale] = useState(1);
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el || !canvasWidth || !canvasHeight) return;
 
-    const updateScale = () => {
+    const applyScale = () => {
+      const canvas = fabricRef?.current;
+      if (!canvas) return;
+
       const availableWidth = el.clientWidth;
       if (availableWidth <= 0) return;
 
       const scaleByWidth = availableWidth / canvasWidth;
 
-      // On mobile (modal fullscreen), also consider available height
-      // The container gets flex: 1 so it has an actual height to measure
       const availableHeight = el.clientHeight;
       let scaleByHeight = Infinity;
       if (availableHeight > 0) {
         scaleByHeight = availableHeight / canvasHeight;
       }
 
-      // Fit to the most constrained dimension, never scale up
-      const newScale = Math.min(1, scaleByWidth, scaleByHeight);
-      setScale(newScale);
+      const scale = Math.min(1, scaleByWidth, scaleByHeight);
+
+      canvas.setZoom(scale);
+      canvas.setDimensions({
+        width: canvasWidth * scale,
+        height: canvasHeight * scale,
+      });
+      canvas.renderAll();
     };
 
-    const ro = new ResizeObserver(updateScale);
+    const ro = new ResizeObserver(applyScale);
     ro.observe(el);
-    updateScale(); // initial
+    applyScale();
 
     return () => ro.disconnect();
-  }, [canvasWidth, canvasHeight]);
+  }, [canvasWidth, canvasHeight, fabricRef]);
 
-  return { scale, containerRef };
+  return { containerRef };
 }
