@@ -229,6 +229,23 @@ class Frontend {
             }
 
             wp_localize_script('pf-frontend-designer', 'pfDesigner', $js_config);
+
+            // Prevent pinch-to-zoom interference when designer is open on mobile
+            wp_add_inline_script('pf-frontend-designer', '
+  document.addEventListener("pf:designer-open", function() {
+    var meta = document.querySelector("meta[name=viewport]");
+    if (meta) {
+      meta._pfOriginal = meta.getAttribute("content");
+      meta.setAttribute("content", "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no");
+    }
+  });
+  document.addEventListener("pf:designer-close", function() {
+    var meta = document.querySelector("meta[name=viewport]");
+    if (meta && meta._pfOriginal) {
+      meta.setAttribute("content", meta._pfOriginal);
+    }
+  });
+', 'after');
         }
 
         // Enqueue CSS if present

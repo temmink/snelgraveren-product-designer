@@ -6,6 +6,7 @@ import { loadTemplate, loadDesign, createDesign, saveDesignView } from './api/de
 import DesignerCanvas from './components/DesignerCanvas';
 import Sidebar from './components/Sidebar';
 import { loadGoogleFonts } from './utils/fonts';
+import useIsMobile from './hooks/useIsMobile';
 
 /**
  * Render a thumbnail from canvas JSON using an offscreen Fabric canvas.
@@ -43,8 +44,11 @@ export default function App() {
     fabricCanvasRef,
   } = useDesignerStore();
 
+  const isMobile = useIsMobile();
+  const effectiveDisplayMode = isMobile ? 'modal' : (config.display_mode || 'embedded');
+
   const [loading, setLoading] = useState(true);
-  const [designerOpen, setDesignerOpen] = useState(config.display_mode !== 'modal' || !!config.auto_open);
+  const [designerOpen, setDesignerOpen] = useState(effectiveDisplayMode !== 'modal' || !!config.auto_open || !!config.existing_design_hash);
   const [savedRecently, setSavedRecently] = useState(false);
   const [designSaved, setDesignSaved] = useState(!!config.existing_design_hash);
 
@@ -106,7 +110,7 @@ export default function App() {
 
   // Modal open/close
   useEffect(() => {
-    if (config.display_mode !== 'modal') return;
+    if (effectiveDisplayMode !== 'modal') return;
 
     // Auto-open when returning from cart with an existing design
     if (config.existing_design_hash) {
@@ -123,7 +127,7 @@ export default function App() {
 
   // Modal focus trapping and keyboard handling
   useEffect(() => {
-    if (config.display_mode !== 'modal') return;
+    if (effectiveDisplayMode !== 'modal') return;
 
     if (designerOpen) {
       // Save the element that opened the modal so we can restore focus on close
@@ -176,6 +180,15 @@ export default function App() {
         returnFocusRef.current.focus();
         returnFocusRef.current = null;
       }
+    }
+  }, [designerOpen]);
+
+  // Dispatch viewport events for mobile zoom lock (PHP inline script listens)
+  useEffect(() => {
+    if (designerOpen) {
+      document.dispatchEvent(new Event('pf:designer-open'));
+    } else {
+      document.dispatchEvent(new Event('pf:designer-close'));
     }
   }, [designerOpen]);
 
@@ -383,52 +396,63 @@ export default function App() {
     return <div className="pf-designer pf-designer--error">{error || __('Template not available.', 'productforge')}</div>;
   }
 
-  const isModal = config.display_mode === 'modal';
+  const isModal = effectiveDisplayMode === 'modal';
   const wrapperClass = [
     'pf-designer',
-    `pf-designer--${config.display_mode || 'embedded'}`,
+    `pf-designer--${effectiveDisplayMode}`,
     isModal && designerOpen ? 'pf-designer--open' : '',
   ].filter(Boolean).join(' ');
 
   return (
-    <div
-      ref={isModal ? modalRef : undefined}
-      className={wrapperClass}
-      role={isModal ? 'dialog' : undefined}
-      aria-modal={isModal ? 'true' : undefined}
-      aria-label={isModal ? __('ProductForge designer', 'productforge') : undefined}
-      onClick={isModal ? (e) => { e.stopPropagation(); setDesignerOpen(false); } : undefined}
-    >
-      <div className="pf-designer__layout" onClick={isModal ? (e) => e.stopPropagation() : undefined}>
-        <DesignerCanvas />
-        <div className="pf-designer__sidebar-wrap">
-          <Sidebar />
-          {error && (
-            <div className="pf-designer__error" onClick={clearError}>
-              {error}
-            </div>
-          )}
-          <button
-            type="button"
-            className={`pf-designer__save-btn${savedRecently ? ' pf-designer__save-btn--saved' : ''}`}
-            onClick={handleSave}
-            disabled={isSaving || !isDirty}
-          >
-            <span aria-live="polite">
-              {isSaving ? __('Saving...', 'productforge') : savedRecently ? __('Saved!', 'productforge') : __('Save Design', 'productforge')}
-            </span>
-          </button>
-          {isModal && (
+    <>
+      {isMobile && !designerOpen && (
+        <button
+          type="button"
+          className="pf-open-designer button"
+          onClick={() => setDesignerOpen(true)}
+        >
+          {__('Customize Product', 'productforge')}
+        </button>
+      )}
+      <div
+        ref={isModal ? modalRef : undefined}
+        className={wrapperClass}
+        role={isModal ? 'dialog' : undefined}
+        aria-modal={isModal ? 'true' : undefined}
+        aria-label={isModal ? __('ProductForge designer', 'productforge') : undefined}
+        onClick={isModal ? (e) => { e.stopPropagation(); setDesignerOpen(false); } : undefined}
+      >
+        <div className="pf-designer__layout" onClick={isModal ? (e) => e.stopPropagation() : undefined}>
+          <DesignerCanvas />
+          <div className="pf-designer__sidebar-wrap">
+            <Sidebar />
+            {error && (
+              <div className="pf-designer__error" onClick={clearError}>
+                {error}
+              </div>
+            )}
             <button
               type="button"
-              className="pf-designer__close-btn"
-              onClick={(e) => { e.stopPropagation(); setDesignerOpen(false); }}
+              className={`pf-designer__save-btn${savedRecently ? ' pf-designer__save-btn--saved' : ''}`}
+              onClick={handleSave}
+              disabled={isSaving || !isDirty}
             >
-              {__('Close Designer', 'productforge')}
+              <span aria-live="polite">
+                {isSaving ? __('Saving...', 'productforge') : savedRecently ? __('Saved!', 'productforge') : __('Save Design', 'productforge')}
+              </span>
             </button>
-          )}
+            {isModal && (
+              <button
+                type="button"
+                className="pf-designer__close-btn"
+                onClick={(e) => { e.stopPropagation(); setDesignerOpen(false); }}
+              >
+                {__('Close Designer', 'productforge')}
+              </button>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
