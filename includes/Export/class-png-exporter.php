@@ -175,20 +175,37 @@ class PngExporter {
      * Find a TrueType font file for the given font family name.
      */
     private function find_font(string $family): string {
+        $original_family = $family;
         $family = strtolower(trim($family));
+
+        // Check custom uploaded fonts first (TTF only)
+        $custom_fonts = \ProductForge\Database\FontRepository::all();
+        foreach ($custom_fonts as $font) {
+            if (strtolower($font['family']) === $family) {
+                foreach ($font['files'] as $file) {
+                    if ($file['format'] === 'truetype') {
+                        $local_path = FileUtils::url_to_local_path($file['file_url']);
+                        if ($local_path && file_exists($local_path)) {
+                            return $local_path;
+                        }
+                    }
+                }
+            }
+        }
 
         // Common mappings
         $map = [
             'arial'       => ['Arial.ttf', 'arial.ttf', 'LiberationSans-Regular.ttf', 'DejaVuSans.ttf'],
             'helvetica'   => ['Helvetica.ttf', 'Arial.ttf', 'arial.ttf', 'LiberationSans-Regular.ttf', 'DejaVuSans.ttf'],
             'times'       => ['Times.ttf', 'times.ttf', 'LiberationSerif-Regular.ttf', 'DejaVuSerif.ttf'],
+            'times new roman' => ['Times.ttf', 'times.ttf', 'LiberationSerif-Regular.ttf', 'DejaVuSerif.ttf'],
             'courier'     => ['Courier.ttf', 'courier.ttf', 'LiberationMono-Regular.ttf', 'DejaVuSansMono.ttf'],
+            'courier new' => ['Courier.ttf', 'courier.ttf', 'LiberationMono-Regular.ttf', 'DejaVuSansMono.ttf'],
             'sans-serif'  => ['DejaVuSans.ttf', 'LiberationSans-Regular.ttf', 'arial.ttf'],
         ];
 
         $candidates = $map[$family] ?? [$family . '.ttf', 'DejaVuSans.ttf'];
 
-        // Search common font directories
         $dirs = [
             '/usr/share/fonts/truetype/',
             '/usr/share/fonts/truetype/dejavu/',

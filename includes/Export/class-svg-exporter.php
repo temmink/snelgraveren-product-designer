@@ -17,6 +17,9 @@ class SvgExporter {
         $svg .= ' width="' . $width . '" height="' . $height . '"';
         $svg .= ' viewBox="0 0 ' . $width . ' ' . $height . '">';
 
+        // Embed custom fonts used in this design
+        $svg .= $this->build_font_defs($objects);
+
         // Background: solid color or 'none'
         if (!empty($bg) && $bg !== 'none') {
             $svg .= '<rect width="' . $width . '" height="' . $height . '" fill="' . esc_attr($bg) . '"/>';
@@ -302,6 +305,85 @@ class SvgExporter {
             return 'none';
         }
         return $color;
+    }
+
+    /**
+     * Build @font-face CSS for custom fonts used in the canvas objects.
+     * Only embeds fonts that are actually used.
+     */
+    private function build_font_defs(array $objects): string {
+        $used_families = $this->collect_font_families($objects);
+        if (empty($used_families)) {
+            return '';
+        }
+
+        $custom_fonts = \ProductForge\Database\FontRepository::all();
+        if (empty($custom_fonts)) {
+            return '';
+        }
+
+        $css = '';
+        foreach ($custom_fonts as $font) {
+            if (!in_array($font['family'], $used_families, true)) {
+                continue;
+            }
+
+            foreach ($font['files'] as $file) {
+                $local_path = FileUtils::url_to_local_path($file['file_url']);
+                if (empty($local_path) || !file_exists($local_path)) {
+                    continue;
+                }
+
+                $data = file_get_contents($local_path);
+                if ($data === false) {
+                    continue;
+                }
+
+                $mime = match ($file['format']) {
+                    'woff2'    => 'font/woff2',
+                    'woff'     => 'font/woff',
+                    'truetype' => 'font/ttf',
+                    default    => 'application/octet-stream',
+                };
+
+                $base64 = base64_encode($data);
+                $css .= "@font-face {\n";
+                $css .= "  font-family: '" . esc_attr($font['family']) . "';\n";
+                $css .= "  src: url('data:{$mime};base64,{$base64}') format('{$file['format']}');\n";
+                $css .= "}\n";
+            }
+        }
+
+        if (empty($css)) {
+            return '';
+        }
+
+        return '<defs><style type="text/css"><![CDATA[' . "\n" . $css . ']]></style></defs>';
+    }
+
+    /**
+     * Collect all unique font families from canvas objects.
+     */
+    private function collect_font_families(array $objects): array {
+        $families = [];
+        foreach ($objects as $obj) {
+            $type = $obj['type'] ?? '';
+            if (in_array($type, ['i-text', 'IText', 'Textbox', 'textbox', 'Text'], true)) {
+                $family = $obj['fontFamily'] ?? '';
+                if ($family && !in_array($family, $families, true)) {
+                    $families[] = $family;
+                }
+            }
+            if (in_array($type, ['Group', 'group'], true)) {
+                $child_families = $this->collect_font_families($obj['objects'] ?? []);
+                foreach ($child_families as $f) {
+                    if (!in_array($f, $families, true)) {
+                        $families[] = $f;
+                    }
+                }
+            }
+        }
+        return $families;
     }
 
     /**

@@ -5,6 +5,8 @@ defined('ABSPATH') || exit;
 
 class PdfExporter {
 
+    private array $custom_font_map = [];
+
     /**
      * Export design views to a multi-page PDF file.
      *
@@ -19,6 +21,8 @@ class PdfExporter {
         if (!wp_mkdir_p($dir)) {
             return false;
         }
+
+        $this->load_custom_fonts();
 
         try {
             $pdf = new \TCPDF('P', 'pt', 'A4', true, 'UTF-8', false);
@@ -100,8 +104,10 @@ class PdfExporter {
         $rgb = $this->hex_to_rgb($fill);
         $pdf->SetTextColor($rgb[0], $rgb[1], $rgb[2]);
 
+        $family = $obj['fontFamily'] ?? 'Arial';
         $actual_size = $size * $scaleY;
-        $pdf->SetFont('helvetica', $weight . $style, $actual_size);
+        $font_name = $this->resolve_font($pdf, $family);
+        $pdf->SetFont($font_name, $weight . $style, $actual_size);
 
         // Fabric.js top = top of text bounding box; TCPDF SetXY = top-left
         $pdf->SetXY($left, $top);
@@ -186,6 +192,64 @@ class PdfExporter {
             $radius * $scaleY,
             0, 0, 360, 'F'
         );
+    }
+
+    /**
+     * Build a mapping of custom font family names to local TTF file paths.
+     */
+    private function load_custom_fonts(): void {
+        $custom_fonts = \ProductForge\Database\FontRepository::all();
+        foreach ($custom_fonts as $font) {
+            foreach ($font['files'] as $file) {
+                if ($file['format'] !== 'truetype') {
+                    continue;
+                }
+                $local_path = FileUtils::url_to_local_path($file['file_url']);
+                if ($local_path && file_exists($local_path)) {
+                    $this->custom_font_map[$font['family']] = $local_path;
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Resolve a font family name to a TCPDF font name.
+     */
+    private function resolve_font(\TCPDF $pdf, string $family): string {
+        $builtin = [
+            'arial' => 'helvetica',
+            'helvetica' => 'helvetica',
+            'times new roman' => 'times',
+            'times' => 'times',
+            'courier new' => 'courier',
+            'courier' => 'courier',
+            'georgia' => 'times',
+            'verdana' => 'helvetica',
+            'tahoma' => 'helvetica',
+            'trebuchet ms' => 'helvetica',
+            'sans-serif' => 'helvetica',
+            'serif' => 'times',
+            'monospace' => 'courier',
+        ];
+
+        $lower = strtolower($family);
+        if (isset($builtin[$lower])) {
+            return $builtin[$lower];
+        }
+
+        if (isset($this->custom_font_map[$family])) {
+            try {
+                $font_name = \TCPDF_FONTS::addTTFfont($this->custom_font_map[$family], 'TrueTypeUnicode', '', 96);
+                if ($font_name) {
+                    return $font_name;
+                }
+            } catch (\Exception $e) {
+                // Fall through to default
+            }
+        }
+
+        return 'helvetica';
     }
 
     private function hex_to_rgb(string $hex): array {
