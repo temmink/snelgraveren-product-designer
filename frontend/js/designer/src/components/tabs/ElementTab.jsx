@@ -328,7 +328,7 @@ function ImageProperties({ fabricObj, type, perms, globalConfig, snapshotView, c
       </div>
 
       {/* SVG recolor */}
-      {type === 'svg' && perms.recolor !== false && (
+      {type === 'svg' && perms.recolor !== false && !fabricObj.data?.clipartNoRecolor && (
         <label className="pf-element__field">
           <span>{__('Tint Color', 'productforge')}</span>
           {anyColor || allowedColors.length === 0 ? (

@@ -625,6 +625,54 @@ export default function DesignerCanvas() {
     setActiveTool('select');
   }, [findFirstZoneForType, zones, applyPermissions, applyZoneClip, clampToZone, snapshotView, currentViewIndex, setActiveTool, setError]);
 
+  const addClipartToCanvas = useCallback(async (svgUrl) => {
+    try {
+      const canvas = fabricRef.current;
+      if (!canvas) return;
+
+      const img = await FabricImage.fromURL(svgUrl, { crossOrigin: 'anonymous' });
+      const zoneIdx = findFirstZoneForType('svg');
+
+      if (zoneIdx >= 0) {
+        const zone = zones[zoneIdx];
+        img.scaleToWidth(Math.min(img.width, zone.width * 0.8));
+        img.set({
+          left: zone.x + zone.width / 2 - (img.getScaledWidth() / 2),
+          top:  zone.y + zone.height / 2 - (img.getScaledHeight() / 2),
+        });
+      } else {
+        img.scaleToWidth(Math.min(img.width, canvas.width * 0.5));
+        img.set({
+          left: canvas.width / 2 - img.getScaledWidth() / 2,
+          top:  canvas.height / 2 - img.getScaledHeight() / 2,
+        });
+      }
+
+      // Store clipartNoRecolor in data so it survives JSON serialization
+      const clipartRecolor = template?.global_config?.clipart_recolor;
+      img.set({
+        data: {
+          elementType: 'svg',
+          zoneIndex: zoneIdx,
+          ...(clipartRecolor === false ? { clipartNoRecolor: true } : {}),
+        },
+      });
+
+      applyPermissions(img, 'svg');
+
+      if (zoneIdx >= 0) applyZoneClip(img, zoneIdx);
+      canvas.add(img);
+      canvas.setActiveObject(img);
+
+      if (zoneIdx >= 0) clampToZone(img);
+
+      canvas.renderAll();
+      snapshotView(currentViewIndex, canvas.toJSON(['data']));
+    } catch (err) {
+      setError(err.message);
+    }
+  }, [findFirstZoneForType, zones, template, applyPermissions, applyZoneClip, clampToZone, snapshotView, currentViewIndex, setError]);
+
   // Called by AddTab via store
   const triggerFileUpload = useCallback((elementType) => {
     const input = fileInputRef.current;
@@ -649,6 +697,12 @@ export default function DesignerCanvas() {
   useEffect(() => {
     setTriggerFileUpload(triggerFileUpload);
   }, [triggerFileUpload, setTriggerFileUpload]);
+
+  const setAddClipart = useDesignerStore((s) => s.setAddClipart);
+
+  useEffect(() => {
+    setAddClipart(addClipartToCanvas);
+  }, [addClipartToCanvas, setAddClipart]);
 
   return (
     <div className="pf-canvas-wrap" ref={scaleContainerRef}>

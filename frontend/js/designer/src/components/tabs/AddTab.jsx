@@ -3,12 +3,12 @@ import { __ } from '@wordpress/i18n';
 import useDesignerStore from '../../store/useDesignerStore';
 
 export default function AddTab() {
-  const { template, currentViewIndex, activeTool, setActiveTool, triggerFileUpload } = useDesignerStore();
+  const { template, currentViewIndex, activeTool, setActiveTool, triggerFileUpload, clipartCollections, addClipart } = useDesignerStore();
 
   const currentView = template?.views?.[currentViewIndex];
   const zones = currentView?.zones_config || [];
+  const globalConfig = template?.global_config || {};
 
-  // Check if any zone allows a given type (or there are no zones at all)
   const isTypeAllowed = (type) => {
     if (zones.length === 0) return true;
     return zones.some((z) => (z.allowed_types || []).includes(type));
@@ -24,6 +24,12 @@ export default function AddTab() {
       setActiveTool(tool);
     }
   };
+
+  const handleClipartClick = (svgUrl) => {
+    addClipart?.(svgUrl);
+  };
+
+  const showClipart = globalConfig.clipart_enabled && isTypeAllowed('svg') && clipartCollections.length > 0;
 
   return (
     <div className="pf-sidebar__tab-content">
@@ -63,6 +69,31 @@ export default function AddTab() {
           </button>
         )}
       </div>
+
+      {showClipart && (
+        <div className="pf-clipart-section">
+          <h3 className="pf-sidebar__heading">{__('Clip Art', 'productforge')}</h3>
+          {clipartCollections.map((collection) => (
+            <div key={collection.id} className="pf-clipart-collection">
+              <h4 className="pf-clipart-collection__name">{collection.name}</h4>
+              <div className="pf-clipart-collection__grid">
+                {(collection.items || []).map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className="pf-clipart-collection__item"
+                    onClick={() => handleClipartClick(item.svg_url)}
+                    title={item.name}
+                    aria-label={item.name}
+                  >
+                    <img src={item.svg_url} alt={item.name} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
