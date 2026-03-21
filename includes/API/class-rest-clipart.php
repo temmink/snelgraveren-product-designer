@@ -146,6 +146,10 @@ class RestClipart {
             return new \WP_Error('no_collection', 'Collection ID is required.', ['status' => 400]);
         }
 
+        if (!ClipartRepository::collection_exists($collection_id)) {
+            return new \WP_Error('not_found', 'Collection not found.', ['status' => 404]);
+        }
+
         $name = sanitize_text_field($request->get_param('name') ?? '');
         if (empty($name)) {
             // Derive name from filename
@@ -185,7 +189,8 @@ class RestClipart {
     private static function delete_file(string $url): void {
         $upload_dir = wp_upload_dir();
         $path = str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $url);
-        if (file_exists($path)) {
+        $expected_dir = $upload_dir['basedir'] . '/pf-clipart/';
+        if (strpos($path, $expected_dir) === 0 && file_exists($path)) {
             unlink($path);
         }
     }

@@ -110,9 +110,9 @@ export default function App() {
         // Load clip art collections if enabled
         if (data.global_config?.clipart_enabled) {
           fetchClipartCollections().then((collections) => {
-            const allowed = data.global_config.allowed_clipart_collections || [];
+            const allowed = (data.global_config.allowed_clipart_collections || []).map(Number);
             const filtered = allowed.length > 0
-              ? collections.filter((c) => allowed.includes(c.id))
+              ? collections.filter((c) => allowed.includes(Number(c.id)))
               : collections;
             useDesignerStore.getState().setClipartCollections(filtered);
           }).catch(() => {});
