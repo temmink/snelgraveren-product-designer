@@ -4,6 +4,7 @@ namespace ProductForge\API;
 defined('ABSPATH') || exit;
 
 use ProductForge\Database\ClipartRepository;
+use ProductForge\ProductForge;
 use ProductForge\Security\ClipartValidator;
 
 class RestClipart {
@@ -90,6 +91,10 @@ class RestClipart {
     }
 
     public function create_collection(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+        if ( ! ProductForge::has_feature( 'clipart' ) ) {
+            return ProductForge::premium_error( 'clipart' );
+        }
+
         $name = sanitize_text_field($request->get_param('name') ?? '');
         if (empty($name)) {
             return new \WP_Error('no_name', 'Collection name is required.', ['status' => 400]);
@@ -106,6 +111,10 @@ class RestClipart {
     }
 
     public function rename_collection(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+        if ( ! ProductForge::has_feature( 'clipart' ) ) {
+            return ProductForge::premium_error( 'clipart' );
+        }
+
         $id   = (int) $request['id'];
         $name = sanitize_text_field($request->get_param('name') ?? '');
         if (empty($name)) {
@@ -121,6 +130,10 @@ class RestClipart {
     }
 
     public function delete_collection(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+        if ( ! ProductForge::has_feature( 'clipart' ) ) {
+            return ProductForge::premium_error( 'clipart' );
+        }
+
         $id    = (int) $request['id'];
         $items = ClipartRepository::delete_collection($id);
 
@@ -136,6 +149,10 @@ class RestClipart {
     }
 
     public function upload_item(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+        if ( ! ProductForge::has_feature( 'clipart' ) ) {
+            return ProductForge::premium_error( 'clipart' );
+        }
+
         $files = $request->get_file_params();
         if (empty($files['file'])) {
             return new \WP_Error('no_file', 'No SVG file uploaded.', ['status' => 400]);
@@ -174,6 +191,10 @@ class RestClipart {
     }
 
     public function delete_item(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+        if ( ! ProductForge::has_feature( 'clipart' ) ) {
+            return ProductForge::premium_error( 'clipart' );
+        }
+
         $id  = (int) $request['id'];
         $row = ClipartRepository::delete_item($id);
 

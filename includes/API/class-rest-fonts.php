@@ -4,6 +4,7 @@ namespace ProductForge\API;
 defined('ABSPATH') || exit;
 
 use ProductForge\Database\FontRepository;
+use ProductForge\ProductForge;
 use ProductForge\Security\FontValidator;
 
 class RestFonts {
@@ -47,6 +48,10 @@ class RestFonts {
     }
 
     public function upload_font(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+        if ( ! ProductForge::has_feature( 'custom_fonts' ) ) {
+            return ProductForge::premium_error( 'custom_fonts' );
+        }
+
         $files = $request->get_file_params();
         if (empty($files['file'])) {
             return new \WP_Error('no_file', 'No font file uploaded.', ['status' => 400]);
@@ -90,6 +95,10 @@ class RestFonts {
     }
 
     public function delete_font(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+        if ( ! ProductForge::has_feature( 'custom_fonts' ) ) {
+            return ProductForge::premium_error( 'custom_fonts' );
+        }
+
         $id  = (int) $request['id'];
         $row = FontRepository::delete($id);
 
@@ -103,6 +112,10 @@ class RestFonts {
     }
 
     public function delete_family(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+        if ( ! ProductForge::has_feature( 'custom_fonts' ) ) {
+            return ProductForge::premium_error( 'custom_fonts' );
+        }
+
         $family = sanitize_text_field(urldecode($request['family']));
         $rows   = FontRepository::delete_family($family);
 

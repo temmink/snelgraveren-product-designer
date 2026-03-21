@@ -3,6 +3,8 @@ namespace ProductForge\API;
 
 defined('ABSPATH') || exit;
 
+use ProductForge\ProductForge;
+
 class RestPalettes {
 
     private const OPTION_KEY = 'pf_color_palettes';
@@ -39,6 +41,10 @@ class RestPalettes {
     }
 
     public function create_palette(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+        if ( ! ProductForge::has_feature( 'color_palettes' ) ) {
+            return ProductForge::premium_error( 'color_palettes' );
+        }
+
         $body = $request->get_json_params();
         $name = sanitize_text_field($body['name'] ?? '');
         if (empty($name)) {
@@ -61,6 +67,10 @@ class RestPalettes {
     }
 
     public function update_palette(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+        if ( ! ProductForge::has_feature( 'color_palettes' ) ) {
+            return ProductForge::premium_error( 'color_palettes' );
+        }
+
         $id       = sanitize_text_field($request['id']);
         $palettes = $this->get_palettes();
         $index    = array_search($id, array_column($palettes, 'id'), true);
@@ -82,6 +92,10 @@ class RestPalettes {
     }
 
     public function delete_palette(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+        if ( ! ProductForge::has_feature( 'color_palettes' ) ) {
+            return ProductForge::premium_error( 'color_palettes' );
+        }
+
         $id       = sanitize_text_field($request['id']);
         $palettes = $this->get_palettes();
         $index    = array_search($id, array_column($palettes, 'id'), true);
