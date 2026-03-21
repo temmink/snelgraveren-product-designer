@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { __ } from '@wordpress/i18n';
 import useDesignerStore from '../store/useDesignerStore';
+import useIsMobile from '../hooks/useIsMobile';
 import AddTab from './tabs/AddTab';
 import ElementTab from './tabs/ElementTab';
 import ViewsTab from './tabs/ViewsTab';
 
 export default function Sidebar() {
   const { selectedObject } = useDesignerStore();
+  const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState('views');
+  const [collapsed, setCollapsed] = useState(false);
 
   // Auto-switch to Element tab when object selected
   useEffect(() => {
@@ -18,8 +21,31 @@ export default function Sidebar() {
     }
   }, [selectedObject]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Auto-expand when an object is selected (user needs element tab)
+  useEffect(() => {
+    if (selectedObject && isMobile) {
+      setCollapsed(false);
+    }
+  }, [selectedObject, isMobile]);
+
   return (
-    <div className="pf-sidebar">
+    <div className={`pf-sidebar${isMobile && collapsed ? ' pf-sidebar--collapsed' : ''}`}>
+      {isMobile && (
+        <button
+          type="button"
+          className="pf-sidebar__collapse-toggle"
+          onClick={() => setCollapsed(!collapsed)}
+          aria-expanded={!collapsed}
+          aria-label={collapsed ? __('Show options', 'productforge') : __('Hide options', 'productforge')}
+        >
+          {activeTab === 'element' && selectedObject
+            ? __('Element Options', 'productforge')
+            : activeTab === 'add'
+              ? __('Add Element', 'productforge')
+              : __('Views', 'productforge')
+          }
+        </button>
+      )}
       <div className="pf-sidebar__tabs" role="tablist" aria-label={__('Designer tools', 'productforge')}>
         <button
           type="button"
