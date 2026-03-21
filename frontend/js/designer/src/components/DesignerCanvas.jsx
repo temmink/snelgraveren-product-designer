@@ -721,7 +721,34 @@ export default function DesignerCanvas() {
       const canvas = fabricRef.current;
       if (!canvas) return;
 
-      const img = await FabricImage.fromURL(svgUrl, { crossOrigin: 'anonymous' });
+      const clipartRecolor = template?.global_config?.clipart_recolor;
+
+      // Find the first text element's color to match clip art to
+      let matchColor = null;
+      if (clipartRecolor !== false) {
+        const firstText = canvas.getObjects().find((o) => {
+          const t = o.type?.toLowerCase();
+          return t === 'i-text' || t === 'itext' || t === 'text' || t === 'textbox';
+        });
+        if (firstText?.fill) matchColor = firstText.fill;
+      }
+
+      // If we have a color to match, recolor the SVG source before loading
+      let imgUrl = svgUrl;
+      if (matchColor) {
+        try {
+          const resp = await fetch(svgUrl);
+          let svgText = await resp.text();
+          // Replace all fill and stroke colors in the SVG with the target color
+          svgText = svgText.replace(/fill\s*=\s*"(?!none)[^"]*"/gi, `fill="${matchColor}"`);
+          svgText = svgText.replace(/stroke\s*=\s*"(?!none)[^"]*"/gi, `stroke="${matchColor}"`);
+          svgText = svgText.replace(/fill\s*:\s*(?!none)[^;"]+/gi, `fill:${matchColor}`);
+          svgText = svgText.replace(/stroke\s*:\s*(?!none)[^;"]+/gi, `stroke:${matchColor}`);
+          imgUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgText);
+        } catch (_) { /* fall back to original URL */ }
+      }
+
+      const img = await FabricImage.fromURL(imgUrl, { crossOrigin: 'anonymous' });
       const zoneIdx = findFirstZoneForType('svg');
 
       if (zoneIdx >= 0) {
@@ -739,8 +766,6 @@ export default function DesignerCanvas() {
         });
       }
 
-      // Store clipartNoRecolor in data so it survives JSON serialization
-      const clipartRecolor = template?.global_config?.clipart_recolor;
       img.set({
         data: {
           elementType: 'svg',
