@@ -1,6 +1,6 @@
 # ProductForge — Current Status
 
-**Last updated:** 2026-03-20
+**Last updated:** 2026-03-21
 **Plugin version:** 1.0.0
 **Docker environment:** Running (WordPress 6.7, WooCommerce 10.6.1, MariaDB 11)
 
@@ -94,8 +94,18 @@ bash bin/package.sh
   - `ElementTab.jsx` — Text properties (font, size, color, bold/italic), image/SVG properties (scale, recolor), alignment buttons, delete
   - `ViewsTab.jsx` — View switcher with snapshot persistence across view switches
 - **App:** `App.jsx` — template loading, design reload from cart (load design BEFORE setting template to avoid race condition), save flow with offscreen thumbnail generation for all views, auto-save-before-cart, customization-required gate, display modes (embedded/modal), hidden design_hash input
-- **CSS:** `designer.css` — isolation (`all: initial`), layout, modal overlay, BEM naming with `pf-` prefix, explicit text colors to prevent theme overrides, tab text overflow protection
-- **Build:** Vite outputs `dist/frontend-designer.js` + `dist/frontend-designer.css`
+- **CSS:** `designer.css` — isolation (`all: initial`), layout, modal overlay, BEM naming with `pf-` prefix, explicit text colors to prevent theme overrides, tab text overflow protection, mobile responsive (stacked layout, fullscreen modal, touch-sized controls)
+- **Mobile responsive:**
+  - `useIsMobile` hook — reactive breakpoint detection via `matchMedia` + `screen.width` fallback (Safari iOS compatibility)
+  - `useCanvasScale` hook — ResizeObserver-based canvas scaling, applies zoom directly to Fabric.js canvas (no React state in the loop for instant resize)
+  - Mobile forces modal display mode regardless of template config
+  - Canvas scales to fit container (width and height constrained)
+  - Sidebar starts collapsed on mobile, auto-expands on element selection
+  - Touch-optimized controls: 44px+ touch targets, circle corner style, larger cornerSize/touchCornerSize
+  - Zone boundaries rendered with stronger visibility on mobile (higher opacity fill, thicker stroke)
+  - Viewport zoom lock (prevents pinch-to-zoom interference) via `pf:designer-open`/`pf:designer-close` custom events
+  - PHP injects inline script for viewport meta manipulation
+- **Build:** Vite outputs `dist/frontend-designer.js` + `dist/frontend-designer.css` (CSS also copied as separate file for Safari compatibility)
 
 ### Phase 4 — WooCommerce cart integration ✅
 - **Add to cart:** `pf_design_hash` attached to cart item data via hidden input + `woocommerce_add_cart_item_data` filter
@@ -307,9 +317,12 @@ productforge/
 ├── frontend/js/designer/src/
 │   ├── index.jsx
 │   ├── App.jsx                   # Template loading, save flow, display modes
-│   ├── designer.css              # Isolated styles, layout, modal, components
+│   ├── designer.css              # Isolated styles, layout, modal, mobile responsive
 │   ├── api/designerApi.js        # REST API helpers
 │   ├── store/useDesignerStore.js  # Zustand state management
+│   ├── hooks/
+│   │   ├── useIsMobile.js        # Reactive mobile breakpoint (matchMedia + screen.width)
+│   │   └── useCanvasScale.js     # ResizeObserver canvas zoom (direct Fabric.js, no React state)
 │   └── components/
 │       ├── DesignerCanvas.jsx    # Fabric.js canvas, zones, tools, permissions
 │       ├── Sidebar.jsx           # Three-tab sidebar wrapper

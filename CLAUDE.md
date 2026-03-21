@@ -15,7 +15,7 @@ A WooCommerce plugin that lets customers design text, images, and SVGs onto prod
 - **Approach B: Pure custom database tables** (6 tables, no CPTs). All data in `wp_pf_*` tables.
 - **Frontend canvas:** Fabric.js 6.x
 - **UI framework:** React 18 + Zustand state management
-- **Build system:** Vite (single config, dual entry points: admin + frontend)
+- **Build system:** Vite (single config, dual entry points: admin + frontend) + CSS copy step for Safari compatibility
 - **Export:** Local only — PDF (TCPDF), PNG (Imagick), SVG (Fabric.js toSVG)
 - **PHP autoloading:** PSR-4 via custom autoloader. Namespace `ProductForge\` maps to `includes/`.
 
@@ -52,6 +52,9 @@ npm run build                           # Production build → dist/
 - **Fabric.js 6.x type names:** Runtime types are lowercase hyphenated (`'i-text'`, `'image'`, `'path'`), but JSON serialization uses PascalCase (`'IText'`, `'Image'`). Use case-insensitive comparison when matching types at runtime.
 - **No `stopPropagation` on `#pf-designer-root`:** The designer renders inside a WooCommerce product tab via `[productforge]` shortcode. Never add blanket `stopPropagation` on the designer root — it blocks Fabric.js's `document`-level `pointerup` listener, causing dragged objects to stick to the cursor.
 - **Verify hook imports:** When adding React components that use hooks (`useRef`, `useState`, etc.), always verify the hook is imported. Missing hook imports cause `ReferenceError` that crashes the entire React tree with no visible error on the page.
+- **Fabric.js canvas scaling:** Use `canvas.setZoom(scale)` + `canvas.setDimensions({ width, height })` (NOT `cssOnly: true`). Using `cssOnly` causes double-scaling: zoom shrinks objects in the backing buffer, then CSS shrinks the buffer again. Always change backing canvas dimensions alongside zoom.
+- **Mobile detection:** Use `matchMedia` (not `window.innerWidth`) for breakpoint detection. Safari iOS briefly reports `innerWidth` as 980px before viewport meta tag is applied. Use `screen.width` as fallback for initial state. Never evaluate `matchMedia` at module level — Safari can misreport before DOM ready.
+- **CSS delivery:** Build outputs CSS as both JS-injected (via Vite bundle) and separate `dist/frontend-designer.css` file (via `cp` in build script). Safari has issues with media queries in JS-injected `<style>` tags. The PHP already enqueues the CSS file via `<link>` tag if it exists.
 
 ### REST API
 - Namespace: `pf/v1`
