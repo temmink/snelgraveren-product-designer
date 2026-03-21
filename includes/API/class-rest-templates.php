@@ -4,6 +4,7 @@ namespace ProductForge\API;
 defined('ABSPATH') || exit;
 
 use ProductForge\Database\TemplateRepository;
+use ProductForge\ProductForge;
 
 class RestTemplates {
 
@@ -74,6 +75,17 @@ class RestTemplates {
     }
 
     public function create_template(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+        if ( ! ProductForge::has_feature( 'unlimited_templates' ) ) {
+            $counts = $this->repo->get_status_counts();
+            $total  = ( $counts['draft'] ?? 0 ) + ( $counts['published'] ?? 0 ) + ( $counts['archived'] ?? 0 );
+            if ( $total >= 1 ) {
+                return ProductForge::premium_error(
+                    'unlimited_templates',
+                    __( 'Free version is limited to 1 template. Upgrade to Pro for unlimited templates.', 'productforge' )
+                );
+            }
+        }
+
         $body = $request->get_json_params();
         if (empty($body['title'])) {
             return new \WP_Error('missing_title', 'Title is required.', ['status' => 400]);
@@ -207,6 +219,34 @@ class RestTemplates {
         // Remove legacy internal fields
         unset($global_config['color_mode'], $global_config['color_palette_id']);
 
+        // Strip premium features for free users
+        if ( ! ProductForge::is_premium() ) {
+            unset( $global_config['product_colors_enabled'] );
+            unset( $global_config['product_allowed_colors'] );
+            unset( $global_config['product_any_color'] );
+            unset( $global_config['pricing'] );
+            unset( $global_config['permissions'] );
+            unset( $global_config['clipart_enabled'] );
+            unset( $global_config['solid_color'] );
+            unset( $global_config['filters_enabled'] );
+
+            // Enforce single view
+            $sanitized_views = array_slice( $sanitized_views, 0, 1 );
+
+            // Downgrade SVG boundaries to rect
+            foreach ( $sanitized_views as &$sv ) {
+                if ( ! empty( $sv['zones_config'] ) ) {
+                    foreach ( $sv['zones_config'] as &$zone ) {
+                        if ( ( $zone['boundary_type'] ?? 'rect' ) === 'svg' ) {
+                            $zone['boundary_type'] = 'rect';
+                            unset( $zone['svg_url'], $zone['svg_path_data'] );
+                        }
+                    }
+                }
+            }
+            unset( $sv, $zone );
+        }
+
         $response = rest_ensure_response([
             'id'            => (int) $template['id'],
             'title'         => $template['title'],
@@ -230,6 +270,17 @@ class RestTemplates {
 
     public function create_view(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
         $template_id = (int) $request['template_id'];
+
+        if ( ! ProductForge::has_feature( 'multi_view' ) ) {
+            $view_count = count( $this->repo->get_views( $template_id ) );
+            if ( $view_count >= 1 ) {
+                return ProductForge::premium_error(
+                    'multi_view',
+                    __( 'Free version is limited to 1 view per template. Upgrade to Pro for multiple views.', 'productforge' )
+                );
+            }
+        }
+
         if (!$this->repo->get($template_id)) {
             return new \WP_Error('not_found', 'Template not found.', ['status' => 404]);
         }
