@@ -77,3 +77,9 @@ export async function uploadFile(file) {
   }
   return res.json();
 }
+
+export async function fetchCustomFonts() {
+  const res = await fetch(apiUrl('/fonts'));
+  if (!res.ok) return [];
+  return res.json();
+}

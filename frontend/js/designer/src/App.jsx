@@ -2,10 +2,10 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { __ } from '@wordpress/i18n';
 import { Canvas as FabricCanvas } from 'fabric';
 import useDesignerStore from './store/useDesignerStore';
-import { loadTemplate, loadDesign, createDesign, saveDesignView } from './api/designerApi';
+import { loadTemplate, loadDesign, createDesign, saveDesignView, fetchCustomFonts } from './api/designerApi';
 import DesignerCanvas from './components/DesignerCanvas';
 import Sidebar from './components/Sidebar';
-import { loadGoogleFonts } from './utils/fonts';
+import { loadGoogleFonts, loadCustomFonts } from './utils/fonts';
 import useIsMobile from './hooks/useIsMobile';
 
 /**
@@ -66,11 +66,17 @@ export default function App() {
 
     loadTemplate(config.template_id)
       .then(async (data) => {
-        // Load Google Fonts used in this template
+        // Load custom fonts BEFORE Google Fonts (so custom families are excluded from Google loading)
         const allowedFonts = data.global_config?.allowed_fonts || [];
-        if (allowedFonts.length > 0) {
-          loadGoogleFonts(allowedFonts);
-        }
+        fetchCustomFonts()
+          .then((customFonts) => {
+            loadCustomFonts(customFonts);
+            loadGoogleFonts(allowedFonts);
+          })
+          .catch(() => {
+            // If custom fonts fail, still load Google Fonts
+            loadGoogleFonts(allowedFonts);
+          });
 
         // If returning from cart with an existing design, load it BEFORE
         // setting the template so that canvas snapshots are available when
