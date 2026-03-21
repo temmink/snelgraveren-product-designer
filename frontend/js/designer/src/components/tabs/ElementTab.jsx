@@ -3,6 +3,7 @@ import { __ } from '@wordpress/i18n';
 import { cache as fabricCache } from 'fabric';
 import useDesignerStore from '../../store/useDesignerStore';
 import { alignElement } from '../../../../../../shared/js/alignElement';
+import ImageFilters from '../ImageFilters';
 
 export default function ElementTab() {
   const { selectedObject, template, snapshotView, currentViewIndex, fabricCanvasRef, zoneFillColors, setZoneFillColor } = useDesignerStore();
@@ -359,6 +360,16 @@ function ImageProperties({ fabricObj, type, perms, globalConfig, snapshotView, c
             </div>
           )}
         </label>
+      )}
+
+      {/* Image filters */}
+      {type === 'image' && globalConfig.filters_enabled && (
+        <ImageFilters
+          fabricObj={fabricObj}
+          allowedFilters={globalConfig.allowed_filters || ['Brightness', 'Contrast', 'Saturation', 'Grayscale', 'Sepia']}
+          snapshotView={snapshotView}
+          currentViewIndex={currentViewIndex}
+        />
       )}
     </div>
   );

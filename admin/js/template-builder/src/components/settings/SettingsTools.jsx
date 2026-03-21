@@ -1,6 +1,9 @@
 import React from 'react';
 import { __ } from '@wordpress/i18n';
 
+const ALL_FILTERS = ['Brightness', 'Contrast', 'Saturation', 'Grayscale', 'Sepia', 'Blur', 'Invert', 'Vintage', 'Noise', 'Pixelate', 'HueRotation', 'Vibrance', 'BlackWhite', 'Brownie', 'Kodachrome', 'Technicolor', 'Polaroid'];
+const DEFAULT_FILTERS = ['Brightness', 'Contrast', 'Saturation', 'Grayscale', 'Sepia'];
+
 export default function SettingsTools({ globalConfig, update }) {
   return (
     <>
@@ -37,6 +40,44 @@ export default function SettingsTools({ globalConfig, update }) {
                 onChange={(e) => update('drawing_default_color', e.target.value)}
               />
             </label>
+          </div>
+        )}
+      </fieldset>
+
+      <fieldset className="pf-settings__fieldset">
+        <legend>{__('Image Filters', 'productforge')}</legend>
+        <label className="pf-settings__check">
+          <input
+            type="checkbox"
+            checked={globalConfig.filters_enabled || false}
+            onChange={(e) => update('filters_enabled', e.target.checked)}
+          />
+          {__('Enable image filters', 'productforge')}
+        </label>
+        {globalConfig.filters_enabled && (
+          <div style={{ paddingLeft: 20, marginTop: 8 }}>
+            <div className="pf-settings__filter-label">{__('Available filters:', 'productforge')}</div>
+            <div className="pf-settings__filter-pills">
+              {ALL_FILTERS.map((f) => {
+                const allowed = globalConfig.allowed_filters || DEFAULT_FILTERS;
+                const checked = allowed.includes(f);
+                return (
+                  <label key={f} className="pf-settings__filter-pill">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(e) => {
+                        const next = e.target.checked
+                          ? [...allowed, f]
+                          : allowed.filter((x) => x !== f);
+                        update('allowed_filters', next);
+                      }}
+                    />
+                    {f}
+                  </label>
+                );
+              })}
+            </div>
           </div>
         )}
       </fieldset>
