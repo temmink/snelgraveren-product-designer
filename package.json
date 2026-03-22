@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "rm -rf dist && VITE_ENTRY=admin vite build && VITE_ENTRY=frontend vite build && cp frontend/js/designer/src/designer.css dist/frontend-designer.css",
+    "build": "rm -rf dist && VITE_ENTRY=admin vite build && VITE_ENTRY=design-templates vite build && VITE_ENTRY=frontend vite build && cp frontend/js/designer/src/designer.css dist/frontend-designer.css",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:e2e": "playwright test",

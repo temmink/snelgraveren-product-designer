@@ -70,6 +70,11 @@ class Admin {
     }
 
     public function enqueue_scripts(string $hook): void {
+        if ($hook === 'productforge_page_pf-design-templates') {
+            $this->enqueue_design_templates_scripts();
+            return;
+        }
+
         if (!in_array($hook, ['toplevel_page_productforge', 'productforge_page_pf-template-builder'], true)) {
             return;
         }
@@ -118,6 +123,33 @@ class Admin {
             'currency_symbol' => get_woocommerce_currency_symbol(),
             'isPremium'       => \ProductForge\ProductForge::is_premium(),
             'upgradeUrl'      => function_exists( 'pf_fs' ) ? pf_fs()->get_upgrade_url() : '',
+        ]);
+    }
+
+    private function enqueue_design_templates_scripts(): void {
+        $js_file = PF_PLUGIN_DIR . 'dist/admin-design-templates.js';
+        $version = file_exists($js_file) ? substr(md5_file($js_file), 0, 8) : PF_VERSION;
+
+        wp_enqueue_script(
+            'pf-design-templates',
+            PF_PLUGIN_URL . 'dist/admin-design-templates.js',
+            ['react', 'react-dom', 'wp-i18n'],
+            $version,
+            true
+        );
+
+        $this->inline_script_translations('pf-design-templates', 'productforge', 'dist/admin-design-templates.js');
+
+        // Pass all product templates so the form can link design templates to them.
+        $repo = new \ProductForge\Database\TemplateRepository();
+        $all_templates = array_map(function ($t) {
+            return ['id' => (int) $t['id'], 'title' => $t['title']];
+        }, $repo->list(100, 1, 'published'));
+
+        wp_localize_script('pf-design-templates', 'pfDesignTemplates', [
+            'restUrl'   => esc_url_raw(rest_url()),
+            'nonce'     => wp_create_nonce('wp_rest'),
+            'templates' => $all_templates,
         ]);
     }
 

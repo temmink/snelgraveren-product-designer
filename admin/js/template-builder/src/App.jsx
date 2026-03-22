@@ -113,23 +113,18 @@ export default function App() {
     }
   }, [globalConfig.allowed_fonts]);
 
-  // Load custom fonts on mount
+  // Load custom fonts, color palettes, and clip art collections (premium only)
   useEffect(() => {
+    if (!isPremium) return;
     fontApi.list().then((fonts) => {
       setCustomFonts(fonts);
       loadCustomFonts(fonts);
     }).catch((err) => console.error('Failed to load custom fonts:', err));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Load global color palettes on mount
-  useEffect(() => {
     paletteApi.list()
       .then(setColorPalettes)
       .catch((err) => console.error('Failed to load color palettes:', err));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Load clip art collections on mount
-  useEffect(() => {
     clipartApi.listCollections().then((c) => setClipartCollections(c)).catch(() => {});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
