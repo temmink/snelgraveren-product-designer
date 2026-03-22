@@ -806,6 +806,90 @@
   color: #fff;
   border-color: #2271b1;
 }
+.pf-tree-panel__source-select {
+  font-size: 11px !important;
+  padding: 3px 6px !important;
+  max-width: 110px;
+}
+
+/* ── Clipart Picker (inline in tree panel) ────────────────────────────── */
+.pf-clipart-picker {
+  background: #fafbfc;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 10px;
+  margin: 6px 0;
+}
+.pf-clipart-picker__header {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.pf-clipart-picker__select {
+  flex: 1;
+  padding: 5px 8px;
+  font-size: 12px;
+  border: 1px solid #d0d5dd;
+  border-radius: 4px;
+  background: #fff;
+}
+.pf-clipart-picker__select:focus {
+  border-color: #2271b1;
+  outline: none;
+  box-shadow: 0 0 0 1px #2271b1;
+}
+.pf-clipart-picker__cancel-btn {
+  padding: 4px 10px;
+  font-size: 12px;
+  border: 1px solid #8c8f94;
+  border-radius: 4px;
+  background: #f6f7f7;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.pf-clipart-picker__cancel-btn:hover {
+  background: #e9e9e9;
+}
+.pf-clipart-picker__loading {
+  font-size: 12px;
+  color: #646970;
+  margin: 4px 0;
+}
+.pf-clipart-picker__empty {
+  font-size: 12px;
+  color: #646970;
+  margin: 4px 0;
+}
+.pf-clipart-picker__empty a {
+  color: #2271b1;
+}
+.pf-clipart-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 56px);
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.pf-clipart-picker__tile {
+  width: 56px;
+  height: 56px;
+  border: 2px solid #e5e7eb;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  padding: 4px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.pf-clipart-picker__tile:hover {
+  border-color: #2271b1;
+  box-shadow: 0 0 0 1px #2271b1;
+}
+.pf-clipart-picker__tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
 
 /* ── Tree detail panel (properties) ──────────────────────────────────── */
 .pf-tree-panel__detail {
