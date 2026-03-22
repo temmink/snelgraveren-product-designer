@@ -17,6 +17,13 @@ class Frontend {
     public function init(): void {
         add_action('wp_enqueue_scripts', [$this, 'enqueue_assets']);
         add_action('woocommerce_before_add_to_cart_button', [$this, 'render_designer']);
+
+        // Exclude our frontend JS from LiteSpeed Cache JS combining/minification.
+        // Our IIFE bundle includes React internally and breaks when concatenated.
+        add_filter('litespeed_optimize_js_excludes', function ($excludes) {
+            $excludes[] = 'frontend-designer.js';
+            return $excludes;
+        });
         add_shortcode('productforge', [$this, 'shortcode']);
         add_filter('woocommerce_add_cart_item_data', [$this, 'add_cart_item_data'], 10, 2);
         add_filter('woocommerce_cart_item_thumbnail', [$this, 'cart_item_thumbnail'], 10, 3);
@@ -204,6 +211,12 @@ class Frontend {
                 $js_version,
                 true
             );
+
+            // Exclude from JS combining/minification by caching plugins.
+            // Our IIFE bundle includes React internally and breaks when concatenated.
+            // data-no-optimize: Autoptimize, data-no-minify: general, excluded by LiteSpeed filter below.
+            wp_script_add_data('pf-frontend-designer', 'data-no-optimize', '1');
+            wp_script_add_data('pf-frontend-designer', 'data-no-minify', '1');
 
             // Load translations inline to work with JS-combining caches (LiteSpeed, etc.)
             // wp_set_script_translations breaks when caching plugins rewrite the JS URL,

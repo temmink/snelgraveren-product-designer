@@ -12,7 +12,7 @@ import { clipartApi } from '../api/templateApi';
 
 export default function TreePanel() {
   const {
-    views, currentViewIndex,
+    views, currentViewIndex, globalConfig,
     addZone, updateZone, removeZone, reorderZone,
     addLayer, updateLayer, removeLayer, moveLayer,
     canvasSelectedKey,
@@ -31,6 +31,21 @@ export default function TreePanel() {
 
   const currentView = views[currentViewIndex];
   const zones = currentView?.zones_config || [];
+
+  // When solid_color is enabled and a zone's fill color changes,
+  // propagate that color to all SVG zones across all other views.
+  const propagateSolidColor = useCallback((patch) => {
+    if (!globalConfig.solid_color || !patch.svg_fill_color) return;
+    const color = patch.svg_fill_color;
+    views.forEach((view, vi) => {
+      if (vi === currentViewIndex) return;
+      (view.zones_config || []).forEach((zone, zi) => {
+        if (zone.boundary_type === 'svg' && zone.svg_url && zone.svg_fill_editable) {
+          updateZone(vi, zi, { svg_fill_color: color });
+        }
+      });
+    });
+  }, [globalConfig.solid_color, views, currentViewIndex, updateZone]);
 
   // Sync tree selection when a layer is clicked on the canvas.
   useEffect(() => {
@@ -220,10 +235,17 @@ export default function TreePanel() {
                 key={selectedNode.node._key}
                 initialData={liveZone}
                 onChange={(patch) => {
-                  if (zoneIdx >= 0) updateZone(currentViewIndex, zoneIdx, patch);
+                  if (zoneIdx >= 0) {
+                    updateZone(currentViewIndex, zoneIdx, patch);
+                    propagateSolidColor(patch);
+                  }
                 }}
                 onSubmit={(patch) => {
-                  if (zoneIdx >= 0) { updateZone(currentViewIndex, zoneIdx, patch); flashSaved(); }
+                  if (zoneIdx >= 0) {
+                    updateZone(currentViewIndex, zoneIdx, patch);
+                    propagateSolidColor(patch);
+                    flashSaved();
+                  }
                 }}
                 onCancel={() => setSelectedNode(null)}
               />

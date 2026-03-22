@@ -4,7 +4,7 @@ import useDesignerStore from '../../store/useDesignerStore';
 import DesignTemplates from '../DesignTemplates';
 
 export default function AddTab() {
-  const { template, currentViewIndex, activeTool, setActiveTool, triggerFileUpload, clipartCollections, addClipart } = useDesignerStore();
+  const { template, currentViewIndex, activeTool, setActiveTool, clipartCollections, addClipart } = useDesignerStore();
 
   const currentView = template?.views?.[currentViewIndex];
   const zones = currentView?.zones_config || [];
@@ -18,9 +18,6 @@ export default function AddTab() {
   const handleToolClick = (tool) => {
     if (activeTool === tool) {
       setActiveTool('select');
-    } else if (tool === 'add-image' || tool === 'add-svg') {
-      const elementType = tool === 'add-image' ? 'image' : 'svg';
-      triggerFileUpload?.(elementType);
     } else {
       setActiveTool(tool);
     }
@@ -48,26 +45,28 @@ export default function AddTab() {
           </button>
         )}
         {isTypeAllowed('image') && (
-          <button
-            type="button"
-            className={`pf-add-tools__btn${activeTool === 'add-image' ? ' pf-add-tools__btn--active' : ''}`}
-            onClick={() => handleToolClick('add-image')}
+          <label
+            htmlFor="pf-upload-image"
+            className="pf-add-tools__btn"
+            role="button"
+            tabIndex={0}
             aria-label={__('Add image element', 'productforge')}
             title={__('Add image (jpg, png, webp)', 'productforge')}
           >
             {__('Image', 'productforge')}
-          </button>
+          </label>
         )}
         {isTypeAllowed('svg') && (
-          <button
-            type="button"
-            className={`pf-add-tools__btn${activeTool === 'add-svg' ? ' pf-add-tools__btn--active' : ''}`}
-            onClick={() => handleToolClick('add-svg')}
+          <label
+            htmlFor="pf-upload-svg"
+            className="pf-add-tools__btn"
+            role="button"
+            tabIndex={0}
             aria-label={__('Add SVG element', 'productforge')}
             title={__('Add SVG', 'productforge')}
           >
             {__('SVG', 'productforge')}
-          </button>
+          </label>
         )}
         {globalConfig.curved_text_enabled && isTypeAllowed('text') && (
           <button

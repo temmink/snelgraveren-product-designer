@@ -14,7 +14,7 @@ import { filterFabricJson } from '../utils/fabricJson';
 function inferElementType(obj) {
   if (obj.data?.elementType) return obj.data.elementType;
   const t = (obj.type || '').toLowerCase();
-  if (t === 'itext' || t === 'i-text') return 'text';
+  if (t === 'textbox' || t === 'itext' || t === 'i-text') return 'text';
   if (t === 'image') return 'image';
   if (t === 'path' || t === 'group') return 'svg';
   return 'unknown';
@@ -40,7 +40,7 @@ export default function DesignerCanvas() {
   const {
     template, currentViewIndex, activeTool,
     canvasSnapshots, snapshotView, setActiveTool,
-    setSelectedObject, setError, setTriggerFileUpload, setFabricCanvasRef,
+    setSelectedObject, setError, setFabricCanvasRef,
     drawingStrokeColor, drawingStrokeWidth,
   } = useDesignerStore();
 
@@ -427,6 +427,7 @@ export default function DesignerCanvas() {
             fontSize:   layer.fontSize   || 24,
             fontFamily: layer.fontFamily || 'Arial',
             fill:       layer.fill       || '#000000',
+            textAlign:  layer.textAlign  || 'left',
             data:       { elementType: 'text', zoneIndex: zoneIdx },
           });
           applyPermissions(text, 'text');
@@ -949,30 +950,13 @@ export default function DesignerCanvas() {
     };
   }, [activeTool, currentViewIndex]);
 
-  // Called by AddTab via store
-  const triggerFileUpload = useCallback((elementType) => {
-    const input = fileInputRef.current;
-    if (!input) return;
-
-    input.accept = elementType === 'svg'
-      ? 'image/svg+xml'
-      : 'image/jpeg,image/png,image/webp,image/gif';
-    input.dataset.elementType = elementType;
-    input.value = '';
-    input.click();
-  }, []);
-
   const onFileSelected = useCallback((e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const elementType = e.target.dataset.elementType || 'image';
+    e.target.value = '';
     handleFileUpload(file, elementType);
   }, [handleFileUpload]);
-
-  // Expose triggerFileUpload to AddTab via store
-  useEffect(() => {
-    setTriggerFileUpload(triggerFileUpload);
-  }, [triggerFileUpload, setTriggerFileUpload]);
 
   const setAddClipart = useDesignerStore((s) => s.setAddClipart);
 
@@ -986,8 +970,19 @@ export default function DesignerCanvas() {
         <canvas ref={canvasEl} />
       </div>
       <input
+        id="pf-upload-image"
         ref={fileInputRef}
         type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        data-element-type="image"
+        style={{ display: 'none' }}
+        onChange={onFileSelected}
+      />
+      <input
+        id="pf-upload-svg"
+        type="file"
+        accept="image/svg+xml"
+        data-element-type="svg"
         style={{ display: 'none' }}
         onChange={onFileSelected}
       />
