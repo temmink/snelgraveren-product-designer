@@ -177,7 +177,7 @@ export default function TreePanel() {
                         />
                       ))}
                       {addingLayerToZone === zoneIndex && (
-                        <AddLayerInline
+                        <AddLayerPanel
                           zone={zone}
                           onAdd={(data) => handleAddLayer(zoneIndex, data)}
                           onCancel={() => setAddingLayerToZone(null)}
@@ -253,23 +253,83 @@ export default function TreePanel() {
   );
 }
 
-function ClipartPicker({ onSelect, onCancel }) {
+function AddLayerPanel({ zone, onAdd, onCancel }) {
+  const [mode, setMode] = useState(null); // null = source picker, 'clipart' = clipart browser
   const [collections, setCollections] = useState([]);
-  const [selectedCollection, setSelectedCollection] = useState(null);
+  const [activeCollection, setActiveCollection] = useState(null);
   const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [loadingItems, setLoadingItems] = useState(false);
+  const allowedTypes = zone.allowed_types || ['text', 'image', 'svg'];
 
-  useEffect(() => {
-    clipartApi.listCollections().then((data) => {
-      setCollections(data || []);
-      setLoading(false);
-    }).catch(() => setLoading(false));
-  }, []);
+  const addFromUrl = (src, name, type = 'svg') => {
+    // Load image to get dimensions, then scale to fit boundary
+    const img = new Image();
+    img.onload = () => {
+      const zoneW = zone.width || 200;
+      const zoneH = zone.height || 200;
+      const padding = 20;
+      const maxW = zoneW - padding;
+      const maxH = zoneH - padding;
+      const scale = Math.min(maxW / (img.naturalWidth || 200), maxH / (img.naturalHeight || 200), 1);
+      onAdd({
+        name: name || type,
+        type,
+        locked: false,
+        visible: true,
+        src,
+        left: zone.x + (zoneW - img.naturalWidth * scale) / 2,
+        top: zone.y + (zoneH - img.naturalHeight * scale) / 2,
+        scaleX: scale,
+        scaleY: scale,
+        angle: 0,
+      });
+    };
+    img.onerror = () => {
+      // Fallback: add without scaling
+      onAdd({ name: name || type, type, locked: false, visible: true, src, left: zone.x + 20, top: zone.y + 20, scaleX: 1, scaleY: 1, angle: 0 });
+    };
+    img.src = src;
+  };
 
-  const handleCollectionChange = async (id) => {
-    setSelectedCollection(id);
-    if (!id) { setItems([]); return; }
+  const handleText = () => {
+    onAdd({ name: __('Text', 'productforge'), type: 'text', locked: false, visible: true, text: __('Text', 'productforge'), fontSize: 24, fontFamily: 'Arial', fill: '#000000', left: zone.x + 20, top: zone.y + 20 });
+  };
+
+  const handleMedia = (mediaType) => {
+    if (!window.wp?.media) return;
+    const frame = window.wp.media({
+      title: mediaType === 'svg' ? __('Select SVG', 'productforge') : __('Select Image', 'productforge'),
+      button: { text: __('Use', 'productforge') },
+      multiple: false,
+      library: { type: mediaType === 'svg' ? 'image/svg+xml' : 'image' },
+    });
+    frame.on('select', () => {
+      const attachment = frame.state().get('selection').first().toJSON();
+      addFromUrl(attachment.url, attachment.filename, mediaType);
+    });
+    frame.open();
+  };
+
+  const handleClipartMode = async () => {
+    setMode('clipart');
+    setLoading(true);
+    try {
+      const data = await clipartApi.listCollections();
+      const cols = data || [];
+      setCollections(cols);
+      if (cols.length > 0) {
+        setActiveCollection(cols[0].id);
+        const colData = await clipartApi.getCollection(cols[0].id);
+        setItems(colData.items || []);
+      }
+    } catch { /* ignore */ }
+    setLoading(false);
+  };
+
+  const handleCollectionTab = async (id) => {
+    if (id === activeCollection) return;
+    setActiveCollection(id);
     setLoadingItems(true);
     try {
       const data = await clipartApi.getCollection(id);
@@ -280,147 +340,100 @@ function ClipartPicker({ onSelect, onCancel }) {
     setLoadingItems(false);
   };
 
-  if (loading) {
-    return <div className="pf-clipart-picker"><p className="pf-clipart-picker__loading">{__('Loading collections...', 'productforge')}</p></div>;
-  }
-
-  if (collections.length === 0) {
+  // Clipart browser mode
+  if (mode === 'clipart') {
     return (
-      <div className="pf-clipart-picker">
-        <p className="pf-clipart-picker__empty">
-          {__('No clipart collections found.', 'productforge')}{' '}
-          <a href="?page=pf-clipart">{__('Create one first', 'productforge')}</a>
-        </p>
-        <button type="button" className="pf-clipart-picker__cancel-btn" onClick={onCancel}>{__('Cancel', 'productforge')}</button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="pf-clipart-picker">
-      <div className="pf-clipart-picker__header">
-        <select
-          className="pf-clipart-picker__select"
-          value={selectedCollection || ''}
-          onChange={(e) => handleCollectionChange(e.target.value ? parseInt(e.target.value, 10) : null)}
-        >
-          <option value="">{__('Select collection...', 'productforge')}</option>
-          {collections.map((c) => (
-            <option key={c.id} value={c.id}>{c.name} ({c.item_count})</option>
-          ))}
-        </select>
-        <button type="button" className="pf-clipart-picker__cancel-btn" onClick={onCancel}>{__('Cancel', 'productforge')}</button>
-      </div>
-
-      {loadingItems && <p className="pf-clipart-picker__loading">{__('Loading...', 'productforge')}</p>}
-
-      {!loadingItems && selectedCollection && items.length === 0 && (
-        <p className="pf-clipart-picker__empty">{__('This collection is empty.', 'productforge')}</p>
-      )}
-
-      {items.length > 0 && (
-        <div className="pf-clipart-picker__grid">
-          {items.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className="pf-clipart-picker__tile"
-              onClick={() => onSelect(item)}
-              title={item.name}
-            >
-              <img src={item.svg_url} alt={item.name} />
-            </button>
-          ))}
+      <div className="pf-add-layer">
+        <div className="pf-add-layer__header">
+          <button type="button" className="pf-add-layer__back" onClick={() => setMode(null)}>
+            ← {__('Back', 'productforge')}
+          </button>
+          <span className="pf-add-layer__title">{__('Clipart Library', 'productforge')}</span>
+          <button type="button" className="pf-add-layer__close" onClick={onCancel}>×</button>
         </div>
-      )}
-    </div>
-  );
-}
 
-function AddLayerInline({ zone, onAdd, onCancel }) {
-  const [name, setName] = useState('');
-  const [type, setType] = useState('text');
-  const [source, setSource] = useState('media');
-  const [showClipartPicker, setShowClipartPicker] = useState(false);
-  const allowedTypes = zone.allowed_types || ['text', 'image', 'svg'];
-  const isVisualType = type === 'image' || type === 'svg';
+        {loading ? (
+          <p className="pf-add-layer__status">{__('Loading...', 'productforge')}</p>
+        ) : collections.length === 0 ? (
+          <p className="pf-add-layer__status">
+            {__('No collections yet.', 'productforge')}{' '}
+            <a href="?page=pf-clipart">{__('Create one', 'productforge')}</a>
+          </p>
+        ) : (
+          <>
+            <div className="pf-add-layer__tabs">
+              {collections.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  className={`pf-add-layer__tab${activeCollection === c.id ? ' pf-add-layer__tab--active' : ''}`}
+                  onClick={() => handleCollectionTab(c.id)}
+                >
+                  {c.name}
+                  <span className="pf-add-layer__tab-count">{c.item_count}</span>
+                </button>
+              ))}
+            </div>
 
-  const addLayerFromUrl = (src, fallbackName) => {
-    onAdd({
-      name: name || fallbackName || type,
-      type,
-      locked: false,
-      visible: true,
-      src,
-      left: zone.x + 20,
-      top: zone.y + 20,
-      scaleX: 1,
-      scaleY: 1,
-      angle: 0,
-    });
-  };
-
-  const handleAdd = () => {
-    if (type === 'text') {
-      onAdd({ name: name || __('Text', 'productforge'), type, locked: false, visible: true, text: __('Text', 'productforge'), fontSize: 24, fontFamily: 'Arial', fill: '#000000', left: zone.x + 20, top: zone.y + 20 });
-      return;
-    }
-
-    if (source === 'clipart') {
-      setShowClipartPicker(true);
-      return;
-    }
-
-    // Open WP Media Library for image/svg selection.
-    if (!window.wp?.media) return;
-    const frame = window.wp.media({
-      title: type === 'svg' ? __('Select SVG', 'productforge') : __('Select Image', 'productforge'),
-      button: { text: __('Use', 'productforge') },
-      multiple: false,
-      library: { type: type === 'svg' ? 'image/svg+xml' : 'image' },
-    });
-    frame.on('select', () => {
-      const attachment = frame.state().get('selection').first().toJSON();
-      addLayerFromUrl(attachment.url, attachment.filename);
-    });
-    frame.open();
-  };
-
-  const handleClipartSelect = (item) => {
-    addLayerFromUrl(item.svg_url, item.name);
-  };
-
-  if (showClipartPicker) {
-    return (
-      <div style={{ paddingLeft: '32px' }}>
-        <ClipartPicker
-          onSelect={handleClipartSelect}
-          onCancel={() => setShowClipartPicker(false)}
-        />
+            {loadingItems ? (
+              <p className="pf-add-layer__status">{__('Loading...', 'productforge')}</p>
+            ) : items.length === 0 ? (
+              <p className="pf-add-layer__status">{__('Empty collection.', 'productforge')}</p>
+            ) : (
+              <div className="pf-add-layer__grid">
+                {items.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className="pf-add-layer__tile"
+                    onClick={() => addFromUrl(item.svg_url, item.name, 'svg')}
+                    title={item.name}
+                  >
+                    <img src={item.svg_url} alt={item.name} />
+                    <span className="pf-add-layer__tile-name">{item.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
+        )}
       </div>
     );
   }
 
+  // Source picker mode (default)
   return (
-    <div className="pf-tree-panel__add-layer" style={{ paddingLeft: '32px' }}>
-      <input
-        type="text"
-        placeholder={__('Layer name', 'productforge')}
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        autoFocus
-      />
-      <select value={type} onChange={(e) => setType(e.target.value)}>
-        {allowedTypes.map((t) => <option key={t} value={t}>{t}</option>)}
-      </select>
-      {isVisualType && (
-        <select value={source} onChange={(e) => setSource(e.target.value)} className="pf-tree-panel__source-select">
-          <option value="media">{__('Media Library', 'productforge')}</option>
-          <option value="clipart">{__('Clipart Library', 'productforge')}</option>
-        </select>
-      )}
-      <button onClick={handleAdd}>{__('Add', 'productforge')}</button>
-      <button onClick={onCancel}>{__('Cancel', 'productforge')}</button>
+    <div className="pf-add-layer">
+      <div className="pf-add-layer__header">
+        <span className="pf-add-layer__title">{__('Add Layer', 'productforge')}</span>
+        <button type="button" className="pf-add-layer__close" onClick={onCancel}>×</button>
+      </div>
+      <div className="pf-add-layer__sources">
+        {allowedTypes.includes('text') && (
+          <button type="button" className="pf-add-layer__source" onClick={handleText}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M4 7V4h16v3" /><path d="M9 20h6" /><path d="M12 4v16" />
+            </svg>
+            <span>{__('Text', 'productforge')}</span>
+          </button>
+        )}
+        {(allowedTypes.includes('image') || allowedTypes.includes('svg')) && (
+          <button type="button" className="pf-add-layer__source" onClick={() => handleMedia(allowedTypes.includes('image') ? 'image' : 'svg')}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
+            </svg>
+            <span>{__('Media Library', 'productforge')}</span>
+          </button>
+        )}
+        {allowedTypes.includes('svg') && (
+          <button type="button" className="pf-add-layer__source" onClick={handleClipartMode}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
+            </svg>
+            <span>{__('Clipart', 'productforge')}</span>
+          </button>
+        )}
+      </div>
     </div>
   );
 }
