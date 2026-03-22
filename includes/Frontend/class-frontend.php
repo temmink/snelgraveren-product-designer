@@ -156,7 +156,7 @@ class Frontend {
     /**
      * Replace the product gallery image with the design thumbnail when returning from cart.
      */
-    public function override_gallery_thumbnail_html(string $html, int $attachment_id): string {
+    public function override_gallery_thumbnail_html(string $html, $attachment_id): string {
         $hash = $this->get_design_hash_from_url();
         if (empty($hash)) {
             return $html;
