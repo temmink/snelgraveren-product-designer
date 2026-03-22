@@ -142,6 +142,7 @@ const useTemplateStore = create((set, get) => ({
   isDirty: false,
   isSaving: false,
   isFreeMove: false,
+  canvasSelectedKey: null,
 
   // Track removed view IDs for deletion on save
   removedViewIds: [],
@@ -164,6 +165,7 @@ const useTemplateStore = create((set, get) => ({
   setIsSaving:         (v)      => set({ isSaving: v }),
   setFreeMove:         (v)      => set({ isFreeMove: v }),
   setCurrentViewIndex: (i)      => set({ currentViewIndex: i }),
+  setCanvasSelectedKey: (key)   => set({ canvasSelectedKey: key }),
 
   setGlobalConfig: (patch) =>
     set((s) => ({ globalConfig: { ...s.globalConfig, ...patch }, isDirty: true })),

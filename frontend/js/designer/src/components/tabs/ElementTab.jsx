@@ -109,6 +109,7 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
   const [fill, setFill]         = useState(fabricObj.fill || '#000000');
   const [bold, setBold]         = useState(fabricObj.fontWeight === 'bold');
   const [italic, setItalic]     = useState(fabricObj.fontStyle === 'italic');
+  const [textAlign, setTextAlign] = useState(fabricObj.textAlign || 'left');
   const [fontFamily, setFontFamily] = useState(fabricObj.fontFamily || 'Arial');
 
   const update = useCallback((props) => {
@@ -130,6 +131,7 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
     setFill(fabricObj.fill || '#000000');
     setBold(fabricObj.fontWeight === 'bold');
     setItalic(fabricObj.fontStyle === 'italic');
+    setTextAlign(fabricObj.textAlign || 'left');
     setFontFamily(fabricObj.fontFamily || 'Arial');
   }, [fabricObj]);
 
@@ -239,6 +241,24 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
         >
           I
         </button>
+      </div>
+
+      {/* Text Alignment */}
+      <div className="pf-element__toggles">
+        {['left', 'center', 'right'].map((align) => (
+          <button
+            key={align}
+            type="button"
+            className={`pf-element__toggle${textAlign === align ? ' pf-element__toggle--active' : ''}`}
+            onClick={() => {
+              setTextAlign(align);
+              update({ textAlign: align });
+            }}
+            aria-label={align}
+          >
+            {align === 'left' ? '⫷' : align === 'center' ? '⫶' : '⫸'}
+          </button>
+        ))}
       </div>
     </div>
   );

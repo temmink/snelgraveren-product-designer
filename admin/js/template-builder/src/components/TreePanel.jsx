@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { __ } from '@wordpress/i18n';
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
@@ -14,6 +14,7 @@ export default function TreePanel() {
     views, currentViewIndex,
     addZone, updateZone, removeZone, reorderZone,
     addLayer, updateLayer, removeLayer, moveLayer,
+    canvasSelectedKey,
   } = useTemplateStore();
 
   const [selectedNode, setSelectedNode] = useState(null);
@@ -29,6 +30,22 @@ export default function TreePanel() {
 
   const currentView = views[currentViewIndex];
   const zones = currentView?.zones_config || [];
+
+  // Sync tree selection when a layer is clicked on the canvas.
+  useEffect(() => {
+    if (!canvasSelectedKey) {
+      setSelectedNode(null);
+      return;
+    }
+    for (const zone of zones) {
+      const layer = (zone.layers || []).find((l) => l._key === canvasSelectedKey);
+      if (layer) {
+        setSelectedNode({ node: layer, nodeType: 'layer' });
+        setExpandedZones((prev) => ({ ...prev, [zone._key]: true }));
+        break;
+      }
+    }
+  }, [canvasSelectedKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -366,6 +383,18 @@ function LayerDetail({ layer, onChange }) {
           globalConfig={globalConfig}
           colorPalettes={colorPalettes}
         />
+        <label>
+          { __( 'Text Align', 'productforge' ) }
+          <select value={layer.textAlign || 'left'} onChange={(e) => onChange({ textAlign: e.target.value })}>
+            <option value="left">{ __( 'Left', 'productforge' ) }</option>
+            <option value="center">{ __( 'Center', 'productforge' ) }</option>
+            <option value="right">{ __( 'Right', 'productforge' ) }</option>
+          </select>
+        </label>
+        <label>
+          { __( 'Width', 'productforge' ) }
+          <input type="number" min="20" value={layer.width || 200} onChange={(e) => onChange({ width: parseInt(e.target.value, 10) || 200 })} />
+        </label>
         <label>
           { __( 'X', 'productforge' ) }
           <input type="number" value={layer.left || 0} onChange={(e) => onChange({ left: parseInt(e.target.value, 10) || 0 })} />

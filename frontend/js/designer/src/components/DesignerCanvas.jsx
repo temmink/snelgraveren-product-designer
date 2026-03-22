@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 import { __ } from '@wordpress/i18n';
-import { Canvas as FabricCanvas, Rect, IText, FabricImage, Path as FabricPath, PencilBrush, loadSVGFromString, util, cache as fabricCache } from 'fabric';
+import { Canvas as FabricCanvas, Rect, Textbox, IText, FabricImage, Path as FabricPath, PencilBrush, loadSVGFromString, util, cache as fabricCache } from 'fabric';
 import { archUpPath } from '../utils/curvePresets';
 import useDesignerStore from '../store/useDesignerStore';
 import { uploadFile } from '../api/designerApi';
@@ -420,9 +420,10 @@ export default function DesignerCanvas() {
     zones.forEach((zone, zoneIdx) => {
       (zone.layers || []).forEach((layer) => {
         if (layer.type === 'text' && layer.text) {
-          const text = new IText(layer.text, {
+          const text = new Textbox(layer.text, {
             left:       layer.left       || zone.x + 20,
             top:        layer.top        || zone.y + 20,
+            width:      layer.width      || zone.width - 20,
             fontSize:   layer.fontSize   || 24,
             fontFamily: layer.fontFamily || 'Arial',
             fill:       layer.fill       || '#000000',
@@ -643,9 +644,11 @@ export default function DesignerCanvas() {
       const zone = zoneIdx >= 0 ? zones[zoneIdx] : null;
       const defaultFont = zone?.defaultFontFamily || 'Arial';
 
-      const text = new IText(__('Your text here', 'productforge'), {
+      const textWidth = zone ? zone.width - 20 : 200;
+      const text = new Textbox(__('Your text here', 'productforge'), {
         left: ptr.x,
         top: ptr.y,
+        width: textWidth,
         fontFamily: defaultFont,
         fontSize: 24,
         fill: '#000000',

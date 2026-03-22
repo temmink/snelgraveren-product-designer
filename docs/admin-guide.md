@@ -42,28 +42,32 @@
    - [Custom Fonts](#custom-fonts)
    - [Clip Art Library](#clip-art-library)
    - [Image Upload Restrictions](#image-upload-restrictions)
-10. [Assigning Templates to Products](#assigning-templates-to-products)
-11. [Display Modes](#display-modes)
-12. [The Frontend Designer](#the-frontend-designer)
+10. [Design Templates](#design-templates)
+    - [Templates vs Design Templates](#templates-vs-design-templates)
+    - [Managing Design Templates](#managing-design-templates)
+    - [Import & Export](#import--export)
+11. [Assigning Templates to Products](#assigning-templates-to-products)
+12. [Display Modes](#display-modes)
+13. [The Frontend Designer](#the-frontend-designer)
     - [How Customers Use the Designer](#how-customers-use-the-designer)
     - [Auto-Save Before Cart](#auto-save-before-cart)
     - [Mobile Behavior](#mobile-behavior)
-13. [WooCommerce Integration](#woocommerce-integration)
+14. [WooCommerce Integration](#woocommerce-integration)
     - [Cart Integration](#cart-integration)
     - [Order Processing](#order-processing)
     - [Design Surcharges](#design-surcharges)
-14. [Export System](#export-system)
+15. [Export System](#export-system)
     - [PDF Export](#pdf-export)
     - [PNG Export](#png-export)
     - [SVG Export](#svg-export)
     - [Auto-Export on Order Status](#auto-export-on-order-status)
     - [Managing Exports](#managing-exports)
-15. [Database Reference](#database-reference)
-16. [REST API Reference](#rest-api-reference)
-17. [Security](#security)
-18. [File Storage](#file-storage)
-19. [Development & Build](#development--build)
-20. [Troubleshooting](#troubleshooting)
+16. [Database Reference](#database-reference)
+17. [REST API Reference](#rest-api-reference)
+18. [Security](#security)
+19. [File Storage](#file-storage)
+20. [Development & Build](#development--build)
+21. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -552,6 +556,45 @@ Control what files customers can upload.
 | **Allowed types** | PNG, SVG | Checkboxes: JPG, PNG, SVG, WEBP. Only checked types are accepted. |
 
 These restrictions are communicated to customers via error messages when an upload is rejected.
+
+---
+
+## Design Templates
+
+### Templates vs Design Templates
+
+ProductForge has two distinct concepts:
+
+- **Templates (Sjablonen):** Define the *product structure* — canvas dimensions, zones, allowed element types, permissions, and pricing. A template says *where* customers can place elements and *what rules* apply. Templates contain no design content.
+
+- **Design Templates:** Pre-made *designs* that customers can apply as a starting point in the designer. They contain actual Fabric.js canvas content (text, images, shapes) and are linked to a specific product template. Customers see these as "starter designs" they can customize.
+
+**Example:** A T-Shirt template defines a print zone of 300×400px on the front. A design template "Best Dad Ever" provides a pre-made text layout that fits within that zone. The customer picks the design template, then customizes the text.
+
+### Managing Design Templates
+
+Navigate to **ProductForge → Design Templates** in the WordPress admin menu.
+
+The list view shows all design templates with columns:
+- **Name** — The template name shown to customers
+- **Category** — Grouping label (e.g., "Mug", "T-Shirt", "Business Card")
+- **Product Template** — Which product template this design is linked to (or "Any" for all)
+- **Views** — Number of views (canvas pages) in the design
+- **Status** — Active or Inactive
+- **Actions** — Edit, Export, Delete
+
+To create a new design template:
+1. Click **Add New**
+2. Fill in the name, category, select a product template (optional), and set status
+3. Click **Save**
+
+### Import & Export
+
+Design templates can be exported as JSON files for backup or sharing between sites:
+- Click **Export** on any design template to download its JSON file
+- Click **Import JSON** and select a previously exported file to import
+
+The JSON format includes the design template metadata and all view canvas data.
 
 ---
 

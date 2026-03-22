@@ -1,13 +1,13 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { __ } from '@wordpress/i18n';
-import { Canvas as FabricCanvas, Rect, FabricImage, FabricText, loadSVGFromString, util, cache as fabricCache } from 'fabric';
+import { Canvas as FabricCanvas, Rect, FabricImage, Textbox, FabricText, loadSVGFromString, util, cache as fabricCache } from 'fabric';
 import useTemplateStore from '../store/useTemplateStore';
 import { parseSvgToFabric } from '../utils/svgPathUtils';
 import { alignElement } from '../../../../../shared/js/alignElement';
 
 const ALLOWED_FABRIC_TYPES = new Set([
-  'IText', 'Image', 'Rect', 'Path', 'Group', 'FabricText',
-  'i-text', 'image', 'rect', 'path', 'group',
+  'IText', 'Textbox', 'Image', 'Rect', 'Path', 'Group', 'FabricText',
+  'i-text', 'textbox', 'image', 'rect', 'path', 'group',
 ]);
 
 function filterFabricJson(json) {
@@ -43,7 +43,7 @@ export default function Canvas() {
   const {
     views, currentViewIndex,
     updateView, updateZone, updateLayer, pushHistory, undo, redo, canUndo, canRedo,
-    isFreeMove, setFreeMove,
+    isFreeMove, setFreeMove, setCanvasSelectedKey,
   } = useTemplateStore();
 
   const permissions = useTemplateStore((s) => s.globalConfig?.permissions || {});
@@ -226,18 +226,21 @@ export default function Canvas() {
       const sel = obj?.data?.isZone ? null : obj || null;
       selectedObjRef.current = sel;
       setHasSelection(!!sel);
+      setCanvasSelectedKey(sel?.data?.layerKey || null);
     });
     canvas.on('selection:updated', (e) => {
       const obj = e.selected?.[0];
       const sel = obj?.data?.isZone ? null : obj || null;
       selectedObjRef.current = sel;
       setHasSelection(!!sel);
+      setCanvasSelectedKey(sel?.data?.layerKey || null);
     });
     canvas.on('selection:cleared', () => {
       // Don't clear the ref — alignment buttons read it on mousedown,
       // which fires after Fabric clears the selection. The ref gets
       // overwritten on the next selection:created/updated anyway.
       setHasSelection(false);
+      setCanvasSelectedKey(null);
     });
 
     canvas.on('text:changed', (e) => {
@@ -504,13 +507,16 @@ export default function Canvas() {
           if (existing.fontFamily !== fontFamily) {
             fabricCache.clearFontCache(fontFamily);
           }
+          const parentZone = zones[layer._zoneIndex];
           existing.set({
             text:       layer.text,
             left:       layer.left       || 100,
             top:        layer.top        || 100,
+            width:      layer.width || (parentZone ? parentZone.width - 20 : existing.width),
             fontSize:   layer.fontSize   || 24,
             fontFamily,
             fill:       layer.fill       || '#000000',
+            textAlign:  layer.textAlign  || 'left',
             scaleX:     1,
             scaleY:     1,
             selectable: !layer.locked,
@@ -522,12 +528,16 @@ export default function Canvas() {
           applyClipAndClamp(existing, layer);
         } else {
           fabricCache.clearFontCache(fontFamily);
-          const text = new FabricText(layer.text, {
+          const parentZone = zones[layer._zoneIndex];
+          const textWidth = layer.width || (parentZone ? parentZone.width - 20 : 200);
+          const text = new Textbox(layer.text, {
             left:       layer.left       || 100,
             top:        layer.top        || 100,
+            width:      textWidth,
             fontSize:   layer.fontSize   || 24,
             fontFamily,
             fill:       layer.fill       || '#000000',
+            textAlign:  layer.textAlign  || 'left',
             selectable: !layer.locked,
             evented:    !layer.locked,
             data:       layerData(layer),

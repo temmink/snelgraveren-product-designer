@@ -8,6 +8,7 @@ A WooCommerce plugin that lets customers design text, images, and SVGs onto prod
 
 - **Current status:** `current_status.md` — what's done, what's next, how to run the environment.
 - **Admin builder redesign:** `docs/superpowers/specs/2026-03-18-admin-builder-redesign-design.md` — 3-phase redesign (zone enforcement, tree UI, SVG boundaries)
+- **Freemius integration:** `docs/superpowers/specs/2026-03-21-freemius-integration-design.md` — premium feature gating spec
 - **Code audit:** `CODE_AUDIT.md` — 81 findings across security, performance, dead code, and frontend correctness
 
 ## Architecture
@@ -15,7 +16,8 @@ A WooCommerce plugin that lets customers design text, images, and SVGs onto prod
 - **Approach B: Pure custom database tables** (6 tables, no CPTs). All data in `wp_pf_*` tables.
 - **Frontend canvas:** Fabric.js 6.x
 - **UI framework:** React 18 + Zustand state management
-- **Build system:** Vite (single config, dual entry points: admin + frontend) + CSS copy step for Safari compatibility
+- **Build system:** Vite (single config, three entry points: admin, design-templates, frontend) + CSS copy step for Safari compatibility
+- **Licensing:** Freemius SDK for premium feature gating; `is_premium()` helper in main `ProductForge` class
 - **Export:** Local only — PDF (TCPDF), PNG (Imagick), SVG (Fabric.js toSVG)
 - **PHP autoloading:** PSR-4 via custom autoloader. Namespace `ProductForge\` maps to `includes/`.
 
@@ -84,10 +86,20 @@ These exist because FPD had CVE-2024-51919 (arbitrary file upload → RCE) and C
 | `wp_pf_template_views` | Per-view config: canvas size, background, zones, layers, permissions. Columns use `name` (not `view_name`) and `background_url` (not `background_image_url`) |
 | `wp_pf_designs` | Customer designs: hash ID, product/template link, status, price |
 | `wp_pf_design_views` | Per-view Fabric.js canvas JSON + thumbnail |
+| `wp_pf_design_templates` | Pre-made design templates that customers can apply in the designer |
+| `wp_pf_design_template_views` | Per-view Fabric.js canvas JSON for design templates |
 | `wp_pf_exports` | Export records: format, file path, status per order |
 | `wp_pf_price_log` | Pricing audit trail per design element |
 
-All tables use InnoDB engine for foreign key and transaction support.
+All tables use InnoDB engine for foreign key and transaction support. Total: 8 tables.
+
+## Admin Pages
+
+| Menu Item | Page Slug | Purpose |
+|-----------|-----------|---------|
+| Sjablonen | `productforge` | Template list (WP_List_Table with status tabs + bulk actions) |
+| Nieuw Toevoegen | `pf-template-builder` | Template builder React app (canvas, zones, layers, permissions, pricing) |
+| Design Templates | `pf-design-templates` | Design template CRUD React app (list, create, edit, delete, import/export JSON) |
 
 ## WooCommerce Integration Points
 

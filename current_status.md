@@ -1,6 +1,6 @@
 # ProductForge — Current Status
 
-**Last updated:** 2026-03-21
+**Last updated:** 2026-03-22
 **Plugin version:** 1.0.0
 **Docker environment:** Running (WordPress 6.7, WooCommerce 10.6.1, MariaDB 11)
 
@@ -35,7 +35,7 @@ bash bin/package.sh
 ### Phase 0 — Project scaffold ✅
 - Docker: `docker-compose.yml`, `docker/Dockerfile`, `docker/setup.sh`
   - Dockerfile permanently sets `chown -R www-data:www-data /var/www/html/wp-content` to prevent upgrade-dir permission errors
-- Build: `vite.config.mjs` with dual entry points (`admin-template-builder`, `frontend-designer`)
+- Build: `vite.config.mjs` with three entry points (`admin-template-builder`, `admin-design-templates`, `frontend-designer`)
 - Dependencies: `composer.json` (tcpdf, enshrined/svg-sanitize, intervention/image), `package.json` (fabric 6.x, react 18, zustand 4, vite 5)
 - `bin/package.sh` — builds JS, runs composer via Docker fallback, zips for distribution
 
@@ -48,8 +48,9 @@ bash bin/package.sh
   - Creates 6 InnoDB tables: `wp_pf_templates`, `wp_pf_template_views`, `wp_pf_designs`, `wp_pf_design_views`, `wp_pf_exports`, `wp_pf_price_log`
 - **Repositories:** TemplateRepository, DesignRepository, ExportRepository, PriceRepository
 - **Security:** CapabilityChecker (session ID cookie, CSPRNG), UploadValidator (finfo MIME + enshrined SVG sanitizer, rate-limited 10/min)
-- **REST API** (`pf/v1`): RestTemplates (10 routes), RestDesigns (8 routes), RestUploads, RestFonts (stub), RestExports (4 routes)
+- **REST API** (`pf/v1`): RestTemplates (10 routes), RestDesigns (8 routes), RestUploads, RestFonts, RestExports (4 routes), RestDesignTemplates (CRUD + import/export)
 - **Admin:** class-admin.php (menus, enqueue, `user_has_cap` filter granting `edit_pf_templates` to `manage_woocommerce` users), TemplateListTable (WP_List_Table with status tabs + bulk actions), TemplateBuilder
+- **Design Templates admin:** React CRUD app (`admin/js/design-templates/`) with list view, create/edit form, JSON import/export
 
 ### Phase 2 — Admin template builder React UI ✅
 - **State:** `useTemplateStore.js` (Zustand) — views, zones, layers, globalConfig, undo/redo (max 50), removedViewIds tracking
@@ -242,6 +243,25 @@ Full code review performed 2026-03-19 (17 findings, all resolved):
 
 ---
 
+### Freemius Integration ✅
+- **SDK:** Freemius SDK v2.13.0 bundled, initialized in `productforge.php` via `pf_fs()` global
+- **Premium gating:** `ProductForge::is_premium()` helper checks Freemius paying status (+ dev license bypass via `PF_LICENSE_KEY` constant)
+- **Feature gates (PHP):** Template/view creation limits, SVG boundaries, font/palette/clipart endpoints, PDF/SVG export formats, auto-export, multiple views, permissions tab, pricing tab
+- **Feature gates (JS):** Admin template builder skips font/palette/clipart API calls on free plan; frontend designer conditionally loads premium features via `isPremium` flag
+- **Admin menu:** Freemius adds "Contacteer Ons" and "Upgrade ➤" menu items under ProductForge
+- **Performance optimization:** DB migrations run only when `pf_plugin_version` option differs from `PF_VERSION` (not on every admin page load)
+
+---
+
+### Design Templates Admin ✅
+- **React app:** `admin/js/design-templates/src/` — full CRUD interface for managing pre-made design templates
+- **Features:** List table (Name, Category, Product Template, Views, Status, Actions), create/edit form, JSON export per template, JSON import, delete with confirmation
+- **Vite entry:** `admin-design-templates` in `vite.config.mjs`, included in `npm run build`
+- **PHP enqueue:** `enqueue_design_templates_scripts()` in `class-admin.php`, loads on `productforge_page_pf-design-templates` hook
+- **Data model:** Design templates link to product templates, have per-view Fabric.js canvas JSON, stored in `wp_pf_design_templates` + `wp_pf_design_template_views` tables
+
+---
+
 ## File map (source only, excluding build artifacts)
 
 ```
@@ -278,7 +298,8 @@ productforge/
 │   │   ├── class-rest-templates.php  # 11 routes (incl. public endpoint)
 │   │   ├── class-rest-designs.php    # 8 routes (with template validation)
 │   │   ├── class-rest-uploads.php
-│   │   ├── class-rest-fonts.php      # stub
+│   │   ├── class-rest-fonts.php
+│   │   ├── class-rest-design-templates.php  # CRUD + import/export
 │   │   └── class-rest-exports.php    # trigger, download, list, delete
 │   ├── Export/
 │   │   ├── class-export-manager.php     # Orchestrator + order status hook
@@ -314,6 +335,9 @@ productforge/
 │       ├── PermissionsPanel.jsx
 │       ├── PricingPanel.jsx
 │       └── GlobalSettings.jsx
+├── admin/js/design-templates/src/
+│   ├── index.jsx                    # React entry point
+│   └── App.jsx                      # Design template CRUD UI (list, form, import/export)
 ├── frontend/js/designer/src/
 │   ├── index.jsx
 │   ├── App.jsx                   # Template loading, save flow, display modes
