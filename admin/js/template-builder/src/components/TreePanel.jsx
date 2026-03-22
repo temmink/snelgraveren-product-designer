@@ -59,7 +59,7 @@ export default function TreePanel() {
     setSelectedNode({ node, nodeType });
   }, []);
 
-  const handleAction = useCallback((action, node, zoneIndex, layerIndex) => {
+  const handleAction = useCallback((action, node, zoneIndex, layerIndex, extra) => {
     switch (action) {
       case 'add-layer':
         setAddingLayerToZone(zoneIndex);
@@ -76,6 +76,13 @@ export default function TreePanel() {
           updateLayer(currentViewIndex, zoneIndex, layerIndex, { locked: !node.locked });
         } else {
           updateZone(currentViewIndex, zoneIndex, { locked: !node.locked });
+        }
+        break;
+      case 'rename':
+        if (layerIndex != null) {
+          updateLayer(currentViewIndex, zoneIndex, layerIndex, { name: extra });
+        } else {
+          updateZone(currentViewIndex, zoneIndex, { name: extra });
         }
         break;
       case 'delete':
@@ -149,8 +156,10 @@ export default function TreePanel() {
                   node={zone}
                   nodeType="zone"
                   isSelected={selectedNode?.node?._key === zone._key}
-                  onSelect={(n, t) => { handleSelect(n, t); toggleExpanded(zone._key); }}
-                  onAction={(action, n) => handleAction(action, n, zoneIndex)}
+                  isExpanded={isExpanded}
+                  onSelect={handleSelect}
+                  onToggleExpand={() => toggleExpanded(zone._key)}
+                  onAction={(action, n, extra) => handleAction(action, n, zoneIndex, undefined, extra)}
                   depth={0}
                 >
                   {isExpanded && (
@@ -162,7 +171,7 @@ export default function TreePanel() {
                           nodeType="layer"
                           isSelected={selectedNode?.node?._key === layer._key}
                           onSelect={handleSelect}
-                          onAction={(action, n) => handleAction(action, n, zoneIndex, layerIndex)}
+                          onAction={(action, n, extra) => handleAction(action, n, zoneIndex, layerIndex, extra)}
                           depth={1}
                         />
                       ))}
@@ -395,14 +404,16 @@ function LayerDetail({ layer, onChange }) {
           { __( 'Width', 'productforge' ) }
           <input type="number" min="20" value={layer.width || 200} onChange={(e) => onChange({ width: parseInt(e.target.value, 10) || 200 })} />
         </label>
-        <label>
-          { __( 'X', 'productforge' ) }
-          <input type="number" value={layer.left || 0} onChange={(e) => onChange({ left: parseInt(e.target.value, 10) || 0 })} />
-        </label>
-        <label>
-          { __( 'Y', 'productforge' ) }
-          <input type="number" value={layer.top || 0} onChange={(e) => onChange({ top: parseInt(e.target.value, 10) || 0 })} />
-        </label>
+        <div className="pf-tree-panel__coord-row">
+          <label>
+            { __( 'X', 'productforge' ) }
+            <input type="number" value={layer.left || 0} onChange={(e) => onChange({ left: parseInt(e.target.value, 10) || 0 })} />
+          </label>
+          <label>
+            { __( 'Y', 'productforge' ) }
+            <input type="number" value={layer.top || 0} onChange={(e) => onChange({ top: parseInt(e.target.value, 10) || 0 })} />
+          </label>
+        </div>
       </div>
     );
   }
@@ -418,25 +429,29 @@ function LayerDetail({ layer, onChange }) {
       </label>
       {layer.src && (
         <div style={{ margin: '8px 0' }}>
-          <img src={layer.src} alt={ __( 'Preview', 'productforge' ) } style={{ maxWidth: '100%', maxHeight: 60 }} />
+          <img src={layer.src} alt={ __( 'Preview', 'productforge' ) } style={{ maxWidth: '100%', maxHeight: 60, borderRadius: 4 }} />
         </div>
       )}
-      <label>
-        { __( 'X', 'productforge' ) }
-        <input type="number" value={layer.left || 0} onChange={(e) => onChange({ left: parseInt(e.target.value, 10) || 0 })} />
-      </label>
-      <label>
-        { __( 'Y', 'productforge' ) }
-        <input type="number" value={layer.top || 0} onChange={(e) => onChange({ top: parseInt(e.target.value, 10) || 0 })} />
-      </label>
-      <label>
-        { __( 'Scale X', 'productforge' ) }
-        <input type="number" step="0.1" min="0.1" value={layer.scaleX || 1} onChange={(e) => onChange({ scaleX: parseFloat(e.target.value) || 1 })} />
-      </label>
-      <label>
-        { __( 'Scale Y', 'productforge' ) }
-        <input type="number" step="0.1" min="0.1" value={layer.scaleY || 1} onChange={(e) => onChange({ scaleY: parseFloat(e.target.value) || 1 })} />
-      </label>
+      <div className="pf-tree-panel__coord-row">
+        <label>
+          { __( 'X', 'productforge' ) }
+          <input type="number" value={layer.left || 0} onChange={(e) => onChange({ left: parseInt(e.target.value, 10) || 0 })} />
+        </label>
+        <label>
+          { __( 'Y', 'productforge' ) }
+          <input type="number" value={layer.top || 0} onChange={(e) => onChange({ top: parseInt(e.target.value, 10) || 0 })} />
+        </label>
+      </div>
+      <div className="pf-tree-panel__coord-row">
+        <label>
+          { __( 'Scale X', 'productforge' ) }
+          <input type="number" step="0.1" min="0.1" value={layer.scaleX || 1} onChange={(e) => onChange({ scaleX: parseFloat(e.target.value) || 1 })} />
+        </label>
+        <label>
+          { __( 'Scale Y', 'productforge' ) }
+          <input type="number" step="0.1" min="0.1" value={layer.scaleY || 1} onChange={(e) => onChange({ scaleY: parseFloat(e.target.value) || 1 })} />
+        </label>
+      </div>
       <label>
         { __( 'Rotation', 'productforge' ) }
         <input type="number" min="0" max="360" value={layer.angle || 0} onChange={(e) => onChange({ angle: parseInt(e.target.value, 10) || 0 })} />
