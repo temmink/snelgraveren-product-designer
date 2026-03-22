@@ -276,21 +276,11 @@ export default function SettingsAssets({ globalConfig, update, clipartCollection
               </div>
             )}
 
-            <button
-              type="button"
-              className="button button-small"
-              onClick={() => setShowCollectionManager(!showCollectionManager)}
-              style={{ marginTop: 8 }}
-            >
-              {showCollectionManager ? __('Close', 'productforge') : __('Manage Collections', 'productforge')}
-            </button>
-
-            {showCollectionManager && (
-              <CollectionManager
-                collections={clipartCollections}
-                onUpdate={setClipartCollections}
-              />
-            )}
+            <p className="pf-settings__note" style={{ marginTop: 8 }}>
+              {__('Manage collections and upload SVGs from the', 'productforge')}{' '}
+              <a href="?page=pf-clipart">{__('Clipart', 'productforge')}</a>{' '}
+              {__('admin page.', 'productforge')}
+            </p>
           </>
         )}
       </fieldset>

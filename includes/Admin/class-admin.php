@@ -52,6 +52,15 @@ class Admin {
             'pf-design-templates',
             [$this, 'render_design_templates_page']
         );
+
+        add_submenu_page(
+            'productforge',
+            __('Clipart', 'productforge'),
+            __('Clipart', 'productforge'),
+            'edit_pf_templates',
+            'pf-clipart',
+            [$this, 'render_clipart_page']
+        );
     }
 
     public function render_list_page(): void {
@@ -64,6 +73,10 @@ class Admin {
         include PF_PLUGIN_DIR . 'includes/Admin/views/design-templates.php';
     }
 
+    public function render_clipart_page(): void {
+        include PF_PLUGIN_DIR . 'includes/Admin/views/clipart.php';
+    }
+
     public function render_builder_page(): void {
         $builder = new TemplateBuilder();
         $builder->render();
@@ -72,6 +85,11 @@ class Admin {
     public function enqueue_scripts(string $hook): void {
         if ($hook === 'productforge_page_pf-design-templates') {
             $this->enqueue_design_templates_scripts();
+            return;
+        }
+
+        if ($hook === 'productforge_page_pf-clipart') {
+            $this->enqueue_clipart_scripts();
             return;
         }
 
@@ -150,6 +168,33 @@ class Admin {
             'restUrl'   => esc_url_raw(rest_url()),
             'nonce'     => wp_create_nonce('wp_rest'),
             'templates' => $all_templates,
+        ]);
+    }
+
+    private function enqueue_clipart_scripts(): void {
+        $js_file = PF_PLUGIN_DIR . 'dist/admin-clipart.js';
+        $version = file_exists($js_file) ? substr(md5_file($js_file), 0, 8) : PF_VERSION;
+
+        wp_enqueue_script(
+            'pf-clipart',
+            PF_PLUGIN_URL . 'dist/admin-clipart.js',
+            ['react', 'react-dom', 'wp-i18n'],
+            $version,
+            true
+        );
+
+        $this->inline_script_translations('pf-clipart', 'productforge', 'dist/admin-clipart.js');
+
+        $css_file = PF_PLUGIN_DIR . 'dist/admin-clipart.css';
+        if (file_exists($css_file)) {
+            wp_enqueue_style('pf-clipart', PF_PLUGIN_URL . 'dist/admin-clipart.css', [], $version);
+        }
+
+        wp_localize_script('pf-clipart', 'pfClipart', [
+            'restUrl'    => esc_url_raw(rest_url()),
+            'nonce'      => wp_create_nonce('wp_rest'),
+            'isPremium'  => \ProductForge\ProductForge::is_premium(),
+            'upgradeUrl' => function_exists('pf_fs') ? pf_fs()->get_upgrade_url() : '',
         ]);
     }
 

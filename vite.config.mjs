@@ -49,6 +49,27 @@ const configs = {
       },
     },
   },
+  clipart: {
+    plugins: [react()],
+    build: {
+      outDir: 'dist',
+      emptyOutDir: false,
+      rollupOptions: {
+        external: ['react', 'react-dom', '@wordpress/i18n'],
+        input: { 'admin-clipart': 'admin/js/clipart/src/index.jsx' },
+        output: {
+          format: 'iife',
+          entryFileNames: '[name].js',
+          assetFileNames: '[name][extname]',
+          globals: {
+            'react': 'React',
+            'react-dom': 'ReactDOM',
+            '@wordpress/i18n': 'wp.i18n',
+          },
+        },
+      },
+    },
+  },
   frontend: {
     plugins: [react()],
     build: {
