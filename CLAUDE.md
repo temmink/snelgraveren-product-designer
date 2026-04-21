@@ -13,12 +13,12 @@ A WooCommerce plugin that lets customers design text, images, and SVGs onto prod
 
 ## Architecture
 
-- **Approach B: Pure custom database tables** (6 tables, no CPTs). All data in `wp_pf_*` tables.
+- **Approach B: Pure custom database tables** (11 tables, no CPTs). All data in `wp_pf_*` tables.
 - **Frontend canvas:** Fabric.js 6.x
 - **UI framework:** React 18 + Zustand state management
-- **Build system:** Vite (single config, three entry points: admin, design-templates, frontend) + CSS copy step for Safari compatibility
+- **Build system:** Vite (single config, four entry points: admin, design-templates, clipart, frontend) + CSS copy step for Safari compatibility
 - **Licensing:** Freemius SDK for premium feature gating; `is_premium()` helper in main `ProductForge` class
-- **Export:** Local only — PDF (TCPDF), PNG (Imagick), SVG (Fabric.js toSVG)
+- **Export:** Local only — browser-rendered source (Fabric.js `toDataURL` at 3× PNG, or `toSVG`) is captured client-side during save and stored in `wp_pf_design_views.export_svg`. Server then emits PDF (TCPDF), PNG (direct or `rsvg-convert`/Imagick from SVG), or SVG. Multi-view exports stream as ZIP.
 - **PHP autoloading:** PSR-4 via custom autoloader. Namespace `ProductForge\` maps to `includes/`.
 
 ## Development Environment
@@ -57,6 +57,10 @@ npm run build                           # Production build → dist/
 - **Fabric.js canvas scaling:** Use `canvas.setZoom(scale)` + `canvas.setDimensions({ width, height })` (NOT `cssOnly: true`). Using `cssOnly` causes double-scaling: zoom shrinks objects in the backing buffer, then CSS shrinks the buffer again. Always change backing canvas dimensions alongside zoom.
 - **Mobile detection:** Use `matchMedia` (not `window.innerWidth`) for breakpoint detection. Safari iOS briefly reports `innerWidth` as 980px before viewport meta tag is applied. Use `screen.width` as fallback for initial state. Never evaluate `matchMedia` at module level — Safari can misreport before DOM ready.
 - **CSS delivery:** Build outputs CSS as both JS-injected (via Vite bundle) and separate `dist/frontend-designer.css` file (via `cp` in build script). Safari has issues with media queries in JS-injected `<style>` tags. The PHP already enqueues the CSS file via `<link>` tag if it exists.
+- **Zustand stale closures:** In async handlers or callbacks that run later (e.g. `handleSave`), always read Zustand state fresh via `useDesignerStore.getState()` instead of using closure variables from the React component. Closure variables capture state at render time and go stale by the time the callback executes.
+- **Pre-rendered export data:** On every design save the designer renders a 3× PNG via `fabricCanvasRef.toDataURL({ format: 'png', multiplier: 3 })` (live view) or an offscreen Fabric canvas (non-active views) and passes it as `export_svg` to `POST /designs/{hash}/views`. Reason: server-side SVG rendering cannot reproduce text exactly without all the client fonts. Accepted payloads: SVG markup (`<…>`) or `data:image/png;base64,` URLs — validated in `RestDesigns::save_view`.
+- **Engraving text (Hershey fonts):** `utils/hersheyFonts.js` contains single-stroke path data used for laser/CNC engraving output. Objects have `data.elementType = 'engraving-text'` and carry `engravingText`, `engravingFontId`, `engravingFontSize`. They render as Fabric `Path` with stroke only (no fill), so engrave machines see a single-line tool path.
+- **Undo/redo guard:** `useCanvasHistory` keeps an `isRestoring` ref — `pushHistory` early-returns while a snapshot is being applied. Without this, `loadFromJSON` triggers object events that schedule a new history entry, polluting the stack.
 
 ### REST API
 - Namespace: `pf/v1`
@@ -65,6 +69,7 @@ npm run build                           # Production build → dist/
 - Customer design endpoints verify ownership (customer_id or session_id)
 - `grant_template_cap` filter lives in `ProductForge` main class (not Admin) so it applies in REST API context too
 - List endpoints support pagination (`per_page`, `page`) with `X-WP-Total` headers
+- Clipart and font GET endpoints are intentionally public (`__return_true`) — guest customers need them in the frontend designer. The SVG files are public uploads anyway. Mutation endpoints require `edit_pf_templates` + premium feature gate.
 
 ## Security Rules (Critical)
 
@@ -75,7 +80,7 @@ These exist because FPD had CVE-2024-51919 (arbitrary file upload → RCE) and C
 3. **Always sanitize SVGs** — strip `<script>`, `on*` attrs, `<use>` with external refs, `foreignObject`, `data:` URIs
 4. **Never expose sequential IDs** — designs use CSPRNG hashes
 5. **Never trust client-sent prices** — recalculate server-side on every cart/order operation
-6. **Rate limit uploads** — max 10/minute per session
+6. **Rate limit uploads** — max 10/minute per session (customer uploads); clipart admin uploads rate-limited to 20/minute per user
 7. **Validate Fabric.js JSON** — whitelist allowed object types before serving to other users
 
 ## Database Tables
@@ -85,21 +90,25 @@ These exist because FPD had CVE-2024-51919 (arbitrary file upload → RCE) and C
 | `wp_pf_templates` | Template definitions (title, slug, status, global config) |
 | `wp_pf_template_views` | Per-view config: canvas size, background, zones, layers, permissions. Columns use `name` (not `view_name`) and `background_url` (not `background_image_url`) |
 | `wp_pf_designs` | Customer designs: hash ID, product/template link, status, price |
-| `wp_pf_design_views` | Per-view Fabric.js canvas JSON + thumbnail |
+| `wp_pf_design_views` | Per-view Fabric.js canvas JSON + thumbnail + `export_svg` (browser-rendered PNG data URL or SVG markup, used by export pipeline) |
 | `wp_pf_design_templates` | Pre-made design templates that customers can apply in the designer |
 | `wp_pf_design_template_views` | Per-view Fabric.js canvas JSON for design templates |
 | `wp_pf_exports` | Export records: format, file path, status per order |
 | `wp_pf_price_log` | Pricing audit trail per design element |
+| `wp_pf_fonts` | Custom font uploads (family name, file URL, format) |
+| `wp_pf_clipart_collections` | Clipart collections (name, slug) |
+| `wp_pf_clipart` | Clipart items (SVG file URL, collection FK) |
 
-All tables use InnoDB engine for foreign key and transaction support. Total: 8 tables.
+All tables use InnoDB engine for foreign key and transaction support. Total: 11 tables.
 
 ## Admin Pages
 
 | Menu Item | Page Slug | Purpose |
 |-----------|-----------|---------|
-| Sjablonen | `productforge` | Template list (WP_List_Table with status tabs + bulk actions) |
-| Nieuw Toevoegen | `pf-template-builder` | Template builder React app (canvas, zones, layers, permissions, pricing) |
+| Templates | `productforge` | Template list (WP_List_Table with status tabs + bulk actions) |
+| Add New | `pf-template-builder` | Template builder React app (canvas, zones, layers, permissions, pricing) |
 | Design Templates | `pf-design-templates` | Design template CRUD React app (list, create, edit, delete, import/export JSON) |
+| Clipart | `pf-clipart` | Clipart manager React app (collections CRUD, bulk SVG upload, drag & drop) |
 
 ## WooCommerce Integration Points
 
@@ -113,6 +122,14 @@ All tables use InnoDB engine for foreign key and transaction support. Total: 8 t
 - Surcharge: via `woocommerce_before_calculate_totals`
 - Order: design_hash in order item meta, export triggered on configurable order status
 - HPOS: Compatibility declared in `productforge.php`
+
+## Deployment
+
+- **Live site:** snelgraveren.nl (LiteSpeed Cache — flush after deploy)
+- **Plugin ZIP:** Build with `npm run build` first, then create ZIP including: `productforge.php`, `freemius-init.php`, `includes/`, `dist/`, `vendor/`, `languages/`, `admin/` (but NOT `node_modules/`, `.git/`, `frontend/js/*/src/`). Output ZIP to project directory (not `/tmp/`).
+- **JS cache busting:** PHP uses `md5_file()` on JS bundles for version param, so new builds get fresh URLs automatically even without clearing server cache.
+- **Freemius SDK guard:** `productforge.php` conditionally loads `freemius-init.php` only if the file exists. The plugin works fine without Freemius — all premium gates gracefully degrade.
+- **SVG→PNG conversion:** Export pipeline prefers `/usr/bin/rsvg-convert` (installed via `librsvg2-bin` in the Docker image and on the live server); falls back to Imagick with SVG support. Host must have at least one of the two.
 
 ## Don't
 

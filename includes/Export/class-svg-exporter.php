@@ -82,6 +82,8 @@ class SvgExporter {
         $scaleX = (float) ($obj['scaleX'] ?? 1);
         $scaleY = (float) ($obj['scaleY'] ?? 1);
         $opacity = (float) ($obj['opacity'] ?? 1);
+        $textAlign = $obj['textAlign'] ?? 'left';
+        $width  = (float) ($obj['width'] ?? 0);
 
         $transform = $this->build_transform($left, $top, $angle, $scaleX, $scaleY);
 
@@ -91,15 +93,27 @@ class SvgExporter {
         // Offset y by ~80% of fontSize (font ascent) to match Fabric.js positioning.
         $ascent_offset = $size * 0.8;
 
+        // Map textAlign to SVG text-anchor and x position
+        $anchor = 'start';
+        $x = 0;
+        if ($textAlign === 'center') {
+            $anchor = 'middle';
+            $x = $width / 2;
+        } elseif ($textAlign === 'right') {
+            $anchor = 'end';
+            $x = $width;
+        }
+
         $svg = '<g transform="' . esc_attr($transform) . '" opacity="' . $opacity . '">';
         foreach ($lines as $i => $line) {
             $y = ($i * $line_height) + $ascent_offset;
-            $svg .= '<text x="0" y="' . $y . '"'
+            $svg .= '<text x="' . $x . '" y="' . $y . '"'
                 . ' fill="' . esc_attr($fill) . '"'
                 . ' font-size="' . $size . '"'
                 . ' font-family="' . esc_attr($family) . '"'
                 . ' font-weight="' . $weight . '"'
                 . ' font-style="' . $style . '"'
+                . ' text-anchor="' . $anchor . '"'
                 . '>' . esc_html($line) . '</text>';
         }
         $svg .= '</g>';
@@ -153,6 +167,8 @@ class SvgExporter {
 
         $left   = (float) ($obj['left'] ?? 0);
         $top    = (float) ($obj['top'] ?? 0);
+        $width  = (float) ($obj['width'] ?? 0);
+        $height = (float) ($obj['height'] ?? 0);
         $fill   = $obj['fill'] ?? 'none';
         $stroke = $obj['stroke'] ?? 'none';
         $strokeWidth = (float) ($obj['strokeWidth'] ?? 1);
@@ -169,16 +185,29 @@ class SvgExporter {
             $strokeWidth = max($strokeWidth, 0.5);
         }
 
+        // Fabric.js uses pathOffset to center path data within the object bounds.
+        // pathOffset is not serialized in toJSON, so we calculate it from the path
+        // data bounding box. The path d coordinates are in the original SVG space;
+        // Fabric translates by -pathOffset to center them, then positions at (left, top).
+        $bbox = is_array($path_data) ? $this->path_bounding_box($path_data) : null;
+        $offset_x = 0;
+        $offset_y = 0;
+        if ($bbox) {
+            $offset_x = ($bbox['minX'] + $bbox['maxX']) / 2;
+            $offset_y = ($bbox['minY'] + $bbox['maxY']) / 2;
+        }
+
         $transform = $this->build_transform($left, $top, $angle, $scaleX, $scaleY);
 
-        return '<path'
-            . ' transform="' . esc_attr($transform) . '"'
+        return '<g transform="' . esc_attr($transform) . '">'
+            . '<path'
+            . ' transform="translate(' . (-$offset_x) . ',' . (-$offset_y) . ')"'
             . ' d="' . esc_attr($d) . '"'
             . ' fill="' . esc_attr($export_fill) . '"'
             . ' stroke="' . esc_attr($export_stroke) . '"'
             . ' stroke-width="' . $strokeWidth . '"'
             . ' opacity="' . $opacity . '"'
-            . '/>';
+            . '/></g>';
     }
 
     private function render_group(array $obj): string {
@@ -280,6 +309,38 @@ class SvgExporter {
             $parts[] = 'scale(' . $scaleX . ',' . $scaleY . ')';
         }
         return implode(' ', $parts);
+    }
+
+    /**
+     * Calculate the bounding box of a Fabric.js path array.
+     * Uses the numeric coordinates from all path segments.
+     */
+    private function path_bounding_box(array $path): array {
+        $minX = PHP_FLOAT_MAX;
+        $minY = PHP_FLOAT_MAX;
+        $maxX = -PHP_FLOAT_MAX;
+        $maxY = -PHP_FLOAT_MAX;
+
+        foreach ($path as $segment) {
+            if (!is_array($segment) || empty($segment)) continue;
+            $cmd = $segment[0];
+            $coords = array_slice($segment, 1);
+            // Extract x,y pairs from coordinates
+            for ($i = 0; $i < count($coords) - 1; $i += 2) {
+                $x = (float) $coords[$i];
+                $y = (float) $coords[$i + 1];
+                $minX = min($minX, $x);
+                $minY = min($minY, $y);
+                $maxX = max($maxX, $x);
+                $maxY = max($maxY, $y);
+            }
+        }
+
+        if ($minX === PHP_FLOAT_MAX) {
+            return ['minX' => 0, 'minY' => 0, 'maxX' => 0, 'maxY' => 0];
+        }
+
+        return ['minX' => $minX, 'minY' => $minY, 'maxX' => $maxX, 'maxY' => $maxY];
     }
 
     /**

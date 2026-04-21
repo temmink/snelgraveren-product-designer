@@ -140,10 +140,11 @@ class RestDesigns {
         if (!$design) return new \WP_Error('not_found', 'Design not found.', ['status' => 404]);
         if (!$this->owns_design($design)) return new \WP_Error('forbidden', 'Access denied.', ['status' => 403]);
 
-        $body    = $request->get_json_params();
-        $view_id = (int) ($body['view_id'] ?? 0);
-        $json    = $body['canvas_json'] ?? [];
-        $thumb   = $body['thumbnail'] ?? '';
+        $body       = $request->get_json_params();
+        $view_id    = (int) ($body['view_id'] ?? 0);
+        $json       = $body['canvas_json'] ?? [];
+        $thumb      = $body['thumbnail'] ?? '';
+        $export_svg = $body['export_svg'] ?? '';
 
         // Save base64 thumbnail as a file
         $thumb_url = '';
@@ -151,7 +152,17 @@ class RestDesigns {
             $thumb_url = $this->save_thumbnail_file($request['hash'], $view_id, $thumb);
         }
 
-        $this->repo->upsert_view((int) $design['id'], $view_id, $json, $thumb_url);
+        // Validate export data — must be SVG markup or PNG data URL
+        if (!empty($export_svg)) {
+            $trimmed = trim($export_svg);
+            $is_svg = str_starts_with($trimmed, '<');
+            $is_png = str_starts_with($trimmed, 'data:image/png;base64,');
+            if (!$is_svg && !$is_png) {
+                $export_svg = '';
+            }
+        }
+
+        $this->repo->upsert_view((int) $design['id'], $view_id, $json, $thumb_url, $export_svg);
         $this->repo->invalidate_cache($request['hash']);
         return new \WP_REST_Response($this->sanitize_for_customer($this->repo->get_by_hash($request['hash'])), 200);
     }

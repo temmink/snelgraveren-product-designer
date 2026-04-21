@@ -1,7 +1,7 @@
 const config = window.pfDesigner || {};
 
 function apiUrl(path) {
-  return `${config.api_base}${path}`;
+  return `${config.rest_url}${path}`;
 }
 
 function headers(includeNonce = true) {
@@ -34,7 +34,7 @@ export async function createDesign(templateId, productId) {
   return res.json();
 }
 
-export async function saveDesignView(designHash, viewId, canvasJson, thumbnail = '') {
+export async function saveDesignView(designHash, viewId, canvasJson, thumbnail = '', exportSvg = '') {
   const res = await fetch(apiUrl(`/designs/${designHash}/views`), {
     method: 'POST',
     headers: headers(),
@@ -42,6 +42,7 @@ export async function saveDesignView(designHash, viewId, canvasJson, thumbnail =
       view_id: viewId,
       canvas_json: canvasJson,
       thumbnail,
+      export_svg: exportSvg,
     }),
   });
   if (!res.ok) {

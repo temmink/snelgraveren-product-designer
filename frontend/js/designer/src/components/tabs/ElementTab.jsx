@@ -5,6 +5,7 @@ import useDesignerStore from '../../store/useDesignerStore';
 import { alignElement } from '../../../../../../shared/js/alignElement';
 import ImageFilters from '../ImageFilters';
 import CurvedTextProperties from '../CurvedTextProperties';
+import { renderHersheyText, ENGRAVING_FONTS } from '../../utils/hersheyFonts';
 
 export default function ElementTab() {
   const { selectedObject, template, snapshotView, currentViewIndex, fabricCanvasRef, zoneFillColors, setZoneFillColor } = useDesignerStore();
@@ -40,7 +41,7 @@ export default function ElementTab() {
 
       {selectedObject && (
         <>
-          <h3 className="pf-sidebar__heading">{type.charAt(0).toUpperCase() + type.slice(1)}{__(' Properties', 'productforge')}</h3>
+          <h3 className="pf-sidebar__heading">{type === 'engraving-text' ? (<>{__('Engraving', 'productforge')}{__(' Properties', 'productforge')} <span style={{ fontSize: '10px', color: '#fff', background: '#2271b1', padding: '1px 6px', borderRadius: '3px', marginLeft: '6px', fontWeight: 'normal', verticalAlign: 'middle' }}>⠁ single-line</span></>) : (<>{type.charAt(0).toUpperCase() + type.slice(1)}{__(' Properties', 'productforge')}</>)}</h3>
 
           {type === 'text' && (
             <TextProperties
@@ -69,6 +70,13 @@ export default function ElementTab() {
             </>
           )}
 
+          {type === 'engraving-text' && (
+            <EngravingTextProperties
+              fabricObj={fabricObj}
+              snapshotView={snapshotView}
+              currentViewIndex={currentViewIndex}
+            />
+          )}
           {(type === 'image' || type === 'svg') && (
             <ImageProperties
               fabricObj={fabricObj}
@@ -425,7 +433,7 @@ function ZoneFillSection({ zones, editableZones, globalConfig, fabricCanvasRef, 
     canvas.getObjects().forEach((obj) => {
       if (obj.data?.isZoneOverlay) {
         if (obj.getObjects) {
-          obj.getObjects().forEach((c) => c.set({ fill: color }));
+          obj.getObjects().forEach((c) => c.set({ fill: color, stroke: 'transparent', strokeWidth: 0 }));
         }
         obj.set({ fill: color });
         obj.dirty = true;
@@ -450,7 +458,7 @@ function ZoneFillSection({ zones, editableZones, globalConfig, fabricCanvasRef, 
               return {
                 ...obj,
                 fill: color,
-                objects: (obj.objects || []).map((c) => ({ ...c, fill: color })),
+                objects: (obj.objects || []).map((c) => ({ ...c, fill: color, stroke: 'transparent', strokeWidth: 0 })),
               };
             }
             return obj;
@@ -495,6 +503,132 @@ function ZoneFillSection({ zones, editableZones, globalConfig, fabricCanvasRef, 
           </label>
         );
       })}
+    </div>
+  );
+}
+
+function EngravingTextProperties({ fabricObj, snapshotView, currentViewIndex }) {
+  const data = fabricObj.data || {};
+  const [text, setText] = useState(data.engravingText || 'Your text');
+  const [fontId, setFontId] = useState(data.engravingFontId || 'hershey-simplex');
+  const [fontSize, setFontSize] = useState(data.engravingFontSize || 24);
+  const [stroke, setStroke] = useState(fabricObj.stroke || '#000000');
+
+  useEffect(() => {
+    const d = fabricObj.data || {};
+    setText(d.engravingText || 'Your text');
+    setFontId(d.engravingFontId || 'hershey-simplex');
+    setFontSize(d.engravingFontSize || 24);
+    setStroke(fabricObj.stroke || '#000000');
+  }, [fabricObj]);
+
+  const rerender = useCallback((newText, newFontId, newFontSize, newStroke) => {
+    const { d, width, height } = renderHersheyText(newText, newFontId, { fontSize: newFontSize });
+    if (!d) return;
+
+    const oldLeft = fabricObj.left;
+    const oldTop = fabricObj.top;
+
+    // Update path data by replacing the path array
+    const tmpPath = new (fabricObj.constructor)(d, {
+      left: oldLeft,
+      top: oldTop,
+      fill: '',
+      stroke: newStroke,
+      strokeWidth: fabricObj.strokeWidth || 1.5,
+      strokeLineCap: 'round',
+      strokeLineJoin: 'round',
+    });
+
+    // Copy path data to existing object
+    fabricObj.set({
+      path: tmpPath.path,
+      pathOffset: tmpPath.pathOffset,
+      width: tmpPath.width,
+      height: tmpPath.height,
+      left: oldLeft,
+      top: oldTop,
+      fill: '',
+      stroke: newStroke,
+      data: {
+        ...fabricObj.data,
+        engravingText: newText,
+        engravingFontId: newFontId,
+        engravingFontSize: newFontSize,
+      },
+    });
+    fabricObj.setCoords();
+    fabricObj.canvas?.renderAll();
+    snapshotView(currentViewIndex, fabricObj.canvas?.toJSON(['data']));
+  }, [fabricObj, snapshotView, currentViewIndex]);
+
+  return (
+    <div className="pf-element__section">
+      <label className="pf-element__label">{__('Text', 'productforge')}</label>
+      <input
+        type="text"
+        className="pf-element__input"
+        value={text}
+        onChange={(e) => {
+          setText(e.target.value);
+          rerender(e.target.value, fontId, fontSize, stroke);
+        }}
+      />
+
+      <label className="pf-element__label">{__('Engraving Font', 'productforge')} <span style={{ fontSize: '10px', color: '#888', fontWeight: 'normal', marginLeft: '4px', background: '#f0f0f0', padding: '1px 5px', borderRadius: '3px' }}>single-line</span></label>
+      <div className="pf-element__font-picker" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        {ENGRAVING_FONTS.map((f) => {
+          const preview = renderHersheyText('Abc', f.id, { fontSize: 18 });
+          return (
+            <button
+              type="button"
+              key={f.id}
+              onClick={() => { setFontId(f.id); rerender(text, f.id, fontSize, stroke); }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                padding: '6px 8px', border: fontId === f.id ? '2px solid #2271b1' : '1px solid #ddd',
+                borderRadius: '4px', background: fontId === f.id ? '#f0f7ff' : '#fff',
+                cursor: 'pointer', transition: 'border-color 0.15s',
+              }}
+            >
+              <svg
+                viewBox={"0 0 " + (preview.width || 60) + " " + (preview.height || 20)}
+                width={Math.min(80, preview.width || 60)}
+                height={Math.min(24, preview.height || 20)}
+                style={{ flexShrink: 0 }}
+              >
+                <path d={preview.d} fill="none" stroke="#333" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span style={{ fontSize: '11px', color: '#555' }}>{f.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <label className="pf-element__label">{__('Size', 'productforge')}</label>
+      <input
+        type="number"
+        className="pf-element__input pf-element__input--short"
+        value={fontSize}
+        min={8}
+        max={120}
+        onChange={(e) => {
+          const v = parseInt(e.target.value, 10) || 24;
+          setFontSize(v);
+          rerender(text, fontId, v, stroke);
+        }}
+      />
+
+      <label className="pf-element__label">{__('Color', 'productforge')}</label>
+      <input
+        type="color"
+        className="pf-element__color-input"
+        value={stroke}
+        onChange={(e) => {
+          setStroke(e.target.value);
+          rerender(text, fontId, fontSize, e.target.value);
+        }}
+      />
     </div>
   );
 }

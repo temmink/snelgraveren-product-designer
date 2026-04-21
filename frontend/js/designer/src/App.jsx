@@ -32,6 +32,31 @@ async function renderOffscreenThumbnail(canvasJson, width, height) {
   }
 }
 
+/**
+ * Generate high-res export PNG from canvas JSON using an offscreen Fabric canvas.
+ * Returns a data URL (PNG at 3x resolution) or empty string on failure.
+ * We use PNG instead of SVG because SVG text requires the exact fonts on the
+ * server, whereas browser-rendered PNG captures text with loaded web fonts.
+ */
+async function renderOffscreenExportPng(canvasJson, width, height) {
+  try {
+    const el = document.createElement('canvas');
+    el.width = width;
+    el.height = height;
+    const offscreen = new FabricCanvas(el, { width, height });
+    await offscreen.loadFromJSON(canvasJson);
+    offscreen.renderAll();
+    const dataUrl = offscreen.toDataURL({ format: 'png', multiplier: 3 });
+    offscreen.dispose();
+    return dataUrl;
+  } catch (err) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('Offscreen export PNG render failed:', err);
+    }
+    return '';
+  }
+}
+
 const config = window.pfDesigner || {};
 
 export default function App() {
@@ -346,16 +371,22 @@ export default function App() {
             const view = views[idx];
             if (view?.id) {
               let thumbnail = '';
+              let exportSvg = '';
+              const w = view.canvas_width || 600;
+              const h = view.canvas_height || 600;
+
               if (idx === store.currentViewIndex && store.fabricCanvasRef) {
                 try {
                   thumbnail = store.fabricCanvasRef.toDataURL({ format: 'png', multiplier: 0.5 });
                 } catch (_) { /* ignore */ }
+                try {
+                  exportSvg = store.fabricCanvasRef.toDataURL({ format: 'png', multiplier: 3 });
+                } catch (_) { /* ignore */ }
               } else {
-                const w = view.canvas_width || 600;
-                const h = view.canvas_height || 600;
                 thumbnail = await renderOffscreenThumbnail(json, w, h);
+                exportSvg = await renderOffscreenExportPng(json, w, h);
               }
-              await saveDesignView(hash, view.id, json, thumbnail);
+              await saveDesignView(hash, view.id, json, thumbnail, exportSvg);
             }
           }
 
@@ -395,7 +426,8 @@ export default function App() {
     const saveStart = Date.now();
 
     try {
-      let hash = designHash;
+      // Read fresh from store — closure values may be stale
+      let hash = useDesignerStore.getState().designHash;
 
       // Create design if first save
       if (!hash) {
@@ -405,26 +437,34 @@ export default function App() {
       }
 
       // Save each view that has a snapshot
+      // Read fresh from store — closure `canvasSnapshots` may be stale
+      const freshSnapshots = useDesignerStore.getState().canvasSnapshots;
       const views = template?.views || [];
       const activeViewIndex = useDesignerStore.getState().currentViewIndex;
       let savedDesign = null;
-      for (const [viewIndex, json] of Object.entries(canvasSnapshots)) {
+      for (const [viewIndex, json] of Object.entries(freshSnapshots)) {
         const idx = parseInt(viewIndex, 10);
         const view = views[idx];
         if (view?.id) {
           let thumbnail = '';
+          let exportSvg = '';
+          const w = view.canvas_width || 600;
+          const h = view.canvas_height || 600;
+
           if (idx === activeViewIndex && fabricCanvasRef) {
             // Active view: capture directly from the live canvas
             try {
               thumbnail = fabricCanvasRef.toDataURL({ format: 'png', multiplier: 0.5 });
             } catch (_) { /* ignore */ }
+            try {
+              exportSvg = fabricCanvasRef.toDataURL({ format: 'png', multiplier: 3 });
+            } catch (_) { /* ignore */ }
           } else {
-            // Non-active view: render offscreen to generate thumbnail
-            const w = view.canvas_width || 600;
-            const h = view.canvas_height || 600;
+            // Non-active view: render offscreen
             thumbnail = await renderOffscreenThumbnail(json, w, h);
+            exportSvg = await renderOffscreenExportPng(json, w, h);
           }
-          savedDesign = await saveDesignView(hash, view.id, json, thumbnail);
+          savedDesign = await saveDesignView(hash, view.id, json, thumbnail, exportSvg);
         }
       }
 

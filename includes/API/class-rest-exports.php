@@ -91,31 +91,54 @@ class RestExports {
     public function download_export(\WP_REST_Request $request): \WP_REST_Response {
         $export_id = (int) $request->get_param('id');
 
-        $path = $this->manager()->get_download_path($export_id);
+        $paths = $this->manager()->get_download_paths($export_id);
 
-        if (empty($path)) {
+        if (empty($paths)) {
             return new \WP_REST_Response(['error' => 'Export not found or not ready'], 404);
         }
 
-        // Sanitize filename: only allow alphanumeric, hyphens, underscores, dots
-        $filename = basename($path);
-        $filename = preg_replace('/[^a-zA-Z0-9._-]/', '_', $filename);
-
-        $mime = match (pathinfo($path, PATHINFO_EXTENSION)) {
-            'pdf' => 'application/pdf',
-            'png' => 'image/png',
-            'svg' => 'image/svg+xml',
-            default => 'application/octet-stream',
-        };
-
-        // Stream the file with proper headers
         nocache_headers();
-        header('Content-Type: ' . $mime);
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-        header('Content-Length: ' . filesize($path));
         header('X-Content-Type-Options: nosniff');
-        // phpcs:ignore WordPress.WP.AlternativeFunctions
-        readfile($path);
+
+        if (count($paths) === 1) {
+            // Single file — stream directly
+            $path = $paths[0];
+            $filename = basename($path);
+            $filename = preg_replace('/[^a-zA-Z0-9._-]/', '_', $filename);
+
+            $mime = match (pathinfo($path, PATHINFO_EXTENSION)) {
+                'pdf' => 'application/pdf',
+                'png' => 'image/png',
+                'svg' => 'image/svg+xml',
+                default => 'application/octet-stream',
+            };
+
+            header('Content-Type: ' . $mime);
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            header('Content-Length: ' . filesize($path));
+            readfile($path); // phpcs:ignore WordPress.WP.AlternativeFunctions
+            exit;
+        }
+
+        // Multi-view — create a zip on the fly
+        $zip_path = sys_get_temp_dir() . '/pf-export-' . $export_id . '.zip';
+        $zip = new \ZipArchive();
+        if ($zip->open($zip_path, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            return new \WP_REST_Response(['error' => 'Failed to create zip'], 500);
+        }
+
+        foreach ($paths as $path) {
+            $zip->addFile($path, basename($path));
+        }
+        $zip->close();
+
+        $zip_name = preg_replace('/[^a-zA-Z0-9._-]/', '_', basename($paths[0], '.' . pathinfo($paths[0], PATHINFO_EXTENSION))) . '-all-views.zip';
+
+        header('Content-Type: application/zip');
+        header('Content-Disposition: attachment; filename="' . $zip_name . '"');
+        header('Content-Length: ' . filesize($zip_path));
+        readfile($zip_path); // phpcs:ignore WordPress.WP.AlternativeFunctions
+        @unlink($zip_path);
         exit;
     }
 

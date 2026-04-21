@@ -55,6 +55,9 @@ class ExportManager {
     /**
      * Generate an export for a design hash.
      *
+     * Uses the pre-rendered SVG from canvas.toSVG() stored during design save.
+     * This produces pixel-perfect output because Fabric.js itself generated the SVG.
+     *
      * @return array{export_id: int, status: string, file_path: string}|array{error: string}
      */
     public function generate_export(string $design_hash, string $format = 'pdf', int $order_id = 0): array {
@@ -101,6 +104,19 @@ class ExportManager {
             return ['error' => 'Design has no views'];
         }
 
+        // Check that views have export_svg data
+        $has_svg = false;
+        foreach ($views as $view) {
+            if (!empty($view['export_svg'])) {
+                $has_svg = true;
+                break;
+            }
+        }
+        if (!$has_svg) {
+            $this->exports->update_status($export_id, 'failed');
+            return ['error' => 'Design has no export SVG data. Please re-save the design to generate export data.'];
+        }
+
         $export_dir = $this->get_export_dir($format);
         $file_name  = $design_hash . '-' . $design_id;
 
@@ -108,7 +124,7 @@ class ExportManager {
             $file_path = match ($format) {
                 'pdf' => $this->export_pdf($views, $template, $export_dir, $file_name),
                 'png' => $this->export_png($views, $template, $export_dir, $file_name),
-                'svg' => $this->export_svg($views, $template, $export_dir, $file_name),
+                'svg' => $this->export_svg($views, $export_dir, $file_name),
                 default => throw new \InvalidArgumentException('Unsupported format: ' . $format),
             };
 
@@ -126,93 +142,322 @@ class ExportManager {
     }
 
     /**
-     * Get the file path for a completed export, verifying it exists.
+     * Get the file path(s) for a completed export, verifying they exist.
+     * Returns an array of validated paths (supports multi-view exports).
      */
-    public function get_download_path(int $export_id): string {
+    public function get_download_paths(int $export_id): array {
         $export = $this->exports->get_by_id($export_id);
         if (!$export || $export['status'] !== 'done') {
-            return '';
+            return [];
         }
 
-        $path = $export['file_path'];
-        if (empty($path)) {
-            return '';
+        $stored = $export['file_path'] ?? '';
+        if (empty($stored)) {
+            return [];
         }
 
-        // Ensure path is within the expected export directory to prevent path traversal.
-        // realpath() returns false for non-existent paths, so no separate file_exists() needed.
         $upload_dir  = wp_upload_dir();
         $exports_dir = realpath($upload_dir['basedir'] . '/pf-exports');
-        $real_path   = realpath($path);
-        if (!$exports_dir || !$real_path || !str_starts_with($real_path, $exports_dir . '/')) {
-            return '';
+        if (!$exports_dir) {
+            return [];
         }
 
-        return $real_path;
+        $paths = [];
+        foreach (explode(',', $stored) as $path) {
+            $path = trim($path);
+            $real_path = realpath($path);
+            if ($real_path && str_starts_with($real_path, $exports_dir . '/')) {
+                $paths[] = $real_path;
+            }
+        }
+
+        return $paths;
     }
 
-    private function export_pdf(array $views, array $template, string $dir, string $file_name): string {
-        $exporter  = new PdfExporter();
-        $file_path = $dir . $file_name . '.pdf';
-
-        $pdf_views = [];
-        foreach ($views as $view) {
-            $canvas_json = $view['canvas_json'] ?? [];
-            $dimensions  = $this->get_view_dimensions($view, $template);
-            $pdf_views[] = [
-                'canvas_json' => $canvas_json,
-                'width'       => $dimensions['width'],
-                'height'      => $dimensions['height'],
-            ];
-        }
-
-        if (!$exporter->export($pdf_views, $file_path)) {
-            throw new \RuntimeException('PDF export failed');
-        }
-
-        return $file_path;
+    /**
+     * Get the file path for a completed export, verifying it exists.
+     * For backwards compatibility, returns only the first file.
+     */
+    public function get_download_path(int $export_id): string {
+        $paths = $this->get_download_paths($export_id);
+        return $paths[0] ?? '';
     }
 
+    /**
+     * Decode export data from a view. Supports both PNG data URLs and raw SVG.
+     * Returns ['type' => 'png'|'svg', 'data' => binary|string] or null.
+     */
+    private function decode_export_data(string $raw): ?array {
+        if (str_starts_with($raw, 'data:image/png;base64,')) {
+            $base64 = substr($raw, strlen('data:image/png;base64,'));
+            $binary = base64_decode($base64, true);
+            if ($binary === false) {
+                return null;
+            }
+            return ['type' => 'png', 'data' => $binary];
+        }
+
+        if (str_starts_with($raw, '<')) {
+            return ['type' => 'svg', 'data' => $raw];
+        }
+
+        return null;
+    }
+
+    /**
+     * Export views as SVG files. Only works with SVG export data.
+     * PNG data URLs cannot be converted to vector SVG.
+     */
+    private function export_svg(array $views, string $dir, string $file_name): string {
+        $paths = [];
+        foreach ($views as $i => $view) {
+            $raw = $view['export_svg'] ?? '';
+            if (empty($raw)) {
+                continue;
+            }
+
+            $export = $this->decode_export_data($raw);
+            if (!$export) {
+                continue;
+            }
+
+            $suffix    = count($views) > 1 ? '-view-' . ($i + 1) : '';
+            $file_path = $dir . $file_name . $suffix . '.svg';
+
+            if ($export['type'] === 'svg') {
+                if (file_put_contents($file_path, $export['data']) === false) {
+                    throw new \RuntimeException('SVG export failed for view ' . ($i + 1));
+                }
+            } else {
+                // PNG data: wrap in an SVG container
+                $b64 = base64_encode($export['data']);
+                $svg = '<?xml version="1.0" encoding="UTF-8"?>'
+                     . '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">'
+                     . '<image width="100%" height="100%" href="data:image/png;base64,' . $b64 . '"/>'
+                     . '</svg>';
+                if (file_put_contents($file_path, $svg) === false) {
+                    throw new \RuntimeException('SVG export failed for view ' . ($i + 1));
+                }
+            }
+
+            $paths[] = $file_path;
+        }
+
+        if (empty($paths)) {
+            throw new \RuntimeException('No views with export data');
+        }
+
+        return implode(',', $paths);
+    }
+
+    /**
+     * Export views as PNG files. Supports both PNG data URLs (direct save)
+     * and SVG data (convert via rsvg/Imagick).
+     */
     private function export_png(array $views, array $template, string $dir, string $file_name): string {
-        $exporter = new PngExporter();
-
-        // Export each view as a separate PNG
         $paths = [];
         foreach ($views as $i => $view) {
-            $canvas_json = $view['canvas_json'] ?? [];
-            $dimensions  = $this->get_view_dimensions($view, $template);
-            $suffix      = count($views) > 1 ? '-view-' . ($i + 1) : '';
-            $file_path   = $dir . $file_name . $suffix . '.png';
+            $raw = $view['export_svg'] ?? '';
+            if (empty($raw)) {
+                continue;
+            }
 
-            if (!$exporter->export($canvas_json, $dimensions['width'], $dimensions['height'], $file_path)) {
-                throw new \RuntimeException('PNG export failed for view ' . ($i + 1));
+            $export = $this->decode_export_data($raw);
+            if (!$export) {
+                continue;
+            }
+
+            $suffix    = count($views) > 1 ? '-view-' . ($i + 1) : '';
+            $file_path = $dir . $file_name . $suffix . '.png';
+
+            if ($export['type'] === 'png') {
+                // Browser-rendered PNG: save directly
+                if (file_put_contents($file_path, $export['data']) === false) {
+                    throw new \RuntimeException('PNG export failed for view ' . ($i + 1));
+                }
+            } else {
+                // SVG data: convert via rsvg/Imagick
+                $dimensions = $this->get_view_dimensions($view, $template);
+                if (!$this->svg_to_png($export['data'], $dimensions['width'], $dimensions['height'], $file_path)) {
+                    throw new \RuntimeException('PNG export failed for view ' . ($i + 1));
+                }
             }
 
             $paths[] = $file_path;
         }
 
-        // Return the first path (or a comma-separated list for multi-view)
-        return $paths[0];
+        if (empty($paths)) {
+            throw new \RuntimeException('No views with export data');
+        }
+
+        return implode(',', $paths);
     }
 
-    private function export_svg(array $views, array $template, string $dir, string $file_name): string {
-        $exporter = new SvgExporter();
+    /**
+     * Export views as a multi-page PDF. Uses browser-rendered PNG when available,
+     * falls back to SVG→PNG conversion for legacy data.
+     */
+    private function export_pdf(array $views, array $template, string $dir, string $file_name): string {
+        $file_path = $dir . $file_name . '.pdf';
+        $temp_pngs = [];
 
-        $paths = [];
-        foreach ($views as $i => $view) {
-            $canvas_json = $view['canvas_json'] ?? [];
-            $dimensions  = $this->get_view_dimensions($view, $template);
-            $suffix      = count($views) > 1 ? '-view-' . ($i + 1) : '';
-            $file_path   = $dir . $file_name . $suffix . '.svg';
+        try {
+            $pdf = new \TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+            $pdf->SetCreator('ProductForge');
+            $pdf->SetAuthor('ProductForge for WooCommerce');
+            $pdf->SetTitle('Design Export');
+            $pdf->setPrintHeader(false);
+            $pdf->setPrintFooter(false);
+            $pdf->SetAutoPageBreak(false, 0);
+            $pdf->SetMargins(0, 0, 0);
+            $pdf->setCellPaddings(0, 0, 0, 0);
 
-            if (!$exporter->export($canvas_json, $dimensions['width'], $dimensions['height'], $file_path)) {
-                throw new \RuntimeException('SVG export failed for view ' . ($i + 1));
+            foreach ($views as $view) {
+                $raw = $view['export_svg'] ?? '';
+                if (empty($raw)) {
+                    continue;
+                }
+
+                $export = $this->decode_export_data($raw);
+                if (!$export) {
+                    continue;
+                }
+
+                $dimensions = $this->get_view_dimensions($view, $template);
+                $w_px = $dimensions['width'];
+                $h_px = $dimensions['height'];
+
+                // Convert pixels to mm for TCPDF (1px at 96dpi = 25.4/96 mm)
+                $px_to_mm = 25.4 / 96;
+                $w_mm = $w_px * $px_to_mm;
+                $h_mm = $h_px * $px_to_mm;
+
+                // Set orientation based on canvas aspect ratio
+                $orientation = ($w_mm >= $h_mm) ? 'L' : 'P';
+                $pdf->AddPage($orientation, [$w_mm, $h_mm]);
+
+                $temp_png = tempnam(sys_get_temp_dir(), 'pf-pdf-');
+
+                if ($export['type'] === 'png') {
+                    // Browser-rendered PNG: write directly to temp file
+                    file_put_contents($temp_png, $export['data']);
+                    $temp_pngs[] = $temp_png;
+                    $pdf->Image($temp_png, 0, 0, $w_mm, $h_mm, 'PNG');
+                } else {
+                    // SVG: convert to PNG first
+                    if ($this->svg_to_png($export['data'], $w_px, $h_px, $temp_png, 300)) {
+                        $temp_pngs[] = $temp_png;
+                        $pdf->Image($temp_png, 0, 0, $w_mm, $h_mm, 'PNG');
+                    }
+                }
             }
 
-            $paths[] = $file_path;
+            $pdf->Output($file_path, 'F');
+
+            foreach ($temp_pngs as $tmp) {
+                @unlink($tmp);
+            }
+
+            if (!file_exists($file_path)) {
+                throw new \RuntimeException('PDF export failed');
+            }
+
+            return $file_path;
+        } catch (\Exception $e) {
+            foreach ($temp_pngs as $tmp) {
+                @unlink($tmp);
+            }
+            throw $e;
+        }
+    }
+
+    /**
+     * Convert SVG string to PNG file.
+     *
+     * Tries in order: rsvg-convert (best quality), Imagick with SVG support.
+     */
+    private function svg_to_png(string $svg, int $width, int $height, string $file_path, int $dpi = 300): bool {
+        $dir = dirname($file_path);
+        if (!wp_mkdir_p($dir)) {
+            return false;
         }
 
-        return $paths[0];
+        // Write SVG to temp file (both methods need it on disk)
+        $tmp_svg = tempnam(sys_get_temp_dir(), 'pf-svg-');
+        file_put_contents($tmp_svg, $svg);
+
+        // Try rsvg-convert first (best quality, handles CSS/fonts well)
+        $rsvg = $this->svg_to_png_rsvg($tmp_svg, $width, $height, $file_path, $dpi);
+        if ($rsvg) {
+            @unlink($tmp_svg);
+            return true;
+        }
+
+        // Try Imagick with SVG support
+        if (extension_loaded('imagick')) {
+            $result = $this->svg_to_png_imagick($svg, $width, $height, $file_path, $dpi);
+            @unlink($tmp_svg);
+            return $result;
+        }
+
+        @unlink($tmp_svg);
+        return false;
+    }
+
+    /**
+     * Convert SVG to PNG using rsvg-convert command-line tool.
+     * All arguments are integers or escaped paths — no user input reaches the shell.
+     *
+     * Fabric.js toSVG() outputs pixel coordinates at 96 DPI (browser default).
+     * We scale output dimensions for high-res but keep DPI at 96 so coordinates
+     * are interpreted correctly.
+     */
+    private function svg_to_png_rsvg(string $svg_path, int $width, int $height, string $file_path, int $dpi): bool {
+        $rsvg_bin = '/usr/bin/rsvg-convert';
+        if (!file_exists($rsvg_bin)) {
+            return false;
+        }
+
+        // Scale output pixel dimensions for high-res, but don't change DPI
+        // interpretation (Fabric.js SVGs use pixel units at 96 DPI)
+        $scale = $dpi / 96;
+        $render_width  = (int) round($width * $scale);
+        $render_height = (int) round($height * $scale);
+
+        $args = [
+            escapeshellarg($rsvg_bin),
+            '--width=' . $render_width,
+            '--height=' . $render_height,
+            '--output=' . escapeshellarg($file_path),
+            escapeshellarg($svg_path),
+        ];
+
+        // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_exec -- controlled binary with escaped args
+        exec(implode(' ', $args) . ' 2>&1', $output, $return_code);
+        return $return_code === 0 && file_exists($file_path);
+    }
+
+    private function svg_to_png_imagick(string $svg, int $width, int $height, string $file_path, int $dpi): bool {
+        try {
+            $formats = \Imagick::queryFormats('SVG');
+            if (empty($formats)) {
+                return false;
+            }
+
+            $imagick = new \Imagick();
+            $imagick->setResolution($dpi, $dpi);
+            $scale = $dpi / 72;
+            $render_width  = (int) round($width * $scale);
+            $render_height = (int) round($height * $scale);
+            $imagick->readImageBlob($svg);
+            $imagick->setImageFormat('png');
+            $imagick->resizeImage($render_width, $render_height, \Imagick::FILTER_LANCZOS, 1);
+            $result = $imagick->writeImage($file_path);
+            $imagick->destroy();
+            return $result;
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     /**
@@ -221,7 +466,6 @@ class ExportManager {
     private function get_view_dimensions(array $design_view, array $template): array {
         $view_id = (int) ($design_view['view_id'] ?? 0);
 
-        // Look up template view for dimensions
         $template_views = $template['views'] ?? [];
         foreach ($template_views as $tv) {
             if ((int) ($tv['id'] ?? 0) === $view_id) {
@@ -232,7 +476,6 @@ class ExportManager {
             }
         }
 
-        // Fallback: try canvas_json dimensions or defaults
         $canvas = $design_view['canvas_json'] ?? [];
         return [
             'width'  => (int) ($canvas['width'] ?? 800),

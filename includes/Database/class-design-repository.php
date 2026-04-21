@@ -119,7 +119,7 @@ class DesignRepository {
         }, $rows ?: []);
     }
 
-    public function upsert_view(int $design_id, int $view_id, array $canvas_json, string $thumbnail = ''): bool {
+    public function upsert_view(int $design_id, int $view_id, array $canvas_json, string $thumbnail = '', string $export_svg = ''): bool {
         global $wpdb;
         $existing = $wpdb->get_var(
             $wpdb->prepare(
@@ -137,6 +137,10 @@ class DesignRepository {
                 $data['thumbnail'] = $thumbnail;
                 $format[]          = '%s';
             }
+            if (!empty($export_svg)) {
+                $data['export_svg'] = $export_svg;
+                $format[]           = '%s';
+            }
             return (bool) $wpdb->update(
                 $this->views_table,
                 $data,
@@ -151,7 +155,8 @@ class DesignRepository {
             'view_id'     => $view_id,
             'canvas_json' => $json_str,
             'thumbnail'   => $thumbnail,
-        ], ['%d', '%d', '%s', '%s']);
+            'export_svg'  => $export_svg,
+        ], ['%d', '%d', '%s', '%s', '%s']);
         return (bool) $wpdb->insert_id;
     }
 }

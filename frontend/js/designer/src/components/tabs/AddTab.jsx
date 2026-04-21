@@ -80,6 +80,19 @@ export default function AddTab() {
             ⌒ {__('Curved', 'productforge')}
           </button>
         )}
+
+        {isTypeAllowed('text') && (
+          <button
+            type="button"
+            className={`pf-add-tools__btn${activeTool === 'add-engraving-text' ? ' pf-add-tools__btn--active' : ''}`}
+            onClick={() => handleToolClick('add-engraving-text')}
+            aria-label={__('Add engraving text element', 'productforge')}
+            title={__('Add engraving text (single-line font)', 'productforge')}
+            style={{ color: activeTool === 'add-engraving-text' ? '#2271b1' : '#333' }}
+          >
+            ✦ {__('Engrave', 'productforge')}
+          </button>
+        )}
       </div>
 
       {globalConfig.design_templates_enabled && (

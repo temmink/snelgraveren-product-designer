@@ -228,7 +228,7 @@ class Frontend {
                 'product_id'      => $product_id,
                 'display_mode'    => $this->has_shortcode_in_content() ? 'embedded' : (get_post_meta($product_id, '_pf_display_mode', true) ?: 'embedded'),
                 'nonce'           => wp_create_nonce('wp_rest'),
-                'api_base'        => rest_url('pf/v1'),
+                'rest_url'        => rest_url('pf/v1'),
                 'currency_symbol' => function_exists('get_woocommerce_currency_symbol')
                     ? get_woocommerce_currency_symbol()
                     : '€',

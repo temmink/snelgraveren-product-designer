@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useCallback } from 'react';
 import { __ } from '@wordpress/i18n';
 import { Canvas as FabricCanvas, Rect, Textbox, IText, FabricImage, Path as FabricPath, PencilBrush, loadSVGFromString, util, cache as fabricCache } from 'fabric';
 import { archUpPath } from '../utils/curvePresets';
+import { renderHersheyText, ENGRAVING_FONTS } from '../utils/hersheyFonts';
 import useDesignerStore from '../store/useDesignerStore';
 import { uploadFile } from '../api/designerApi';
 import useCanvasScale from '../hooks/useCanvasScale';
@@ -328,8 +329,9 @@ export default function DesignerCanvas() {
               useDesignerStore.getState().setSolidFillColor(solidColor);
             }
             const zoneFill = (isSolid && solidColor) || zone.svg_fill_color || (isMobileRef.current ? 'rgba(0, 0, 0, 0.06)' : 'rgba(0, 0, 0, 0.03)');
-            const zoneStroke = isMobileRef.current ? '#aaaaaa' : '#cccccc';
-            const zoneStrokeWidth = isMobileRef.current ? 2 : 1;
+            const hasFill = !!(isSolid && solidColor) || !!zone.svg_fill_color;
+            const zoneStroke = hasFill ? 'transparent' : (isMobileRef.current ? '#aaaaaa' : '#cccccc');
+            const zoneStrokeWidth = hasFill ? 0 : (isMobileRef.current ? 2 : 1);
             if (group.getObjects) {
               group.getObjects().forEach((c) => c.set({ fill: zoneFill, stroke: zoneStroke, strokeWidth: zoneStrokeWidth, strokeUniform: true }));
             }
@@ -732,6 +734,59 @@ export default function DesignerCanvas() {
       canvas.defaultCursor = 'default';
     };
   }, [activeTool, currentViewIndex, zones, findZoneForPoint, applyPermissions, applyZoneClip, clampToZone, snapshotView, setActiveTool]);
+
+  // ── Tool: add-engraving-text on canvas click ────────────────────────────────
+  useEffect(() => {
+    const canvas = fabricRef.current;
+    if (!canvas || activeTool !== 'add-engraving-text') return;
+    canvas.defaultCursor = 'crosshair';
+
+    const onClick = (opt) => {
+      const ptr = canvas.getPointer(opt.e);
+      const zoneIdx = findZoneForPoint(ptr.x, ptr.y, 'text');
+
+      const defaultText = __('Your text', 'productforge');
+      const fontId = 'hershey-simplex';
+      const fontSize = 24;
+      const { d, width, height } = renderHersheyText(defaultText, fontId, { fontSize });
+
+      if (!d) return; // nothing to render
+
+      const path = new FabricPath(d, {
+        left: ptr.x,
+        top: ptr.y,
+        fill: '',
+        stroke: '#000000',
+        strokeWidth: 1.5,
+        strokeLineCap: 'round',
+        strokeLineJoin: 'round',
+        selectable: true,
+        data: {
+          elementType: 'engraving-text',
+          engravingText: defaultText,
+          engravingFontId: fontId,
+          engravingFontSize: fontSize,
+          zoneIndex: zoneIdx,
+        },
+      });
+
+      applyPermissions(path, 'text');
+      if (zoneIdx >= 0) applyZoneClip(path, zoneIdx);
+      canvas.add(path);
+      canvas.setActiveObject(path);
+      if (zoneIdx >= 0) clampToZone(path);
+      pushHistoryRef.current?.();
+      canvas.renderAll();
+      snapshotView(currentViewIndex, canvas.toJSON(['data']));
+      setActiveTool('select');
+    };
+
+    canvas.on('mouse:down', onClick);
+    return () => {
+      canvas.off('mouse:down', onClick);
+      canvas.defaultCursor = 'default';
+    };
+  }, [activeTool, currentViewIndex, findZoneForPoint, applyPermissions, applyZoneClip, clampToZone, snapshotView, setActiveTool]);
 
   // ── Tool: add-image / add-svg via file input ──────────────────────────────
 

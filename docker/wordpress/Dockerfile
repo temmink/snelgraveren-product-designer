@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     unzip \
     git \
     mariadb-client \
+    librsvg2-bin \
     && docker-php-ext-install zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
