@@ -1,8 +1,10 @@
 # ProductForge — Current Status
 
-**Last updated:** 2026-03-22
+**Last updated:** 2026-04-22
 **Plugin version:** 1.0.0
 **Docker environment:** Running (WordPress 6.7, WooCommerce 10.6.1, MariaDB 11)
+
+> **Since 2026-03-22:** Freemius premium gating, Clipart Manager admin, Design Templates admin, redesigned Add Layer panel with clipart picker, engraving text (Hershey single-line fonts), pre-rendered browser export pipeline with multi-view ZIP downloads, migration 700 (`export_svg` column), clipart upload rate-limit, history restore-rejection guard, and input sanitization + size-cap for export blobs.
 
 ---
 

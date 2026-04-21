@@ -117,6 +117,16 @@ If your file does not meet the requirements, an error message will explain what 
 2. Select an `.svg` file from your device.
 3. The SVG is uploaded, sanitized for security, and placed on the canvas.
 
+### Adding Engraving Text
+
+Some products (laser-engraved tags, CNC-milled signs, acrylic plaques) require **single-line text** — strokes rather than filled letter shapes — so the engraving machine can follow the letter paths in one pass.
+
+1. Click the **Engrave** button on the Add tab.
+2. Click anywhere in a text-allowed zone.
+3. A single-line "Your text" appears — select it and use the Element tab to change the text, font, size, and stroke color.
+
+The available engraving fonts are different from regular text fonts because each glyph is stored as a single stroke path (Hershey-style). The result is identical on screen and on the machine, with no need to outline the text.
+
 ---
 
 ## Editing Elements
