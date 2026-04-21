@@ -18,18 +18,51 @@ class RestDesigns {
     }
 
     /**
-     * Strip internal sequential IDs from design data before sending to non-admin users.
-     * CLAUDE.md rule 4: "Never expose sequential IDs — designs use CSPRNG hashes".
+     * Strip internal sequential IDs and heavy export payloads before sending
+     * design data back to non-admin users. Also keeps autosave responses lean —
+     * the export_svg column can be several MB per view.
      */
     private function sanitize_for_customer(array $design): array {
         unset($design['id'], $design['template_id'], $design['customer_id'], $design['session_id']);
         if (!empty($design['views'])) {
             $design['views'] = array_map(function ($view) {
-                unset($view['id'], $view['design_id']);
+                unset($view['id'], $view['design_id'], $view['export_svg']);
                 return $view;
             }, $design['views']);
         }
         return $design;
+    }
+
+    /**
+     * Sanitize a client-submitted export blob. Accepts either a PNG data URL
+     * (passed through as-is after base64 validation) or SVG markup (run through
+     * enshrined/svg-sanitize to strip scripts, event handlers, external refs).
+     * Returns '' if the payload is malformed or too large.
+     */
+    private function sanitize_export_blob(string $blob): string {
+        $trimmed = trim($blob);
+        if ($trimmed === '') return '';
+
+        // Cap at ~10 MB to prevent memory exhaustion during PDF/PNG render.
+        // Multiplier:3 PNGs on large canvases can exceed the thumbnail cap.
+        if (strlen($trimmed) > 10 * 1024 * 1024) return '';
+
+        if (str_starts_with($trimmed, 'data:image/png;base64,')) {
+            $b64 = substr($trimmed, strlen('data:image/png;base64,'));
+            $decoded = base64_decode($b64, true);
+            if ($decoded === false || strlen($decoded) < 8 || substr($decoded, 0, 8) !== "\x89PNG\r\n\x1a\n") {
+                return '';
+            }
+            return $trimmed;
+        }
+
+        if (str_starts_with($trimmed, '<') && class_exists(\enshrined\svgSanitize\Sanitizer::class)) {
+            $sanitizer = new \enshrined\svgSanitize\Sanitizer();
+            $clean = $sanitizer->sanitize($trimmed);
+            return $clean === false ? '' : $clean;
+        }
+
+        return '';
     }
 
     /**
@@ -152,15 +185,9 @@ class RestDesigns {
             $thumb_url = $this->save_thumbnail_file($request['hash'], $view_id, $thumb);
         }
 
-        // Validate export data — must be SVG markup or PNG data URL
-        if (!empty($export_svg)) {
-            $trimmed = trim($export_svg);
-            $is_svg = str_starts_with($trimmed, '<');
-            $is_png = str_starts_with($trimmed, 'data:image/png;base64,');
-            if (!$is_svg && !$is_png) {
-                $export_svg = '';
-            }
-        }
+        // Sanitize export blob — SVG markup goes through enshrined/svg-sanitize,
+        // PNG data URLs are validated for magic bytes. Anything else is dropped.
+        $export_svg = !empty($export_svg) ? $this->sanitize_export_blob($export_svg) : '';
 
         $this->repo->upsert_view((int) $design['id'], $view_id, $json, $thumb_url, $export_svg);
         $this->repo->invalidate_cache($request['hash']);

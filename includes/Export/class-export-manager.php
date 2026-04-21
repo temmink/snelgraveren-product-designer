@@ -80,12 +80,18 @@ class ExportManager {
 
         $design_id = (int) $design['id'];
 
-        // Remove previous exports of the same format for this design
+        // Remove previous exports of the same format for this design.
+        // Multi-view exports store paths as a comma-separated list, so split before unlinking.
         $existing = $this->exports->get_by_design($design_id);
         foreach ($existing as $old) {
             if ($old['format'] === $format) {
-                if (!empty($old['file_path']) && file_exists($old['file_path'])) {
-                    @unlink($old['file_path']);
+                if (!empty($old['file_path'])) {
+                    foreach (explode(',', $old['file_path']) as $old_path) {
+                        $old_path = trim($old_path);
+                        if ($old_path !== '' && file_exists($old_path)) {
+                            @unlink($old_path);
+                        }
+                    }
                 }
                 $this->exports->delete((int) $old['id']);
             }

@@ -23,16 +23,19 @@ export default function useCanvasHistory(fabricCanvasRef, currentViewIndex) {
     const canvas = fabricCanvasRef.current;
     if (!canvas || !snapshot) return;
     isRestoring.current = true;
-    canvas.loadFromJSON(filterFabricJson(snapshot)).then(() => {
-      canvas.getObjects().forEach((obj) => {
-        if (obj.data?.isZone || obj.data?.isZoneOverlay || obj.data?.isBackground) {
-          obj.set({ selectable: false, evented: false });
-        }
+    canvas.loadFromJSON(filterFabricJson(snapshot))
+      .then(() => {
+        canvas.getObjects().forEach((obj) => {
+          if (obj.data?.isZone || obj.data?.isZoneOverlay || obj.data?.isBackground) {
+            obj.set({ selectable: false, evented: false });
+          }
+        });
+        canvas.renderAll();
+        useDesignerStore.getState().snapshotView(currentViewIndex, canvas.toJSON(['data']));
+      })
+      .finally(() => {
+        isRestoring.current = false;
       });
-      canvas.renderAll();
-      useDesignerStore.getState().snapshotView(currentViewIndex, canvas.toJSON(['data']));
-      isRestoring.current = false;
-    });
   }, [fabricCanvasRef, currentViewIndex]);
 
   const undo = useCallback(() => {
