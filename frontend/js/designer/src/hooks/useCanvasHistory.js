@@ -4,13 +4,16 @@ import { filterFabricJson } from '../utils/fabricJson';
 
 export default function useCanvasHistory(fabricCanvasRef, currentViewIndex) {
   const debounceTimer = useRef(null);
+  const isRestoring = useRef(false);
 
   const pushHistory = useCallback(() => {
+    if (isRestoring.current) return;
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
 
     clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(() => {
+      if (isRestoring.current) return;
       const json = canvas.toJSON(['data']);
       useDesignerStore.getState().pushHistory(currentViewIndex, json);
     }, 300);
@@ -19,6 +22,7 @@ export default function useCanvasHistory(fabricCanvasRef, currentViewIndex) {
   const applySnapshot = useCallback((snapshot) => {
     const canvas = fabricCanvasRef.current;
     if (!canvas || !snapshot) return;
+    isRestoring.current = true;
     canvas.loadFromJSON(filterFabricJson(snapshot)).then(() => {
       canvas.getObjects().forEach((obj) => {
         if (obj.data?.isZone || obj.data?.isZoneOverlay || obj.data?.isBackground) {
@@ -27,6 +31,7 @@ export default function useCanvasHistory(fabricCanvasRef, currentViewIndex) {
       });
       canvas.renderAll();
       useDesignerStore.getState().snapshotView(currentViewIndex, canvas.toJSON(['data']));
+      isRestoring.current = false;
     });
   }, [fabricCanvasRef, currentViewIndex]);
 

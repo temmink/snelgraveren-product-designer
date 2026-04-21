@@ -6,13 +6,24 @@ defined('ABSPATH') || exit;
 class ClipartValidator {
 
     private const MAX_FILE_SIZE = 512 * 1024; // 512 KB
+    private const RATE_LIMIT    = 20;          // per minute (admin-only, higher than customer limit)
 
     public static function validate_and_store(array $file): array {
+        self::check_rate_limit();
         self::check_size($file);
         self::check_mime($file['tmp_name']);
         self::sanitize_svg($file['tmp_name']);
 
         return self::move_file($file);
+    }
+
+    private static function check_rate_limit(): void {
+        $key   = 'pf_clipart_upload_' . get_current_user_id();
+        $count = (int) get_transient($key);
+        if ($count >= self::RATE_LIMIT) {
+            throw new \RuntimeException('Upload rate limit exceeded. Please wait a minute.', 429);
+        }
+        set_transient($key, $count + 1, MINUTE_IN_SECONDS);
     }
 
     private static function check_size(array $file): void {

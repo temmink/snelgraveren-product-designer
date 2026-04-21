@@ -33,7 +33,7 @@ if (file_exists(PF_PLUGIN_DIR . 'vendor/autoload.php')) {
 }
 
 // Freemius SDK (non-namespaced file so pf_fs() is global)
-if (file_exists(PF_PLUGIN_DIR . 'freemius/start.php')) {
+if (file_exists(PF_PLUGIN_DIR . 'freemius-init.php')) {
     require_once PF_PLUGIN_DIR . 'freemius-init.php';
 }
 
