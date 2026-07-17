@@ -82,6 +82,7 @@ class DesignTemplateRepository {
         global $wpdb;
         $tt = self::templates_table();
 
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $tt is a trusted constant ($wpdb->prefix . 'pf_design_templates'), not user input; $id goes through $wpdb->prepare()
         $row = $wpdb->get_row(
             $wpdb->prepare(
                 "SELECT id, name, category, thumbnail_url, template_id, status, created_at, updated_at
@@ -107,6 +108,7 @@ class DesignTemplateRepository {
         global $wpdb;
         $vt = self::views_table();
 
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $vt is a trusted constant ($wpdb->prefix . 'pf_design_template_views'), not user input; $design_template_id goes through $wpdb->prepare()
         $rows = $wpdb->get_results(
             $wpdb->prepare(
                 "SELECT id, design_template_id, view_index, canvas_json

@@ -193,6 +193,7 @@ class StarterTemplates {
         if (!file_exists($source)) {
             return new \WP_Error(
                 'pf_starter_asset_missing',
+                /* translators: %s: asset filename */
                 sprintf(__('Starter asset "%s" not found.', 'productforge'), $filename),
                 ['status' => 500]
             );

@@ -172,51 +172,45 @@ class Admin {
         $importing_label = esc_js(__('Importing…', 'productforge'));
         $generic_error    = esc_js(__('Could not import this template. Please try again.', 'productforge'));
 
-        $script = <<<JS
-(function() {
-    document.addEventListener('click', function(event) {
-        var button = event.target.closest('.pf-starter-import');
-        if (!button) {
-            return;
-        }
-
-        var config = window.pfTemplateBuilder;
-        if (!config || !config.restUrl) {
-            return;
-        }
-
-        var starterId = button.getAttribute('data-starter-id');
-        if (!starterId) {
-            return;
-        }
-
-        var originalLabel = button.textContent;
-        button.disabled = true;
-        button.textContent = "{$importing_label}";
-
-        fetch(config.restUrl + 'pf/v1/starter-templates/' + encodeURIComponent(starterId) + '/import', {
-            method: 'POST',
-            headers: { 'X-WP-Nonce': config.nonce }
-        })
-        .then(function(response) {
-            return response.json().then(function(data) {
-                return { ok: response.ok, data: data };
-            });
-        })
-        .then(function(result) {
-            if (!result.ok) {
-                throw new Error((result.data && result.data.message) || "{$generic_error}");
-            }
-            window.location.reload();
-        })
-        .catch(function(error) {
-            alert(error.message || "{$generic_error}");
-            button.disabled = false;
-            button.textContent = originalLabel;
-        });
-    });
-})();
-JS;
+        $script = "(function() {"
+            . "document.addEventListener('click', function(event) {"
+            . "var button = event.target.closest('.pf-starter-import');"
+            . "if (!button) {"
+            . "return;"
+            . "}"
+            . "var config = window.pfTemplateBuilder;"
+            . "if (!config || !config.restUrl) {"
+            . "return;"
+            . "}"
+            . "var starterId = button.getAttribute('data-starter-id');"
+            . "if (!starterId) {"
+            . "return;"
+            . "}"
+            . "var originalLabel = button.textContent;"
+            . "button.disabled = true;"
+            . 'button.textContent = "' . $importing_label . '";'
+            . "fetch(config.restUrl + 'pf/v1/starter-templates/' + encodeURIComponent(starterId) + '/import', {"
+            . "method: 'POST',"
+            . "headers: { 'X-WP-Nonce': config.nonce }"
+            . "})"
+            . ".then(function(response) {"
+            . "return response.json().then(function(data) {"
+            . "return { ok: response.ok, data: data };"
+            . "});"
+            . "})"
+            . ".then(function(result) {"
+            . "if (!result.ok) {"
+            . 'throw new Error((result.data && result.data.message) || "' . $generic_error . '");'
+            . "}"
+            . "window.location.reload();"
+            . "})"
+            . ".catch(function(error) {"
+            . 'alert(error.message || "' . $generic_error . '");'
+            . "button.disabled = false;"
+            . "button.textContent = originalLabel;"
+            . "});"
+            . "});"
+            . "})();";
 
         wp_add_inline_script('pf-template-builder', $script, 'after');
     }
@@ -345,15 +339,13 @@ JS;
             return;
         }
 
-        $script = <<<JS
-(function(domain, translations) {
-    var localeData = translations.locale_data.messages || translations.locale_data[domain];
-    if (localeData) {
-        localeData[""].domain = domain;
-        wp.i18n.setLocaleData(localeData, domain);
-    }
-})("{$domain}", {$json});
-JS;
+        $script = '(function(domain, translations) {'
+            . 'var localeData = translations.locale_data.messages || translations.locale_data[domain];'
+            . 'if (localeData) {'
+            . 'localeData[""].domain = domain;'
+            . 'wp.i18n.setLocaleData(localeData, domain);'
+            . '}'
+            . '})("' . $domain . '", ' . $json . ');';
 
         wp_add_inline_script($handle, $script, 'before');
     }

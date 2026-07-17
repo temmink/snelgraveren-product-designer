@@ -29,7 +29,8 @@ class TemplateListTable extends \WP_List_Table {
     }
 
     private function get_current_status(): string {
-        return sanitize_text_field($_GET['pf_status'] ?? '');
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list filter
+        return isset($_GET['pf_status']) ? sanitize_text_field(wp_unslash($_GET['pf_status'])) : '';
     }
 
     public function get_columns(): array {
@@ -93,7 +94,8 @@ class TemplateListTable extends \WP_List_Table {
      * Handle single-row actions (GET links from row_actions).
      */
     private function process_row_action(): void {
-        $action = sanitize_text_field($_GET['action'] ?? '');
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce verified per-action below via check_admin_referer()
+        $action = isset($_GET['action']) ? sanitize_text_field(wp_unslash($_GET['action'])) : '';
         $id     = (int) ($_GET['template'] ?? 0);
         if (!$action || !$id) return;
 
@@ -125,7 +127,7 @@ class TemplateListTable extends \WP_List_Table {
 
         check_admin_referer('bulk-templates');
 
-        $ids = array_map('intval', (array) $_POST['template']);
+        $ids = array_map('intval', (array) wp_unslash($_POST['template']));
 
         foreach ($ids as $id) {
             if ($action === 'trash') {
@@ -236,6 +238,7 @@ class TemplateListTable extends \WP_List_Table {
             $class   = $current === $status ? ' class="current"' : '';
             $links[] = '<li><a href="' . esc_url($url) . '"' . $class . '>' . esc_html($label) . '</a>';
         }
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- each $links entry is built above from esc_url()/esc_html() output plus a static class attribute
         echo implode(' | ', $links);
         echo '</ul>';
     }

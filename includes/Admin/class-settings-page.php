@@ -177,7 +177,10 @@ class SettingsPage {
                     <?php foreach ($stats['top_products'] as $i => $row) :
                         $product = wc_get_product((int) $row['product_id']);
                         if (!$product) { continue; } ?>
-                    <tr><td><?php echo esc_html(sprintf(__('Top product #%d', 'productforge'), $i + 1)); ?></td>
+                    <tr><td><?php
+                        /* translators: %d: product rank */
+                        echo esc_html(sprintf(__('Top product #%d', 'productforge'), $i + 1));
+                    ?></td>
                         <td><?php echo esc_html($product->get_name()); ?> (<?php echo esc_html($row['cnt']); ?>)</td></tr>
                     <?php endforeach; ?>
                 </tbody>

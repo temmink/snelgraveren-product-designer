@@ -79,7 +79,7 @@ class ProductIntegration {
         $template_id = isset($_POST['_pf_template_id']) ? absint($_POST['_pf_template_id']) : 0;
         update_post_meta($product_id, '_pf_template_id', $template_id);
 
-        $display_mode = isset($_POST['_pf_display_mode']) ? sanitize_text_field($_POST['_pf_display_mode']) : 'embedded';
+        $display_mode = isset($_POST['_pf_display_mode']) ? sanitize_text_field(wp_unslash($_POST['_pf_display_mode'])) : 'embedded';
         if (!in_array($display_mode, ['embedded', 'modal'], true)) {
             $display_mode = 'embedded';
         }
