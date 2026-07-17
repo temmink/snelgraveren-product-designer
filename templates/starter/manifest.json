@@ -1,0 +1,571 @@
+[
+  {
+    "id": "engrave-dog-tag-bone",
+    "title": "Dog Tag — Bone",
+    "description": "Bone-shaped engraving tag with a vector-only text zone.",
+    "set": "engrave",
+    "global_config": {
+      "vector_only": true,
+      "customization_required": true,
+      "fonts_enabled": true,
+      "colors_enabled": false,
+      "pricing_mode": "per_element",
+      "allowed_image_types": ["svg"],
+      "max_elements_per_view": 20
+    },
+    "views": [
+      {
+        "name": "Front",
+        "canvas_width": 800,
+        "canvas_height": 600,
+        "background_url": "asset:dog-tag-bone.svg",
+        "zones": [
+          {
+            "_key": "st-dtb-zone-0001",
+            "name": "Tag Shape",
+            "type": "safe_area",
+            "x": 0,
+            "y": 0,
+            "width": 800,
+            "height": 600,
+            "allowed_types": ["text", "svg"],
+            "behavior": "restrict",
+            "boundary_type": "svg",
+            "svg_url": "asset:dog-tag-bone.svg",
+            "svg_path_data": "",
+            "svg_scale": 1,
+            "svg_rotation": 0,
+            "svg_intrinsic_width": 800,
+            "svg_intrinsic_height": 600,
+            "svg_fill_color": "#c9c9c9",
+            "svg_fill_editable": true,
+            "locked": true,
+            "layers": [],
+            "sort_order": 0
+          }
+        ],
+        "layers": [],
+        "permissions": []
+      }
+    ]
+  },
+  {
+    "id": "engrave-dog-tag-round",
+    "title": "Dog Tag — Round",
+    "description": "Classic round pet tag with a hanging hole, ready for engraving.",
+    "set": "engrave",
+    "global_config": {
+      "vector_only": true,
+      "customization_required": true,
+      "fonts_enabled": true,
+      "colors_enabled": false,
+      "pricing_mode": "per_element",
+      "allowed_image_types": ["svg"],
+      "max_elements_per_view": 20
+    },
+    "views": [
+      {
+        "name": "Front",
+        "canvas_width": 700,
+        "canvas_height": 700,
+        "background_url": "asset:dog-tag-round.svg",
+        "zones": [
+          {
+            "_key": "st-dtr-zone-0001",
+            "name": "Tag Shape",
+            "type": "safe_area",
+            "x": 0,
+            "y": 0,
+            "width": 700,
+            "height": 700,
+            "allowed_types": ["text", "svg"],
+            "behavior": "restrict",
+            "boundary_type": "svg",
+            "svg_url": "asset:dog-tag-round.svg",
+            "svg_path_data": "",
+            "svg_scale": 1,
+            "svg_rotation": 0,
+            "svg_intrinsic_width": 700,
+            "svg_intrinsic_height": 700,
+            "svg_fill_color": "#c9c9c9",
+            "svg_fill_editable": true,
+            "locked": true,
+            "layers": [],
+            "sort_order": 0
+          }
+        ],
+        "layers": [],
+        "permissions": []
+      }
+    ]
+  },
+  {
+    "id": "engrave-name-plate-rect",
+    "title": "Name Plate — Rectangular",
+    "description": "Rounded rectangular engraving plate with mounting holes.",
+    "set": "engrave",
+    "global_config": {
+      "vector_only": true,
+      "customization_required": true,
+      "fonts_enabled": true,
+      "colors_enabled": false,
+      "pricing_mode": "per_element",
+      "allowed_image_types": ["svg"],
+      "max_elements_per_view": 20
+    },
+    "views": [
+      {
+        "name": "Front",
+        "canvas_width": 900,
+        "canvas_height": 300,
+        "background_url": "asset:name-plate-rect.svg",
+        "zones": [
+          {
+            "_key": "st-npr-zone-0001",
+            "name": "Plate Shape",
+            "type": "safe_area",
+            "x": 0,
+            "y": 0,
+            "width": 900,
+            "height": 300,
+            "allowed_types": ["text", "svg"],
+            "behavior": "restrict",
+            "boundary_type": "svg",
+            "svg_url": "asset:name-plate-rect.svg",
+            "svg_path_data": "",
+            "svg_scale": 1,
+            "svg_rotation": 0,
+            "svg_intrinsic_width": 900,
+            "svg_intrinsic_height": 300,
+            "svg_fill_color": "#c9c9c9",
+            "svg_fill_editable": true,
+            "locked": true,
+            "layers": [],
+            "sort_order": 0
+          }
+        ],
+        "layers": [],
+        "permissions": []
+      }
+    ]
+  },
+  {
+    "id": "engrave-keychain",
+    "title": "Keychain",
+    "description": "Rounded rectangular keychain fob with a hanging hole.",
+    "set": "engrave",
+    "global_config": {
+      "vector_only": true,
+      "customization_required": true,
+      "fonts_enabled": true,
+      "colors_enabled": false,
+      "pricing_mode": "per_element",
+      "allowed_image_types": ["svg"],
+      "max_elements_per_view": 20
+    },
+    "views": [
+      {
+        "name": "Front",
+        "canvas_width": 500,
+        "canvas_height": 800,
+        "background_url": "asset:keychain.svg",
+        "zones": [
+          {
+            "_key": "st-kc-zone-0001",
+            "name": "Keychain Shape",
+            "type": "safe_area",
+            "x": 0,
+            "y": 0,
+            "width": 500,
+            "height": 800,
+            "allowed_types": ["text", "svg"],
+            "behavior": "restrict",
+            "boundary_type": "svg",
+            "svg_url": "asset:keychain.svg",
+            "svg_path_data": "",
+            "svg_scale": 1,
+            "svg_rotation": 0,
+            "svg_intrinsic_width": 500,
+            "svg_intrinsic_height": 800,
+            "svg_fill_color": "#c9c9c9",
+            "svg_fill_editable": true,
+            "locked": true,
+            "layers": [],
+            "sort_order": 0
+          }
+        ],
+        "layers": [],
+        "permissions": []
+      }
+    ]
+  },
+  {
+    "id": "print-tshirt",
+    "title": "T-Shirt",
+    "description": "Unisex tee with front and back chest print areas.",
+    "set": "print",
+    "global_config": {
+      "vector_only": false,
+      "customization_required": true,
+      "fonts_enabled": true,
+      "colors_enabled": true,
+      "pricing_mode": "per_element",
+      "allowed_image_types": ["jpg", "png", "svg", "webp"],
+      "max_elements_per_view": 30
+    },
+    "views": [
+      {
+        "name": "Front",
+        "canvas_width": 800,
+        "canvas_height": 900,
+        "background_url": "asset:tshirt-front.svg",
+        "zones": [
+          {
+            "_key": "st-tsf-zone-0001",
+            "name": "Shirt Color",
+            "type": "safe_area",
+            "x": 0,
+            "y": 0,
+            "width": 800,
+            "height": 900,
+            "allowed_types": [],
+            "behavior": "restrict",
+            "boundary_type": "svg",
+            "svg_url": "asset:tshirt-front.svg",
+            "svg_path_data": "",
+            "svg_scale": 1,
+            "svg_rotation": 0,
+            "svg_intrinsic_width": 800,
+            "svg_intrinsic_height": 900,
+            "svg_fill_color": "#ffffff",
+            "svg_fill_editable": true,
+            "locked": true,
+            "layers": [],
+            "sort_order": 0
+          },
+          {
+            "_key": "st-tsf-zone-0002",
+            "name": "Chest Print",
+            "type": "safe_area",
+            "x": 280,
+            "y": 290,
+            "width": 240,
+            "height": 300,
+            "allowed_types": ["text", "image", "svg"],
+            "behavior": "restrict",
+            "boundary_type": "rect",
+            "svg_url": "",
+            "svg_path_data": "",
+            "svg_scale": 1,
+            "svg_rotation": 0,
+            "svg_fill_color": "",
+            "svg_fill_editable": false,
+            "locked": false,
+            "layers": [],
+            "sort_order": 1
+          }
+        ],
+        "layers": [],
+        "permissions": []
+      },
+      {
+        "name": "Back",
+        "canvas_width": 800,
+        "canvas_height": 900,
+        "background_url": "asset:tshirt-back.svg",
+        "zones": [
+          {
+            "_key": "st-tsb-zone-0001",
+            "name": "Shirt Color",
+            "type": "safe_area",
+            "x": 0,
+            "y": 0,
+            "width": 800,
+            "height": 900,
+            "allowed_types": [],
+            "behavior": "restrict",
+            "boundary_type": "svg",
+            "svg_url": "asset:tshirt-back.svg",
+            "svg_path_data": "",
+            "svg_scale": 1,
+            "svg_rotation": 0,
+            "svg_intrinsic_width": 800,
+            "svg_intrinsic_height": 900,
+            "svg_fill_color": "#ffffff",
+            "svg_fill_editable": true,
+            "locked": true,
+            "layers": [],
+            "sort_order": 0
+          },
+          {
+            "_key": "st-tsb-zone-0002",
+            "name": "Back Print",
+            "type": "safe_area",
+            "x": 280,
+            "y": 260,
+            "width": 240,
+            "height": 320,
+            "allowed_types": ["text", "image", "svg"],
+            "behavior": "restrict",
+            "boundary_type": "rect",
+            "svg_url": "",
+            "svg_path_data": "",
+            "svg_scale": 1,
+            "svg_rotation": 0,
+            "svg_fill_color": "",
+            "svg_fill_editable": false,
+            "locked": false,
+            "layers": [],
+            "sort_order": 1
+          }
+        ],
+        "layers": [],
+        "permissions": []
+      }
+    ]
+  },
+  {
+    "id": "print-mug-wrap",
+    "title": "Mug — Wrap",
+    "description": "Side view of a mug with a wide wrap-around print zone.",
+    "set": "print",
+    "global_config": {
+      "vector_only": false,
+      "customization_required": true,
+      "fonts_enabled": true,
+      "colors_enabled": true,
+      "pricing_mode": "per_element",
+      "allowed_image_types": ["jpg", "png", "svg", "webp"],
+      "max_elements_per_view": 30
+    },
+    "views": [
+      {
+        "name": "Wrap",
+        "canvas_width": 1000,
+        "canvas_height": 500,
+        "background_url": "asset:mug-wrap.svg",
+        "zones": [
+          {
+            "_key": "st-mw-zone-0001",
+            "name": "Wrap Area",
+            "type": "safe_area",
+            "x": 260,
+            "y": 100,
+            "width": 480,
+            "height": 300,
+            "allowed_types": ["text", "image", "svg"],
+            "behavior": "restrict",
+            "boundary_type": "rect",
+            "svg_url": "",
+            "svg_path_data": "",
+            "svg_scale": 1,
+            "svg_rotation": 0,
+            "svg_fill_color": "",
+            "svg_fill_editable": false,
+            "locked": false,
+            "layers": [],
+            "sort_order": 0
+          }
+        ],
+        "layers": [],
+        "permissions": []
+      }
+    ]
+  },
+  {
+    "id": "print-tote",
+    "title": "Tote Bag",
+    "description": "Clean tote bag with handles and a large front design area.",
+    "set": "print",
+    "global_config": {
+      "vector_only": false,
+      "customization_required": true,
+      "fonts_enabled": true,
+      "colors_enabled": true,
+      "pricing_mode": "per_element",
+      "allowed_image_types": ["jpg", "png", "svg", "webp"],
+      "max_elements_per_view": 30
+    },
+    "views": [
+      {
+        "name": "Front",
+        "canvas_width": 700,
+        "canvas_height": 850,
+        "background_url": "asset:tote.svg",
+        "zones": [
+          {
+            "_key": "st-tt-zone-0001",
+            "name": "Bag Design",
+            "type": "safe_area",
+            "x": 180,
+            "y": 340,
+            "width": 340,
+            "height": 380,
+            "allowed_types": ["text", "image", "svg"],
+            "behavior": "restrict",
+            "boundary_type": "rect",
+            "svg_url": "",
+            "svg_path_data": "",
+            "svg_scale": 1,
+            "svg_rotation": 0,
+            "svg_fill_color": "",
+            "svg_fill_editable": false,
+            "locked": false,
+            "layers": [],
+            "sort_order": 0
+          }
+        ],
+        "layers": [],
+        "permissions": []
+      }
+    ]
+  },
+  {
+    "id": "basic-round",
+    "title": "Basic — Round",
+    "description": "Simple round die-cut shape for stickers, badges, or ornaments.",
+    "set": "basic",
+    "global_config": {
+      "vector_only": false,
+      "customization_required": true,
+      "fonts_enabled": true,
+      "colors_enabled": true,
+      "pricing_mode": "per_element",
+      "allowed_image_types": ["jpg", "png", "svg", "webp"],
+      "max_elements_per_view": 20
+    },
+    "views": [
+      {
+        "name": "Front",
+        "canvas_width": 700,
+        "canvas_height": 700,
+        "background_url": "",
+        "zones": [
+          {
+            "_key": "st-br-zone-0001",
+            "name": "Boundary",
+            "type": "safe_area",
+            "x": 0,
+            "y": 0,
+            "width": 700,
+            "height": 700,
+            "allowed_types": ["text", "image", "svg"],
+            "behavior": "clip",
+            "boundary_type": "svg",
+            "svg_url": "asset:round.svg",
+            "svg_path_data": "",
+            "svg_scale": 1,
+            "svg_rotation": 0,
+            "svg_intrinsic_width": 700,
+            "svg_intrinsic_height": 700,
+            "svg_fill_color": "",
+            "svg_fill_editable": false,
+            "locked": false,
+            "layers": [],
+            "sort_order": 0
+          }
+        ],
+        "layers": [],
+        "permissions": []
+      }
+    ]
+  },
+  {
+    "id": "basic-rectangle",
+    "title": "Basic — Rectangle",
+    "description": "Simple rectangular canvas for labels, cards, or stickers.",
+    "set": "basic",
+    "global_config": {
+      "vector_only": false,
+      "customization_required": true,
+      "fonts_enabled": true,
+      "colors_enabled": true,
+      "pricing_mode": "per_element",
+      "allowed_image_types": ["jpg", "png", "svg", "webp"],
+      "max_elements_per_view": 20
+    },
+    "views": [
+      {
+        "name": "Front",
+        "canvas_width": 800,
+        "canvas_height": 600,
+        "background_url": "",
+        "zones": [
+          {
+            "_key": "st-brc-zone-0001",
+            "name": "Print Area",
+            "type": "safe_area",
+            "x": 50,
+            "y": 50,
+            "width": 700,
+            "height": 500,
+            "allowed_types": ["text", "image", "svg"],
+            "behavior": "clip",
+            "boundary_type": "rect",
+            "svg_url": "",
+            "svg_path_data": "",
+            "svg_scale": 1,
+            "svg_rotation": 0,
+            "svg_fill_color": "",
+            "svg_fill_editable": false,
+            "locked": false,
+            "layers": [],
+            "sort_order": 0
+          }
+        ],
+        "layers": [],
+        "permissions": []
+      }
+    ]
+  },
+  {
+    "id": "basic-heart",
+    "title": "Basic — Heart",
+    "description": "Simple heart die-cut shape for stickers, tags, or ornaments.",
+    "set": "basic",
+    "global_config": {
+      "vector_only": false,
+      "customization_required": true,
+      "fonts_enabled": true,
+      "colors_enabled": true,
+      "pricing_mode": "per_element",
+      "allowed_image_types": ["jpg", "png", "svg", "webp"],
+      "max_elements_per_view": 20
+    },
+    "views": [
+      {
+        "name": "Front",
+        "canvas_width": 700,
+        "canvas_height": 650,
+        "background_url": "",
+        "zones": [
+          {
+            "_key": "st-bh-zone-0001",
+            "name": "Boundary",
+            "type": "safe_area",
+            "x": 0,
+            "y": 0,
+            "width": 700,
+            "height": 650,
+            "allowed_types": ["text", "image", "svg"],
+            "behavior": "clip",
+            "boundary_type": "svg",
+            "svg_url": "asset:heart.svg",
+            "svg_path_data": "",
+            "svg_scale": 1,
+            "svg_rotation": 0,
+            "svg_intrinsic_width": 700,
+            "svg_intrinsic_height": 650,
+            "svg_fill_color": "",
+            "svg_fill_editable": false,
+            "locked": false,
+            "layers": [],
+            "sort_order": 0
+          }
+        ],
+        "layers": [],
+        "permissions": []
+      }
+    ]
+  }
+]

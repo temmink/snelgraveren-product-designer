@@ -1,0 +1,6 @@
+<svg viewBox="0 0 700 700" xmlns="http://www.w3.org/2000/svg">
+  <path fill="#e5e7eb" stroke="#9ca3af" stroke-width="1.5" fill-rule="evenodd" d="
+    M 100,370 A 250,250 0 1 1 600,370 A 250,250 0 1 1 100,370 Z
+    M 325,170 A 25,25 0 1 0 375,170 A 25,25 0 1 0 325,170 Z
+  "/>
+</svg>
