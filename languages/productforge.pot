@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-07-17T09:33:40+00:00\n"
+"POT-Creation-Date: 2026-07-17T11:42:23+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: productforge\n"
@@ -34,54 +34,110 @@ msgstr ""
 msgid "Martin Temmink"
 msgstr ""
 
-#: includes/Admin/class-admin.php:26
-#: includes/Admin/class-admin.php:27
+#: includes/Admin/class-admin.php:30
+#: includes/Admin/class-admin.php:31
 #: includes/Admin/class-product-integration.php:18
 msgid "ProductForge"
 msgstr ""
 
-#: includes/Admin/class-admin.php:37
-#: includes/Admin/class-admin.php:38
+#: includes/Admin/class-admin.php:41
+#: includes/Admin/class-admin.php:42
 #: includes/Admin/views/template-list.php:9
 msgid "Templates"
 msgstr ""
 
-#: includes/Admin/class-admin.php:46
+#: includes/Admin/class-admin.php:50
 msgid "Template Builder"
 msgstr ""
 
-#: includes/Admin/class-admin.php:47
+#: includes/Admin/class-admin.php:51
 #: includes/Admin/views/template-list.php:11
 #: admin/js/design-templates/src/App.jsx:193
 msgid "Add New"
 msgstr ""
 
-#: includes/Admin/class-admin.php:55
-#: includes/Admin/class-admin.php:56
+#: includes/Admin/class-admin.php:59
+#: includes/Admin/class-admin.php:60
 #: includes/Admin/views/design-templates.php:3
 #: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:289
 #: frontend/js/designer/src/components/DesignTemplates.jsx:71
 msgid "Design Templates"
 msgstr ""
 
-#: includes/Admin/class-admin.php:64
-#: includes/Admin/class-admin.php:65
+#: includes/Admin/class-admin.php:68
+#: includes/Admin/class-admin.php:69
 #: includes/Admin/views/clipart.php:3
 #: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:281
 #: admin/js/template-builder/src/components/TreePanel.jsx:455
 msgid "Clipart"
 msgstr ""
 
-#: includes/Admin/class-admin.php:237
+#: includes/Admin/class-admin.php:243
 msgid "SVG sanitization library not available."
 msgstr ""
 
-#: includes/Admin/class-admin.php:243
+#: includes/Admin/class-admin.php:249
 msgid "Could not read SVG file."
 msgstr ""
 
-#: includes/Admin/class-admin.php:250
+#: includes/Admin/class-admin.php:256
 msgid "SVG file contains disallowed content and was rejected."
+msgstr ""
+
+#: includes/Admin/class-export-dashboard.php:28
+#: includes/Admin/class-export-dashboard.php:29
+msgid "Production"
+msgstr ""
+
+#: includes/Admin/class-export-dashboard.php:73
+#: includes/Admin/class-export-dashboard.php:139
+#: includes/Admin/class-settings-page.php:85
+msgid "You do not have permission to access this page."
+msgstr ""
+
+#: includes/Admin/class-export-dashboard.php:84
+msgid "Production — design exports"
+msgstr ""
+
+#: includes/Admin/class-export-dashboard.php:94
+msgid "Last"
+msgstr ""
+
+#: includes/Admin/class-export-dashboard.php:96
+msgid "days"
+msgstr ""
+
+#: includes/Admin/class-export-dashboard.php:98
+msgid "Filter"
+msgstr ""
+
+#: includes/Admin/class-export-dashboard.php:102
+msgid "No orders with designs found for this filter."
+msgstr ""
+
+#: includes/Admin/class-export-dashboard.php:110
+msgid "Order"
+msgstr ""
+
+#: includes/Admin/class-export-dashboard.php:111
+#: includes/Frontend/class-account-designs.php:59
+msgid "Product"
+msgstr ""
+
+#: includes/Admin/class-export-dashboard.php:112
+msgid "Notes"
+msgstr ""
+
+#: includes/Admin/class-export-dashboard.php:124
+msgid "contains raster images"
+msgstr ""
+
+#: includes/Admin/class-export-dashboard.php:130
+msgid "Download selection as ZIP"
+msgstr ""
+
+#: includes/Admin/class-export-dashboard.php:196
+msgid "No export files could be generated for the selection."
 msgstr ""
 
 #: includes/Admin/class-product-integration.php:42
@@ -118,65 +174,102 @@ msgstr ""
 msgid "Settings"
 msgstr ""
 
-#: includes/Admin/class-settings-page.php:73
-msgid "You do not have permission to access this page."
-msgstr ""
-
-#: includes/Admin/class-settings-page.php:86
+#: includes/Admin/class-settings-page.php:100
 msgid "ProductForge Settings"
 msgstr ""
 
-#: includes/Admin/class-settings-page.php:93
+#: includes/Admin/class-settings-page.php:107
 msgid "Auto-export on order status"
 msgstr ""
 
-#: includes/Admin/class-settings-page.php:104
+#: includes/Admin/class-settings-page.php:118
 msgid "Design exports are generated automatically when an order reaches this status."
 msgstr ""
 
-#: includes/Admin/class-settings-page.php:109
+#: includes/Admin/class-settings-page.php:123
 msgid "Default export format"
 msgstr ""
 
-#: includes/Admin/class-settings-page.php:120
-msgid "Delete data on uninstall"
+#: includes/Admin/class-settings-page.php:135
+msgid "Guest design retention (days)"
 msgstr ""
 
-#: includes/Admin/class-settings-page.php:124
-msgid "Permanently delete ALL templates, customer designs, and exports when the plugin is deleted."
-msgstr ""
-
-#: includes/Admin/class-settings-page.php:127
-msgid "Leave this off unless you are permanently removing the plugin. With this off, your templates and designs survive a delete + reinstall."
-msgstr ""
-
-#: includes/Admin/class-settings-page.php:137
-msgid "System status"
-msgstr ""
-
-#: includes/Admin/class-settings-page.php:138
-msgid "Environment checks for everything the plugin needs at runtime. Reload this page to re-run them."
-msgstr ""
-
-#: includes/Admin/class-settings-page.php:143
-msgid "Check"
+#: includes/Admin/class-settings-page.php:140
+msgid "Abandoned guest designs (never ordered) are deleted after this many days. 0 disables cleanup. Ordered designs and designs of logged-in customers are never deleted."
 msgstr ""
 
 #: includes/Admin/class-settings-page.php:144
+msgid "Delete data on uninstall"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:148
+msgid "Permanently delete ALL templates, customer designs, and exports when the plugin is deleted."
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:151
+msgid "Leave this off unless you are permanently removing the plugin. With this off, your templates and designs survive a delete + reinstall."
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:156
+msgid "E-mail alerts"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:160
+msgid "E-mail the site admin when a critical system check starts failing (checked daily)."
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:169
+msgid "Design statistics (last 30 days)"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:173
+msgid "Designs saved"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:174
+msgid "Designs ordered"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:175
+msgid "Conversion"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:180
+#, php-format
+msgid "Top product #%d"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:185
+msgid "\"Ordered\" counts designs saved after this feature was installed — older orders are not back-filled."
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:189
+msgid "System status"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:190
+msgid "Environment checks for everything the plugin needs at runtime. Reload this page to re-run them."
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:195
+msgid "Check"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:196
 msgid "Result"
 msgstr ""
 
-#: includes/Admin/class-settings-page.php:208
+#: includes/Admin/class-settings-page.php:260
 msgid "ProductForge: server configuration problem."
 msgstr ""
 
 #. translators: %s: comma-separated list of failed checks
-#: includes/Admin/class-settings-page.php:211
+#: includes/Admin/class-settings-page.php:263
 #, php-format
 msgid "Failed checks: %s."
 msgstr ""
 
-#: includes/Admin/class-settings-page.php:215
+#: includes/Admin/class-settings-page.php:267
 msgid "View details and fixes"
 msgstr ""
 
@@ -412,6 +505,10 @@ msgstr ""
 msgid "SVG export requires ProductForge Pro."
 msgstr ""
 
+#: includes/API/class-rest-pricing.php:31
+msgid "Template not found."
+msgstr ""
+
 #: includes/API/class-rest-templates.php:84
 msgid "Free version is limited to 1 template. Upgrade to Pro for unlimited templates."
 msgstr ""
@@ -420,13 +517,52 @@ msgstr ""
 msgid "Free version is limited to 1 view per template. Upgrade to Pro for multiple views."
 msgstr ""
 
-#: includes/class-product-forge.php:105
+#: includes/class-cleanup.php:92
+#, php-format
+msgid "[%s] ProductForge: server configuration problem"
+msgstr ""
+
+#. translators: 1: failure list, 2: settings page URL
+#: includes/class-cleanup.php:95
+#, php-format
+msgid ""
+"The following ProductForge system checks are failing:\n"
+"\n"
+"%1$s\n"
+"\n"
+"Details and fixes: %2$s"
+msgstr ""
+
+#: includes/class-product-forge.php:107
 msgid "This feature requires ProductForge Pro."
 msgstr ""
 
+#: includes/Frontend/class-account-designs.php:31
+#: includes/Frontend/class-account-designs.php:38
+msgid "My designs"
+msgstr ""
+
+#: includes/Frontend/class-account-designs.php:53
+msgid "You have no saved designs yet. Start designing on any customizable product!"
+msgstr ""
+
+#: includes/Frontend/class-account-designs.php:58
+#: includes/Frontend/class-frontend.php:133
+#: includes/Frontend/class-order-integration.php:164
+msgid "Design"
+msgstr ""
+
+#: includes/Frontend/class-account-designs.php:60
+msgid "Last edited"
+msgstr ""
+
+#: includes/Frontend/class-account-designs.php:77
+msgid "Open in designer"
+msgstr ""
+
 #: includes/Frontend/class-frontend.php:93
-#: includes/Frontend/class-order-integration.php:123
-#: includes/Frontend/class-order-integration.php:144
+#: includes/Frontend/class-order-integration.php:125
+#: includes/Frontend/class-order-integration.php:146
 msgid "Custom design"
 msgstr ""
 
@@ -440,13 +576,8 @@ msgstr ""
 msgid "Your custom product design – view %d"
 msgstr ""
 
-#: includes/Frontend/class-frontend.php:133
-#: includes/Frontend/class-order-integration.php:162
-msgid "Design"
-msgstr ""
-
 #: includes/Frontend/class-frontend.php:134
-#: includes/Frontend/class-order-integration.php:163
+#: includes/Frontend/class-order-integration.php:165
 msgid "Customized"
 msgstr ""
 
@@ -455,15 +586,19 @@ msgid "Your custom design"
 msgstr ""
 
 #: includes/Frontend/class-frontend.php:402
-#: frontend/js/designer/src/App.jsx:580
+#: frontend/js/designer/src/App.jsx:598
 msgid "Customize Product"
 msgstr ""
 
-#: includes/Frontend/class-order-integration.php:193
+#: includes/Frontend/class-order-integration.php:199
+msgid "This design contains raster images (photos) — check engraving suitability before production."
+msgstr ""
+
+#: includes/Frontend/class-order-integration.php:203
 msgid "Export Design:"
 msgstr ""
 
-#: includes/Frontend/class-order-integration.php:213
+#: includes/Frontend/class-order-integration.php:223
 msgid "Pro: PDF & SVG export"
 msgstr ""
 
@@ -529,7 +664,7 @@ msgstr ""
 #: admin/js/template-builder/src/components/settings/SettingsColors.jsx:124
 #: admin/js/template-builder/src/components/TreeNode.jsx:213
 #: admin/js/template-builder/src/components/TreeNode.jsx:214
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:106
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:107
 msgid "Delete"
 msgstr ""
 
@@ -620,7 +755,7 @@ msgid "Inactive"
 msgstr ""
 
 #: admin/js/design-templates/src/App.jsx:94
-#: frontend/js/designer/src/App.jsx:608
+#: frontend/js/designer/src/App.jsx:632
 msgid "Saving..."
 msgstr ""
 
@@ -775,32 +910,32 @@ msgid "↪ Redo"
 msgstr ""
 
 #: admin/js/template-builder/src/components/Canvas.jsx:1101
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:324
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:325
 msgid "Align left"
 msgstr ""
 
 #: admin/js/template-builder/src/components/Canvas.jsx:1102
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:325
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:326
 msgid "Align center"
 msgstr ""
 
 #: admin/js/template-builder/src/components/Canvas.jsx:1103
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:326
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:327
 msgid "Align right"
 msgstr ""
 
 #: admin/js/template-builder/src/components/Canvas.jsx:1104
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:327
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:328
 msgid "Align top"
 msgstr ""
 
 #: admin/js/template-builder/src/components/Canvas.jsx:1105
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:328
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:329
 msgid "Align middle"
 msgstr ""
 
 #: admin/js/template-builder/src/components/Canvas.jsx:1106
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:329
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:330
 msgid "Align bottom"
 msgstr ""
 
@@ -856,18 +991,18 @@ msgstr ""
 #: admin/js/template-builder/src/components/TreePanel.jsx:318
 #: admin/js/template-builder/src/components/TreePanel.jsx:439
 #: admin/js/template-builder/src/components/TreePanel.jsx:528
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:44
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:567
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:47
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:574
 msgid "Text"
 msgstr ""
 
 #: admin/js/template-builder/src/components/PricingPanel.jsx:44
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:56
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:63
 msgid "Image"
 msgstr ""
 
 #: admin/js/template-builder/src/components/PricingPanel.jsx:45
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:68
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:75
 msgid "SVG"
 msgstr ""
 
@@ -949,7 +1084,7 @@ msgid "Manage clip art libraries available to customers."
 msgstr ""
 
 #: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:226
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:104
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:111
 msgid "Clip Art"
 msgstr ""
 
@@ -1142,7 +1277,7 @@ msgid "When enabled, customers must save a design before they can add the produc
 msgstr ""
 
 #: admin/js/template-builder/src/components/settings/SettingsGeneral.jsx:27
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:477
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:484
 msgid "Product Color"
 msgstr ""
 
@@ -1223,26 +1358,38 @@ msgid "Restrict what customers can upload to their designs."
 msgstr ""
 
 #: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:28
+msgid "Vector Only"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:32
+msgid "Vector only (engraving) — block raster image uploads"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:35
+msgid "Enable this for laser/CNC engraving products. Customers can still upload SVGs and use clip art, but photo (JPG/PNG/WebP) uploads are blocked."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:40
 msgid "Image Upload Restrictions"
 msgstr ""
 
-#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:30
+#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:42
 msgid "Max file size (MB)"
 msgstr ""
 
-#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:37
+#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:49
 msgid "Min width (px)"
 msgstr ""
 
-#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:44
+#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:56
 msgid "Min height (px)"
 msgstr ""
 
-#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:51
+#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:63
 msgid "Min DPI"
 msgstr ""
 
-#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:58
+#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:70
 msgid "Allowed types:"
 msgstr ""
 
@@ -1350,8 +1497,8 @@ msgstr ""
 
 #: admin/js/template-builder/src/components/TreePanel.jsx:489
 #: admin/js/template-builder/src/components/TreePanel.jsx:497
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:190
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:622
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:191
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:629
 #: frontend/js/designer/src/components/Toolbar.jsx:91
 msgid "Color"
 msgstr ""
@@ -1563,39 +1710,43 @@ msgstr ""
 msgid "Save Boundary"
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:99
+#: frontend/js/designer/src/App.jsx:100
 msgid "The designer could not load. Please reload the page."
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:395
+#: frontend/js/designer/src/App.jsx:413
 msgid "Please customize your product before adding to cart."
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:470
+#: frontend/js/designer/src/App.jsx:488
 msgid "Failed to save design. Please try again."
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:558
+#: frontend/js/designer/src/App.jsx:576
 msgid "Loading designer..."
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:562
+#: frontend/js/designer/src/App.jsx:580
 msgid "Template not available."
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:588
+#: frontend/js/designer/src/App.jsx:606
 msgid "ProductForge designer"
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:608
+#: frontend/js/designer/src/App.jsx:621
+msgid "Design surcharge:"
+msgstr ""
+
+#: frontend/js/designer/src/App.jsx:632
 msgid "Saved!"
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:608
+#: frontend/js/designer/src/App.jsx:632
 msgid "Save Design"
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:617
+#: frontend/js/designer/src/App.jsx:641
 msgid "Close Designer"
 msgstr ""
 
@@ -1614,6 +1765,10 @@ msgstr ""
 
 #: frontend/js/designer/src/components/DesignerCanvas.jsx:748
 msgid "Your text"
+msgstr ""
+
+#: frontend/js/designer/src/components/DesignerCanvas.jsx:795
+msgid "Photos are not possible on this product (engraving requires vector artwork)."
 msgstr ""
 
 #: frontend/js/designer/src/components/DesignTemplates.jsx:24
@@ -1653,7 +1808,7 @@ msgid "Element Options"
 msgstr ""
 
 #: frontend/js/designer/src/components/Sidebar.jsx:50
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:34
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:37
 msgid "Add Element"
 msgstr ""
 
@@ -1665,85 +1820,93 @@ msgstr ""
 msgid "Element"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:41
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:44
 msgid "Add text element"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:42
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:45
 msgid "Add text"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:53
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:57
 msgid "Add image element"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:54
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:59
+msgid "Photos are not possible on this product (engraving requires vector artwork)"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:60
 msgid "Add image (jpg, png, webp)"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:65
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:72
 msgid "Add SVG element"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:66
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:73
 msgid "Add SVG"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:76
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:83
 msgid "Add curved text element"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:77
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:84
 msgid "Add curved text"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:80
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:87
 msgid "Curved"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:89
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:96
 msgid "Add engraving text element"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:90
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:97
 msgid "Add engraving text (single-line font)"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:93
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:100
 msgid "Engrave"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:39
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:40
 msgid "Select an element to edit its properties"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:44
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:45
 msgid "Engraving"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:44
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:45
 msgid " Properties"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:156
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:157
 msgid "Font"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:173
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:608
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:174
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:615
 #: frontend/js/designer/src/components/Toolbar.jsx:80
 msgid "Size"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:334
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:335
 msgid "Align"
 msgstr ""
 
 #: frontend/js/designer/src/components/tabs/ElementTab.jsx:382
+msgid "This image is scaled beyond its resolution — the result may look blurry or pixelated. Use a larger image for a sharp result."
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:389
 msgid "Tint Color"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:578
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:585
 msgid "Engraving Font"
 msgstr ""
 

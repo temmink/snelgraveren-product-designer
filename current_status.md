@@ -1,10 +1,27 @@
 # ProductForge — Current Status
 
-**Last updated:** 2026-04-22
+**Last updated:** 2026-07-17
 **Plugin version:** 1.0.0
 **Docker environment:** Running (WordPress 6.7, WooCommerce 10.6.1, MariaDB 11)
 
 > **Since 2026-03-22:** Freemius premium gating, Clipart Manager admin, Design Templates admin, redesigned Add Layer panel with clipart picker, engraving text (Hershey single-line fonts), pre-rendered browser export pipeline with multi-view ZIP downloads, migration 700 (`export_svg` column), clipart upload rate-limit, history restore-rejection guard, and input sanitization + size-cap for export blobs.
+
+## 2026-07-17 — Eight-feature expansion
+
+Branch `feature/eight-feature-expansion`, 12 tasks (T1–T12). Eight customer/admin-facing features, fully Dutch-translated:
+
+1. **Live price preview** — non-persisting `pf/v1/pricing/preview` REST endpoint (`RestPricing`) computes a price from element counts without saving; the designer shows a live "Design surcharge:" line as the customer edits (`App.jsx`, `utils/priceCounts.js`).
+2. **DPI / image-quality warning** — `utils/imageQuality.js` flags images scaled beyond their native resolution; `ElementTab.jsx` shows an inline warning so customers pick a sharper source image before ordering.
+3. **Order status flip** — `DesignRepository::mark_ordered_by_hash()` flips a design's `status` to `ordered` when its hash lands on a paid order item (`OrderIntegration`). Powers feature 8's conversion stat and the Production dashboard's default filter. Not back-filled for designs saved before this shipped.
+4. **Guest design cleanup cron** — `Cleanup` (`pf_daily_maintenance`, self-healing schedule registered on `init`) deletes abandoned guest designs (and their thumbnail files) older than `pf_guest_design_retention_days` (default 30, 0 disables). Ordered designs and logged-in customers' designs are never touched.
+5. **Health e-mail alert** — same daily cron mails `admin_email` when a critical `SystemStatus` check starts failing, deduped via a stored failure-set hash (`pf_health_email_alerts` toggle, on by default).
+6. **"My designs" account tab** — `AccountDesigns` adds a `pf-designs` WooCommerce My Account endpoint listing a customer's saved designs with a one-click reopen link. Rewrite rules self-heal via a `PF_VERSION` guard (ZIP-upload updates skip the activation hook).
+7. **Vector-only templates** — `global_config.vector_only` (template builder → Settings → Uploads) blocks photo uploads in the frontend designer for engraving-only products while still allowing SVG/clip art. `DesignInspector::contains_raster()` flags any design that has raster images anyway (e.g. saved before the flag was enabled), surfaced as a warning in both the WooCommerce order admin and the Production dashboard.
+8. **Production dashboard + funnel stats** — new "Production" admin page (`pf-export-dashboard`) lists recent orders with designs, filterable by status/days, with per-design raster warnings and a bulk "download selection as ZIP" action. Settings page gained a "Design statistics (last 30 days)" panel (saved / ordered / conversion / top products) via `DesignRepository::funnel_stats()`.
+
+German translation (originally scoped as a ninth item) was intentionally dropped per product decision — Dutch only for this expansion.
+
+Docs, `.po`/`.pot`/`.mo`, and the two JS translation JSONs (frontend-designer bundle + admin template-builder bundle) were updated in T12 to cover every new string from T1–T11.
 
 ---
 

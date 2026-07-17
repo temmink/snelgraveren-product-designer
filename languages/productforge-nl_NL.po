@@ -1093,3 +1093,117 @@ msgstr "Mislukte checks: %s."
 
 msgid "View details and fixes"
 msgstr "Bekijk details en oplossingen"
+
+msgid "Production"
+msgstr "Productie"
+
+msgid "Production — design exports"
+msgstr "Productie — designexports"
+
+msgid "Last"
+msgstr "Laatste"
+
+msgid "days"
+msgstr "dagen"
+
+msgid "Filter"
+msgstr "Filteren"
+
+msgid "No orders with designs found for this filter."
+msgstr "Geen bestellingen met designs gevonden voor dit filter."
+
+msgid "Order"
+msgstr "Bestelling"
+
+msgid "Product"
+msgstr "Product"
+
+msgid "Notes"
+msgstr "Notities"
+
+msgid "contains raster images"
+msgstr "bevat rasterafbeeldingen"
+
+msgid "Download selection as ZIP"
+msgstr "Selectie downloaden als ZIP"
+
+msgid "No export files could be generated for the selection."
+msgstr "Er konden geen exportbestanden worden gegenereerd voor de selectie."
+
+msgid "Guest design retention (days)"
+msgstr "Bewaartermijn gastontwerpen (dagen)"
+
+msgid "Abandoned guest designs (never ordered) are deleted after this many days. 0 disables cleanup. Ordered designs and designs of logged-in customers are never deleted."
+msgstr "Verlaten gastontwerpen (nooit besteld) worden na dit aantal dagen verwijderd. 0 schakelt opruimen uit. Bestelde designs en designs van ingelogde klanten worden nooit verwijderd."
+
+msgid "E-mail alerts"
+msgstr "E-mailmeldingen"
+
+msgid "E-mail the site admin when a critical system check starts failing (checked daily)."
+msgstr "Mail de sitebeheerder wanneer een kritieke systeemcheck begint te falen (dagelijks gecontroleerd)."
+
+msgid "Design statistics (last 30 days)"
+msgstr "Designstatistieken (laatste 30 dagen)"
+
+msgid "Designs saved"
+msgstr "Designs opgeslagen"
+
+msgid "Designs ordered"
+msgstr "Designs besteld"
+
+msgid "Conversion"
+msgstr "Conversie"
+
+msgid "Top product #%d"
+msgstr "Topproduct #%d"
+
+msgid "\"Ordered\" counts designs saved after this feature was installed — older orders are not back-filled."
+msgstr "\"Besteld\" telt designs die zijn opgeslagen nadat deze functie is geïnstalleerd — oudere bestellingen worden niet met terugwerkende kracht bijgewerkt."
+
+msgid "My designs"
+msgstr "Mijn ontwerpen"
+
+msgid "You have no saved designs yet. Start designing on any customizable product!"
+msgstr "Je hebt nog geen opgeslagen ontwerpen. Begin met ontwerpen bij een aanpasbaar product!"
+
+msgid "Last edited"
+msgstr "Laatst bewerkt"
+
+msgid "Open in designer"
+msgstr "Openen in designer"
+
+msgid "This design contains raster images (photos) — check engraving suitability before production."
+msgstr "Dit design bevat rasterafbeeldingen (foto's) — controleer de graveergeschiktheid voor productie."
+
+msgid "[%s] ProductForge: server configuration problem"
+msgstr "[%s] ProductForge: probleem met de serverconfiguratie"
+
+msgid "The following ProductForge system checks are failing:\n\n%1$s\n\nDetails and fixes: %2$s"
+msgstr "De volgende ProductForge-systeemchecks falen op dit moment:\n\n%1$s\n\nDetails en oplossingen: %2$s"
+
+msgid "Template not found."
+msgstr "Sjabloon niet gevonden."
+
+msgid "Add image (jpg, png, webp)"
+msgstr "Afbeelding toevoegen (jpg, png, webp)"
+
+msgid "Photos are not possible on this product (engraving requires vector artwork)"
+msgstr "Foto's zijn niet mogelijk bij dit product (graveren vereist vectorafbeeldingen)"
+
+msgid "Photos are not possible on this product (engraving requires vector artwork)."
+msgstr "Foto's zijn niet mogelijk bij dit product (graveren vereist vectorafbeeldingen)."
+
+msgid "Design surcharge:"
+msgstr "Meerprijs ontwerp:"
+
+msgid "This image is scaled beyond its resolution — the result may look blurry or pixelated. Use a larger image for a sharp result."
+msgstr "Deze afbeelding wordt groter geschaald dan de resolutie toelaat — het resultaat kan wazig of korrelig worden. Gebruik een grotere afbeelding voor een scherp resultaat."
+
+msgid "Vector Only"
+msgstr "Alleen vector"
+
+msgid "Vector only (engraving) — block raster image uploads"
+msgstr "Alleen vector (graveren) — blokkeer rasterafbeeldingen"
+
+msgid "Enable this for laser/CNC engraving products. Customers can still upload SVGs and use clip art, but photo (JPG/PNG/WebP) uploads are blocked."
+msgstr "Schakel dit in voor laser-/cnc-graveerproducten. Klanten kunnen nog steeds SVG's uploaden en clipart gebruiken, maar foto-uploads (JPG/PNG/WebP) worden geblokkeerd."

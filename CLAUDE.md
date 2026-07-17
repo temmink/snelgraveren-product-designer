@@ -111,7 +111,8 @@ All tables use InnoDB engine for foreign key and transaction support. Total: 11 
 | Add New | `pf-template-builder` | Template builder React app (canvas, zones, layers, permissions, pricing) |
 | Design Templates | `pf-design-templates` | Design template CRUD React app (list, create, edit, delete, import/export JSON) |
 | Clipart | `pf-clipart` | Clipart manager React app (collections CRUD, bulk SVG upload, drag & drop) |
-| Settings | `pf-settings` | Export options (`pf_export_trigger_status`, `pf_export_default_format`), `pf_delete_data_on_uninstall` toggle, and system status checks (`Admin\SystemStatus`: PHP ≥ 8.1, finfo, rsvg-convert/Imagick-SVG, writable `pf-thumbnails`/`pf-exports`/`pf-fonts`/`pf-clipart`/plugin `dist/`, DB tables, LiteSpeed detection). Critical failures also show as an admin notice on every ProductForge screen (cached 5 min in the `pf_system_status_critical` transient) |
+| Settings | `pf-settings` | Export options (`pf_export_trigger_status`, `pf_export_default_format`), `pf_delete_data_on_uninstall` toggle, guest design retention (`pf_guest_design_retention_days`), health e-mail alert toggle (`pf_health_email_alerts`), a design-statistics panel (saved/ordered/conversion, last 30 days), and system status checks (`Admin\SystemStatus`: PHP ≥ 8.1, finfo, rsvg-convert/Imagick-SVG, writable `pf-thumbnails`/`pf-exports`/`pf-fonts`/`pf-clipart`/plugin `dist/`, DB tables, LiteSpeed detection). Critical failures also show as an admin notice on every ProductForge screen (cached 5 min in the `pf_system_status_critical` transient) |
+| Production | `pf-export-dashboard` | `Admin\ExportDashboard` — lists recent orders (filterable by status/days) that contain designs, flags designs containing raster images via `DesignInspector::contains_raster()`, and bulk-downloads the selection as one ZIP via `admin_post_pf_bulk_export` |
 
 ## WooCommerce Integration Points
 
@@ -124,7 +125,16 @@ All tables use InnoDB engine for foreign key and transaction support. Total: 11 
 - Shortcode: `[productforge]` renders the designer inline on product pages (auto-detects product context)
 - Surcharge: via `woocommerce_before_calculate_totals`
 - Order: design_hash in order item meta, export triggered on configurable order status
+- Order status flip: `OrderIntegration::save_order_item_meta()` and `assign_design_hashes()` call `DesignRepository::mark_ordered_by_hash()` when an order item's design hash is saved, flipping the design's `status` column to `ordered`. This backs the "Designs ordered" stat and the Production dashboard filter — designs saved before this feature shipped are not back-filled.
+- Account tab: `Frontend\AccountDesigns` registers a `pf-designs` WooCommerce My Account endpoint (`add_rewrite_endpoint`) listing the logged-in customer's saved designs with a reopen link (`?pf_design=HASH` on the product page). Rewrite rules self-heal via a version guard — `get_option('pf_endpoint_registered') !== PF_VERSION` triggers `flush_rewrite_rules()` — because ZIP-upload plugin updates never re-run the activation hook.
 - HPOS: Compatibility declared in `productforge.php`
+
+## Scheduled Tasks & Maintenance
+
+- **`pf_daily_maintenance` cron** (`class-cleanup.php`, `Cleanup::HOOK`): runs daily, deletes abandoned guest designs (never ordered, no logged-in customer) older than `pf_guest_design_retention_days` (default 30; 0 disables cleanup) along with their thumbnail files. Ordered designs and designs belonging to logged-in customers are never deleted. Also triggers the health e-mail alert check on every run.
+- **Self-heal scheduling pattern:** `Cleanup::init()` hooks `wp_next_scheduled()` on `init` instead of relying solely on the activation hook — the same reasoning as the account-endpoint rewrite flush: ZIP-upload updates skip `register_activation_hook`, so cron and rewrite state must repair themselves on every request instead of only at install time.
+- **Health e-mail alert:** gated by option `pf_health_email_alerts` (default on). Mails `admin_email` when a critical `SystemStatus` check starts failing; the failing-checks set is hashed and stored in `pf_health_last_alert_hash` so a persistent failure doesn't re-mail daily, but a newly-failing check does. Recovery resets the stored hash silently (no "all clear" e-mail).
+- **`global_config.vector_only`** (template builder → Settings → Uploads, `SettingsUploads.jsx`): per-template flag for engraving-only products. When set, the frontend designer disables the image-upload tool (`AddTab.jsx` checks `globalConfig.vector_only`) and `DesignerCanvas.jsx` blocks image drops/paste with an error message — SVGs and clip art remain allowed. Order admin (`OrderIntegration`) and the Production dashboard (`ExportDashboard`) both surface a warning via `Export\DesignInspector::contains_raster()` when a design was saved with raster images anyway (e.g. added before the flag was enabled).
 
 ## Deployment
 
