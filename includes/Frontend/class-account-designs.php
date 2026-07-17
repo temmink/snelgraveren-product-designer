@@ -43,7 +43,12 @@ class AccountDesigns {
     }
 
     public function render(): void {
-        $designs = (new DesignRepository())->list_by_customer(get_current_user_id());
+        $user_id = get_current_user_id();
+        if ($user_id <= 0) {
+            return;
+        }
+
+        $designs = (new DesignRepository())->list_by_customer($user_id);
         if (empty($designs)) {
             echo '<p>' . esc_html__('You have no saved designs yet. Start designing on any customizable product!', 'productforge') . '</p>';
             return;
