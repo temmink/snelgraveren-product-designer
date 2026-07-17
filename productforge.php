@@ -3,13 +3,14 @@
  * Plugin Name: ProductForge for WooCommerce
  * Plugin URI:  https://example.com/productforge
  * Description: Let customers personalise products with text, images, and SVGs using a drag-and-drop editor.
- * Version:     1.0.0
+ * Version:     1.0.1
  * Author:      Martin Temmink
  * License:     GPL-2.0-or-later
  * Text Domain: productforge
  * Domain Path: /languages
  * Requires at least: 6.4
  * Requires PHP:      8.1
+ * Requires Plugins:  woocommerce
  * WC requires at least: 8.0
  * WC tested up to:      9.9
  */
@@ -18,7 +19,7 @@ namespace ProductForge;
 
 defined('ABSPATH') || exit;
 
-define('PF_VERSION',    '1.0.0');
+define('PF_VERSION',    '1.0.1');
 define('PF_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('PF_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('PF_PLUGIN_FILE', __FILE__);
@@ -49,8 +50,19 @@ add_action('plugins_loaded', function () {
     load_plugin_textdomain('productforge', false, dirname(plugin_basename(__FILE__)) . '/languages');
 }, 1);
 
-// Boot plugin
+// Boot plugin. Hard requirement: WooCommerce. The "Requires Plugins" header
+// enforces this on WP 6.5+, but a runtime guard is still needed for older
+// WordPress versions and manual/FTP installs — without it every frontend
+// pageview fatals on WooCommerce functions (is_product() etc.).
 add_action('plugins_loaded', function () {
+    if (!class_exists('WooCommerce')) {
+        add_action('admin_notices', function () {
+            echo '<div class="notice notice-error"><p>'
+                . esc_html__('ProductForge for WooCommerce requires WooCommerce to be installed and active. The plugin is idle until WooCommerce is activated.', 'productforge')
+                . '</p></div>';
+        });
+        return;
+    }
     ProductForge::instance();
 });
 

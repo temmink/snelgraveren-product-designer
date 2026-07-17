@@ -1201,3 +1201,6 @@ msgstr "Alleen vector (graveren) — blokkeer rasterafbeeldingen"
 
 msgid "Enable this for laser/CNC engraving products. Customers can still upload SVGs and use clip art, but photo (JPG/PNG/WebP) uploads are blocked."
 msgstr "Schakel dit in voor laser-/cnc-graveerproducten. Klanten kunnen nog steeds SVG's uploaden en clipart gebruiken, maar foto-uploads (JPG/PNG/WebP) worden geblokkeerd."
+
+msgid "ProductForge for WooCommerce requires WooCommerce to be installed and active. The plugin is idle until WooCommerce is activated."
+msgstr "ProductForge for WooCommerce vereist dat WooCommerce geïnstalleerd en actief is. De plugin doet niets totdat WooCommerce is geactiveerd."
