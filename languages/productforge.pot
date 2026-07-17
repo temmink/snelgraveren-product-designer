@@ -2,57 +2,86 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Product Designer for WooCommerce 1.0.0\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/product-designer\n"
+"Project-Id-Version: ProductForge for WooCommerce 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/productforge\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-03-19T13:15:57+00:00\n"
+"POT-Creation-Date: 2026-07-17T09:33:40+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
-"X-Domain: product-designer\n"
+"X-Domain: productforge\n"
 
 #. Plugin Name of the plugin
-#: product-designer.php
-msgid "Product Designer for WooCommerce"
+#: productforge.php
+msgid "ProductForge for WooCommerce"
 msgstr ""
 
 #. Plugin URI of the plugin
-#: product-designer.php
-msgid "https://example.com/product-designer"
+#: productforge.php
+msgid "https://example.com/productforge"
 msgstr ""
 
 #. Description of the plugin
-#: product-designer.php
+#: productforge.php
 msgid "Let customers personalise products with text, images, and SVGs using a drag-and-drop editor."
 msgstr ""
 
 #. Author of the plugin
-#: product-designer.php
+#: productforge.php
 msgid "Martin Temmink"
 msgstr ""
 
-#: includes/Admin/class-admin.php:20
-#: includes/Admin/class-admin.php:21
+#: includes/Admin/class-admin.php:26
+#: includes/Admin/class-admin.php:27
 #: includes/Admin/class-product-integration.php:18
-msgid "Product Designer"
+msgid "ProductForge"
 msgstr ""
 
-#: includes/Admin/class-admin.php:31
-#: includes/Admin/class-admin.php:32
+#: includes/Admin/class-admin.php:37
+#: includes/Admin/class-admin.php:38
 #: includes/Admin/views/template-list.php:9
 msgid "Templates"
 msgstr ""
 
-#: includes/Admin/class-admin.php:40
+#: includes/Admin/class-admin.php:46
 msgid "Template Builder"
 msgstr ""
 
-#: includes/Admin/class-admin.php:41
+#: includes/Admin/class-admin.php:47
 #: includes/Admin/views/template-list.php:11
+#: admin/js/design-templates/src/App.jsx:193
 msgid "Add New"
+msgstr ""
+
+#: includes/Admin/class-admin.php:55
+#: includes/Admin/class-admin.php:56
+#: includes/Admin/views/design-templates.php:3
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:289
+#: frontend/js/designer/src/components/DesignTemplates.jsx:71
+msgid "Design Templates"
+msgstr ""
+
+#: includes/Admin/class-admin.php:64
+#: includes/Admin/class-admin.php:65
+#: includes/Admin/views/clipart.php:3
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:281
+#: admin/js/template-builder/src/components/TreePanel.jsx:455
+msgid "Clipart"
+msgstr ""
+
+#: includes/Admin/class-admin.php:237
+msgid "SVG sanitization library not available."
+msgstr ""
+
+#: includes/Admin/class-admin.php:243
+msgid "Could not read SVG file."
+msgstr ""
+
+#: includes/Admin/class-admin.php:250
+msgid "SVG file contains disallowed content and was rejected."
 msgstr ""
 
 #: includes/Admin/class-product-integration.php:42
@@ -83,87 +112,278 @@ msgstr ""
 msgid "Open in modal popup"
 msgstr ""
 
-#: includes/Admin/class-template-list-table.php:36
-msgid "Title"
+#: includes/Admin/class-settings-page.php:26
+#: includes/Admin/class-settings-page.php:27
+#: admin/js/template-builder/src/App.jsx:20
+msgid "Settings"
 msgstr ""
 
-#: includes/Admin/class-template-list-table.php:37
-msgid "Status"
+#: includes/Admin/class-settings-page.php:73
+msgid "You do not have permission to access this page."
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:86
+msgid "ProductForge Settings"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:93
+msgid "Auto-export on order status"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:104
+msgid "Design exports are generated automatically when an order reaches this status."
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:109
+msgid "Default export format"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:120
+msgid "Delete data on uninstall"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:124
+msgid "Permanently delete ALL templates, customer designs, and exports when the plugin is deleted."
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:127
+msgid "Leave this off unless you are permanently removing the plugin. With this off, your templates and designs survive a delete + reinstall."
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:137
+msgid "System status"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:138
+msgid "Environment checks for everything the plugin needs at runtime. Reload this page to re-run them."
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:143
+msgid "Check"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:144
+msgid "Result"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:208
+msgid "ProductForge: server configuration problem."
+msgstr ""
+
+#. translators: %s: comma-separated list of failed checks
+#: includes/Admin/class-settings-page.php:211
+#, php-format
+msgid "Failed checks: %s."
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:215
+msgid "View details and fixes"
+msgstr ""
+
+#: includes/Admin/class-system-status.php:54
+msgid "PHP version"
+msgstr ""
+
+#: includes/Admin/class-system-status.php:56
+#, php-format
+msgid "PHP %s detected. Minimum required: 8.1."
+msgstr ""
+
+#: includes/Admin/class-system-status.php:57
+msgid "Ask your host to upgrade PHP to 8.1 or newer."
+msgstr ""
+
+#: includes/Admin/class-system-status.php:64
+msgid "PHP fileinfo extension"
+msgstr ""
+
+#: includes/Admin/class-system-status.php:67
+msgid "Available. Uploaded files are MIME-validated."
+msgstr ""
+
+#: includes/Admin/class-system-status.php:68
+msgid "Missing. Upload validation cannot run, so all uploads are rejected."
+msgstr ""
+
+#: includes/Admin/class-system-status.php:69
+msgid "Enable the \"fileinfo\" PHP extension (php.ini or ask your host)."
+msgstr ""
+
+#: includes/Admin/class-system-status.php:86
+#, php-format
+msgid "Writable: %s"
+msgstr ""
+
+#: includes/Admin/class-system-status.php:90
+msgid "Writable."
+msgstr ""
+
+#: includes/Admin/class-system-status.php:91
+#, php-format
+msgid "Not writable — used for %s."
+msgstr ""
+
+#. translators: %s: directory path
+#: includes/Admin/class-system-status.php:94
+#, php-format
+msgid "Make the directory writable for the web server, e.g. via your hosting file manager or: chmod 755 %s (owner must be the web server user)."
+msgstr ""
+
+#: includes/Admin/class-system-status.php:107
+msgid "Writable: plugin dist/ directory"
+msgstr ""
+
+#: includes/Admin/class-system-status.php:110
+msgid "Writable. Hash-named JS copies are created for reliable cache busting."
+msgstr ""
+
+#: includes/Admin/class-system-status.php:111
+msgid "Not writable. The designer still works, but browsers may serve a stale JS bundle after plugin updates (Safari caches JS for a year)."
+msgstr ""
+
+#. translators: %s: directory path
+#: includes/Admin/class-system-status.php:114
+#, php-format
+msgid "Make %s writable for the web server to enable hash-named cache busting."
+msgstr ""
+
+#: includes/Admin/class-system-status.php:126
+msgid "LiteSpeed Cache"
+msgstr ""
+
+#: includes/Admin/class-system-status.php:128
+msgid "Detected. The designer bundle is excluded from JS combining/minification automatically. Remember to purge the cache after plugin updates."
+msgstr ""
+
+#: includes/Admin/class-system-status.php:156
+msgid "rsvg-convert found (preferred converter)."
+msgstr ""
+
+#: includes/Admin/class-system-status.php:158
+msgid "Imagick with SVG support found."
+msgstr ""
+
+#: includes/Admin/class-system-status.php:160
+msgid "Neither rsvg-convert nor Imagick with SVG support found. Exports of designs saved with older plugin versions (SVG data) will fail; current browser-rendered PNG exports still work."
+msgstr ""
+
+#: includes/Admin/class-system-status.php:165
+msgid "SVG to PNG converter"
+msgstr ""
+
+#: includes/Admin/class-system-status.php:168
+msgid "Install librsvg2-bin (provides /usr/bin/rsvg-convert) or enable the Imagick PHP extension with SVG delegate support."
+msgstr ""
+
+#: includes/Admin/class-system-status.php:186
+msgid "Database tables"
+msgstr ""
+
+#: includes/Admin/class-system-status.php:189
+#, php-format
+msgid "All %d tables present."
+msgstr ""
+
+#: includes/Admin/class-system-status.php:190
+#, php-format
+msgid "Missing tables: %s"
+msgstr ""
+
+#: includes/Admin/class-system-status.php:191
+msgid "Deactivate and re-activate the plugin to re-run the database migrations."
 msgstr ""
 
 #: includes/Admin/class-template-list-table.php:38
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/components/Sidebar.jsx:44
+msgid "Title"
+msgstr ""
+
+#: includes/Admin/class-template-list-table.php:39
+#: admin/js/design-templates/src/App.jsx:82
+#: admin/js/design-templates/src/App.jsx:213
+msgid "Status"
+msgstr ""
+
+#: includes/Admin/class-template-list-table.php:40
+#: admin/js/design-templates/src/App.jsx:212
+#: frontend/js/designer/src/components/Sidebar.jsx:51
+#: frontend/js/designer/src/components/Sidebar.jsx:65
 #: frontend/js/designer/src/components/tabs/ViewsTab.jsx:17
 msgid "Views"
 msgstr ""
 
-#: includes/Admin/class-template-list-table.php:39
+#: includes/Admin/class-template-list-table.php:41
 msgid "Products"
 msgstr ""
 
-#: includes/Admin/class-template-list-table.php:40
+#: includes/Admin/class-template-list-table.php:42
 msgid "Created"
 msgstr ""
 
-#: includes/Admin/class-template-list-table.php:55
-#: includes/Admin/class-template-list-table.php:166
+#: includes/Admin/class-template-list-table.php:57
+#: includes/Admin/class-template-list-table.php:167
 msgid "Restore"
 msgstr ""
 
-#: includes/Admin/class-template-list-table.php:56
-#: includes/Admin/class-template-list-table.php:168
+#: includes/Admin/class-template-list-table.php:58
+#: includes/Admin/class-template-list-table.php:169
 msgid "Delete Permanently"
 msgstr ""
 
-#: includes/Admin/class-template-list-table.php:60
+#: includes/Admin/class-template-list-table.php:62
 msgid "Publish"
 msgstr ""
 
-#: includes/Admin/class-template-list-table.php:61
+#: includes/Admin/class-template-list-table.php:63
 msgid "Archive"
 msgstr ""
 
-#: includes/Admin/class-template-list-table.php:62
+#: includes/Admin/class-template-list-table.php:64
 msgid "Move to Trash"
 msgstr ""
 
-#: includes/Admin/class-template-list-table.php:180
+#: includes/Admin/class-template-list-table.php:181
+#: admin/js/design-templates/src/App.jsx:237
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:121
 msgid "Edit"
 msgstr ""
 
-#: includes/Admin/class-template-list-table.php:181
-#: includes/Admin/class-template-list-table.php:228
+#: includes/Admin/class-template-list-table.php:182
+#: includes/Admin/class-template-list-table.php:229
 msgid "Trash"
-msgstr ""
-
-#: includes/Admin/class-template-list-table.php:190
-#: includes/Admin/class-template-list-table.php:221
-#: admin/js/template-builder/src/App.jsx:156
-#: dist/admin-template-builder.js:533
-msgid "Draft"
 msgstr ""
 
 #: includes/Admin/class-template-list-table.php:191
 #: includes/Admin/class-template-list-table.php:222
-#: admin/js/template-builder/src/App.jsx:157
-#: dist/admin-template-builder.js:533
-msgid "Published"
+#: admin/js/template-builder/src/App.jsx:220
+msgid "Draft"
 msgstr ""
 
 #: includes/Admin/class-template-list-table.php:192
 #: includes/Admin/class-template-list-table.php:223
-#: admin/js/template-builder/src/App.jsx:158
-#: dist/admin-template-builder.js:533
-msgid "Archived"
+#: admin/js/template-builder/src/App.jsx:221
+msgid "Published"
 msgstr ""
 
 #: includes/Admin/class-template-list-table.php:193
+#: includes/Admin/class-template-list-table.php:224
+#: admin/js/template-builder/src/App.jsx:222
+msgid "Archived"
+msgstr ""
+
+#: includes/Admin/class-template-list-table.php:194
 msgid "Trashed"
 msgstr ""
 
-#: includes/Admin/class-template-list-table.php:220
+#: includes/Admin/class-template-list-table.php:221
 msgid "All"
+msgstr ""
+
+#: includes/Admin/views/clipart.php:4
+msgid "Manage clip art collections and SVG assets available in the designer."
+msgstr ""
+
+#: includes/Admin/views/design-templates.php:4
+msgid "Manage pre-made design templates that customers can apply in the designer."
 msgstr ""
 
 #: includes/Admin/views/template-list.php:17
@@ -182,783 +402,1368 @@ msgstr ""
 msgid "Search Templates"
 msgstr ""
 
-#: includes/Frontend/class-frontend.php:65
-#: includes/Frontend/class-order-integration.php:96
-#: includes/Frontend/class-order-integration.php:117
+#: includes/API/class-rest-exports.php:72
+#: includes/Export/class-export-manager.php:65
+msgid "PDF export requires ProductForge Pro."
+msgstr ""
+
+#: includes/API/class-rest-exports.php:75
+#: includes/Export/class-export-manager.php:68
+msgid "SVG export requires ProductForge Pro."
+msgstr ""
+
+#: includes/API/class-rest-templates.php:84
+msgid "Free version is limited to 1 template. Upgrade to Pro for unlimited templates."
+msgstr ""
+
+#: includes/API/class-rest-templates.php:279
+msgid "Free version is limited to 1 view per template. Upgrade to Pro for multiple views."
+msgstr ""
+
+#: includes/class-product-forge.php:105
+msgid "This feature requires ProductForge Pro."
+msgstr ""
+
+#: includes/Frontend/class-frontend.php:93
+#: includes/Frontend/class-order-integration.php:123
+#: includes/Frontend/class-order-integration.php:144
 msgid "Custom design"
 msgstr ""
 
-#: includes/Frontend/class-frontend.php:91
-msgid "Custom Design"
+#: includes/Frontend/class-frontend.php:120
+#, php-format
+msgid "Custom Design – View %d"
 msgstr ""
 
-#: includes/Frontend/class-frontend.php:92
-msgid "Your custom product design"
+#: includes/Frontend/class-frontend.php:121
+#, php-format
+msgid "Your custom product design – view %d"
 msgstr ""
 
-#: includes/Frontend/class-frontend.php:103
-#: includes/Frontend/class-order-integration.php:135
+#: includes/Frontend/class-frontend.php:133
+#: includes/Frontend/class-order-integration.php:162
 msgid "Design"
 msgstr ""
 
-#: includes/Frontend/class-frontend.php:104
-#: includes/Frontend/class-order-integration.php:136
+#: includes/Frontend/class-frontend.php:134
+#: includes/Frontend/class-order-integration.php:163
 msgid "Customized"
 msgstr ""
 
-#: includes/Frontend/class-frontend.php:144
+#: includes/Frontend/class-frontend.php:179
 msgid "Your custom design"
 msgstr ""
 
-#: includes/Frontend/class-frontend.php:231
+#: includes/Frontend/class-frontend.php:402
+#: frontend/js/designer/src/App.jsx:580
 msgid "Customize Product"
 msgstr ""
 
-#: includes/Frontend/class-order-integration.php:167
+#: includes/Frontend/class-order-integration.php:193
 msgid "Export Design:"
 msgstr ""
 
-#: includes/Pricing/class-cart-surcharge.php:68
+#: includes/Frontend/class-order-integration.php:213
+msgid "Pro: PDF & SVG export"
+msgstr ""
+
+#: includes/Pricing/class-cart-surcharge.php:74
 msgid "Design surcharge"
 msgstr ""
 
-#: admin/js/template-builder/src/App.jsx:14
-#: dist/admin-template-builder.js:533
-msgid "Structure"
+#: admin/js/clipart/src/App.jsx:36
+msgid "Clipart management requires ProductForge Pro."
 msgstr ""
 
-#: admin/js/template-builder/src/App.jsx:15
-#: dist/admin-template-builder.js:533
-msgid "Permissions"
+#: admin/js/clipart/src/App.jsx:38
+msgid "Upgrade Now"
 msgstr ""
 
-#: admin/js/template-builder/src/App.jsx:16
-#: dist/admin-template-builder.js:533
-msgid "Pricing"
+#: admin/js/clipart/src/App.jsx:86
+msgid "Uploading"
 msgstr ""
 
-#: admin/js/template-builder/src/App.jsx:17
-#: dist/admin-template-builder.js:533
-msgid "Settings"
+#: admin/js/clipart/src/App.jsx:91
+msgid "Drop SVG files here or"
 msgstr ""
 
-#: admin/js/template-builder/src/App.jsx:48
-#: dist/admin-template-builder.js:533
-msgid "Front"
+#: admin/js/clipart/src/App.jsx:93
+msgid "browse"
 msgstr ""
 
-#: admin/js/template-builder/src/App.jsx:70
-#: dist/admin-template-builder.js:533
-msgid "Title is required."
+#: admin/js/clipart/src/App.jsx:149
+#, js-format
+msgid "Delete collection \"%s\" and all its items?"
 msgstr ""
 
-#: admin/js/template-builder/src/App.jsx:124
-#: dist/admin-template-builder.js:533
-msgid "Save failed."
+#: admin/js/clipart/src/App.jsx:160
+#, js-format
+msgid "Delete %d selected items?"
 msgstr ""
 
-#: admin/js/template-builder/src/App.jsx:133
-#: dist/admin-template-builder.js:533
-msgid "Loading template…"
-msgstr ""
-
-#: admin/js/template-builder/src/App.jsx:142
-#: dist/admin-template-builder.js:533
-msgid "← Templates"
-msgstr ""
-
-#: admin/js/template-builder/src/App.jsx:149
-#: dist/admin-template-builder.js:533
-msgid "Template title…"
-msgstr ""
-
-#: admin/js/template-builder/src/App.jsx:165
-#: dist/admin-template-builder.js:533
-msgid "Saving…"
-msgstr ""
-
-#: admin/js/template-builder/src/App.jsx:165
-#: dist/admin-template-builder.js:533
+#: admin/js/clipart/src/App.jsx:226
+#: admin/js/design-templates/src/App.jsx:94
+#: admin/js/template-builder/src/App.jsx:229
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:134
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:104
 msgid "Save"
 msgstr ""
 
-#: admin/js/template-builder/src/App.jsx:165
-#: dist/admin-template-builder.js:533
+#: admin/js/clipart/src/App.jsx:229
+#: admin/js/design-templates/src/App.jsx:97
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:137
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:107
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:150
+#: admin/js/template-builder/src/components/ZoneForm.jsx:345
+msgid "Cancel"
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:235
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:151
+msgid "Rename"
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:238
+#: admin/js/design-templates/src/App.jsx:245
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:154
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:124
+#: admin/js/template-builder/src/components/TreeNode.jsx:213
+#: admin/js/template-builder/src/components/TreeNode.jsx:214
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:106
+msgid "Delete"
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:248
+#: admin/js/design-templates/src/App.jsx:202
+#: admin/js/template-builder/src/components/TreePanel.jsx:378
+#: admin/js/template-builder/src/components/TreePanel.jsx:401
+msgid "Loading..."
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:259
+msgid "Select All"
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:268
+msgid "Deleting..."
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:269
+msgid "Delete Selected"
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:353
+msgid "New collection name..."
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:363
+msgid "Creating..."
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:363
+msgid "Create Collection"
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:368
+msgid "Loading collections..."
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:371
+msgid "No clip art collections yet. Create one to get started."
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:31
+msgid "Name is required."
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:58
+msgid "Edit Design Template"
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:58
+msgid "New Design Template"
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:63
+#: admin/js/design-templates/src/App.jsx:209
+#: admin/js/template-builder/src/components/TreePanel.jsx:581
+#: admin/js/template-builder/src/components/ZoneForm.jsx:130
+msgid "Name"
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:67
+#: admin/js/design-templates/src/App.jsx:210
+msgid "Category"
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:68
+msgid "e.g. T-Shirt, Mug"
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:71
+#: admin/js/design-templates/src/App.jsx:211
+msgid "Product Template"
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:74
+msgid "Any template"
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:85
+#: admin/js/design-templates/src/App.jsx:232
+msgid "Active"
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:86
+#: admin/js/design-templates/src/App.jsx:232
+msgid "Inactive"
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:94
+#: frontend/js/designer/src/App.jsx:608
+msgid "Saving..."
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:162
+#, js-format
+msgid "Delete design template \"%s\"?"
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:196
+msgid "Importing..."
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:196
+msgid "Import JSON"
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:204
+msgid "No design templates yet. Create one to get started."
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:214
+msgid "Actions"
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:222
+msgid "Any"
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:241
+msgid "Export"
+msgstr ""
+
+#: admin/js/template-builder/src/App.jsx:17
+msgid "Structure"
+msgstr ""
+
+#: admin/js/template-builder/src/App.jsx:18
+#: admin/js/template-builder/src/components/settings/SettingsPermissions.jsx:7
+msgid "Permissions"
+msgstr ""
+
+#: admin/js/template-builder/src/App.jsx:19
+#: admin/js/template-builder/src/components/settings/SettingsPricing.jsx:7
+msgid "Pricing"
+msgstr ""
+
+#: admin/js/template-builder/src/App.jsx:95
+msgid "Front"
+msgstr ""
+
+#: admin/js/template-builder/src/App.jsx:133
+msgid "Title is required."
+msgstr ""
+
+#: admin/js/template-builder/src/App.jsx:188
+msgid "Save failed."
+msgstr ""
+
+#: admin/js/template-builder/src/App.jsx:197
+msgid "Loading template…"
+msgstr ""
+
+#: admin/js/template-builder/src/App.jsx:206
+msgid "← Templates"
+msgstr ""
+
+#: admin/js/template-builder/src/App.jsx:213
+msgid "Template title…"
+msgstr ""
+
+#: admin/js/template-builder/src/App.jsx:229
+msgid "Saving…"
+msgstr ""
+
+#: admin/js/template-builder/src/App.jsx:229
 msgid "Saved ✓"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:737
-#: dist/admin-template-builder.js:529
+#: admin/js/template-builder/src/components/Canvas.jsx:841
 msgid "Select Background Image"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:738
-#: admin/js/template-builder/src/components/Canvas.jsx:805
-#: dist/admin-template-builder.js:529
+#: admin/js/template-builder/src/components/Canvas.jsx:842
+#: admin/js/template-builder/src/components/Canvas.jsx:1018
 msgid "Set Background"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:796
-#: dist/admin-template-builder.js:529
+#: admin/js/template-builder/src/components/Canvas.jsx:1009
 msgid "Enable zone enforcement"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:796
-#: dist/admin-template-builder.js:529
+#: admin/js/template-builder/src/components/Canvas.jsx:1009
 msgid "Disable zone enforcement for free positioning"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:798
-#: dist/admin-template-builder.js:529
+#: admin/js/template-builder/src/components/Canvas.jsx:1011
 msgid "Enforce Zones"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:798
-#: dist/admin-template-builder.js:529
+#: admin/js/template-builder/src/components/Canvas.jsx:1011
 msgid "Free Move"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:803
-#: dist/admin-template-builder.js:529
+#: admin/js/template-builder/src/components/Canvas.jsx:1016
 msgid "Set background image"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:805
-#: dist/admin-template-builder.js:529
+#: admin/js/template-builder/src/components/Canvas.jsx:1018
 msgid "Change Background"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:811
-#: dist/admin-template-builder.js:529
+#: admin/js/template-builder/src/components/Canvas.jsx:1024
+msgid "Resize and reposition the background image"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1026
+msgid "Resize BG"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1033
+msgid "Apply background position"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1035
+msgid "Done"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1042
 msgid "Remove background image"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:813
-#: dist/admin-template-builder.js:529
+#: admin/js/template-builder/src/components/Canvas.jsx:1044
 msgid "Remove BG"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:820
-#: dist/admin-template-builder.js:529
+#: admin/js/template-builder/src/components/Canvas.jsx:1051
+#: frontend/js/designer/src/components/Toolbar.jsx:29
 msgid "Undo (Ctrl+Z)"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:822
-#: dist/admin-template-builder.js:529
+#: admin/js/template-builder/src/components/Canvas.jsx:1053
 msgid "↩ Undo"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:828
-#: dist/admin-template-builder.js:529
+#: admin/js/template-builder/src/components/Canvas.jsx:1059
+#: frontend/js/designer/src/components/Toolbar.jsx:36
 msgid "Redo (Ctrl+Shift+Z)"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:830
-#: dist/admin-template-builder.js:529
+#: admin/js/template-builder/src/components/Canvas.jsx:1061
 msgid "↪ Redo"
 msgstr ""
 
-#: admin/js/template-builder/src/components/GlobalSettings.jsx:42
-#: dist/admin-template-builder.js:533
-msgid "Color Picker"
+#: admin/js/template-builder/src/components/Canvas.jsx:1101
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:324
+msgid "Align left"
 msgstr ""
 
-#: admin/js/template-builder/src/components/GlobalSettings.jsx:46
-#: dist/admin-template-builder.js:533
-msgid "Enable color picker"
+#: admin/js/template-builder/src/components/Canvas.jsx:1102
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:325
+msgid "Align center"
 msgstr ""
 
-#: admin/js/template-builder/src/components/GlobalSettings.jsx:53
-#: dist/admin-template-builder.js:533
-msgid "Allow any color (full picker)"
+#: admin/js/template-builder/src/components/Canvas.jsx:1103
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:326
+msgid "Align right"
 msgstr ""
 
-#: admin/js/template-builder/src/components/GlobalSettings.jsx:73
-#: admin/js/template-builder/src/components/GlobalSettings.jsx:74
-#: dist/admin-template-builder.js:533
-msgid "Pick a color"
+#: admin/js/template-builder/src/components/Canvas.jsx:1104
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:327
+msgid "Align top"
 msgstr ""
 
-#: admin/js/template-builder/src/components/GlobalSettings.jsx:80
-#: dist/admin-template-builder.js:533
-msgid "Add selected color"
+#: admin/js/template-builder/src/components/Canvas.jsx:1105
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:328
+msgid "Align middle"
 msgstr ""
 
-#: admin/js/template-builder/src/components/GlobalSettings.jsx:82
-#: admin/js/template-builder/src/components/TreePanel.jsx:276
-#: dist/admin-template-builder.js:533
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/components/Sidebar.jsx:29
-msgid "Add"
+#: admin/js/template-builder/src/components/Canvas.jsx:1106
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:329
+msgid "Align bottom"
 msgstr ""
 
-#: admin/js/template-builder/src/components/GlobalSettings.jsx:92
-#: dist/admin-template-builder.js:533
-msgid "Font Picker"
+#: admin/js/template-builder/src/components/GlobalSettings.jsx:40
+msgid "Configure product color palettes and element color modes with Pro."
 msgstr ""
 
-#: admin/js/template-builder/src/components/GlobalSettings.jsx:96
-#: dist/admin-template-builder.js:533
-msgid "Enable font picker"
+#: admin/js/template-builder/src/components/GlobalSettings.jsx:44
+msgid "Upload custom fonts for your designs with Pro."
 msgstr ""
 
-#: admin/js/template-builder/src/components/GlobalSettings.jsx:107
-#: dist/admin-template-builder.js:533
-msgid "Image Upload Restrictions"
+#: admin/js/template-builder/src/components/GlobalSettings.jsx:50
+msgid "Create clip art libraries for customers with Pro."
 msgstr ""
 
-#: admin/js/template-builder/src/components/GlobalSettings.jsx:109
-#: dist/admin-template-builder.js:533
-msgid "Max file size (MB)"
+#: admin/js/template-builder/src/components/GlobalSettings.jsx:56
+msgid "Add design surcharges and per-element pricing with Pro."
 msgstr ""
 
-#: admin/js/template-builder/src/components/GlobalSettings.jsx:116
-#: dist/admin-template-builder.js:533
-msgid "Min width (px)"
-msgstr ""
-
-#: admin/js/template-builder/src/components/GlobalSettings.jsx:123
-#: dist/admin-template-builder.js:533
-msgid "Min height (px)"
-msgstr ""
-
-#: admin/js/template-builder/src/components/GlobalSettings.jsx:130
-#: dist/admin-template-builder.js:533
-msgid "Min DPI"
-msgstr ""
-
-#: admin/js/template-builder/src/components/GlobalSettings.jsx:137
-#: dist/admin-template-builder.js:533
-msgid "Allowed types:"
-msgstr ""
-
-#: admin/js/template-builder/src/components/GlobalSettings.jsx:192
-#: dist/admin-template-builder.js:533
-msgid "Add a font..."
-msgstr ""
-
-#: admin/js/template-builder/src/components/GlobalSettings.jsx:202
-#: dist/admin-template-builder.js:533
-msgid "No fonts selected. Customers won't be able to change fonts."
+#: admin/js/template-builder/src/components/GlobalSettings.jsx:60
+msgid "Fine-tune element permissions per type with Pro."
 msgstr ""
 
 #: admin/js/template-builder/src/components/PermissionsPanel.jsx:53
-#: dist/admin-template-builder.js:533
 msgid "Min scale"
 msgstr ""
 
 #: admin/js/template-builder/src/components/PermissionsPanel.jsx:62
-#: dist/admin-template-builder.js:533
 msgid "Max scale"
 msgstr ""
 
 #: admin/js/template-builder/src/components/PermissionsPanel.jsx:72
-#: dist/admin-template-builder.js:533
 msgid "Grid size (px)"
 msgstr ""
 
 #: admin/js/template-builder/src/components/PricingPanel.jsx:27
-#: dist/admin-template-builder.js:533
 msgid "Pricing mode"
 msgstr ""
 
 #: admin/js/template-builder/src/components/PricingPanel.jsx:33
-#: dist/admin-template-builder.js:533
 msgid "Per element"
 msgstr ""
 
 #: admin/js/template-builder/src/components/PricingPanel.jsx:34
-#: dist/admin-template-builder.js:533
 msgid "Tier-based"
 msgstr ""
 
 #: admin/js/template-builder/src/components/PricingPanel.jsx:41
-#: dist/admin-template-builder.js:533
 msgid "Element prices"
 msgstr ""
 
 #: admin/js/template-builder/src/components/PricingPanel.jsx:43
-#: admin/js/template-builder/src/components/TreePanel.jsx:235
-#: admin/js/template-builder/src/components/TreePanel.jsx:295
-#: dist/admin-template-builder.js:533
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:39
+#: admin/js/template-builder/src/components/TreePanel.jsx:318
+#: admin/js/template-builder/src/components/TreePanel.jsx:439
+#: admin/js/template-builder/src/components/TreePanel.jsx:528
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:44
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:567
 msgid "Text"
 msgstr ""
 
 #: admin/js/template-builder/src/components/PricingPanel.jsx:44
-#: dist/admin-template-builder.js:533
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:48
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:56
 msgid "Image"
 msgstr ""
 
 #: admin/js/template-builder/src/components/PricingPanel.jsx:45
-#: dist/admin-template-builder.js:533
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:57
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:68
 msgid "SVG"
 msgstr ""
 
 #: admin/js/template-builder/src/components/PricingPanel.jsx:46
-#: dist/admin-template-builder.js:533
 msgid "Extra layer"
 msgstr ""
 
 #: admin/js/template-builder/src/components/PricingPanel.jsx:63
-#: dist/admin-template-builder.js:533
 msgid "Tiers (element count → surcharge)"
 msgstr ""
 
 #: admin/js/template-builder/src/components/PricingPanel.jsx:66
-#: dist/admin-template-builder.js:533
 msgid "Min"
 msgstr ""
 
 #: admin/js/template-builder/src/components/PricingPanel.jsx:68
-#: dist/admin-template-builder.js:533
 msgid "Max"
 msgstr ""
 
 #: admin/js/template-builder/src/components/PricingPanel.jsx:74
-#: dist/admin-template-builder.js:533
 msgid "Remove tier"
 msgstr ""
 
 #: admin/js/template-builder/src/components/PricingPanel.jsx:82
-#: dist/admin-template-builder.js:533
 msgid "Add Tier"
 msgstr ""
 
 #: admin/js/template-builder/src/components/PricingPanel.jsx:88
-#: dist/admin-template-builder.js:533
 msgid "Surcharge caps"
 msgstr ""
 
 #: admin/js/template-builder/src/components/PricingPanel.jsx:90
-#: dist/admin-template-builder.js:533
 msgid "Minimum"
 msgstr ""
 
 #: admin/js/template-builder/src/components/PricingPanel.jsx:97
-#: dist/admin-template-builder.js:533
 msgid "Maximum cap"
 msgstr ""
 
 #: admin/js/template-builder/src/components/PricingPanel.jsx:97
-#: dist/admin-template-builder.js:533
 msgid "leave blank for no cap"
 msgstr ""
 
 #: admin/js/template-builder/src/components/PricingPanel.jsx:101
-#: dist/admin-template-builder.js:533
 msgid "No cap"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreeNode.jsx:22
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:33
+msgid "Delete this collection and all its clip art?"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:118
+msgid "Clip Art Collections"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:179
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:142
+msgid "Uploading…"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:179
+msgid "Upload SVGs"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:200
+msgid "New collection name"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:210
+msgid "Create"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:222
+msgid "Assets"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:223
+msgid "Manage clip art libraries available to customers."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:226
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:104
+msgid "Clip Art"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:230
+msgid "Enable clip art library"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:237
+msgid "Allow recoloring clip art"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:242
+msgid "Available collections:"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:280
+msgid "Manage collections and upload SVGs from the"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:282
+msgid "admin page."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:293
+msgid "Enable design templates"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:297
+msgid "Manage design templates from the ProductForge → Design Templates admin page."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:58
+msgid "Color Palettes"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:98
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:168
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:290
+#: frontend/js/designer/src/components/Sidebar.jsx:88
+msgid "Add"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:134
+msgid "New Palette"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:139
+msgid "Palette name"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:178
+msgid "Create Palette"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:206
+msgid "Enable color picker"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:212
+msgid "Color mode"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:218
+msgid "All colors (full picker)"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:219
+msgid "Use a color palette"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:220
+msgid "Individual colors"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:228
+msgid "Palette"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:235
+msgid "— Select a palette —"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:237
+msgid "colors"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:245
+msgid "Close"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:245
+msgid "Manage Palettes"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:281
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:282
+msgid "Pick a color"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:288
+msgid "Add selected color"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:311
+msgid "Colors"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:312
+msgid "Configure color pickers for product and element colors."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:315
+msgid "Colorpicker Product"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:324
+msgid "Colorpicker Elements"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:100
+msgid "Add a font..."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:111
+msgid "Upload Custom Font"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:115
+msgid "Choose File"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:130
+msgid "Font family name"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:142
+msgid "Upload"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:155
+msgid "Supported formats: .woff2, .woff, .ttf. You can upload multiple files for the same family name (e.g. regular + bold)."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:163
+msgid "Uploaded Fonts"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:175
+msgid "Delete font"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:186
+msgid "No fonts selected. Customers won't be able to change fonts."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:198
+msgid "Fonts"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:199
+msgid "Control which fonts customers can use in their designs."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:202
+msgid "Font Picker"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:206
+msgid "Enable font picker"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsGeneral.jsx:11
+msgid "General"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsGeneral.jsx:12
+msgid "Global template behavior and product settings."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsGeneral.jsx:15
+msgid "Cart Behavior"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsGeneral.jsx:19
+msgid "Require customization before adding to cart"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsGeneral.jsx:22
+msgid "When enabled, customers must save a design before they can add the product to their cart."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsGeneral.jsx:27
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:477
+msgid "Product Color"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsGeneral.jsx:31
+msgid "Solid color product (all views share the same color)"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsGeneral.jsx:34
+msgid "Enable this for products like dog tags, keychains, etc. where front and back are the same color. Changing the color on one view will update all views."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsPermissions.jsx:8
+msgid "Control global customer permissions across all templates."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsPermissions.jsx:9
+msgid "No global permissions configured."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsPricing.jsx:8
+msgid "Configure global pricing rules for customization surcharges."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsPricing.jsx:9
+msgid "No global pricing configured."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsTools.jsx:10
+msgid "Tools"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsTools.jsx:11
+msgid "Configure which tools are available to customers."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsTools.jsx:14
+msgid "Drawing Tool"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsTools.jsx:21
+msgid "Enable drawing tool"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsTools.jsx:26
+msgid "Default stroke width"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsTools.jsx:36
+msgid "Default stroke color"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsTools.jsx:48
+msgid "Image Filters"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsTools.jsx:55
+msgid "Enable image filters"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsTools.jsx:59
+msgid "Available filters:"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsTools.jsx:85
+msgid "Curved Text"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsTools.jsx:92
+msgid "Enable curved text tool"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:24
+msgid "Uploads"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:25
+msgid "Restrict what customers can upload to their designs."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:28
+msgid "Image Upload Restrictions"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:30
+msgid "Max file size (MB)"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:37
+msgid "Min width (px)"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:44
+msgid "Min height (px)"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:51
+msgid "Min DPI"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:58
+msgid "Allowed types:"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:102
 msgid "Unnamed Zone"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreeNode.jsx:22
-#: admin/js/template-builder/src/components/TreePanel.jsx:326
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/TreeNode.jsx:102
+#: admin/js/template-builder/src/components/TreePanel.jsx:575
 msgid "Layer"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreeNode.jsx:30
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/TreeNode.jsx:137
 msgid "Drag to reorder"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreeNode.jsx:43
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/TreeNode.jsx:146
+msgid "Collapse"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:146
+msgid "Expand"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:194
+#: admin/js/template-builder/src/components/TreeNode.jsx:195
 msgid "Add layer"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreeNode.jsx:49
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/TreeNode.jsx:201
+#: admin/js/template-builder/src/components/TreeNode.jsx:202
 msgid "Show"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreeNode.jsx:49
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/TreeNode.jsx:201
+#: admin/js/template-builder/src/components/TreeNode.jsx:202
 msgid "Hide"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreeNode.jsx:54
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/TreeNode.jsx:207
+#: admin/js/template-builder/src/components/TreeNode.jsx:208
 msgid "Unlock"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreeNode.jsx:54
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/TreeNode.jsx:207
+#: admin/js/template-builder/src/components/TreeNode.jsx:208
 msgid "Lock"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreeNode.jsx:59
-#: dist/admin-template-builder.js:533
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:56
-msgid "Delete"
-msgstr ""
-
-#: admin/js/template-builder/src/components/TreePanel.jsx:125
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/TreePanel.jsx:165
 msgid "Add a boundary first to place layers."
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:173
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/TreePanel.jsx:214
+msgid "Add Boundary"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:216
 msgid "+ Add Boundary"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:175
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/TreePanel.jsx:218
 msgid "Saved Boundary"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:240
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/TreePanel.jsx:324
 msgid "Select SVG"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:240
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/TreePanel.jsx:324
 msgid "Select Image"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:241
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/TreePanel.jsx:325
 msgid "Use"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:268
-#: dist/admin-template-builder.js:533
-msgid "Layer name"
+#: admin/js/template-builder/src/components/TreePanel.jsx:371
+msgid "Back"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:277
-#: admin/js/template-builder/src/components/ZoneForm.jsx:229
-#: dist/admin-template-builder.js:533
-msgid "Cancel"
+#: admin/js/template-builder/src/components/TreePanel.jsx:373
+msgid "Clipart Library"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:293
-#: dist/admin-template-builder.js:533
-msgid "Text Properties"
+#: admin/js/template-builder/src/components/TreePanel.jsx:381
+msgid "No collections yet."
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:299
-#: dist/admin-template-builder.js:533
-msgid "Font Size"
+#: admin/js/template-builder/src/components/TreePanel.jsx:382
+msgid "Create one"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:303
-#: dist/admin-template-builder.js:533
-msgid "Font Family"
+#: admin/js/template-builder/src/components/TreePanel.jsx:403
+msgid "Empty collection."
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:311
-#: dist/admin-template-builder.js:533
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:128
+#: admin/js/template-builder/src/components/TreePanel.jsx:430
+msgid "Add Layer"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:447
+msgid "Media Library"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:489
+#: admin/js/template-builder/src/components/TreePanel.jsx:497
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:190
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:622
+#: frontend/js/designer/src/components/Toolbar.jsx:91
 msgid "Color"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:315
-#: admin/js/template-builder/src/components/TreePanel.jsx:341
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/TreePanel.jsx:526
+msgid "Text Properties"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:532
+msgid "Font Size"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:536
+msgid "Font Family"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:550
+msgid "Text Align"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:552
+msgid "Left"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:553
+msgid "Center"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:554
+msgid "Right"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:558
+msgid "Width"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:563
+#: admin/js/template-builder/src/components/TreePanel.jsx:591
 msgid "X"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:319
-#: admin/js/template-builder/src/components/TreePanel.jsx:345
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/TreePanel.jsx:567
+#: admin/js/template-builder/src/components/TreePanel.jsx:595
 msgid "Y"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:330
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/TreePanel.jsx:579
 msgid "Properties"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:332
-#: admin/js/template-builder/src/components/ZoneForm.jsx:58
-#: dist/admin-template-builder.js:533
-msgid "Name"
-msgstr ""
-
-#: admin/js/template-builder/src/components/TreePanel.jsx:337
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/TreePanel.jsx:586
 msgid "Preview"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:349
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/TreePanel.jsx:601
 msgid "Scale X"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:353
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/TreePanel.jsx:605
 msgid "Scale Y"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:357
-#: admin/js/template-builder/src/components/ZoneForm.jsx:168
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/TreePanel.jsx:610
+#: admin/js/template-builder/src/components/ZoneForm.jsx:240
 msgid "Rotation"
 msgstr ""
 
+#: admin/js/template-builder/src/components/UpgradePrompt.jsx:9
+msgid "Pro"
+msgstr ""
+
+#: admin/js/template-builder/src/components/UpgradePrompt.jsx:17
+msgid "Upgrade to Pro"
+msgstr ""
+
 #. translators: %d is the view number
-#: admin/js/template-builder/src/components/ViewTabs.jsx:18
-#: dist/admin-template-builder.js:529
+#: admin/js/template-builder/src/components/ViewTabs.jsx:20
 msgid "View"
 msgstr ""
 
-#: admin/js/template-builder/src/components/ViewTabs.jsx:80
-#: dist/admin-template-builder.js:529
+#: admin/js/template-builder/src/components/ViewTabs.jsx:82
 msgid "Double-click to rename"
 msgstr ""
 
-#: admin/js/template-builder/src/components/ViewTabs.jsx:87
-#: admin/js/template-builder/src/components/ZoneForm.jsx:108
-#: dist/admin-template-builder.js:529
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/ViewTabs.jsx:89
+#: admin/js/template-builder/src/components/ZoneForm.jsx:180
 msgid "Remove"
 msgstr ""
 
 #. translators: %s is the view name
-#: admin/js/template-builder/src/components/ViewTabs.jsx:92
-#: dist/admin-template-builder.js:529
+#: admin/js/template-builder/src/components/ViewTabs.jsx:94
 msgid "Remove view"
 msgstr ""
 
-#: admin/js/template-builder/src/components/ViewTabs.jsx:107
-#: dist/admin-template-builder.js:529
+#: admin/js/template-builder/src/components/ViewTabs.jsx:109
 msgid "Add view"
 msgstr ""
 
-#: admin/js/template-builder/src/components/ViewTabs.jsx:110
-#: dist/admin-template-builder.js:529
+#: admin/js/template-builder/src/components/ViewTabs.jsx:111
+msgid "Multiple views require Pro"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ViewTabs.jsx:113
 msgid "+ Add View"
 msgstr ""
 
-#: admin/js/template-builder/src/components/ZoneForm.jsx:63
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/ZoneForm.jsx:65
+#: admin/js/template-builder/src/components/ZoneForm.jsx:79
+msgid "Clear"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:135
 msgid "e.g. Front Print Area"
 msgstr ""
 
-#: admin/js/template-builder/src/components/ZoneForm.jsx:70
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/ZoneForm.jsx:142
 msgid "Type"
 msgstr ""
 
-#: admin/js/template-builder/src/components/ZoneForm.jsx:72
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/ZoneForm.jsx:144
 msgid "Safe Area"
 msgstr ""
 
-#: admin/js/template-builder/src/components/ZoneForm.jsx:73
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/ZoneForm.jsx:145
 msgid "Upload Zone"
 msgstr ""
 
-#: admin/js/template-builder/src/components/ZoneForm.jsx:77
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/ZoneForm.jsx:149
 msgid "Behavior"
 msgstr ""
 
-#: admin/js/template-builder/src/components/ZoneForm.jsx:79
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/ZoneForm.jsx:151
 msgid "Restrict (can't leave)"
 msgstr ""
 
-#: admin/js/template-builder/src/components/ZoneForm.jsx:80
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/ZoneForm.jsx:152
 msgid "Clip at boundary"
 msgstr ""
 
-#: admin/js/template-builder/src/components/ZoneForm.jsx:87
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/ZoneForm.jsx:159
 msgid "Boundary"
 msgstr ""
 
-#: admin/js/template-builder/src/components/ZoneForm.jsx:92
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/ZoneForm.jsx:164
 msgid "Rectangle"
 msgstr ""
 
-#: admin/js/template-builder/src/components/ZoneForm.jsx:93
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/ZoneForm.jsx:165
 msgid "SVG Shape"
 msgstr ""
 
-#: admin/js/template-builder/src/components/ZoneForm.jsx:102
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/ZoneForm.jsx:174
 msgid "Zone shape"
 msgstr ""
 
-#: admin/js/template-builder/src/components/ZoneForm.jsx:117
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/ZoneForm.jsx:189
 msgid "Select SVG Zone Shape"
 msgstr ""
 
-#: admin/js/template-builder/src/components/ZoneForm.jsx:118
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/ZoneForm.jsx:190
 msgid "Use Shape"
 msgstr ""
 
-#: admin/js/template-builder/src/components/ZoneForm.jsx:129
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/ZoneForm.jsx:201
 msgid "Could not parse SVG file."
 msgstr ""
 
-#: admin/js/template-builder/src/components/ZoneForm.jsx:148
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/ZoneForm.jsx:220
 msgid "Failed to parse SVG file."
 msgstr ""
 
-#: admin/js/template-builder/src/components/ZoneForm.jsx:154
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/ZoneForm.jsx:226
 msgid "Upload SVG Shape"
 msgstr ""
 
-#: admin/js/template-builder/src/components/ZoneForm.jsx:160
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/ZoneForm.jsx:232
 msgid "Scale"
 msgstr ""
 
-#: admin/js/template-builder/src/components/ZoneForm.jsx:192
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/ZoneForm.jsx:248
+msgid "Fill Color"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:262
+msgid "Customer can change fill color"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:281
 msgid "Resize the SVG on canvas or change Scale to adjust"
 msgstr ""
 
-#: admin/js/template-builder/src/components/ZoneForm.jsx:200
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/ZoneForm.jsx:289
 msgid "Allowed element types"
 msgstr ""
 
-#: admin/js/template-builder/src/components/ZoneForm.jsx:216
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/ZoneForm.jsx:311
+msgid "Default Font"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:317
+msgid "Default (Arial)"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:332
 msgid "Mask SVG URL"
 msgstr ""
 
-#: admin/js/template-builder/src/components/ZoneForm.jsx:228
-#: dist/admin-template-builder.js:533
+#: admin/js/template-builder/src/components/ZoneForm.jsx:344
 msgid "Save Boundary"
 msgstr ""
 
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/components/DesignerCanvas.jsx:412
+#: frontend/js/designer/src/App.jsx:99
+msgid "The designer could not load. Please reload the page."
+msgstr ""
+
+#: frontend/js/designer/src/App.jsx:395
+msgid "Please customize your product before adding to cart."
+msgstr ""
+
+#: frontend/js/designer/src/App.jsx:470
+msgid "Failed to save design. Please try again."
+msgstr ""
+
+#: frontend/js/designer/src/App.jsx:558
+msgid "Loading designer..."
+msgstr ""
+
+#: frontend/js/designer/src/App.jsx:562
+msgid "Template not available."
+msgstr ""
+
+#: frontend/js/designer/src/App.jsx:588
+msgid "ProductForge designer"
+msgstr ""
+
+#: frontend/js/designer/src/App.jsx:608
+msgid "Saved!"
+msgstr ""
+
+#: frontend/js/designer/src/App.jsx:608
+msgid "Save Design"
+msgstr ""
+
+#: frontend/js/designer/src/App.jsx:617
+msgid "Close Designer"
+msgstr ""
+
+#: frontend/js/designer/src/components/CurvedTextProperties.jsx:58
+msgid "Curve intensity"
+msgstr ""
+
+#: frontend/js/designer/src/components/CurvedTextProperties.jsx:69
+msgid "Letter spacing"
+msgstr ""
+
+#: frontend/js/designer/src/components/DesignerCanvas.jsx:651
+#: frontend/js/designer/src/components/DesignerCanvas.jsx:698
 msgid "Your text here"
 msgstr ""
 
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:30
+#: frontend/js/designer/src/components/DesignerCanvas.jsx:748
+msgid "Your text"
+msgstr ""
+
+#: frontend/js/designer/src/components/DesignTemplates.jsx:24
+msgid "Apply this template? This will replace your current design elements."
+msgstr ""
+
+#: frontend/js/designer/src/components/DesignTemplates.jsx:57
+msgid "Loading templates..."
+msgstr ""
+
+#: frontend/js/designer/src/components/DesignTemplates.jsx:78
+msgid "All categories"
+msgstr ""
+
+#: frontend/js/designer/src/components/ImageFilters.jsx:86
+msgid "Filters"
+msgstr ""
+
+#: frontend/js/designer/src/components/ImageFilters.jsx:88
+msgid "Reset"
+msgstr ""
+
+#: frontend/js/designer/src/components/ImageFilters.jsx:100
+msgid "None"
+msgstr ""
+
+#: frontend/js/designer/src/components/Sidebar.jsx:45
+msgid "Show options"
+msgstr ""
+
+#: frontend/js/designer/src/components/Sidebar.jsx:45
+msgid "Hide options"
+msgstr ""
+
+#: frontend/js/designer/src/components/Sidebar.jsx:48
+msgid "Element Options"
+msgstr ""
+
+#: frontend/js/designer/src/components/Sidebar.jsx:50
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:34
 msgid "Add Element"
 msgstr ""
 
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:37
+#: frontend/js/designer/src/components/Sidebar.jsx:55
+msgid "Designer tools"
+msgstr ""
+
+#: frontend/js/designer/src/components/Sidebar.jsx:77
+msgid "Element"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:41
+msgid "Add text element"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:42
 msgid "Add text"
 msgstr ""
 
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:37
-msgid "Text not allowed on this view"
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:53
+msgid "Add image element"
 msgstr ""
 
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:46
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:54
 msgid "Add image (jpg, png, webp)"
 msgstr ""
 
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:46
-msgid "Images not allowed on this view"
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:65
+msgid "Add SVG element"
 msgstr ""
 
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:55
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:66
 msgid "Add SVG"
 msgstr ""
 
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:55
-msgid "SVGs not allowed on this view"
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:76
+msgid "Add curved text element"
 msgstr ""
 
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:12
-msgid "Select an element"
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:77
+msgid "Add curved text"
 msgstr ""
 
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:20
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:80
+msgid "Curved"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:89
+msgid "Add engraving text element"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:90
+msgid "Add engraving text (single-line font)"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:93
+msgid "Engrave"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:39
+msgid "Select an element to edit its properties"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:44
+msgid "Engraving"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:44
 msgid " Properties"
 msgstr ""
 
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:94
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:156
 msgid "Font"
 msgstr ""
 
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:111
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:173
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:608
+#: frontend/js/designer/src/components/Toolbar.jsx:80
 msgid "Size"
 msgstr ""
 
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:232
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:334
+msgid "Align"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:382
 msgid "Tint Color"
 msgstr ""
 
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/components/tabs/ViewsTab.jsx:26
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:578
+msgid "Engraving Font"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/ViewsTab.jsx:18
+msgid "Product views"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/ViewsTab.jsx:28
 #, js-format
 msgid "View %d"
 msgstr ""
 
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/components/Sidebar.jsx:37
-msgid "Element"
+#: frontend/js/designer/src/components/Toolbar.jsx:48
+msgid "Select"
 msgstr ""
 
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/App.jsx:29
-msgid "No template configured for this product."
+#: frontend/js/designer/src/components/Toolbar.jsx:54
+msgid "Draw"
 msgstr ""
 
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/App.jsx:166
-msgid "Loading designer..."
-msgstr ""
-
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/App.jsx:170
-msgid "Template not available."
-msgstr ""
-
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/App.jsx:201
-msgid "Saving..."
-msgstr ""
-
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/App.jsx:201
-msgid "Saved!"
-msgstr ""
-
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/App.jsx:201
-msgid "Save Design"
-msgstr ""
-
-#: dist/frontend-designer.js:560
-#: frontend/js/designer/src/App.jsx:209
-msgid "Close Designer"
-msgstr ""
-
-msgid "The designer could not load. Please reload the page."
+#: frontend/js/designer/src/components/Toolbar.jsx:60
+msgid "Eraser"
 msgstr ""

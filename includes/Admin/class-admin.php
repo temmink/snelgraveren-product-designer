@@ -5,12 +5,18 @@ defined('ABSPATH') || exit;
 
 class Admin {
 
+    private SettingsPage $settings_page;
+
     public function __construct() {
         add_action('admin_menu',           [$this, 'register_menus']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_scripts']);
         add_filter('upload_mimes',         [$this, 'allow_svg_upload']);
         add_filter('wp_check_filetype_and_ext', [$this, 'fix_svg_filetype'], 10, 5);
         add_filter('wp_handle_upload_prefilter', [$this, 'sanitize_svg_upload']);
+        add_action('admin_notices',        [SettingsPage::class, 'maybe_show_critical_notice']);
+
+        $this->settings_page = new SettingsPage();
+        $this->settings_page->init();
 
         new ProductIntegration();
     }
@@ -61,6 +67,8 @@ class Admin {
             'pf-clipart',
             [$this, 'render_clipart_page']
         );
+
+        $this->settings_page->register_menu();
     }
 
     public function render_list_page(): void {

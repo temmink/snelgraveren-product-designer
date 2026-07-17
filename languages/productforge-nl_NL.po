@@ -967,3 +967,129 @@ msgstr "Designer Sluiten"
 
 msgid "The designer could not load. Please reload the page."
 msgstr "De designer kon niet laden. Herlaad de pagina."
+
+msgid "PHP version"
+msgstr "PHP-versie"
+
+msgid "PHP %s detected. Minimum required: 8.1."
+msgstr "PHP %s gedetecteerd. Minimaal vereist: 8.1."
+
+msgid "Ask your host to upgrade PHP to 8.1 or newer."
+msgstr "Vraag je host om PHP te upgraden naar 8.1 of nieuwer."
+
+msgid "PHP fileinfo extension"
+msgstr "PHP fileinfo-extensie"
+
+msgid "Available. Uploaded files are MIME-validated."
+msgstr "Beschikbaar. Geüploade bestanden worden MIME-gevalideerd."
+
+msgid "Missing. Upload validation cannot run, so all uploads are rejected."
+msgstr "Ontbreekt. Uploadvalidatie kan niet draaien, dus alle uploads worden geweigerd."
+
+msgid "Enable the \"fileinfo\" PHP extension (php.ini or ask your host)."
+msgstr "Schakel de PHP-extensie \"fileinfo\" in (php.ini of vraag je host)."
+
+msgid "Writable: %s"
+msgstr "Schrijfbaar: %s"
+
+msgid "Writable."
+msgstr "Schrijfbaar."
+
+msgid "Not writable — used for %s."
+msgstr "Niet schrijfbaar — gebruikt voor %s."
+
+msgid "Make the directory writable for the web server, e.g. via your hosting file manager or: chmod 755 %s (owner must be the web server user)."
+msgstr "Maak de map schrijfbaar voor de webserver, bijv. via de bestandsbeheerder van je hosting of: chmod 755 %s (eigenaar moet de webserver-gebruiker zijn)."
+
+msgid "Writable: plugin dist/ directory"
+msgstr "Schrijfbaar: plugin dist/-map"
+
+msgid "Writable. Hash-named JS copies are created for reliable cache busting."
+msgstr "Schrijfbaar. Er worden hash-benoemde JS-kopieën gemaakt voor betrouwbare cache-invalidatie."
+
+msgid "Not writable. The designer still works, but browsers may serve a stale JS bundle after plugin updates (Safari caches JS for a year)."
+msgstr "Niet schrijfbaar. De designer werkt nog, maar browsers kunnen na plugin-updates een verouderde JS-bundle serveren (Safari cachet JS een jaar)."
+
+msgid "Make %s writable for the web server to enable hash-named cache busting."
+msgstr "Maak %s schrijfbaar voor de webserver om hash-benoemde cache-invalidatie mogelijk te maken."
+
+msgid "LiteSpeed Cache"
+msgstr "LiteSpeed Cache"
+
+msgid "Detected. The designer bundle is excluded from JS combining/minification automatically. Remember to purge the cache after plugin updates."
+msgstr "Gedetecteerd. De designer-bundle wordt automatisch uitgesloten van JS-combineren/minificatie. Vergeet niet de cache te legen na plugin-updates."
+
+msgid "rsvg-convert found (preferred converter)."
+msgstr "rsvg-convert gevonden (voorkeursconverter)."
+
+msgid "Imagick with SVG support found."
+msgstr "Imagick met SVG-ondersteuning gevonden."
+
+msgid "Neither rsvg-convert nor Imagick with SVG support found. Exports of designs saved with older plugin versions (SVG data) will fail; current browser-rendered PNG exports still work."
+msgstr "Geen rsvg-convert of Imagick met SVG-ondersteuning gevonden. Exports van designs die met oudere pluginversies zijn opgeslagen (SVG-data) zullen mislukken; huidige browser-gerenderde PNG-exports werken nog."
+
+msgid "SVG to PNG converter"
+msgstr "SVG-naar-PNG-converter"
+
+msgid "Install librsvg2-bin (provides /usr/bin/rsvg-convert) or enable the Imagick PHP extension with SVG delegate support."
+msgstr "Installeer librsvg2-bin (levert /usr/bin/rsvg-convert) of schakel de Imagick PHP-extensie met SVG-ondersteuning in."
+
+msgid "Database tables"
+msgstr "Databasetabellen"
+
+msgid "All %d tables present."
+msgstr "Alle %d tabellen aanwezig."
+
+msgid "Missing tables: %s"
+msgstr "Ontbrekende tabellen: %s"
+
+msgid "Deactivate and re-activate the plugin to re-run the database migrations."
+msgstr "Deactiveer en heractiveer de plugin om de databasemigraties opnieuw uit te voeren."
+
+msgid "Settings"
+msgstr "Instellingen"
+
+msgid "You do not have permission to access this page."
+msgstr "Je hebt geen rechten om deze pagina te bekijken."
+
+msgid "ProductForge Settings"
+msgstr "ProductForge-instellingen"
+
+msgid "Auto-export on order status"
+msgstr "Automatische export bij orderstatus"
+
+msgid "Design exports are generated automatically when an order reaches this status."
+msgstr "Design-exports worden automatisch gegenereerd wanneer een bestelling deze status bereikt."
+
+msgid "Default export format"
+msgstr "Standaard exportformaat"
+
+msgid "Delete data on uninstall"
+msgstr "Gegevens verwijderen bij de-installatie"
+
+msgid "Permanently delete ALL templates, customer designs, and exports when the plugin is deleted."
+msgstr "Verwijder permanent ALLE templates, klantdesigns en exports wanneer de plugin wordt verwijderd."
+
+msgid "Leave this off unless you are permanently removing the plugin. With this off, your templates and designs survive a delete + reinstall."
+msgstr "Laat dit uit tenzij je de plugin definitief verwijdert. Met deze optie uit overleven je templates en designs een verwijdering + herinstallatie."
+
+msgid "System status"
+msgstr "Systeemstatus"
+
+msgid "Environment checks for everything the plugin needs at runtime. Reload this page to re-run them."
+msgstr "Omgevingschecks voor alles wat de plugin tijdens gebruik nodig heeft. Herlaad deze pagina om ze opnieuw uit te voeren."
+
+msgid "Check"
+msgstr "Check"
+
+msgid "Result"
+msgstr "Resultaat"
+
+msgid "ProductForge: server configuration problem."
+msgstr "ProductForge: probleem met de serverconfiguratie."
+
+msgid "Failed checks: %s."
+msgstr "Mislukte checks: %s."
+
+msgid "View details and fixes"
+msgstr "Bekijk details en oplossingen"

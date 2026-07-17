@@ -111,6 +111,7 @@ All tables use InnoDB engine for foreign key and transaction support. Total: 11 
 | Add New | `pf-template-builder` | Template builder React app (canvas, zones, layers, permissions, pricing) |
 | Design Templates | `pf-design-templates` | Design template CRUD React app (list, create, edit, delete, import/export JSON) |
 | Clipart | `pf-clipart` | Clipart manager React app (collections CRUD, bulk SVG upload, drag & drop) |
+| Settings | `pf-settings` | Export options (`pf_export_trigger_status`, `pf_export_default_format`), `pf_delete_data_on_uninstall` toggle, and system status checks (`Admin\SystemStatus`: PHP ≥ 8.1, finfo, rsvg-convert/Imagick-SVG, writable `pf-thumbnails`/`pf-exports`/`pf-fonts`/`pf-clipart`/plugin `dist/`, DB tables, LiteSpeed detection). Critical failures also show as an admin notice on every ProductForge screen (cached 5 min in the `pf_system_status_critical` transient) |
 
 ## WooCommerce Integration Points
 
