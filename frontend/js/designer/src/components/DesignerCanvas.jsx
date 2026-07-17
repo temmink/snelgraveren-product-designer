@@ -791,6 +791,11 @@ export default function DesignerCanvas() {
   // ── Tool: add-image / add-svg via file input ──────────────────────────────
 
   const handleFileUpload = useCallback(async (file, elementType) => {
+    if (elementType === 'image' && template?.global_config?.vector_only) {
+      setError(__('Photos are not possible on this product (engraving requires vector artwork).', 'productforge'));
+      return;
+    }
+
     try {
       const result = await uploadFile(file);
       const canvas = fabricRef.current;
@@ -833,7 +838,7 @@ export default function DesignerCanvas() {
     }
 
     setActiveTool('select');
-  }, [findFirstZoneForType, zones, applyPermissions, applyZoneClip, clampToZone, snapshotView, currentViewIndex, setActiveTool, setError]);
+  }, [findFirstZoneForType, zones, template, applyPermissions, applyZoneClip, clampToZone, snapshotView, currentViewIndex, setActiveTool, setError]);
 
   const addClipartToCanvas = useCallback(async (svgUrl) => {
     try {

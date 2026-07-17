@@ -25,6 +25,18 @@ export default function SettingsUploads({ globalConfig, update }) {
       <p className="pf-settings__section-desc">{__('Restrict what customers can upload to their designs.', 'productforge')}</p>
 
       <fieldset className="pf-settings__fieldset">
+        <legend>{__('Vector Only', 'productforge')}</legend>
+        <label className="pf-settings__check">
+          <input type="checkbox" checked={globalConfig.vector_only || false}
+            onChange={(e) => update('vector_only', e.target.checked)} />
+          {__('Vector only (engraving) — block raster image uploads', 'productforge')}
+        </label>
+        <p className="pf-settings__note">
+          {__('Enable this for laser/CNC engraving products. Customers can still upload SVGs and use clip art, but photo (JPG/PNG/WebP) uploads are blocked.', 'productforge')}
+        </p>
+      </fieldset>
+
+      <fieldset className="pf-settings__fieldset">
         <legend>{__('Image Upload Restrictions', 'productforge')}</legend>
         <label className="pf-settings__label">
           {__('Max file size (MB)', 'productforge')}

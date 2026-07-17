@@ -15,6 +15,9 @@ export default function AddTab() {
     return zones.some((z) => (z.allowed_types || []).includes(type));
   };
 
+  const vectorOnly = !!globalConfig.vector_only;
+  const imageDisabled = vectorOnly || !isTypeAllowed('image');
+
   const handleToolClick = (tool) => {
     if (activeTool === tool) {
       setActiveTool('select');
@@ -46,12 +49,16 @@ export default function AddTab() {
         )}
         {isTypeAllowed('image') && (
           <label
-            htmlFor="pf-upload-image"
+            htmlFor={imageDisabled ? undefined : 'pf-upload-image'}
             className="pf-add-tools__btn"
             role="button"
-            tabIndex={0}
+            tabIndex={imageDisabled ? -1 : 0}
+            aria-disabled={imageDisabled}
             aria-label={__('Add image element', 'productforge')}
-            title={__('Add image (jpg, png, webp)', 'productforge')}
+            title={vectorOnly
+              ? __('Photos are not possible on this product (engraving requires vector artwork)', 'productforge')
+              : __('Add image (jpg, png, webp)', 'productforge')}
+            style={imageDisabled ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
           >
             {__('Image', 'productforge')}
           </label>
