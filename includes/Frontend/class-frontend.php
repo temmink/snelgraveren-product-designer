@@ -117,7 +117,9 @@ class Frontend {
                 'thumbnail' => $url,
                 'srcset'    => '',
                 'sizes'     => '',
+                /* translators: %d: view number */
                 'name'      => sprintf(__('Custom Design – View %d', 'productforge'), $i + 1),
+                /* translators: %d: view number */
                 'alt'       => sprintf(__('Your custom product design – view %d', 'productforge'), $i + 1),
             ];
         }
@@ -156,10 +158,11 @@ class Frontend {
      */
     private function get_design_hash_from_url(): string {
         // phpcs:disable WordPress.Security.NonceVerification
-        if (!empty($_GET['pf_design']) && preg_match('/^[0-9a-f]{32}$/', $_GET['pf_design'])) {
-            return sanitize_text_field(wp_unslash($_GET['pf_design']));
-        }
+        $hash = isset($_GET['pf_design']) ? sanitize_text_field(wp_unslash($_GET['pf_design'])) : '';
         // phpcs:enable
+        if ($hash !== '' && preg_match('/^[0-9a-f]{32}$/', $hash)) {
+            return $hash;
+        }
         return '';
     }
 
@@ -203,6 +206,10 @@ class Frontend {
         $dist_path = PF_PLUGIN_DIR . 'dist/';
         $dist_url  = PF_PLUGIN_URL . 'dist/';
 
+        $upload_dir = wp_upload_dir();
+        $cache_path = trailingslashit($upload_dir['basedir']) . 'pf-cache/';
+        $cache_url  = trailingslashit($upload_dir['baseurl']) . 'pf-cache/';
+
         // Enqueue JS
         $js_file = 'frontend-designer.js';
         if (file_exists($dist_path . $js_file)) {
@@ -221,23 +228,26 @@ class Frontend {
             // URL. LiteSpeed's Delay JS feature strips the ?ver= query
             // parameter we pass to wp_enqueue_script, so without a different
             // URL, Safari keeps serving the old bundle after every deploy.
-            // Copy the source to a hash-named file so the URL itself changes
-            // per build. If the plugin directory is not writable we fall back
-            // to the un-hashed URL (same as before).
+            // Copy the source to a hash-named file in uploads/pf-cache/ so the
+            // URL itself changes per build. wp.org disallows writing inside
+            // the plugin directory, so this never touches dist/. If uploads
+            // isn't writable we fall back to the un-hashed dist/ URL (same
+            // fallback behavior as before).
             $hashed_file = 'frontend-designer.' . $js_version . '.js';
-            $hashed_path = $dist_path . $hashed_file;
-            if (!file_exists($hashed_path) && is_writable($dist_path)) {
+            wp_mkdir_p($cache_path);
+            $hashed_path = $cache_path . $hashed_file;
+            if (!file_exists($hashed_path) && wp_is_writable($cache_path)) {
                 // Keep the NEWEST existing hashed copy (the previous build's):
                 // LiteSpeed page-cached HTML keeps referencing that URL until
                 // the cache expires or is flushed — deleting it immediately
                 // would 404 the bundle on every cached page. Older copies and
                 // orphaned temp files are removed.
                 $existing = [];
-                foreach (glob($dist_path . 'frontend-designer.*.js') ?: [] as $candidate) {
+                foreach (glob($cache_path . 'frontend-designer.*.js') ?: [] as $candidate) {
                     if (strpos(basename($candidate), 'frontend-designer.tmp-') === 0) {
                         // Temp file from a crashed/concurrent request.
                         if (time() - (int) filemtime($candidate) > DAY_IN_SECONDS) {
-                            @unlink($candidate);
+                            wp_delete_file($candidate);
                         }
                         continue;
                     }
@@ -247,23 +257,33 @@ class Frontend {
                     return (int) filemtime($b) <=> (int) filemtime($a);
                 });
                 foreach (array_slice($existing, 1) as $old) {
-                    @unlink($old);
+                    wp_delete_file($old);
                 }
-                // Write via temp file + rename: rename() is atomic on the same
-                // filesystem, so a concurrent request can never serve (and
-                // Safari never caches, with its 1-year max-age) a half-written
-                // bundle. The temp name never matches $hashed_file, so it is
-                // never enqueued.
-                $tmp_path = $dist_path . 'frontend-designer.tmp-' . wp_generate_password(8, false) . '.js';
-                if (@copy($dist_path . $js_file, $tmp_path) && !@rename($tmp_path, $hashed_path)) {
-                    @unlink($tmp_path);
+
+                // Write via temp file + atomic move: a concurrent request can
+                // never serve (and Safari never caches, with its 1-year
+                // max-age) a half-written bundle. The temp name never matches
+                // $hashed_file, so it is never enqueued.
+                global $wp_filesystem;
+                if (empty($wp_filesystem)) {
+                    require_once ABSPATH . 'wp-admin/includes/file.php';
+                    WP_Filesystem();
+                }
+                if ($wp_filesystem) {
+                    $tmp_path = $cache_path . 'frontend-designer.tmp-' . wp_generate_password(8, false) . '.js';
+                    if ($wp_filesystem->copy($dist_path . $js_file, $tmp_path, true)
+                        && !$wp_filesystem->move($tmp_path, $hashed_path, true)) {
+                        wp_delete_file($tmp_path);
+                    }
                 }
             }
-            $enqueue_file = file_exists($hashed_path) ? $hashed_file : $js_file;
+
+            $enqueue_from_cache = file_exists($hashed_path);
+            $enqueue_url        = $enqueue_from_cache ? ($cache_url . $hashed_file) : ($dist_url . $js_file);
 
             wp_enqueue_script(
                 'pf-frontend-designer',
-                $dist_url . $enqueue_file,
+                $enqueue_url,
                 ['wp-i18n'],
                 $js_version,
                 true
@@ -416,6 +436,7 @@ class Frontend {
         }
 
         $mode = get_post_meta($post->ID, '_pf_display_mode', true) ?: 'embedded';
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- data_config_attr() already wraps its value in esc_attr(wp_json_encode())
         echo '<div id="pf-designer-root" data-mode="' . esc_attr($mode) . '"' . $this->data_config_attr() . '></div>';
 
         if ($mode === 'modal') {
@@ -477,15 +498,13 @@ class Frontend {
             return;
         }
 
-        $script = <<<JS
-(function(domain, translations) {
-    var localeData = translations.locale_data.messages || translations.locale_data[domain];
-    if (localeData) {
-        localeData[""].domain = domain;
-        wp.i18n.setLocaleData(localeData, domain);
-    }
-})("{$domain}", {$json});
-JS;
+        $script = '(function(domain, translations) {'
+            . 'var localeData = translations.locale_data.messages || translations.locale_data[domain];'
+            . 'if (localeData) {'
+            . 'localeData[""].domain = domain;'
+            . 'wp.i18n.setLocaleData(localeData, domain);'
+            . '}'
+            . '})("' . $domain . '", ' . $json . ');';
 
         wp_add_inline_script($handle, $script, 'before');
     }

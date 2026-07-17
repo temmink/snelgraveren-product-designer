@@ -53,6 +53,7 @@ class SystemStatus {
             'id'      => 'php_version',
             'label'   => __('PHP version', 'productforge'),
             'status'  => $php_ok ? 'ok' : 'error',
+            /* translators: %s: detected PHP version */
             'message' => sprintf(__('PHP %s detected. Minimum required: 8.1.', 'productforge'), PHP_VERSION),
             'fix'     => $php_ok ? '' : __('Ask your host to upgrade PHP to 8.1 or newer.', 'productforge'),
         ];
@@ -83,11 +84,12 @@ class SystemStatus {
             $writable = is_dir($path) && wp_is_writable($path);
             $checks[] = [
                 'id'      => 'dir_' . $dir,
+                /* translators: %s: directory path relative to ABSPATH */
                 'label'   => sprintf(__('Writable: %s', 'productforge'), str_replace(ABSPATH, '', $path)),
                 'status'  => $writable ? 'ok' : 'error',
-                /* translators: %s: what the directory is used for */
                 'message' => $writable
                     ? __('Writable.', 'productforge')
+                    /* translators: %s: what the directory is used for */
                     : sprintf(__('Not writable — used for %s.', 'productforge'), $purpose),
                 'fix'     => $writable ? '' : sprintf(
                     /* translators: %s: directory path */
@@ -97,22 +99,26 @@ class SystemStatus {
             ];
         }
 
-        // Writable plugin dist/ — needed for hash-named JS cache busting.
-        // Not critical: enqueue falls back to the un-hashed URL, but Safari +
-        // LiteSpeed cache invalidation degrades after deploys.
-        $dist_path     = PF_PLUGIN_DIR . 'dist/';
-        $dist_writable = is_dir($dist_path) && wp_is_writable($dist_path);
+        // Writable uploads/pf-cache/ — needed for hash-named JS cache busting.
+        // Not critical: enqueue falls back to the un-hashed dist/ URL, but
+        // Safari + LiteSpeed cache invalidation degrades after deploys.
+        // Never the plugin's own dist/ directory — wp.org disallows writing there.
+        $cache_dir_path = $base_dir . 'pf-cache';
+        if (!is_dir($cache_dir_path)) {
+            wp_mkdir_p($cache_dir_path);
+        }
+        $cache_dir_writable = is_dir($cache_dir_path) && wp_is_writable($cache_dir_path);
         $checks[] = [
-            'id'      => 'dir_dist',
-            'label'   => __('Writable: plugin dist/ directory', 'productforge'),
-            'status'  => $dist_writable ? 'ok' : 'warning',
-            'message' => $dist_writable
+            'id'      => 'dir_pf_cache',
+            'label'   => __('Writable: uploads/pf-cache/ directory', 'productforge'),
+            'status'  => $cache_dir_writable ? 'ok' : 'warning',
+            'message' => $cache_dir_writable
                 ? __('Writable. Hash-named JS copies are created for reliable cache busting.', 'productforge')
                 : __('Not writable. The designer still works, but browsers may serve a stale JS bundle after plugin updates (Safari caches JS for a year).', 'productforge'),
-            'fix'     => $dist_writable ? '' : sprintf(
+            'fix'     => $cache_dir_writable ? '' : sprintf(
                 /* translators: %s: directory path */
                 __('Make %s writable for the web server to enable hash-named cache busting.', 'productforge'),
-                $dist_path
+                $cache_dir_path
             ),
         ];
 
@@ -186,7 +192,9 @@ class SystemStatus {
             'label'   => __('Database tables', 'productforge'),
             'status'  => empty($missing) ? 'ok' : 'error',
             'message' => empty($missing)
+                /* translators: %d: number of database tables found */
                 ? sprintf(__('All %d tables present.', 'productforge'), count(self::TABLES))
+                /* translators: %s: comma-separated list of missing table names */
                 : sprintf(__('Missing tables: %s', 'productforge'), implode(', ', $missing)),
             'fix'     => empty($missing) ? '' : __('Deactivate and re-activate the plugin to re-run the database migrations.', 'productforge'),
         ];
