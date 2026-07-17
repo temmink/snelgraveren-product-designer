@@ -292,7 +292,7 @@ Full code review performed 2026-03-19 (17 findings, all resolved):
 ```
 productforge/
 ├── productforge.php          # Plugin bootstrap + HPOS + update-protection filter
-├── uninstall.php                 # Drops all wp_pf_* tables
+├── includes/class-uninstaller.php # Drops all wp_pf_* tables (via Freemius after_uninstall)
 ├── composer.json / composer.lock
 ├── package.json / vite.config.mjs
 ├── jest.config.js / babel.config.js  # Jest test config

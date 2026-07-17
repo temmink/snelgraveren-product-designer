@@ -40,5 +40,10 @@ if ( ! function_exists( 'pf_fs' ) ) {
         return $pf_fs;
     }
     pf_fs();
+
+    // Freemius owns the uninstall flow (no uninstall.php allowed in the
+    // deployment); run our cleanup through its hook instead.
+    pf_fs()->add_action( 'after_uninstall', [ \ProductForge\Uninstaller::class, 'uninstall' ] );
+
     do_action( 'pf_fs_loaded' );
 }

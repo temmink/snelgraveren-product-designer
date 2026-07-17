@@ -28,7 +28,6 @@ rm -rf "${STAGE_DIR}"
 mkdir -p "${STAGE_DIR}/${PLUGIN_SLUG}"
 
 cp "${PLUGIN_FILE}" "${STAGE_DIR}/${PLUGIN_SLUG}/"
-cp uninstall.php "${STAGE_DIR}/${PLUGIN_SLUG}/"
 [ -f readme.txt ] && cp readme.txt "${STAGE_DIR}/${PLUGIN_SLUG}/"
 cp -r includes/ "${STAGE_DIR}/${PLUGIN_SLUG}/includes/"
 cp -r vendor/ "${STAGE_DIR}/${PLUGIN_SLUG}/vendor/"

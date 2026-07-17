@@ -69,3 +69,10 @@ add_action('plugins_loaded', function () {
 // Activation / deactivation hooks
 register_activation_hook(__FILE__, [Activator::class, 'activate']);
 register_deactivation_hook(__FILE__, [Deactivator::class, 'deactivate']);
+
+// Uninstall cleanup. With the Freemius SDK present, its after_uninstall hook
+// (wired in freemius-init.php) handles this; the WP-native hook is only the
+// fallback for installs without Freemius.
+if (!function_exists('pf_fs')) {
+    register_uninstall_hook(__FILE__, [Uninstaller::class, 'uninstall']);
+}
