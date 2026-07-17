@@ -273,6 +273,16 @@
   margin-top: 12px;
 }
 
+.pf-element__warning {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: #92400e;
+  background: #fef3c7;
+  border-left: 3px solid #dba617;
+  border-radius: 4px;
+}
+
 .pf-element__toggles {
   display: flex;
   gap: 4px;

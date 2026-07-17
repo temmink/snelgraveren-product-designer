@@ -6,6 +6,7 @@ import { alignElement } from '../../../../../../shared/js/alignElement';
 import ImageFilters from '../ImageFilters';
 import CurvedTextProperties from '../CurvedTextProperties';
 import { renderHersheyText, ENGRAVING_FONTS } from '../../utils/hersheyFonts';
+import { getImageQuality } from '../../utils/imageQuality';
 
 export default function ElementTab() {
   const { selectedObject, template, snapshotView, currentViewIndex, fabricCanvasRef, zoneFillColors, setZoneFillColor } = useDesignerStore();
@@ -375,6 +376,12 @@ function ImageProperties({ fabricObj, type, perms, globalConfig, snapshotView, c
         <span>Scale</span>
         <span>{scalePercent}%</span>
       </div>
+
+      {getImageQuality(fabricObj) === 'upscaled' && (
+        <p className="pf-element__warning">
+          {__('This image is scaled beyond its resolution — the result may look blurry or pixelated. Use a larger image for a sharp result.', 'productforge')}
+        </p>
+      )}
 
       {/* SVG recolor */}
       {type === 'svg' && elementColorsEnabled && perms.recolor !== false && !fabricObj.data?.clipartNoRecolor && (
