@@ -19,4 +19,15 @@ describe('countPriceableElements', () => {
     it('returns zeros for empty snapshots', () => {
         expect(countPriceableElements({})).toEqual({ text: 0, image: 0, svg: 0 });
     });
+
+    it('skips zone overlays (template chrome is never billable)', () => {
+        const snapshots = {
+            0: { objects: [
+                { type: 'Group', data: { zoneIndex: 0, isZoneOverlay: true } },
+                { type: 'Group' },
+                { type: 'IText', data: { elementType: 'text', zoneIndex: 0 } },
+            ] },
+        };
+        expect(countPriceableElements(snapshots)).toEqual({ text: 1, image: 0, svg: 1 });
+    });
 });

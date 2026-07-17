@@ -109,6 +109,13 @@ class PriceCalculator {
      * Classify a Fabric.js object as text, image, svg, or null (zone/background).
      */
     private function classify_object(array $obj): ?string {
+        // Zone overlays (SVG boundary fills rendered from the template) are
+        // template chrome, not customer elements — never billable. Saves
+        // flag them via data.isZoneOverlay (serialized by toJSON(['data'])).
+        if (!empty($obj['data']['isZoneOverlay'])) {
+            return null;
+        }
+
         $fabric_type = $obj['type'] ?? '';
 
         // Text types
