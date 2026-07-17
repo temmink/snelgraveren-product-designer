@@ -1270,3 +1270,6 @@ msgstr "Startsjabloon-asset is niet geslaagd voor SVG-sanitisatie."
 
 msgid "Could not store starter asset."
 msgstr "Startsjabloon-asset kon niet worden opgeslagen."
+
+msgid "Writable: uploads/pf-cache/ directory"
+msgstr "Schrijfbaar: uploads/pf-cache/-map"
