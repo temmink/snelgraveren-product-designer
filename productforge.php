@@ -13,6 +13,8 @@
  * Requires Plugins:  woocommerce
  * WC requires at least: 8.0
  * WC tested up to:      9.9
+ *
+ * @fs_premium_only /includes/Export/class-premium-exports.php, /includes/Pricing/, /includes/API/class-rest-pricing.php, /includes/API/class-rest-palettes.php, /includes/API/class-rest-fonts-admin.php, /includes/API/class-rest-clipart-admin.php, /vendor/tecnickcom/
  */
 
 namespace ProductForge;

@@ -89,8 +89,18 @@ class SettingsPage {
         SystemStatus::flush_cache();
         $checks = SystemStatus::run_checks();
 
+        // Auto-export + PDF/SVG formats are premium-only (PremiumExports is
+        // stripped from the free build) — hide the settings that have no effect.
+        $has_premium_exports = class_exists('ProductForge\\Export\\PremiumExports');
+
         $trigger_status  = get_option('pf_export_trigger_status', 'completed');
         $default_format  = get_option('pf_export_default_format', 'pdf');
+        $format_options  = $has_premium_exports
+            ? ['pdf' => 'PDF', 'png' => 'PNG', 'svg' => 'SVG']
+            : ['png' => 'PNG'];
+        if (!isset($format_options[$default_format])) {
+            $default_format = 'png';
+        }
         $delete_data     = (bool) get_option('pf_delete_data_on_uninstall', false);
         $retention_days  = (int) get_option('pf_guest_design_retention_days', 30);
         $health_alerts   = (bool) get_option('pf_health_email_alerts', true);
@@ -102,6 +112,7 @@ class SettingsPage {
             <form method="post" action="options.php">
                 <?php settings_fields(self::OPTION_GROUP); ?>
                 <table class="form-table" role="presentation">
+                    <?php if ($has_premium_exports) : ?>
                     <tr>
                         <th scope="row">
                             <label for="pf_export_trigger_status"><?php esc_html_e('Auto-export on order status', 'productforge'); ?></label>
@@ -118,16 +129,20 @@ class SettingsPage {
                             <p class="description"><?php esc_html_e('Design exports are generated automatically when an order reaches this status.', 'productforge'); ?></p>
                         </td>
                     </tr>
+                    <?php endif; ?>
                     <tr>
                         <th scope="row">
                             <label for="pf_export_default_format"><?php esc_html_e('Default export format', 'productforge'); ?></label>
                         </th>
                         <td>
                             <select name="pf_export_default_format" id="pf_export_default_format">
-                                <?php foreach (['pdf' => 'PDF', 'png' => 'PNG', 'svg' => 'SVG'] as $value => $label) : ?>
+                                <?php foreach ($format_options as $value => $label) : ?>
                                     <option value="<?php echo esc_attr($value); ?>" <?php selected($default_format, $value); ?>><?php echo esc_html($label); ?></option>
                                 <?php endforeach; ?>
                             </select>
+                            <?php if (!$has_premium_exports) : ?>
+                                <p class="description"><?php esc_html_e('PDF and SVG export are available in ProductForge Pro.', 'productforge'); ?></p>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <tr>

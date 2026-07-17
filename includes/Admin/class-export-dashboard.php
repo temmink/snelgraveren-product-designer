@@ -146,7 +146,11 @@ class ExportDashboard {
             exit;
         }
 
-        $format  = get_option('pf_export_default_format', 'pdf');
+        $format = get_option('pf_export_default_format', 'pdf');
+        // PDF/SVG generation is premium-only; the free build falls back to PNG.
+        if (!class_exists('ProductForge\\Export\\PremiumExports') && $format !== 'png') {
+            $format = 'png';
+        }
         $manager = new ExportManager();
         $repo    = new ExportRepository();
         $designs = new DesignRepository();

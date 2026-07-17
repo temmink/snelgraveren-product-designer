@@ -6,6 +6,12 @@ defined('ABSPATH') || exit;
 use ProductForge\Database\TemplateRepository;
 use ProductForge\Pricing\PriceCalculator;
 
+/**
+ * Live price-preview endpoint for the frontend designer. Premium-only: the
+ * whole pricing engine is stripped from the free build (@fs_premium_only in
+ * productforge.php). The frontend treats a failed preview as "no surcharge"
+ * (silent catch), so the free build degrades cleanly without this route.
+ */
 class RestPricing {
 
     public function register_routes(): void {

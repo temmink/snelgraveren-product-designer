@@ -134,8 +134,12 @@ class ProductForge {
     }
 
     private function init_pricing(): void {
-        $surcharge = new Pricing\CartSurcharge();
-        $surcharge->init();
+        // The pricing engine is premium-only and stripped from the free build
+        // (@fs_premium_only in productforge.php) — guard so free degrades cleanly.
+        if (class_exists(Pricing\CartSurcharge::class)) {
+            $surcharge = new Pricing\CartSurcharge();
+            $surcharge->init();
+        }
     }
 
     private function init_exports(): void {
@@ -149,12 +153,27 @@ class ProductForge {
             (new API\RestDesigns())->register_routes();
             (new API\RestUploads())->register_routes();
             (new API\RestFonts())->register_routes();
-            (new API\RestPalettes())->register_routes();
             (new API\RestExports())->register_routes();
             (new API\RestClipart())->register_routes();
             (new API\RestDesignTemplates())->register_routes();
-            (new API\RestPricing())->register_routes();
             (new Admin\StarterTemplates())->register_routes();
+
+            // Premium-only controllers — stripped from the free build via
+            // @fs_premium_only in productforge.php, hence the guards. The
+            // admin UI for these features is Pro-gated client-side, so the
+            // free build never calls the missing routes.
+            if (class_exists(API\RestPalettes::class)) {
+                (new API\RestPalettes())->register_routes();
+            }
+            if (class_exists(API\RestPricing::class)) {
+                (new API\RestPricing())->register_routes();
+            }
+            if (class_exists(API\RestFontsAdmin::class)) {
+                (new API\RestFontsAdmin())->register_routes();
+            }
+            if (class_exists(API\RestClipartAdmin::class)) {
+                (new API\RestClipartAdmin())->register_routes();
+            }
         });
     }
 }

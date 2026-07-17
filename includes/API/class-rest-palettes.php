@@ -5,6 +5,13 @@ defined('ABSPATH') || exit;
 
 use ProductForge\ProductForge;
 
+/**
+ * Color-palette endpoints. The whole controller is premium-only: palettes are
+ * only used by the (Pro-gated) template-builder admin UI, never by the
+ * frontend designer. Listed under @fs_premium_only in productforge.php, so
+ * this file is absent from the free build; registration in ProductForge is
+ * guarded with class_exists().
+ */
 class RestPalettes {
 
     private const OPTION_KEY = 'pf_color_palettes';
