@@ -81,6 +81,24 @@ class TemplateRepository {
         return $row;
     }
 
+    /**
+     * Look up a template by slug (any status). Used by StarterTemplates to detect
+     * whether a starter (slug `starter-{id}`) has already been imported.
+     */
+    public function get_by_slug(string $slug): ?array {
+        global $wpdb;
+        $row = $wpdb->get_row(
+            $wpdb->prepare("SELECT * FROM {$this->table} WHERE slug = %s ORDER BY id DESC LIMIT 1", $slug),
+            ARRAY_A
+        );
+        if (!$row) return null;
+
+        $row['global_config'] = json_decode($row['global_config'], true) ?: [];
+        $row['views']         = $this->get_views((int) $row['id']);
+
+        return $row;
+    }
+
     public function create(array $data): int {
         global $wpdb;
         $wpdb->insert($this->table, [
