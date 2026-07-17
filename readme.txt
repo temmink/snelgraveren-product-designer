@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -66,9 +66,14 @@ Exports (PDF, PNG, SVG) are generated locally on your server — nothing is sent
 
 = What does the free version include? =
 
-The free version includes the full designer with one template. Pro unlocks unlimited templates, multiple product views, PDF/SVG export, automatic exports, pricing rules, custom fonts, clip art management, and more.
+The free version includes the full designer with unlimited templates and PNG export. Pro unlocks multiple product views, PDF/SVG production export, automatic exports on order status, pricing rules, custom fonts, clip art management, color palettes, and more.
 
 == Changelog ==
+
+= 1.0.4 =
+* Change: premium functionality (PDF/SVG export, auto-export, pricing engine, clip art / font / palette management) is no longer bundled in the free version — it now ships only with Pro.
+* Change: removed the template and view count limits from the free version; Pro features are presented as upgrades instead.
+* Maintenance: slimmed the plugin package (pruned unused PDF fonts, removed unused libraries).
 
 = 1.0.3 =
 * Maintenance: WordPress.org Plugin Check compliance — filesystem API usage, output escaping, i18n comments; cache files moved to uploads; removed obsolete update-guard.

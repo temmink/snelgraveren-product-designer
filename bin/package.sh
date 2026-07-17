@@ -42,15 +42,28 @@ cp -r dist/ "${STAGE_DIR}/${PLUGIN_SLUG}/dist/"
 [ -f freemius-init.php ] && cp freemius-init.php "${STAGE_DIR}/${PLUGIN_SLUG}/"
 [ -d freemius/ ] && cp -r freemius/ "${STAGE_DIR}/${PLUGIN_SLUG}/freemius/"
 
-# 4. Clean unwanted files
+# 4. Prune unused TCPDF fonts. The export pipeline only uses TCPDF's built-in
+# core fonts (helvetica/times/courier/symbol/zapfdingbats, ~56 KB); the full
+# font set is ~24 MB and would blow past wp.org's 10 MB upload limit.
+# (In the Freemius FREE build /vendor/tecnickcom/ is stripped entirely via
+# @fs_premium_only — this pruning keeps the PREMIUM build small too.)
+TCPDF_FONTS="${STAGE_DIR}/${PLUGIN_SLUG}/vendor/tecnickcom/tcpdf/fonts"
+if [ -d "${TCPDF_FONTS}" ]; then
+    find "${TCPDF_FONTS}" -mindepth 1 -maxdepth 1 \
+        ! -name 'helvetica*' ! -name 'times*' ! -name 'courier*' \
+        ! -name 'symbol*' ! -name 'zapfdingbats*' \
+        -exec rm -rf {} +
+fi
+
+# 5. Clean unwanted files
 find "${STAGE_DIR}" -name '.DS_Store' -delete
 find "${STAGE_DIR}" -name '.gitkeep' -delete
 
-# 5. Create the zip
+# 6. Create the zip
 rm -f "${OUTPUT}"
 (cd "${STAGE_DIR}" && zip -r - "${PLUGIN_SLUG}") > "${OUTPUT}"
 
-# 6. Clean up staging dir
+# 7. Clean up staging dir
 rm -rf "${STAGE_DIR}"
 
 echo ""
