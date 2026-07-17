@@ -6,6 +6,7 @@ defined('ABSPATH') || exit;
 class Admin {
 
     private SettingsPage $settings_page;
+    private ExportDashboard $export_dashboard;
 
     public function __construct() {
         add_action('admin_menu',           [$this, 'register_menus']);
@@ -17,6 +18,9 @@ class Admin {
 
         $this->settings_page = new SettingsPage();
         $this->settings_page->init();
+
+        $this->export_dashboard = new ExportDashboard();
+        $this->export_dashboard->init();
 
         new ProductIntegration();
     }
@@ -67,6 +71,8 @@ class Admin {
             'pf-clipart',
             [$this, 'render_clipart_page']
         );
+
+        $this->export_dashboard->register_menu();
 
         $this->settings_page->register_menu();
     }
