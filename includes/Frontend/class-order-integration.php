@@ -192,6 +192,14 @@ class OrderIntegration {
         $existing = $design_id ? $export_repo->get_by_design($design_id) : [];
 
         echo '<div class="pf-export-actions" style="margin-top:8px;">';
+
+        // Show raster warning if design contains images
+        if ($design && \ProductForge\Export\DesignInspector::contains_raster($design['views'] ?? [])) {
+            echo '<p style="color:#b32d2e;margin:4px 0;">⚠ '
+                . esc_html__('This design contains raster images (photos) — check engraving suitability before production.', 'productforge')
+                . '</p>';
+        }
+
         echo '<strong style="display:block;margin-bottom:4px;">' . esc_html__('Export Design:', 'productforge') . '</strong>';
 
         // Export buttons — gate PDF/SVG for Pro
