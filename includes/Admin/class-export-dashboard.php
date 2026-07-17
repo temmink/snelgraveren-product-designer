@@ -153,7 +153,10 @@ class ExportDashboard {
 
         $zip_path = wp_tempnam('pf-bulk-export.zip');
         $zip      = new \ZipArchive();
-        $zip->open($zip_path, \ZipArchive::OVERWRITE);
+        if ($zip->open($zip_path, \ZipArchive::OVERWRITE) !== true) {
+            @unlink($zip_path);
+            wp_die(esc_html__('Could not create the export ZIP file.', 'productforge'));
+        }
         $added = 0;
 
         foreach ($entries as $entry) {
@@ -185,8 +188,9 @@ class ExportDashboard {
             $order  = wc_get_order($order_id);
             $prefix = 'order-' . ($order ? $order->get_order_number() : $order_id) . '/';
             foreach ($manager->get_download_paths($export_id) as $path) {
-                $zip->addFile($path, $prefix . basename($path));
-                $added++;
+                if ($zip->addFile($path, $prefix . basename($path))) {
+                    $added++;
+                }
             }
         }
         $zip->close();

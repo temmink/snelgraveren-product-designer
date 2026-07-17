@@ -1046,9 +1046,6 @@ msgstr "Ontbrekende tabellen: %s"
 msgid "Deactivate and re-activate the plugin to re-run the database migrations."
 msgstr "Deactiveer en heractiveer de plugin om de databasemigraties opnieuw uit te voeren."
 
-msgid "Settings"
-msgstr "Instellingen"
-
 msgid "You do not have permission to access this page."
 msgstr "Je hebt geen rechten om deze pagina te bekijken."
 
@@ -1183,9 +1180,6 @@ msgstr "De volgende ProductForge-systeemchecks falen op dit moment:\n\n%1$s\n\nD
 
 msgid "Template not found."
 msgstr "Sjabloon niet gevonden."
-
-msgid "Add image (jpg, png, webp)"
-msgstr "Afbeelding toevoegen (jpg, png, webp)"
 
 msgid "Photos are not possible on this product (engraving requires vector artwork)"
 msgstr "Foto's zijn niet mogelijk bij dit product (graveren vereist vectorafbeeldingen)"

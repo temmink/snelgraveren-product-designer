@@ -151,18 +151,49 @@ class DesignRepository {
     /**
      * Guest drafts untouched for $days days. Ordered designs are excluded by
      * status; registered customers' designs are kept for their account page.
+     * Defensively re-excludes anything referenced by an order item or that
+     * already has an export record, in case status somehow lagged behind
+     * (belt-and-braces alongside the 'ordered' status backfill/flip).
      */
     public function find_stale_guest_drafts(int $days, int $limit = 200): array {
         global $wpdb;
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is a class property
         return $wpdb->get_results($wpdb->prepare(
-            "SELECT id, design_hash FROM {$this->table}
-             WHERE customer_id = 0 AND status = 'draft'
-               AND updated_at < DATE_SUB(NOW(), INTERVAL %d DAY)
-             ORDER BY updated_at ASC LIMIT %d",
+            "SELECT d.id, d.design_hash FROM {$this->table} d
+             WHERE d.customer_id = 0 AND d.status = 'draft'
+               AND d.updated_at < DATE_SUB(NOW(), INTERVAL %d DAY)
+               AND NOT EXISTS (
+                   SELECT 1 FROM {$wpdb->prefix}woocommerce_order_itemmeta m
+                   WHERE m.meta_key = '_pf_design_hash' AND m.meta_value = d.design_hash
+               )
+               AND NOT EXISTS (
+                   SELECT 1 FROM {$wpdb->prefix}pf_exports e WHERE e.design_id = d.id
+               )
+             ORDER BY d.updated_at ASC LIMIT %d",
             $days,
             $limit
         ), ARRAY_A) ?: [];
+    }
+
+    /**
+     * One-time back-fill: designs referenced by existing order items were
+     * saved before checkout started flipping status to 'ordered'. Without
+     * this, the stale-guest-draft cleanup would treat them as abandoned
+     * drafts and delete designs belonging to real historical orders.
+     *
+     * @return int Number of rows updated.
+     */
+    public function backfill_ordered_from_order_meta(): int {
+        global $wpdb;
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names are class properties/internal, no user input
+        $result = $wpdb->query(
+            "UPDATE {$this->table} d
+             JOIN {$wpdb->prefix}woocommerce_order_itemmeta m
+               ON m.meta_key = '_pf_design_hash' AND m.meta_value = d.design_hash
+             SET d.status = 'ordered'
+             WHERE d.status = 'draft'"
+        );
+        return $result === false ? 0 : (int) $result;
     }
 
     /**

@@ -142,6 +142,10 @@ export default function App() {
   useEffect(() => {
     if (!config.template_id || !template) return;
     const counts = countPriceableElements(canvasSnapshots);
+    if (counts.text + counts.image + counts.svg === 0) {
+      setPricePreview(null);
+      return;
+    }
     const timer = setTimeout(() => {
       previewPrice(config.template_id, counts)
         .then(setPricePreview)

@@ -28,16 +28,32 @@ class Cleanup {
      * @return array{deleted:int}
      */
     public function run(): array {
+        $repo = new DesignRepository();
+
+        // One-time back-fill: designs referenced by existing order items were
+        // saved before checkout started flipping status to 'ordered'. Without
+        // this, the cleanup below would treat them as abandoned drafts and
+        // delete designs belonging to real historical orders.
+        if (!get_option('pf_ordered_backfill_done')) {
+            $repo->backfill_ordered_from_order_meta();
+            update_option('pf_ordered_backfill_done', 1, false);
+        }
+
         $days = (int) get_option('pf_guest_design_retention_days', 30);
         if ($days < 1) {
             return ['deleted' => 0];
         }
 
-        $repo    = new DesignRepository();
         $deleted = 0;
 
         foreach ($repo->find_stale_guest_drafts($days) as $row) {
             $design = $repo->get((int) $row['id']);
+
+            if (!$repo->delete((int) $row['id'])) {
+                error_log('ProductForge cleanup: could not delete design ' . $row['id']);
+                continue;
+            }
+
             foreach ($design['views'] ?? [] as $view) {
                 $thumb = $view['thumbnail'] ?? '';
                 if ($thumb) {
@@ -47,9 +63,8 @@ class Cleanup {
                     }
                 }
             }
-            if ($repo->delete((int) $row['id'])) {
-                $deleted++;
-            }
+
+            $deleted++;
         }
 
         $this->maybe_send_health_alert();
