@@ -20,8 +20,11 @@ class Frontend {
 
         // Exclude our frontend JS from LiteSpeed Cache JS combining/minification.
         // Our IIFE bundle includes React internally and breaks when concatenated.
+        // Substring match, WITHOUT the .js suffix: the enqueued file is the
+        // hash-named copy (frontend-designer.<md5>.js), which the literal
+        // 'frontend-designer.js' would not match.
         add_filter('litespeed_optimize_js_excludes', function ($excludes) {
-            $excludes[] = 'frontend-designer.js';
+            $excludes[] = 'frontend-designer.';
             return $excludes;
         });
         add_shortcode('productforge', [$this, 'shortcode']);
@@ -203,23 +206,58 @@ class Frontend {
         // Enqueue JS
         $js_file = 'frontend-designer.js';
         if (file_exists($dist_path . $js_file)) {
-            $js_version = substr(md5_file($dist_path . $js_file), 0, 8);
+            // Hashing the full bundle on every pageview is wasteful — cache
+            // the hash keyed on the file's mtime, recompute only after a build.
+            $js_mtime   = (int) filemtime($dist_path . $js_file);
+            $hash_cache = get_option('pf_frontend_js_hash');
+            if (is_array($hash_cache) && ($hash_cache['mtime'] ?? 0) === $js_mtime && !empty($hash_cache['hash'])) {
+                $js_version = $hash_cache['hash'];
+            } else {
+                $js_version = substr(md5_file($dist_path . $js_file), 0, 8);
+                update_option('pf_frontend_js_hash', ['mtime' => $js_mtime, 'hash' => $js_version], true);
+            }
 
             // Safari caches JS with max-age=31557600 (1 year) keyed on the
             // URL. LiteSpeed's Delay JS feature strips the ?ver= query
             // parameter we pass to wp_enqueue_script, so without a different
             // URL, Safari keeps serving the old bundle after every deploy.
             // Copy the source to a hash-named file so the URL itself changes
-            // per build — old copies are deleted to avoid clutter. If the
-            // plugin directory is not writable the copy fails silently and we
-            // fall back to the un-hashed URL (same as before).
+            // per build. If the plugin directory is not writable we fall back
+            // to the un-hashed URL (same as before).
             $hashed_file = 'frontend-designer.' . $js_version . '.js';
             $hashed_path = $dist_path . $hashed_file;
-            if (!file_exists($hashed_path)) {
-                foreach (glob($dist_path . 'frontend-designer.*.js') ?: [] as $old) {
+            if (!file_exists($hashed_path) && is_writable($dist_path)) {
+                // Keep the NEWEST existing hashed copy (the previous build's):
+                // LiteSpeed page-cached HTML keeps referencing that URL until
+                // the cache expires or is flushed — deleting it immediately
+                // would 404 the bundle on every cached page. Older copies and
+                // orphaned temp files are removed.
+                $existing = [];
+                foreach (glob($dist_path . 'frontend-designer.*.js') ?: [] as $candidate) {
+                    if (strpos(basename($candidate), 'frontend-designer.tmp-') === 0) {
+                        // Temp file from a crashed/concurrent request.
+                        if (time() - (int) filemtime($candidate) > DAY_IN_SECONDS) {
+                            @unlink($candidate);
+                        }
+                        continue;
+                    }
+                    $existing[] = $candidate;
+                }
+                usort($existing, static function ($a, $b) {
+                    return (int) filemtime($b) <=> (int) filemtime($a);
+                });
+                foreach (array_slice($existing, 1) as $old) {
                     @unlink($old);
                 }
-                @copy($dist_path . $js_file, $hashed_path);
+                // Write via temp file + rename: rename() is atomic on the same
+                // filesystem, so a concurrent request can never serve (and
+                // Safari never caches, with its 1-year max-age) a half-written
+                // bundle. The temp name never matches $hashed_file, so it is
+                // never enqueued.
+                $tmp_path = $dist_path . 'frontend-designer.tmp-' . wp_generate_password(8, false) . '.js';
+                if (@copy($dist_path . $js_file, $tmp_path) && !@rename($tmp_path, $hashed_path)) {
+                    @unlink($tmp_path);
+                }
             }
             $enqueue_file = file_exists($hashed_path) ? $hashed_file : $js_file;
 
@@ -242,24 +280,7 @@ class Frontend {
             // because WordPress can't match the hash to find the JSON file.
             $this->inline_script_translations('pf-frontend-designer', 'productforge', 'dist/frontend-designer.js');
 
-            $this->js_config = [
-                'template_id'     => $template_id,
-                'product_id'      => $product_id,
-                'display_mode'    => $this->has_shortcode_in_content() ? 'embedded' : (get_post_meta($product_id, '_pf_display_mode', true) ?: 'embedded'),
-                'nonce'           => wp_create_nonce('wp_rest'),
-                'rest_url'        => rest_url('pf/v1'),
-                'currency_symbol' => function_exists('get_woocommerce_currency_symbol')
-                    ? get_woocommerce_currency_symbol()
-                    : '€',
-                'isPremium'       => \ProductForge\ProductForge::is_premium(),
-            ];
-
-            // If returning from cart with an existing design, pass the hash and auto-open
-            $existing_hash = $this->get_design_hash_from_url();
-            if (!empty($existing_hash)) {
-                $this->js_config['existing_design_hash'] = $existing_hash;
-                $this->js_config['auto_open'] = true;
-            }
+            $this->js_config = $this->build_js_config($product_id, $template_id);
 
             // Prevent pinch-to-zoom interference when designer is open on mobile
             wp_add_inline_script('pf-frontend-designer', '
@@ -294,11 +315,40 @@ class Frontend {
     private bool $designer_rendered = false;
 
     /**
-     * Designer config built during enqueue_assets(); emitted as data-config
-     * JSON attribute on #pf-designer-root. Staat in het HTML-element zelf zodat
-     * LiteSpeed's JS-optimalisaties de volgorde nooit kunnen breken.
+     * Designer config emitted as data-config JSON attribute on
+     * #pf-designer-root. It lives on the HTML element itself so LiteSpeed's
+     * JS optimizations can never break the ordering. Built in
+     * enqueue_assets(), or on demand in data_config_attr() when a render
+     * path runs before wp_enqueue_scripts (e.g. an SEO plugin applying
+     * the_content early).
      */
     private array $js_config = [];
+
+    /**
+     * Build the designer config array for the given product/template.
+     */
+    private function build_js_config(int $product_id, int $template_id): array {
+        $config = [
+            'template_id'     => $template_id,
+            'product_id'      => $product_id,
+            'display_mode'    => $this->has_shortcode_in_content() ? 'embedded' : (get_post_meta($product_id, '_pf_display_mode', true) ?: 'embedded'),
+            'nonce'           => wp_create_nonce('wp_rest'),
+            'rest_url'        => rest_url('pf/v1'),
+            'currency_symbol' => function_exists('get_woocommerce_currency_symbol')
+                ? get_woocommerce_currency_symbol()
+                : '€',
+            'isPremium'       => \ProductForge\ProductForge::is_premium(),
+        ];
+
+        // If returning from cart with an existing design, pass the hash and auto-open
+        $existing_hash = $this->get_design_hash_from_url();
+        if (!empty($existing_hash)) {
+            $config['existing_design_hash'] = $existing_hash;
+            $config['auto_open'] = true;
+        }
+
+        return $config;
+    }
 
     /**
      * Render the data-config attribute for #pf-designer-root.
@@ -306,7 +356,15 @@ class Frontend {
      */
     private function data_config_attr(): string {
         if (empty($this->js_config)) {
-            return '';
+            // enqueue_assets() has not run (yet) for this request — build on
+            // demand so an early the_content render never emits a config-less
+            // root element that config.js would then latch onto.
+            global $post;
+            $template_id = $post ? (int) get_post_meta($post->ID, '_pf_template_id', true) : 0;
+            if (!$template_id) {
+                return '';
+            }
+            $this->js_config = $this->build_js_config((int) $post->ID, $template_id);
         }
         return ' data-config="' . esc_attr(wp_json_encode($this->js_config)) . '"';
     }

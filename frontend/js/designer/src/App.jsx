@@ -84,27 +84,49 @@ export default function App() {
       attempts += 1;
       const fresh = getDesignerConfig();
       if (fresh.template_id) {
+        // Recovered — clear any timeout error a previous slow tick surfaced.
+        clearError();
+        setLoading(true);
         setConfig(fresh);
         return;
       }
-      if (attempts < 40) {
-        timer = setTimeout(tick, 50); // up to 2 s of retries
-      } else {
-        setError(__('No template configured for this product.', 'productforge'));
+      if (attempts === 40) {
+        // ~2 s of fast polling produced nothing. PHP only enqueues this
+        // bundle when a template IS configured, so a missing config is a
+        // delivery problem, not a store-configuration problem — show an
+        // accurate message and KEEP polling (slowly) so a late config still
+        // recovers without a manual reload.
+        setError(__('The designer could not load. Please reload the page.', 'productforge'));
         setLoading(false);
       }
+      timer = setTimeout(tick, attempts < 40 ? 50 : 1000);
     };
     timer = setTimeout(tick, 50);
     return () => clearTimeout(timer);
-  }, [config.template_id, setError]);
+  }, [config.template_id, setError, clearError]);
 
   const isMobile = useIsMobile();
   const effectiveDisplayMode = isMobile ? 'modal' : (config.display_mode || 'embedded');
 
   const [loading, setLoading] = useState(true);
-  const [designerOpen, setDesignerOpen] = useState(effectiveDisplayMode !== 'modal' || !!config.auto_open || !!config.existing_design_hash);
+  // These initializers only see a real config when it was readable at mount;
+  // the sync effect below re-derives them when the retry loop fills config in
+  // later. Until then a modal-mode product must NOT default to open (an empty
+  // config makes effectiveDisplayMode fall back to 'embedded', which would
+  // pop the modal open uninvited once the real display_mode arrives).
+  const [designerOpen, setDesignerOpen] = useState(() => !!config.template_id
+    && (effectiveDisplayMode !== 'modal' || !!config.auto_open || !!config.existing_design_hash));
   const [savedRecently, setSavedRecently] = useState(false);
   const [designSaved, setDesignSaved] = useState(!!config.existing_design_hash);
+
+  // Re-derive mount-time state when config arrives late via the retry loop.
+  // Runs once when template_id transitions empty → set; on a normal load
+  // (config present at mount) it recomputes the same values, which is a no-op.
+  useEffect(() => {
+    if (!config.template_id) return;
+    setDesignerOpen(effectiveDisplayMode !== 'modal' || !!config.auto_open || !!config.existing_design_hash);
+    setDesignSaved(!!config.existing_design_hash);
+  }, [config.template_id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const modalRef = useRef(null);
   const returnFocusRef = useRef(null);
@@ -186,7 +208,10 @@ export default function App() {
       });
   }, [config.template_id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Modal open/close
+  // Modal open/close. Depends on the config/display mode (not []): when the
+  // retry loop delivers config after mount, this must re-run — otherwise the
+  // .pf-open-designer listener is never attached (dead Customize button) and
+  // the return-from-cart auto-open never fires.
   useEffect(() => {
     if (effectiveDisplayMode !== 'modal') return;
 
@@ -201,7 +226,7 @@ export default function App() {
     const handler = () => setDesignerOpen(true);
     btn.addEventListener('click', handler);
     return () => btn.removeEventListener('click', handler);
-  }, []);
+  }, [effectiveDisplayMode, config.template_id, config.existing_design_hash]);
 
   // Modal focus trapping and keyboard handling
   useEffect(() => {

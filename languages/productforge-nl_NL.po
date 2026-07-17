@@ -964,3 +964,6 @@ msgstr "Ontwerp Opslaan"
 #: frontend/js/designer/src/App.jsx:209
 msgid "Close Designer"
 msgstr "Designer Sluiten"
+
+msgid "The designer could not load. Please reload the page."
+msgstr "De designer kon niet laden. Herlaad de pagina."

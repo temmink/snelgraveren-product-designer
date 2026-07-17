@@ -86,7 +86,7 @@ bash bin/package.sh
 ---
 
 ### Phase 3 — Frontend customer designer ✅
-- **PHP:** `includes/Frontend/class-frontend.php` — hooks WooCommerce product page, enqueues assets, renders designer container, localizes `window.pfDesigner` config, `[productforge]` shortcode with duplicate-render prevention
+- **PHP:** `includes/Frontend/class-frontend.php` — hooks WooCommerce product page, enqueues assets, renders designer container, emits designer config as `data-config` JSON attribute on `#pf-designer-root` (read via `utils/config.js`; `wp_localize_script` was removed because LiteSpeed can reorder the inline global), `[productforge]` shortcode with duplicate-render prevention
 - **REST:** `GET /pf/v1/templates/{id}/public` — unauthenticated public endpoint, published templates only, sanitized response
 - **Security:** `RestDesigns::create_design()` validates template_id references a published template
 - **State:** `useDesignerStore.js` (Zustand) — template, design hash, canvas snapshots, tool mode, selected object, error state, fabricCanvasRef

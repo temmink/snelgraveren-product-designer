@@ -68,9 +68,12 @@ export async function uploadFile(file) {
   const formData = new FormData();
   formData.append('file', file);
 
+  // No Content-Type header here — the browser must set the multipart
+  // boundary for FormData itself, so we can't reuse headers().
+  const { nonce } = getDesignerConfig();
   const res = await fetch(apiUrl('/uploads'), {
     method: 'POST',
-    headers: getDesignerConfig().nonce ? { 'X-WP-Nonce': getDesignerConfig().nonce } : {},
+    headers: nonce ? { 'X-WP-Nonce': nonce } : {},
     body: formData,
   });
   if (!res.ok) {

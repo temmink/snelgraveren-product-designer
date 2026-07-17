@@ -959,3 +959,6 @@ msgstr ""
 #: frontend/js/designer/src/App.jsx:209
 msgid "Close Designer"
 msgstr ""
+
+msgid "The designer could not load. Please reload the page."
+msgstr ""
