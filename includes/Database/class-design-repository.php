@@ -137,6 +137,25 @@ class DesignRepository {
         ), ARRAY_A) ?: [];
     }
 
+    /**
+     * Designs for the account page: newest first, with the first view's
+     * thumbnail joined in (no full canvas_json payloads).
+     */
+    public function list_by_customer(int $customer_id, int $limit = 50): array {
+        global $wpdb;
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names are class properties
+        return $wpdb->get_results($wpdb->prepare(
+            "SELECT d.id, d.design_hash, d.product_id, d.status, d.total_price, d.created_at, d.updated_at,
+                    (SELECT v.thumbnail FROM {$this->views_table} v WHERE v.design_id = d.id ORDER BY v.id ASC LIMIT 1) AS thumbnail
+             FROM {$this->table} d
+             WHERE d.customer_id = %d
+             ORDER BY d.updated_at DESC
+             LIMIT %d",
+            $customer_id,
+            $limit
+        ), ARRAY_A) ?: [];
+    }
+
     public function get_views(int $design_id): array {
         global $wpdb;
         $rows = $wpdb->get_results(

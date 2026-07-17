@@ -35,6 +35,7 @@ class ProductForge {
         $this->init_pricing();
         $this->init_exports();
         (new Cleanup())->init();
+        (new Frontend\AccountDesigns())->init();
     }
 
     /**
