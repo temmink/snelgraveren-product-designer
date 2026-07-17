@@ -25,6 +25,12 @@ Docs, `.po`/`.pot`/`.mo`, and the two JS translation JSONs (frontend-designer bu
 
 ---
 
+## 2026-07-17 — Starter templates
+
+4-task plan, `templates/starter/` ships 10 hand-authored starter templates (engrave/print/basic sets) as a manifest + SVG assets, importable one-click from the Templates admin page. `Admin\StarterTemplates` copies assets into `uploads/pf-template-assets/` (re-sanitized on import), rewrites `asset:` placeholders, and creates the template + views via the existing repositories — slug `starter-{id}` doubles as the imported-detection key. REST: `GET /pf/v1/starter-templates`, `POST /pf/v1/starter-templates/{id}/import`, both `edit_pf_templates`-gated. The importer enforces the same free-tier limit as manual template creation (`unlimited_templates` — 1 template on free). Gallery panel is plain server-rendered PHP/JS (no React) on the Templates list page. Dutch strings added, `bin/package.sh` now bundles `templates/`, verified end-to-end on a fresh install (free-tier import + upsell on second import, template opens in the builder).
+
+---
+
 ## Environment
 
 ```bash

@@ -107,12 +107,14 @@ All tables use InnoDB engine for foreign key and transaction support. Total: 11 
 
 | Menu Item | Page Slug | Purpose |
 |-----------|-----------|---------|
-| Templates | `productforge` | Template list (WP_List_Table with status tabs + bulk actions) |
+| Templates | `productforge` | Template list (WP_List_Table with status tabs + bulk actions), plus a starter-templates gallery panel (see below) |
 | Add New | `pf-template-builder` | Template builder React app (canvas, zones, layers, permissions, pricing) |
 | Design Templates | `pf-design-templates` | Design template CRUD React app (list, create, edit, delete, import/export JSON) |
 | Clipart | `pf-clipart` | Clipart manager React app (collections CRUD, bulk SVG upload, drag & drop) |
 | Settings | `pf-settings` | Export options (`pf_export_trigger_status`, `pf_export_default_format`), `pf_delete_data_on_uninstall` toggle, guest design retention (`pf_guest_design_retention_days`), health e-mail alert toggle (`pf_health_email_alerts`), a design-statistics panel (saved/ordered/conversion, last 30 days), and system status checks (`Admin\SystemStatus`: PHP ≥ 8.1, finfo, rsvg-convert/Imagick-SVG, writable `pf-thumbnails`/`pf-exports`/`pf-fonts`/`pf-clipart`/plugin `dist/`, DB tables, LiteSpeed detection). Critical failures also show as an admin notice on every ProductForge screen (cached 5 min in the `pf_system_status_critical` transient) |
 | Production | `pf-export-dashboard` | `Admin\ExportDashboard` — lists recent orders (filterable by status/days) that contain designs, flags designs containing raster images via `DesignInspector::contains_raster()`, and bulk-downloads the selection as one ZIP via `admin_post_pf_bulk_export` |
+
+- **Starter templates:** `templates/starter/manifest.json` + `templates/starter/assets/*.svg` ship 10 ready-made templates (engrave/print/basic sets — hand-authored, no CPTs, no DB rows until import). `Admin\StarterTemplates` (`includes/Admin/class-starter-templates.php`) parses the catalog, imports a chosen entry by copying its assets into `uploads/pf-template-assets/` (re-sanitized via `enshrined\svgSanitize\Sanitizer` even though they're our own files), rewriting `asset:` URLs, and creating the template + views through `TemplateRepository`. Imported templates use slug `starter-{id}` — that slug doubles as the "already imported" detection key, no extra DB column. REST: `GET /pf/v1/starter-templates` (catalog with `imported` flags) and `POST /pf/v1/starter-templates/{id}/import`, both gated on `edit_pf_templates`. The importer enforces the same free-tier limit as manual template creation (`ProductForge::has_feature('unlimited_templates')` — free accounts may import 1 template total, counting drafts/published/archived, before hitting `pf_premium_required`). The gallery panel renders server-side (no React) on the Templates list page (`includes/Admin/views/template-list.php`), always visible while an un-imported starter remains, with extra-prominent copy when the template list is empty; `includes/Admin/class-admin.php` enqueues the inline JS that wires Import buttons to the REST endpoint.
 
 ## WooCommerce Integration Points
 

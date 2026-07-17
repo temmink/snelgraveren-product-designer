@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: ProductForge for WooCommerce 1.0.0\n"
+"Project-Id-Version: ProductForge for WooCommerce 1.0.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/productforge\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-07-17T11:42:23+00:00\n"
+"POT-Creation-Date: 2026-07-17T14:34:48+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: productforge\n"
@@ -42,7 +42,7 @@ msgstr ""
 
 #: includes/Admin/class-admin.php:41
 #: includes/Admin/class-admin.php:42
-#: includes/Admin/views/template-list.php:9
+#: includes/Admin/views/template-list.php:24
 msgid "Templates"
 msgstr ""
 
@@ -51,7 +51,7 @@ msgid "Template Builder"
 msgstr ""
 
 #: includes/Admin/class-admin.php:51
-#: includes/Admin/views/template-list.php:11
+#: includes/Admin/views/template-list.php:26
 #: admin/js/design-templates/src/App.jsx:193
 msgid "Add New"
 msgstr ""
@@ -72,15 +72,23 @@ msgstr ""
 msgid "Clipart"
 msgstr ""
 
-#: includes/Admin/class-admin.php:243
+#: includes/Admin/class-admin.php:172
+msgid "Importing…"
+msgstr ""
+
+#: includes/Admin/class-admin.php:173
+msgid "Could not import this template. Please try again."
+msgstr ""
+
+#: includes/Admin/class-admin.php:306
 msgid "SVG sanitization library not available."
 msgstr ""
 
-#: includes/Admin/class-admin.php:249
+#: includes/Admin/class-admin.php:312
 msgid "Could not read SVG file."
 msgstr ""
 
-#: includes/Admin/class-admin.php:256
+#: includes/Admin/class-admin.php:319
 msgid "SVG file contains disallowed content and was rejected."
 msgstr ""
 
@@ -136,7 +144,11 @@ msgstr ""
 msgid "Download selection as ZIP"
 msgstr ""
 
-#: includes/Admin/class-export-dashboard.php:196
+#: includes/Admin/class-export-dashboard.php:158
+msgid "Could not create the export ZIP file."
+msgstr ""
+
+#: includes/Admin/class-export-dashboard.php:200
 msgid "No export files could be generated for the selection."
 msgstr ""
 
@@ -271,6 +283,44 @@ msgstr ""
 
 #: includes/Admin/class-settings-page.php:267
 msgid "View details and fixes"
+msgstr ""
+
+#: includes/Admin/class-starter-templates.php:84
+#: includes/API/class-rest-templates.php:84
+msgid "Free version is limited to 1 template. Upgrade to Pro for unlimited templates."
+msgstr ""
+
+#: includes/Admin/class-starter-templates.php:99
+msgid "Starter template not found."
+msgstr ""
+
+#: includes/Admin/class-starter-templates.php:108
+msgid "This starter template has already been imported."
+msgstr ""
+
+#: includes/Admin/class-starter-templates.php:116
+msgid "SVG sanitizer is not available."
+msgstr ""
+
+#: includes/Admin/class-starter-templates.php:160
+msgid "Failed to create template."
+msgstr ""
+
+#: includes/Admin/class-starter-templates.php:196
+#, php-format
+msgid "Starter asset \"%s\" not found."
+msgstr ""
+
+#: includes/Admin/class-starter-templates.php:205
+msgid "Could not read starter asset."
+msgstr ""
+
+#: includes/Admin/class-starter-templates.php:215
+msgid "Starter asset failed SVG sanitization."
+msgstr ""
+
+#: includes/Admin/class-starter-templates.php:229
+msgid "Could not store starter asset."
 msgstr ""
 
 #: includes/Admin/class-system-status.php:54
@@ -479,19 +529,52 @@ msgstr ""
 msgid "Manage pre-made design templates that customers can apply in the designer."
 msgstr ""
 
-#: includes/Admin/views/template-list.php:17
-msgid "Template moved to Trash."
+#: includes/Admin/views/template-list.php:18
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:100
+msgid "Engrave"
+msgstr ""
+
+#: includes/Admin/views/template-list.php:19
+msgid "Print"
 msgstr ""
 
 #: includes/Admin/views/template-list.php:20
+msgid "Basic"
+msgstr ""
+
+#: includes/Admin/views/template-list.php:32
+msgid "Template moved to Trash."
+msgstr ""
+
+#: includes/Admin/views/template-list.php:35
 msgid "Template restored."
 msgstr ""
 
-#: includes/Admin/views/template-list.php:23
+#: includes/Admin/views/template-list.php:38
 msgid "Template permanently deleted."
 msgstr ""
 
-#: includes/Admin/views/template-list.php:31
+#: includes/Admin/views/template-list.php:88
+msgid "Get started with a ready-made template"
+msgstr ""
+
+#: includes/Admin/views/template-list.php:89
+msgid "You don't have any templates yet. Import one of the starter templates below to get a working product in seconds, or build your own with \"Add New\"."
+msgstr ""
+
+#: includes/Admin/views/template-list.php:93
+msgid "Starter templates"
+msgstr ""
+
+#: includes/Admin/views/template-list.php:131
+msgid "Imported"
+msgstr ""
+
+#: includes/Admin/views/template-list.php:139
+msgid "Import"
+msgstr ""
+
+#: includes/Admin/views/template-list.php:154
 msgid "Search Templates"
 msgstr ""
 
@@ -509,21 +592,17 @@ msgstr ""
 msgid "Template not found."
 msgstr ""
 
-#: includes/API/class-rest-templates.php:84
-msgid "Free version is limited to 1 template. Upgrade to Pro for unlimited templates."
-msgstr ""
-
 #: includes/API/class-rest-templates.php:279
 msgid "Free version is limited to 1 view per template. Upgrade to Pro for multiple views."
 msgstr ""
 
-#: includes/class-cleanup.php:92
+#: includes/class-cleanup.php:107
 #, php-format
 msgid "[%s] ProductForge: server configuration problem"
 msgstr ""
 
 #. translators: 1: failure list, 2: settings page URL
-#: includes/class-cleanup.php:95
+#: includes/class-cleanup.php:110
 #, php-format
 msgid ""
 "The following ProductForge system checks are failing:\n"
@@ -533,7 +612,7 @@ msgid ""
 "Details and fixes: %2$s"
 msgstr ""
 
-#: includes/class-product-forge.php:107
+#: includes/class-product-forge.php:110
 msgid "This feature requires ProductForge Pro."
 msgstr ""
 
@@ -585,8 +664,8 @@ msgstr ""
 msgid "Your custom design"
 msgstr ""
 
-#: includes/Frontend/class-frontend.php:402
-#: frontend/js/designer/src/App.jsx:598
+#: includes/Frontend/class-frontend.php:422
+#: frontend/js/designer/src/App.jsx:602
 msgid "Customize Product"
 msgstr ""
 
@@ -604,6 +683,10 @@ msgstr ""
 
 #: includes/Pricing/class-cart-surcharge.php:74
 msgid "Design surcharge"
+msgstr ""
+
+#: productforge.php:61
+msgid "ProductForge for WooCommerce requires WooCommerce to be installed and active. The plugin is idle until WooCommerce is activated."
 msgstr ""
 
 #: admin/js/clipart/src/App.jsx:36
@@ -755,7 +838,7 @@ msgid "Inactive"
 msgstr ""
 
 #: admin/js/design-templates/src/App.jsx:94
-#: frontend/js/designer/src/App.jsx:632
+#: frontend/js/designer/src/App.jsx:636
 msgid "Saving..."
 msgstr ""
 
@@ -1710,43 +1793,51 @@ msgstr ""
 msgid "Save Boundary"
 msgstr ""
 
+#: blocks/designer/editor.js:31
+msgid "ProductForge Designer"
+msgstr ""
+
+#: blocks/designer/editor.js:35
+msgid "The product designer renders here for customers, on products that have a designer template enabled."
+msgstr ""
+
 #: frontend/js/designer/src/App.jsx:100
 msgid "The designer could not load. Please reload the page."
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:413
+#: frontend/js/designer/src/App.jsx:417
 msgid "Please customize your product before adding to cart."
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:488
+#: frontend/js/designer/src/App.jsx:492
 msgid "Failed to save design. Please try again."
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:576
+#: frontend/js/designer/src/App.jsx:580
 msgid "Loading designer..."
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:580
+#: frontend/js/designer/src/App.jsx:584
 msgid "Template not available."
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:606
+#: frontend/js/designer/src/App.jsx:610
 msgid "ProductForge designer"
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:621
+#: frontend/js/designer/src/App.jsx:625
 msgid "Design surcharge:"
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:632
+#: frontend/js/designer/src/App.jsx:636
 msgid "Saved!"
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:632
+#: frontend/js/designer/src/App.jsx:636
 msgid "Save Design"
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:641
+#: frontend/js/designer/src/App.jsx:645
 msgid "Close Designer"
 msgstr ""
 
@@ -1868,10 +1959,6 @@ msgstr ""
 msgid "Add engraving text (single-line font)"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/AddTab.jsx:100
-msgid "Engrave"
-msgstr ""
-
 #: frontend/js/designer/src/components/tabs/ElementTab.jsx:40
 msgid "Select an element to edit its properties"
 msgstr ""
@@ -1929,4 +2016,29 @@ msgstr ""
 
 #: frontend/js/designer/src/components/Toolbar.jsx:60
 msgid "Eraser"
+msgstr ""
+
+#: blocks/designer/block.json
+msgctxt "block title"
+msgid "ProductForge Designer"
+msgstr ""
+
+#: blocks/designer/block.json
+msgctxt "block description"
+msgid "Shows the product designer on a customizable product page. Place it anywhere in the product template or description."
+msgstr ""
+
+#: blocks/designer/block.json
+msgctxt "block keyword"
+msgid "designer"
+msgstr ""
+
+#: blocks/designer/block.json
+msgctxt "block keyword"
+msgid "personalize"
+msgstr ""
+
+#: blocks/designer/block.json
+msgctxt "block keyword"
+msgid "productforge"
 msgstr ""

@@ -1213,3 +1213,60 @@ msgstr "Toont de productdesigner op een personaliseerbare productpagina. Plaats 
 
 msgid "The product designer renders here for customers, on products that have a designer template enabled."
 msgstr "Hier verschijnt de productdesigner voor klanten, bij producten waarvoor een designer-template is ingeschakeld."
+
+msgid "Get started with a ready-made template"
+msgstr "Begin met een kant-en-klaar sjabloon"
+
+msgid "You don't have any templates yet. Import one of the starter templates below to get a working product in seconds, or build your own with \"Add New\"."
+msgstr "Je hebt nog geen sjablonen. Importeer hieronder een startsjabloon om binnen enkele seconden een werkend product te hebben, of bouw je eigen sjabloon met \"Nieuwe toevoegen\"."
+
+msgid "Starter templates"
+msgstr "Startsjablonen"
+
+msgid "Imported"
+msgstr "Geïmporteerd"
+
+msgid "Import"
+msgstr "Importeren"
+
+msgid "Importing…"
+msgstr "Bezig met importeren…"
+
+msgid "Could not import this template. Please try again."
+msgstr "Dit sjabloon kon niet worden geïmporteerd. Probeer het opnieuw."
+
+msgid "Engrave"
+msgstr "Graveren"
+
+msgid "Print"
+msgstr "Print"
+
+msgid "Basic"
+msgstr "Basis"
+
+msgid "Free version is limited to 1 template. Upgrade to Pro for unlimited templates."
+msgstr "De gratis versie is beperkt tot 1 sjabloon. Upgrade naar Pro voor onbeperkt sjablonen."
+
+msgid "Starter template not found."
+msgstr "Startsjabloon niet gevonden."
+
+msgid "This starter template has already been imported."
+msgstr "Dit startsjabloon is al geïmporteerd."
+
+msgid "SVG sanitizer is not available."
+msgstr "SVG-sanitizer is niet beschikbaar."
+
+msgid "Failed to create template."
+msgstr "Sjabloon aanmaken is mislukt."
+
+msgid "Starter asset \"%s\" not found."
+msgstr "Startsjabloon-asset \"%s\" niet gevonden."
+
+msgid "Could not read starter asset."
+msgstr "Startsjabloon-asset kon niet worden gelezen."
+
+msgid "Starter asset failed SVG sanitization."
+msgstr "Startsjabloon-asset is niet geslaagd voor SVG-sanitisatie."
+
+msgid "Could not store starter asset."
+msgstr "Startsjabloon-asset kon niet worden opgeslagen."
