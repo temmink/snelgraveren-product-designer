@@ -72,3 +72,36 @@ Read directly from wordpress.org/plugins/developers/add/ before submitting:
 
 Sequence: compliance sprint → new version → Freemius deploy → download free build →
 verify <10 MB + Plugin Check clean + premium code absent → submit.
+
+## UPDATE (compliance sprint uitgevoerd, v1.0.4)
+
+Beide blockers opgelost:
+
+1. **Trialware:** premium code fysiek gesplitst in eigen bestanden, gelist in de
+   `@fs_premium_only` header-annotatie in `productforge.php`: `PremiumExports`
+   (PDF/SVG-generatie + auto-export hook), `includes/Pricing/`, `RestPricing`,
+   `RestPalettes` (geheel premium), `RestFontsAdmin`/`RestClipartAdmin`
+   (mutaties; publieke GET's blijven free), en `/vendor/tecnickcom/` (TCPDF).
+   Alle call sites hebben `class_exists()`-guards; settings-pagina en Production-
+   dashboard vallen terug op PNG-only. Legacy `PdfExporter`/`SvgExporter`/
+   `PngExporter` + `intervention/image` verwijderd (dode code).
+2. **Quota's (guideline 5):** de 1-template- en 1-view-tellers zijn verwijderd
+   (besluit Martin 2026-07-17, "hybride aanpak"): geen server-side blocks meer;
+   multi-view e.d. blijven Pro via de bestaande client-side isPremium-gating
+   (Pro-badge op "Add view"). `unlimited_templates`/`multi_view` feature-keys
+   bestaan niet meer.
+3. **10 MB:** `bin/package.sh` prunt TCPDF-fonts tot de core-set (24 MB → 56 KB).
+   Premium-zip: 2.0 MB. Free build (zonder TCPDF): ~1 MB.
+4. **Bonus-bugfix:** infinite render loop (React #185) die de designer crashte op
+   templates zonder permissions/zones-config — fataal voor ELKE free install
+   omdat het publieke template-endpoint `permissions` stript. Gefixt met stabiele
+   fallback-referenties in `DesignerCanvas.jsx`.
+
+Geverifieerd op pf-fresh (poort 8090) met een gesimuleerde free build (zip minus
+de @fs_premium_only bestanden — zelfde als de Freemius-processor doet):
+Plugin Check **0 errors eigen code**, boot/REST/designer/save-flow werken,
+pricing-preview degradeert stil, PDF geeft nette Pro-error, auto-export hook
+niet geregistreerd, 2e starter-import zonder block.
+
+Nog te doen: 1.0.4 uploaden naar Freemius → echte free build downloaden →
+zelfde verificatie herhalen → indienen bij wordpress.org.
