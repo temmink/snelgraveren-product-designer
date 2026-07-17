@@ -21,6 +21,16 @@ function inferElementType(obj) {
   return 'unknown';
 }
 
+// Stable fallbacks for optional template config. Inline `|| {}` / `|| []`
+// literals create a NEW reference every render, which makes every useCallback
+// depending on them unstable; the setAddClipart effect then writes to the
+// Zustand store on each render → re-render → infinite loop (React #185).
+// Templates without permissions/zones (all free-build templates: the public
+// endpoint strips `permissions`) crashed the whole designer this way.
+const EMPTY_ZONES = [];
+const EMPTY_CONFIG = {};
+const EMPTY_PERMISSIONS = {};
+
 export default function DesignerCanvas() {
   const canvasEl  = useRef(null);
   const fabricRef = useRef(null);
@@ -46,9 +56,9 @@ export default function DesignerCanvas() {
   } = useDesignerStore();
 
   const currentView = template?.views?.[currentViewIndex];
-  const zones = currentView?.zones_config || [];
-  const globalConfig = template?.global_config || {};
-  const permissions = globalConfig.permissions || {};
+  const zones = currentView?.zones_config || EMPTY_ZONES;
+  const globalConfig = template?.global_config || EMPTY_CONFIG;
+  const permissions = globalConfig.permissions || EMPTY_PERMISSIONS;
 
   const canvasWidth = currentView?.canvas_width || 800;
   const canvasHeight = currentView?.canvas_height || 600;
