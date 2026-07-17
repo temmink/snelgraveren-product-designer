@@ -20,6 +20,36 @@ class PriceCalculator {
     }
 
     /**
+     * Pure surcharge computation from element counts + template pricing
+     * config. Used by calculate() (persisting path) and by the live
+     * price-preview REST endpoint (non-persisting).
+     */
+    public function preview_from_counts(array $counts, array $config): float {
+        $total = (int) ($counts['total'] ?? 0);
+        if ($total === 0) {
+            return 0.0;
+        }
+
+        $mode = $config['pricing_mode'] ?? 'per_element';
+        if ($mode === 'tier') {
+            $surcharge = $this->calculate_tier($total, $config['tiers'] ?? []);
+        } else {
+            $surcharge = $this->calculate_per_element($counts, $config);
+        }
+
+        $min = (float) ($config['min_surcharge'] ?? 0);
+        $max = $config['max_surcharge'] ?? null;
+        if ($surcharge > 0 && $surcharge < $min) {
+            $surcharge = $min;
+        }
+        if ($max !== null && $surcharge > (float) $max) {
+            $surcharge = (float) $max;
+        }
+
+        return $surcharge;
+    }
+
+    /**
      * Calculate the design surcharge for a given design hash.
      * Returns the surcharge amount (0 if no pricing rules apply).
      */
@@ -37,29 +67,12 @@ class PriceCalculator {
         $config = $template['global_config'] ?? [];
         $mode   = $config['pricing_mode'] ?? 'per_element';
 
-        // Count elements across all views
         $counts = $this->count_elements($design['views'] ?? []);
         if ($counts['total'] === 0) {
             return 0.0;
         }
 
-        // Calculate raw surcharge based on pricing mode
-        if ($mode === 'tier') {
-            $surcharge = $this->calculate_tier($counts['total'], $config['tiers'] ?? []);
-        } else {
-            $surcharge = $this->calculate_per_element($counts, $config);
-        }
-
-        // Apply min/max caps
-        $min = (float) ($config['min_surcharge'] ?? 0);
-        $max = $config['max_surcharge'] ?? null;
-
-        if ($surcharge > 0 && $surcharge < $min) {
-            $surcharge = $min;
-        }
-        if ($max !== null && $surcharge > (float) $max) {
-            $surcharge = (float) $max;
-        }
+        $surcharge = $this->preview_from_counts($counts, $config);
 
         // Persist the calculated price
         $this->designs->update_price((int) $design['id'], $surcharge);
