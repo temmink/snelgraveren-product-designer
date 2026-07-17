@@ -204,9 +204,28 @@ class Frontend {
         $js_file = 'frontend-designer.js';
         if (file_exists($dist_path . $js_file)) {
             $js_version = substr(md5_file($dist_path . $js_file), 0, 8);
+
+            // Safari caches JS with max-age=31557600 (1 year) keyed on the
+            // URL. LiteSpeed's Delay JS feature strips the ?ver= query
+            // parameter we pass to wp_enqueue_script, so without a different
+            // URL, Safari keeps serving the old bundle after every deploy.
+            // Copy the source to a hash-named file so the URL itself changes
+            // per build — old copies are deleted to avoid clutter. If the
+            // plugin directory is not writable the copy fails silently and we
+            // fall back to the un-hashed URL (same as before).
+            $hashed_file = 'frontend-designer.' . $js_version . '.js';
+            $hashed_path = $dist_path . $hashed_file;
+            if (!file_exists($hashed_path)) {
+                foreach (glob($dist_path . 'frontend-designer.*.js') ?: [] as $old) {
+                    @unlink($old);
+                }
+                @copy($dist_path . $js_file, $hashed_path);
+            }
+            $enqueue_file = file_exists($hashed_path) ? $hashed_file : $js_file;
+
             wp_enqueue_script(
                 'pf-frontend-designer',
-                $dist_url . $js_file,
+                $dist_url . $enqueue_file,
                 ['wp-i18n'],
                 $js_version,
                 true
@@ -223,7 +242,7 @@ class Frontend {
             // because WordPress can't match the hash to find the JSON file.
             $this->inline_script_translations('pf-frontend-designer', 'productforge', 'dist/frontend-designer.js');
 
-            $js_config = [
+            $this->js_config = [
                 'template_id'     => $template_id,
                 'product_id'      => $product_id,
                 'display_mode'    => $this->has_shortcode_in_content() ? 'embedded' : (get_post_meta($product_id, '_pf_display_mode', true) ?: 'embedded'),
@@ -238,11 +257,9 @@ class Frontend {
             // If returning from cart with an existing design, pass the hash and auto-open
             $existing_hash = $this->get_design_hash_from_url();
             if (!empty($existing_hash)) {
-                $js_config['existing_design_hash'] = $existing_hash;
-                $js_config['auto_open'] = true;
+                $this->js_config['existing_design_hash'] = $existing_hash;
+                $this->js_config['auto_open'] = true;
             }
-
-            wp_localize_script('pf-frontend-designer', 'pfDesigner', $js_config);
 
             // Prevent pinch-to-zoom interference when designer is open on mobile
             wp_add_inline_script('pf-frontend-designer', '
@@ -277,6 +294,24 @@ class Frontend {
     private bool $designer_rendered = false;
 
     /**
+     * Designer config built during enqueue_assets(); emitted as data-config
+     * JSON attribute on #pf-designer-root. Staat in het HTML-element zelf zodat
+     * LiteSpeed's JS-optimalisaties de volgorde nooit kunnen breken.
+     */
+    private array $js_config = [];
+
+    /**
+     * Render the data-config attribute for #pf-designer-root.
+     * Returns an empty string when no config is available (designer not enabled).
+     */
+    private function data_config_attr(): string {
+        if (empty($this->js_config)) {
+            return '';
+        }
+        return ' data-config="' . esc_attr(wp_json_encode($this->js_config)) . '"';
+    }
+
+    /**
      * Check if the current product's content contains the [productforge] shortcode.
      */
     private function has_shortcode_in_content(): bool {
@@ -303,7 +338,7 @@ class Frontend {
         }
 
         $mode = get_post_meta($post->ID, '_pf_display_mode', true) ?: 'embedded';
-        echo '<div id="pf-designer-root" data-mode="' . esc_attr($mode) . '"></div>';
+        echo '<div id="pf-designer-root" data-mode="' . esc_attr($mode) . '"' . $this->data_config_attr() . '></div>';
 
         if ($mode === 'modal') {
             echo '<button type="button" class="pf-open-designer button">' . esc_html__('Customize Product', 'productforge') . '</button>';
@@ -334,7 +369,7 @@ class Frontend {
         // discarded or stripped. Only the tab render produces visible HTML.
         $this->designer_rendered = true;
 
-        return '<div id="pf-designer-root" data-mode="embedded"></div>';
+        return '<div id="pf-designer-root" data-mode="embedded"' . $this->data_config_attr() . '></div>';
     }
 
     /**

@@ -1,13 +1,14 @@
-const config = window.pfDesigner || {};
+import { getDesignerConfig } from '../utils/config';
 
 function apiUrl(path) {
-  return `${config.rest_url}${path}`;
+  return `${getDesignerConfig().rest_url}${path}`;
 }
 
 function headers(includeNonce = true) {
   const h = { 'Content-Type': 'application/json' };
-  if (includeNonce && config.nonce) {
-    h['X-WP-Nonce'] = config.nonce;
+  const { nonce } = getDesignerConfig();
+  if (includeNonce && nonce) {
+    h['X-WP-Nonce'] = nonce;
   }
   return h;
 }
@@ -69,7 +70,7 @@ export async function uploadFile(file) {
 
   const res = await fetch(apiUrl('/uploads'), {
     method: 'POST',
-    headers: config.nonce ? { 'X-WP-Nonce': config.nonce } : {},
+    headers: getDesignerConfig().nonce ? { 'X-WP-Nonce': getDesignerConfig().nonce } : {},
     body: formData,
   });
   if (!res.ok) {

@@ -7,6 +7,7 @@ import DesignerCanvas from './components/DesignerCanvas';
 import Sidebar from './components/Sidebar';
 import Toolbar from './components/Toolbar';
 import { loadGoogleFonts, loadCustomFonts } from './utils/fonts';
+import { getDesignerConfig } from './utils/config';
 import useIsMobile from './hooks/useIsMobile';
 
 /**
@@ -57,8 +58,6 @@ async function renderOffscreenExportPng(canvasJson, width, height) {
   }
 }
 
-const config = window.pfDesigner || {};
-
 export default function App() {
   const {
     template, loadTemplate: setTemplate,
@@ -69,6 +68,35 @@ export default function App() {
     error, setError, clearError,
     fabricCanvasRef,
   } = useDesignerStore();
+
+  // Read config via state so we can RETRY if the first read comes back empty.
+  // Observed in production (iOS Safari + LiteSpeed Delay JS, also Mac Safari/
+  // Chrome in private mode): bundle runs, #pf-designer-root with correct
+  // data-config is in the DOM, yet the first read of root.dataset.config
+  // returns empty at mount. A few ms later it parses fine. Retry loop below
+  // covers that window without requiring user interaction.
+  const [config, setConfig] = useState(() => getDesignerConfig());
+  useEffect(() => {
+    if (config.template_id) return;
+    let attempts = 0;
+    let timer;
+    const tick = () => {
+      attempts += 1;
+      const fresh = getDesignerConfig();
+      if (fresh.template_id) {
+        setConfig(fresh);
+        return;
+      }
+      if (attempts < 40) {
+        timer = setTimeout(tick, 50); // up to 2 s of retries
+      } else {
+        setError(__('No template configured for this product.', 'productforge'));
+        setLoading(false);
+      }
+    };
+    timer = setTimeout(tick, 50);
+    return () => clearTimeout(timer);
+  }, [config.template_id, setError]);
 
   const isMobile = useIsMobile();
   const effectiveDisplayMode = isMobile ? 'modal' : (config.display_mode || 'embedded');
@@ -82,11 +110,17 @@ export default function App() {
   const returnFocusRef = useRef(null);
   const savingForCartRef = useRef(false);
 
-  // Load template on mount, then load existing design if hash is present
+  // Load template on mount, then load existing design if hash is present.
+  // Depend on config.template_id (not []) so that if the first render sees an
+  // empty config (e.g. helper couldn't parse dataset.config yet on iOS Safari
+  // + LiteSpeed's delayed script loading), the next render — when config
+  // succeeds — re-runs this effect with the real template_id.
   useEffect(() => {
     if (!config.template_id) {
-      setError(__('No template configured for this product.', 'productforge'));
-      setLoading(false);
+      // Config not ready yet — bundle is loaded but helper couldn't parse
+      // dataset.config on this call. Don't set an error; just wait for the
+      // next render. If the config genuinely never arrives (unlikely — PHP
+      // would not have enqueued the script), the loading state persists.
       return;
     }
 
@@ -150,7 +184,7 @@ export default function App() {
         setError(err.message);
         setLoading(false);
       });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [config.template_id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Modal open/close
   useEffect(() => {
