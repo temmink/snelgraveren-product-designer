@@ -56,7 +56,7 @@ class UploadValidator {
 
     private static function check_mime(string $mime): void {
         if (!in_array($mime, self::ALLOWED_MIME_TYPES, true)) {
-            throw new \RuntimeException("File type '{$mime}' is not allowed.", 400);
+            throw new \RuntimeException(esc_html(sprintf("File type '%s' is not allowed.", $mime)), 400);
         }
     }
 
@@ -75,7 +75,7 @@ class UploadValidator {
 
     private static function move_file(array $file, string $mime): array {
         $upload_dir = wp_upload_dir();
-        $subdir     = '/productforge/' . date('Y/m');
+        $subdir     = '/productforge/' . gmdate('Y/m');
         $dir        = $upload_dir['basedir'] . $subdir;
         wp_mkdir_p($dir);
 
@@ -83,6 +83,7 @@ class UploadValidator {
         $filename = bin2hex(random_bytes(8)) . '.' . $ext;
         $dest     = $dir . '/' . $filename;
 
+        // phpcs:ignore WordPress.WP.AlternativeFunctions, Generic.PHP.ForbiddenFunctions.Found -- move_uploaded_file() verifies the source is a genuine PHP upload (is_uploaded_file() check); WP_Filesystem has no equivalent safety check for $_FILES tmp_name
         if (!move_uploaded_file($file['tmp_name'], $dest)) {
             throw new \RuntimeException('Failed to move uploaded file.', 500);
         }

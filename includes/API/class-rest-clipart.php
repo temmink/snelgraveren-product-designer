@@ -212,7 +212,7 @@ class RestClipart {
         $path = str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $url);
         $expected_dir = $upload_dir['basedir'] . '/pf-clipart/';
         if (strpos($path, $expected_dir) === 0 && file_exists($path)) {
-            unlink($path);
+            wp_delete_file($path);
         }
     }
 }

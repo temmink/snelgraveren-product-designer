@@ -67,7 +67,7 @@ class FontValidator {
             }
         }
 
-        throw new \RuntimeException("Font file type '{$mime}' is not allowed. Use .woff2, .woff, or .ttf files.", 400);
+        throw new \RuntimeException(esc_html(sprintf("Font file type '%s' is not allowed. Use .woff2, .woff, or .ttf files.", $mime)), 400);
     }
 
     private static function move_file(array $file, string $format): array {
@@ -80,6 +80,7 @@ class FontValidator {
         $filename = bin2hex(random_bytes(8)) . '.' . $ext;
         $dest     = $dir . '/' . $filename;
 
+        // phpcs:ignore WordPress.WP.AlternativeFunctions, Generic.PHP.ForbiddenFunctions.Found -- move_uploaded_file() verifies the source is a genuine PHP upload (is_uploaded_file() check); WP_Filesystem has no equivalent safety check for $_FILES tmp_name
         if (!move_uploaded_file($file['tmp_name'], $dest)) {
             throw new \RuntimeException('Failed to move uploaded font file.', 500);
         }

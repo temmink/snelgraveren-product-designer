@@ -116,7 +116,8 @@ class RestExports {
             header('Content-Type: ' . $mime);
             header('Content-Disposition: attachment; filename="' . $filename . '"');
             header('Content-Length: ' . filesize($path));
-            readfile($path); // phpcs:ignore WordPress.WP.AlternativeFunctions
+            // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- streaming large export files; WP_Filesystem would load them fully into memory
+            readfile($path);
             exit;
         }
 
@@ -137,8 +138,9 @@ class RestExports {
         header('Content-Type: application/zip');
         header('Content-Disposition: attachment; filename="' . $zip_name . '"');
         header('Content-Length: ' . filesize($zip_path));
-        readfile($zip_path); // phpcs:ignore WordPress.WP.AlternativeFunctions
-        @unlink($zip_path);
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- streaming large export files; WP_Filesystem would load them fully into memory
+        readfile($zip_path);
+        wp_delete_file($zip_path);
         exit;
     }
 
@@ -168,7 +170,7 @@ class RestExports {
                 foreach (explode(',', $export['file_path']) as $path) {
                     $real_path = realpath(trim($path));
                     if ($real_path && str_starts_with($real_path, $exports_dir . '/')) {
-                        @unlink($real_path);
+                        wp_delete_file($real_path);
                     }
                 }
             }

@@ -89,7 +89,7 @@ class ExportManager {
                     foreach (explode(',', $old['file_path']) as $old_path) {
                         $old_path = trim($old_path);
                         if ($old_path !== '' && file_exists($old_path)) {
-                            @unlink($old_path);
+                            wp_delete_file($old_path);
                         }
                     }
                 }
@@ -131,7 +131,7 @@ class ExportManager {
                 'pdf' => $this->export_pdf($views, $template, $export_dir, $file_name),
                 'png' => $this->export_png($views, $template, $export_dir, $file_name),
                 'svg' => $this->export_svg($views, $export_dir, $file_name),
-                default => throw new \InvalidArgumentException('Unsupported format: ' . $format),
+                default => throw new \InvalidArgumentException(esc_html(sprintf('Unsupported format: %s', $format))),
             };
 
             $this->exports->update_status($export_id, 'done', $file_path);
@@ -232,7 +232,7 @@ class ExportManager {
 
             if ($export['type'] === 'svg') {
                 if (file_put_contents($file_path, $export['data']) === false) {
-                    throw new \RuntimeException('SVG export failed for view ' . ($i + 1));
+                    throw new \RuntimeException(esc_html(sprintf('SVG export failed for view %d', $i + 1)));
                 }
             } else {
                 // PNG data: wrap in an SVG container
@@ -242,7 +242,7 @@ class ExportManager {
                      . '<image width="100%" height="100%" href="data:image/png;base64,' . $b64 . '"/>'
                      . '</svg>';
                 if (file_put_contents($file_path, $svg) === false) {
-                    throw new \RuntimeException('SVG export failed for view ' . ($i + 1));
+                    throw new \RuntimeException(esc_html(sprintf('SVG export failed for view %d', $i + 1)));
                 }
             }
 
@@ -279,13 +279,13 @@ class ExportManager {
             if ($export['type'] === 'png') {
                 // Browser-rendered PNG: save directly
                 if (file_put_contents($file_path, $export['data']) === false) {
-                    throw new \RuntimeException('PNG export failed for view ' . ($i + 1));
+                    throw new \RuntimeException(esc_html(sprintf('PNG export failed for view %d', $i + 1)));
                 }
             } else {
                 // SVG data: convert via rsvg/Imagick
                 $dimensions = $this->get_view_dimensions($view, $template);
                 if (!$this->svg_to_png($export['data'], $dimensions['width'], $dimensions['height'], $file_path)) {
-                    throw new \RuntimeException('PNG export failed for view ' . ($i + 1));
+                    throw new \RuntimeException(esc_html(sprintf('PNG export failed for view %d', $i + 1)));
                 }
             }
 
@@ -361,7 +361,7 @@ class ExportManager {
             $pdf->Output($file_path, 'F');
 
             foreach ($temp_pngs as $tmp) {
-                @unlink($tmp);
+                wp_delete_file($tmp);
             }
 
             if (!file_exists($file_path)) {
@@ -371,7 +371,7 @@ class ExportManager {
             return $file_path;
         } catch (\Exception $e) {
             foreach ($temp_pngs as $tmp) {
-                @unlink($tmp);
+                wp_delete_file($tmp);
             }
             throw $e;
         }
@@ -395,18 +395,18 @@ class ExportManager {
         // Try rsvg-convert first (best quality, handles CSS/fonts well)
         $rsvg = $this->svg_to_png_rsvg($tmp_svg, $width, $height, $file_path, $dpi);
         if ($rsvg) {
-            @unlink($tmp_svg);
+            wp_delete_file($tmp_svg);
             return true;
         }
 
         // Try Imagick with SVG support
         if (extension_loaded('imagick')) {
             $result = $this->svg_to_png_imagick($svg, $width, $height, $file_path, $dpi);
-            @unlink($tmp_svg);
+            wp_delete_file($tmp_svg);
             return $result;
         }
 
-        @unlink($tmp_svg);
+        wp_delete_file($tmp_svg);
         return false;
     }
 

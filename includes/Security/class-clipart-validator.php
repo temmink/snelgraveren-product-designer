@@ -38,7 +38,7 @@ class ClipartValidator {
         finfo_close($finfo);
 
         if ($mime !== 'image/svg+xml') {
-            throw new \RuntimeException("File type '{$mime}' is not allowed. Only SVG files are accepted.", 400);
+            throw new \RuntimeException(esc_html(sprintf("File type '%s' is not allowed. Only SVG files are accepted.", $mime)), 400);
         }
     }
 
@@ -63,6 +63,7 @@ class ClipartValidator {
         $filename = bin2hex(random_bytes(8)) . '.svg';
         $dest     = $dir . '/' . $filename;
 
+        // phpcs:ignore WordPress.WP.AlternativeFunctions, Generic.PHP.ForbiddenFunctions.Found -- move_uploaded_file() verifies the source is a genuine PHP upload (is_uploaded_file() check); WP_Filesystem has no equivalent safety check for $_FILES tmp_name
         if (!move_uploaded_file($file['tmp_name'], $dest)) {
             throw new \RuntimeException('Failed to move uploaded clip art file.', 500);
         }

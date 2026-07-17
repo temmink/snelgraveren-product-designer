@@ -154,7 +154,7 @@ class ExportDashboard {
         $zip_path = wp_tempnam('pf-bulk-export.zip');
         $zip      = new \ZipArchive();
         if ($zip->open($zip_path, \ZipArchive::OVERWRITE) !== true) {
-            @unlink($zip_path);
+            wp_delete_file($zip_path);
             wp_die(esc_html__('Could not create the export ZIP file.', 'productforge'));
         }
         $added = 0;
@@ -196,7 +196,7 @@ class ExportDashboard {
         $zip->close();
 
         if (!$added) {
-            @unlink($zip_path);
+            wp_delete_file($zip_path);
             wp_die(esc_html__('No export files could be generated for the selection.', 'productforge'));
         }
 
@@ -205,8 +205,9 @@ class ExportDashboard {
         header('Content-Disposition: attachment; filename="productforge-exports-' . gmdate('Y-m-d') . '.zip"');
         header('Content-Length: ' . filesize($zip_path));
         header('X-Content-Type-Options: nosniff');
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- streaming large export files; WP_Filesystem would load them fully into memory
         readfile($zip_path);
-        @unlink($zip_path);
+        wp_delete_file($zip_path);
         exit;
     }
 }

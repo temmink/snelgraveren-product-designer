@@ -59,7 +59,7 @@ class Cleanup {
                 if ($thumb) {
                     $path = FileUtils::url_to_local_path($thumb);
                     if ($path && strpos($path, 'pf-thumbnails') !== false && file_exists($path)) {
-                        @unlink($path);
+                        wp_delete_file($path);
                     }
                 }
             }
@@ -104,6 +104,7 @@ class Cleanup {
         );
         wp_mail(
             get_option('admin_email'),
+            /* translators: %s: site hostname */
             sprintf(__('[%s] ProductForge: server configuration problem', 'productforge'), wp_parse_url(home_url(), PHP_URL_HOST)),
             sprintf(
                 /* translators: 1: failure list, 2: settings page URL */
