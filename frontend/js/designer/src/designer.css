@@ -400,6 +400,15 @@
   background: #16a34a;
 }
 
+.pf-designer__price {
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #1f2937;
+  background: #f3f4f6;
+  border-radius: 6px;
+  text-align: center;
+}
+
 /* ── Focus styles for keyboard navigation ────────────────────────────────── */
 
 .pf-designer button:focus-visible,

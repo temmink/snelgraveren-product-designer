@@ -121,3 +121,13 @@ export async function fetchClipartCollections() {
   );
   return withItems;
 }
+
+export async function previewPrice(templateId, counts) {
+  const res = await fetch(apiUrl('/pricing/preview'), {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify({ template_id: templateId, counts }),
+  });
+  if (!res.ok) throw new Error('Price preview failed');
+  return res.json();
+}

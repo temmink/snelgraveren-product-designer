@@ -2,12 +2,13 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { __ } from '@wordpress/i18n';
 import { Canvas as FabricCanvas } from 'fabric';
 import useDesignerStore from './store/useDesignerStore';
-import { loadTemplate, loadDesign, createDesign, saveDesignView, fetchCustomFonts, fetchClipartCollections } from './api/designerApi';
+import { loadTemplate, loadDesign, createDesign, saveDesignView, fetchCustomFonts, fetchClipartCollections, previewPrice } from './api/designerApi';
 import DesignerCanvas from './components/DesignerCanvas';
 import Sidebar from './components/Sidebar';
 import Toolbar from './components/Toolbar';
 import { loadGoogleFonts, loadCustomFonts } from './utils/fonts';
 import { getDesignerConfig } from './utils/config';
+import { countPriceableElements } from './utils/priceCounts';
 import useIsMobile from './hooks/useIsMobile';
 
 /**
@@ -131,6 +132,23 @@ export default function App() {
   const modalRef = useRef(null);
   const returnFocusRef = useRef(null);
   const savingForCartRef = useRef(false);
+
+  const [pricePreview, setPricePreview] = useState(null); // {surcharge, currency_symbol}
+
+  // Live price preview: recompute whenever snapshots change (snapshotView
+  // fires on every object add/modify/remove). Debounced; failures are
+  // silent — the authoritative price is always computed server-side in
+  // the cart.
+  useEffect(() => {
+    if (!config.template_id || !template) return;
+    const counts = countPriceableElements(canvasSnapshots);
+    const timer = setTimeout(() => {
+      previewPrice(config.template_id, counts)
+        .then(setPricePreview)
+        .catch(() => {});
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [canvasSnapshots, config.template_id, template]);
 
   // Load template on mount, then load existing design if hash is present.
   // Depend on config.template_id (not []) so that if the first render sees an
@@ -596,6 +614,12 @@ export default function App() {
             {error && (
               <div className="pf-designer__error" onClick={clearError}>
                 {error}
+              </div>
+            )}
+            {pricePreview && pricePreview.surcharge > 0 && (
+              <div className="pf-designer__price" aria-live="polite">
+                {__('Design surcharge:', 'productforge')}{' '}
+                <strong>{pricePreview.currency_symbol}{pricePreview.surcharge.toFixed(2)}</strong>
               </div>
             )}
             <button
