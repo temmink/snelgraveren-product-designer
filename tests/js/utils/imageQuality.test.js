@@ -17,4 +17,7 @@ describe('getImageQuality', () => {
     it('is ok for missing dimensions', () => {
         expect(getImageQuality(fakeImg(0, 200))).toBe('ok');
     });
+    it('is ok when getScaledWidth is missing', () => {
+        expect(getImageQuality({ width: 500 })).toBe('ok');
+    });
 });

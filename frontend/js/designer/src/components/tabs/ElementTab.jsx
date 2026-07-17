@@ -377,7 +377,7 @@ function ImageProperties({ fabricObj, type, perms, globalConfig, snapshotView, c
         <span>{scalePercent}%</span>
       </div>
 
-      {getImageQuality(fabricObj) === 'upscaled' && (
+      {fabricObj?.type?.toLowerCase() === 'image' && getImageQuality(fabricObj) === 'upscaled' && (
         <p className="pf-element__warning">
           {__('This image is scaled beyond its resolution — the result may look blurry or pixelated. Use a larger image for a sharp result.', 'productforge')}
         </p>
