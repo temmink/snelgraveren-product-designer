@@ -121,6 +121,34 @@ class DesignRepository {
     }
 
     /**
+     * Design funnel for the stats panel. "Saved" = design rows created in
+     * the window (a row only exists once a customer saves); "ordered" =
+     * those that reached checkout (status flip since v1.0.0+checkout-hook).
+     */
+    public function funnel_stats(int $days = 30): array {
+        global $wpdb;
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is a class property
+        $saved = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$this->table} WHERE created_at >= DATE_SUB(NOW(), INTERVAL %d DAY)",
+            $days
+        ));
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        $ordered = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$this->table} WHERE status = 'ordered' AND created_at >= DATE_SUB(NOW(), INTERVAL %d DAY)",
+            $days
+        ));
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        $top = $wpdb->get_results($wpdb->prepare(
+            "SELECT product_id, COUNT(*) AS cnt FROM {$this->table}
+             WHERE created_at >= DATE_SUB(NOW(), INTERVAL %d DAY) AND product_id > 0
+             GROUP BY product_id ORDER BY cnt DESC LIMIT 5",
+            $days
+        ), ARRAY_A) ?: [];
+
+        return ['saved' => $saved, 'ordered' => $ordered, 'top_products' => $top];
+    }
+
+    /**
      * Guest drafts untouched for $days days. Ordered designs are excluded by
      * status; registered customers' designs are kept for their account page.
      */

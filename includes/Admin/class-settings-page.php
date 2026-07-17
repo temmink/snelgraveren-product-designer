@@ -166,6 +166,25 @@ class SettingsPage {
             </form>
 
             <hr />
+            <h2><?php esc_html_e('Design statistics (last 30 days)', 'productforge'); ?></h2>
+            <?php $stats = (new \ProductForge\Database\DesignRepository())->funnel_stats(30); ?>
+            <table class="widefat striped" style="max-width:640px;">
+                <tbody>
+                    <tr><td><?php esc_html_e('Designs saved', 'productforge'); ?></td><td><strong><?php echo esc_html($stats['saved']); ?></strong></td></tr>
+                    <tr><td><?php esc_html_e('Designs ordered', 'productforge'); ?></td><td><strong><?php echo esc_html($stats['ordered']); ?></strong></td></tr>
+                    <tr><td><?php esc_html_e('Conversion', 'productforge'); ?></td>
+                        <td><strong><?php echo esc_html($stats['saved'] > 0 ? round(100 * $stats['ordered'] / $stats['saved']) . '%' : '—'); ?></strong></td></tr>
+                    <?php foreach ($stats['top_products'] as $i => $row) :
+                        $product = wc_get_product((int) $row['product_id']);
+                        if (!$product) { continue; } ?>
+                    <tr><td><?php echo esc_html(sprintf(__('Top product #%d', 'productforge'), $i + 1)); ?></td>
+                        <td><?php echo esc_html($product->get_name()); ?> (<?php echo esc_html($row['cnt']); ?>)</td></tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+            <p class="description"><?php esc_html_e('"Ordered" counts designs saved after this feature was installed — older orders are not back-filled.', 'productforge'); ?></p>
+
+            <hr />
 
             <h2><?php esc_html_e('System status', 'productforge'); ?></h2>
             <p class="description"><?php esc_html_e('Environment checks for everything the plugin needs at runtime. Reload this page to re-run them.', 'productforge'); ?></p>
