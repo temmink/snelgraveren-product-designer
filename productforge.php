@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: ProductForge for WooCommerce
- * Plugin URI:  https://example.com/productforge
+ * Plugin URI:  https://www.snelgraveren.nl/productforge/
  * Description: Let customers personalise products with text, images, and SVGs using a drag-and-drop editor.
  * Version:     1.0.2
  * Author:      Martin Temmink
