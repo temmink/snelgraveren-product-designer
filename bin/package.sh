@@ -19,8 +19,8 @@ if command -v composer &>/dev/null; then
     composer install --no-dev --optimize-autoloader --quiet
 else
     echo "composer not found on host — running via Docker container..."
-    docker compose exec wordpress bash -c \
-        "cd /var/www/html/wp-content/plugins/productforge && composer install --no-dev --optimize-autoloader --quiet"
+    docker run --rm -v "$(pwd)":/app -w /app composer:2 \
+        install --no-dev --optimize-autoloader --ignore-platform-reqs --quiet
 fi
 
 # 3. Stage files into a folder named after the slug
