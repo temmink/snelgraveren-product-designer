@@ -58,6 +58,11 @@ class SettingsPage {
                 return max(0, min(3650, (int) $value));
             },
         ]);
+        register_setting(self::OPTION_GROUP, 'pf_health_email_alerts', [
+            'type'              => 'boolean',
+            'default'           => true,
+            'sanitize_callback' => static function ($value) { return $value ? 1 : 0; },
+        ]);
     }
 
     /**
@@ -88,6 +93,7 @@ class SettingsPage {
         $default_format  = get_option('pf_export_default_format', 'pdf');
         $delete_data     = (bool) get_option('pf_delete_data_on_uninstall', false);
         $retention_days  = (int) get_option('pf_guest_design_retention_days', 30);
+        $health_alerts   = (bool) get_option('pf_health_email_alerts', true);
         $statuses        = function_exists('wc_get_order_statuses') ? wc_get_order_statuses() : [];
         ?>
         <div class="wrap">
@@ -144,6 +150,15 @@ class SettingsPage {
                             <p class="description" style="color:#b32d2e;">
                                 <?php esc_html_e('Leave this off unless you are permanently removing the plugin. With this off, your templates and designs survive a delete + reinstall.', 'productforge'); ?>
                             </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('E-mail alerts', 'productforge'); ?></th>
+                        <td>
+                            <label for="pf_health_email_alerts">
+                                <input type="checkbox" name="pf_health_email_alerts" id="pf_health_email_alerts" value="1" <?php checked($health_alerts); ?> />
+                                <?php esc_html_e('E-mail the site admin when a critical system check starts failing (checked daily).', 'productforge'); ?>
+                            </label>
                         </td>
                     </tr>
                 </table>
