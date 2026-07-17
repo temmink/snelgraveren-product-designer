@@ -254,7 +254,7 @@ class RestDesigns {
 
         $body = $request->get_json_params();
         $new_status = $body['status'] ?? 'draft';
-        $allowed_statuses = ['draft', 'active', 'completed', 'archived'];
+        $allowed_statuses = ['draft', 'final', 'ordered', 'archived'];
         if (!in_array($new_status, $allowed_statuses, true)) {
             return new \WP_Error('invalid_status', 'Invalid status. Allowed: ' . implode(', ', $allowed_statuses), ['status' => 400]);
         }

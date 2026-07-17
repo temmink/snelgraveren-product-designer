@@ -94,6 +94,22 @@ class DesignRepository {
         return (bool) $wpdb->update($this->table, ['status' => $status], ['id' => $id], ['%s'], ['%d']);
     }
 
+    /**
+     * Mark a design as ordered (called at checkout). Idempotent.
+     */
+    public function mark_ordered_by_hash(string $hash): bool {
+        global $wpdb;
+        $result = $wpdb->update(
+            $this->table,
+            ['status' => 'ordered'],
+            ['design_hash' => $hash],
+            ['%s'],
+            ['%s']
+        );
+        $this->invalidate_cache($hash);
+        return $result !== false;
+    }
+
     public function update_price(int $id, float $price): bool {
         global $wpdb;
         return (bool) $wpdb->update($this->table, ['total_price' => $price], ['id' => $id], ['%f'], ['%d']);

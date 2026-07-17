@@ -59,6 +59,7 @@ class OrderIntegration {
     public function save_order_item_meta(\WC_Order_Item_Product $item, string $cart_item_key, array $values, \WC_Order $order): void {
         if (!empty($values['pf_design_hash'])) {
             $item->add_meta_data('_pf_design_hash', $values['pf_design_hash'], true);
+            $this->design_repo()->mark_ordered_by_hash($values['pf_design_hash']);
         }
     }
 
@@ -102,6 +103,7 @@ class OrderIntegration {
                 if ((int) $cart_item['product_id'] === $product_id && !in_array($hash, $assigned_hashes, true)) {
                     $item->add_meta_data('_pf_design_hash', $hash, true);
                     $item->save();
+                    $this->design_repo()->mark_ordered_by_hash($hash);
                     $assigned_hashes[] = $hash;
                     break;
                 }
