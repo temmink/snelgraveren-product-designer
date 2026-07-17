@@ -34,6 +34,11 @@ cp -r vendor/ "${STAGE_DIR}/${PLUGIN_SLUG}/vendor/"
 cp -r dist/ "${STAGE_DIR}/${PLUGIN_SLUG}/dist/"
 [ -d assets/ ] && cp -r assets/ "${STAGE_DIR}/${PLUGIN_SLUG}/assets/"
 [ -d languages/ ] && cp -r languages/ "${STAGE_DIR}/${PLUGIN_SLUG}/languages/"
+# Freemius: productforge.php loads freemius-init.php, which requires
+# freemius/start.php. Without these the live site silently loses all
+# premium feature gating (is_premium() returns false).
+[ -f freemius-init.php ] && cp freemius-init.php "${STAGE_DIR}/${PLUGIN_SLUG}/"
+[ -d freemius/ ] && cp -r freemius/ "${STAGE_DIR}/${PLUGIN_SLUG}/freemius/"
 
 # 4. Clean unwanted files
 find "${STAGE_DIR}" -name '.DS_Store' -delete
