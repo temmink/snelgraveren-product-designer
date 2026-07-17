@@ -52,3 +52,23 @@ warnings** in `includes/` + root + `blocks/`.
 
 Raw report: scratchpad `pcp-report.csv` (regenerate anytime: install plugin-check +
 `wp plugin check productforge --format=csv`).
+
+## UPDATE 2026-07-17 (submission form findings) — NEW BLOCKERS
+
+Read directly from wordpress.org/plugins/developers/add/ before submitting:
+
+1. **Max upload 10 MB — our free build is 16 MB.** Slim the ZIP: prune unused TCPDF
+   fonts in vendor/ (biggest win), review dist/ bundles. Combine with blocker 2:
+   premium-only code leaving the free build also shrinks it.
+2. **Trialware guideline (5/6): runtime license gating is NOT allowed.** Our free build
+   ships ALL premium code locked behind is_premium() — wp.org requires premium
+   functionality to be physically ABSENT from the free version. Fix: annotate
+   premium-only code with Freemius `__premium_only` / `@fs_premium_only` markers
+   (PdfExporter, SvgExporter, auto-export, pricing engine, clipart/font admin, etc.)
+   so the Freemius deployment processor strips it from the free build; ensure the
+   free code degrades gracefully when those files are absent.
+3. **Contributors fixed:** wp.org account is `snelgraveren` (was `martintemmink` in
+   readme.txt — corrected).
+
+Sequence: compliance sprint → new version → Freemius deploy → download free build →
+verify <10 MB + Plugin Check clean + premium code absent → submit.
