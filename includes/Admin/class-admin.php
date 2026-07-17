@@ -156,6 +156,69 @@ class Admin {
             'isPremium'       => \ProductForge\ProductForge::is_premium(),
             'upgradeUrl'      => function_exists( 'pf_fs' ) ? pf_fs()->get_upgrade_url() : '',
         ]);
+
+        if ($hook === 'toplevel_page_productforge') {
+            $this->enqueue_starter_gallery_script();
+        }
+    }
+
+    /**
+     * Small vanilla-JS wiring for the starter-template gallery cards rendered by
+     * views/template-list.php. No build step: attached as an inline script on the
+     * already-enqueued 'pf-template-builder' handle so it can reuse the restUrl/nonce
+     * exposed via the pfTemplateBuilder global.
+     */
+    private function enqueue_starter_gallery_script(): void {
+        $importing_label = esc_js(__('Importing…', 'productforge'));
+        $generic_error    = esc_js(__('Could not import this template. Please try again.', 'productforge'));
+
+        $script = <<<JS
+(function() {
+    document.addEventListener('click', function(event) {
+        var button = event.target.closest('.pf-starter-import');
+        if (!button) {
+            return;
+        }
+
+        var config = window.pfTemplateBuilder;
+        if (!config || !config.restUrl) {
+            return;
+        }
+
+        var starterId = button.getAttribute('data-starter-id');
+        if (!starterId) {
+            return;
+        }
+
+        var originalLabel = button.textContent;
+        button.disabled = true;
+        button.textContent = "{$importing_label}";
+
+        fetch(config.restUrl + 'pf/v1/starter-templates/' + encodeURIComponent(starterId) + '/import', {
+            method: 'POST',
+            headers: { 'X-WP-Nonce': config.nonce }
+        })
+        .then(function(response) {
+            return response.json().then(function(data) {
+                return { ok: response.ok, data: data };
+            });
+        })
+        .then(function(result) {
+            if (!result.ok) {
+                throw new Error((result.data && result.data.message) || "{$generic_error}");
+            }
+            window.location.reload();
+        })
+        .catch(function(error) {
+            alert(error.message || "{$generic_error}");
+            button.disabled = false;
+            button.textContent = originalLabel;
+        });
+    });
+})();
+JS;
+
+        wp_add_inline_script('pf-template-builder', $script, 'after');
     }
 
     private function enqueue_design_templates_scripts(): void {
