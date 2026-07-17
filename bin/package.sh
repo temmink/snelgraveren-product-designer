@@ -29,6 +29,8 @@ mkdir -p "${STAGE_DIR}/${PLUGIN_SLUG}"
 
 cp "${PLUGIN_FILE}" "${STAGE_DIR}/${PLUGIN_SLUG}/"
 [ -f readme.txt ] && cp readme.txt "${STAGE_DIR}/${PLUGIN_SLUG}/"
+# Plugin Check flags a missing composer.json when vendor/ is bundled
+[ -f composer.json ] && cp composer.json "${STAGE_DIR}/${PLUGIN_SLUG}/"
 cp -r includes/ "${STAGE_DIR}/${PLUGIN_SLUG}/includes/"
 cp -r vendor/ "${STAGE_DIR}/${PLUGIN_SLUG}/vendor/"
 cp -r dist/ "${STAGE_DIR}/${PLUGIN_SLUG}/dist/"
