@@ -36,6 +36,9 @@ class ProductForge {
         $this->init_exports();
         (new Cleanup())->init();
         (new Frontend\AccountDesigns())->init();
+        // Both contexts: the editor (admin) needs the block registered for the
+        // inserter; the frontend needs the render callback.
+        (new Frontend\DesignerBlock())->init();
     }
 
     /**

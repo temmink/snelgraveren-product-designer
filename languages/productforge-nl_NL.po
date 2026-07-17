@@ -1204,3 +1204,12 @@ msgstr "Schakel dit in voor laser-/cnc-graveerproducten. Klanten kunnen nog stee
 
 msgid "ProductForge for WooCommerce requires WooCommerce to be installed and active. The plugin is idle until WooCommerce is activated."
 msgstr "ProductForge for WooCommerce vereist dat WooCommerce geïnstalleerd en actief is. De plugin doet niets totdat WooCommerce is geactiveerd."
+
+msgid "ProductForge Designer"
+msgstr "ProductForge Designer"
+
+msgid "Shows the product designer on a customizable product page. Place it anywhere in the product template or description."
+msgstr "Toont de productdesigner op een personaliseerbare productpagina. Plaats het blok waar je wilt in het producttemplate of de omschrijving."
+
+msgid "The product designer renders here for customers, on products that have a designer template enabled."
+msgstr "Hier verschijnt de productdesigner voor klanten, bij producten waarvoor een designer-template is ingeschakeld."

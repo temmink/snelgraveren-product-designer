@@ -370,14 +370,34 @@ class Frontend {
     }
 
     /**
-     * Check if the current product's content contains the [productforge] shortcode.
+     * Check if the current product's content contains the [productforge]
+     * shortcode or the productforge/designer block. Both mean "the merchant
+     * placed the designer explicitly" — the before-add-to-cart auto-render
+     * must then stay out of the way (no duplicate #pf-designer-root) and the
+     * display mode is forced to embedded.
      */
     private function has_shortcode_in_content(): bool {
         global $post;
         if (!$post) {
             return false;
         }
-        return has_shortcode($post->post_content, 'productforge');
+        return has_shortcode($post->post_content, 'productforge')
+            || has_block('productforge/designer', $post)
+            || $this->template_has_designer_block();
+    }
+
+    /**
+     * Whether the resolved block template (block themes / Site Editor) itself
+     * contains the productforge/designer block. WP core stores the current
+     * template's markup in $_wp_current_template_content before rendering, so
+     * hooks firing mid-template (like woocommerce_before_add_to_cart_button)
+     * can detect an explicit template placement and skip the auto-render —
+     * otherwise the page would get two #pf-designer-root elements.
+     */
+    private function template_has_designer_block(): bool {
+        global $_wp_current_template_content;
+        return is_string($_wp_current_template_content ?? null)
+            && has_block('productforge/designer', $_wp_current_template_content);
     }
 
     public function render_designer(): void {
