@@ -75,17 +75,6 @@ class RestTemplates {
     }
 
     public function create_template(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
-        if ( ! ProductForge::has_feature( 'unlimited_templates' ) ) {
-            $counts = $this->repo->get_status_counts();
-            $total  = ( $counts['draft'] ?? 0 ) + ( $counts['published'] ?? 0 ) + ( $counts['archived'] ?? 0 );
-            if ( $total >= 1 ) {
-                return ProductForge::premium_error(
-                    'unlimited_templates',
-                    __( 'Free version is limited to 1 template. Upgrade to Pro for unlimited templates.', 'productforge' )
-                );
-            }
-        }
-
         $body = $request->get_json_params();
         if (empty($body['title'])) {
             return new \WP_Error('missing_title', 'Title is required.', ['status' => 400]);
@@ -270,16 +259,6 @@ class RestTemplates {
 
     public function create_view(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
         $template_id = (int) $request['template_id'];
-
-        if ( ! ProductForge::has_feature( 'multi_view' ) ) {
-            $view_count = count( $this->repo->get_views( $template_id ) );
-            if ( $view_count >= 1 ) {
-                return ProductForge::premium_error(
-                    'multi_view',
-                    __( 'Free version is limited to 1 view per template. Upgrade to Pro for multiple views.', 'productforge' )
-                );
-            }
-        }
 
         if (!$this->repo->get($template_id)) {
             return new \WP_Error('not_found', 'Template not found.', ['status' => 404]);

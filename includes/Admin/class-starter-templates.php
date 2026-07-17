@@ -4,7 +4,6 @@ namespace ProductForge\Admin;
 defined('ABSPATH') || exit;
 
 use ProductForge\Database\TemplateRepository;
-use ProductForge\ProductForge;
 
 /**
  * Bundled "starter" product templates (see templates/starter/manifest.json).
@@ -68,24 +67,11 @@ class StarterTemplates {
 
     /**
      * Import a starter template by manifest id. Returns the new template id, or a
-     * WP_Error (free-tier limit reached, already imported, not found, or an asset
-     * failure).
+     * WP_Error (already imported, not found, or an asset failure).
      *
      * @return int|\WP_Error
      */
     public function import(string $starter_id) {
-        // Free-limit enforcement FIRST — mirrors RestTemplates::create_template exactly.
-        if (!ProductForge::has_feature('unlimited_templates')) {
-            $counts = $this->repo->get_status_counts();
-            $total  = ($counts['draft'] ?? 0) + ($counts['published'] ?? 0) + ($counts['archived'] ?? 0);
-            if ($total >= 1) {
-                return ProductForge::premium_error(
-                    'unlimited_templates',
-                    __('Free version is limited to 1 template. Upgrade to Pro for unlimited templates.', 'productforge')
-                );
-            }
-        }
-
         $entry = null;
         foreach ($this->load_manifest() as $item) {
             if (($item['id'] ?? '') === $starter_id) {

@@ -78,9 +78,11 @@ class ProductForge {
      * Unknown features are always available (fail-open for core features).
      */
     public static function has_feature( string $feature ): bool {
+        // NOTE: template/view *counts* are intentionally NOT premium-gated.
+        // wp.org guideline 5 forbids code-level quotas in the free build;
+        // multi-view and other builder features are Pro-gated in the admin UI
+        // (isPremium flag) and their server code is stripped via @fs_premium_only.
         static $premium_features = [
-            'unlimited_templates',
-            'multi_view',
             'svg_boundaries',
             'product_colors',
             'color_palettes',
