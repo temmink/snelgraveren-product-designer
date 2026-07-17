@@ -34,6 +34,7 @@ class ProductForge {
         $this->init_order_hooks();
         $this->init_pricing();
         $this->init_exports();
+        (new Cleanup())->init();
     }
 
     /**

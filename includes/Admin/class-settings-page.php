@@ -51,6 +51,13 @@ class SettingsPage {
                 return $value ? 1 : 0;
             },
         ]);
+        register_setting(self::OPTION_GROUP, 'pf_guest_design_retention_days', [
+            'type'              => 'integer',
+            'default'           => 30,
+            'sanitize_callback' => static function ($value) {
+                return max(0, min(3650, (int) $value));
+            },
+        ]);
     }
 
     /**
@@ -77,10 +84,11 @@ class SettingsPage {
         SystemStatus::flush_cache();
         $checks = SystemStatus::run_checks();
 
-        $trigger_status = get_option('pf_export_trigger_status', 'completed');
-        $default_format = get_option('pf_export_default_format', 'pdf');
-        $delete_data    = (bool) get_option('pf_delete_data_on_uninstall', false);
-        $statuses       = function_exists('wc_get_order_statuses') ? wc_get_order_statuses() : [];
+        $trigger_status  = get_option('pf_export_trigger_status', 'completed');
+        $default_format  = get_option('pf_export_default_format', 'pdf');
+        $delete_data     = (bool) get_option('pf_delete_data_on_uninstall', false);
+        $retention_days  = (int) get_option('pf_guest_design_retention_days', 30);
+        $statuses        = function_exists('wc_get_order_statuses') ? wc_get_order_statuses() : [];
         ?>
         <div class="wrap">
             <h1><?php esc_html_e('ProductForge Settings', 'productforge'); ?></h1>
@@ -114,6 +122,16 @@ class SettingsPage {
                                     <option value="<?php echo esc_attr($value); ?>" <?php selected($default_format, $value); ?>><?php echo esc_html($label); ?></option>
                                 <?php endforeach; ?>
                             </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="pf_guest_design_retention_days"><?php esc_html_e('Guest design retention (days)', 'productforge'); ?></label>
+                        </th>
+                        <td>
+                            <input type="number" min="0" max="3650" name="pf_guest_design_retention_days" id="pf_guest_design_retention_days"
+                                   value="<?php echo esc_attr($retention_days); ?>" class="small-text" />
+                            <p class="description"><?php esc_html_e('Abandoned guest designs (never ordered) are deleted after this many days. 0 disables cleanup. Ordered designs and designs of logged-in customers are never deleted.', 'productforge'); ?></p>
                         </td>
                     </tr>
                     <tr>

@@ -120,6 +120,23 @@ class DesignRepository {
         return (bool) $wpdb->delete($this->table, ['id' => $id], ['%d']);
     }
 
+    /**
+     * Guest drafts untouched for $days days. Ordered designs are excluded by
+     * status; registered customers' designs are kept for their account page.
+     */
+    public function find_stale_guest_drafts(int $days, int $limit = 200): array {
+        global $wpdb;
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is a class property
+        return $wpdb->get_results($wpdb->prepare(
+            "SELECT id, design_hash FROM {$this->table}
+             WHERE customer_id = 0 AND status = 'draft'
+               AND updated_at < DATE_SUB(NOW(), INTERVAL %d DAY)
+             ORDER BY updated_at ASC LIMIT %d",
+            $days,
+            $limit
+        ), ARRAY_A) ?: [];
+    }
+
     public function get_views(int $design_id): array {
         global $wpdb;
         $rows = $wpdb->get_results(
