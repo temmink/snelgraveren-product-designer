@@ -34,7 +34,7 @@ class RestPricing {
         $template_id = (int) $request['template_id'];
         $template    = (new TemplateRepository())->get($template_id);
         if (!$template || ($template['status'] ?? '') !== 'published') {
-            return new \WP_Error('pf_not_found', __('Template not found.', 'productforge'), ['status' => 404]);
+            return new \WP_Error('pf_not_found', __('Template not found.', 'snelgraveren-product-designer'), ['status' => 404]);
         }
 
         $raw    = (array) $request['counts'];

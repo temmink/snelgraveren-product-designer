@@ -34,17 +34,17 @@ export default function AddTab() {
 
   return (
     <div className="pf-sidebar__tab-content">
-      <h3 className="pf-sidebar__heading">{__('Add Element', 'productforge')}</h3>
+      <h3 className="pf-sidebar__heading">{__('Add Element', 'snelgraveren-product-designer')}</h3>
       <div className="pf-add-tools">
         {isTypeAllowed('text') && (
           <button
             type="button"
             className={`pf-add-tools__btn${activeTool === 'add-text' ? ' pf-add-tools__btn--active' : ''}`}
             onClick={() => handleToolClick('add-text')}
-            aria-label={__('Add text element', 'productforge')}
-            title={__('Add text', 'productforge')}
+            aria-label={__('Add text element', 'snelgraveren-product-designer')}
+            title={__('Add text', 'snelgraveren-product-designer')}
           >
-            {__('Text', 'productforge')}
+            {__('Text', 'snelgraveren-product-designer')}
           </button>
         )}
         {isTypeAllowed('image') && (
@@ -54,13 +54,13 @@ export default function AddTab() {
             role="button"
             tabIndex={imageDisabled ? -1 : 0}
             aria-disabled={imageDisabled}
-            aria-label={__('Add image element', 'productforge')}
+            aria-label={__('Add image element', 'snelgraveren-product-designer')}
             title={vectorOnly
-              ? __('Photos are not possible on this product (engraving requires vector artwork)', 'productforge')
-              : __('Add image (jpg, png, webp)', 'productforge')}
+              ? __('Photos are not possible on this product (engraving requires vector artwork)', 'snelgraveren-product-designer')
+              : __('Add image (jpg, png, webp)', 'snelgraveren-product-designer')}
             style={imageDisabled ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
           >
-            {__('Image', 'productforge')}
+            {__('Image', 'snelgraveren-product-designer')}
           </label>
         )}
         {isTypeAllowed('svg') && (
@@ -69,10 +69,10 @@ export default function AddTab() {
             className="pf-add-tools__btn"
             role="button"
             tabIndex={0}
-            aria-label={__('Add SVG element', 'productforge')}
-            title={__('Add SVG', 'productforge')}
+            aria-label={__('Add SVG element', 'snelgraveren-product-designer')}
+            title={__('Add SVG', 'snelgraveren-product-designer')}
           >
-            {__('SVG', 'productforge')}
+            {__('SVG', 'snelgraveren-product-designer')}
           </label>
         )}
         {globalConfig.curved_text_enabled && isTypeAllowed('text') && (
@@ -80,11 +80,11 @@ export default function AddTab() {
             type="button"
             className={`pf-add-tools__btn${activeTool === 'add-curved-text' ? ' pf-add-tools__btn--active' : ''}`}
             onClick={() => handleToolClick('add-curved-text')}
-            aria-label={__('Add curved text element', 'productforge')}
-            title={__('Add curved text', 'productforge')}
+            aria-label={__('Add curved text element', 'snelgraveren-product-designer')}
+            title={__('Add curved text', 'snelgraveren-product-designer')}
             style={{ color: activeTool === 'add-curved-text' ? '#2271b1' : '#333' }}
           >
-            ⌒ {__('Curved', 'productforge')}
+            ⌒ {__('Curved', 'snelgraveren-product-designer')}
           </button>
         )}
 
@@ -93,11 +93,11 @@ export default function AddTab() {
             type="button"
             className={`pf-add-tools__btn${activeTool === 'add-engraving-text' ? ' pf-add-tools__btn--active' : ''}`}
             onClick={() => handleToolClick('add-engraving-text')}
-            aria-label={__('Add engraving text element', 'productforge')}
-            title={__('Add engraving text (single-line font)', 'productforge')}
+            aria-label={__('Add engraving text element', 'snelgraveren-product-designer')}
+            title={__('Add engraving text (single-line font)', 'snelgraveren-product-designer')}
             style={{ color: activeTool === 'add-engraving-text' ? '#2271b1' : '#333' }}
           >
-            ✦ {__('Engrave', 'productforge')}
+            ✦ {__('Engrave', 'snelgraveren-product-designer')}
           </button>
         )}
       </div>
@@ -108,7 +108,7 @@ export default function AddTab() {
 
       {showClipart && (
         <div className="pf-clipart-section">
-          <h3 className="pf-sidebar__heading">{__('Clip Art', 'productforge')}</h3>
+          <h3 className="pf-sidebar__heading">{__('Clip Art', 'snelgraveren-product-designer')}</h3>
           {clipartCollections.map((collection) => (
             <div key={collection.id} className="pf-clipart-collection">
               <h4 className="pf-clipart-collection__name">{collection.name}</h4>

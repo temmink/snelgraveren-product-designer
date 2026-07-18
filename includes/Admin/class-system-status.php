@@ -51,23 +51,23 @@ class SystemStatus {
         $php_ok = version_compare(PHP_VERSION, '8.1', '>=');
         $checks[] = [
             'id'      => 'php_version',
-            'label'   => __('PHP version', 'productforge'),
+            'label'   => __('PHP version', 'snelgraveren-product-designer'),
             'status'  => $php_ok ? 'ok' : 'error',
             /* translators: %s: detected PHP version */
-            'message' => sprintf(__('PHP %s detected. Minimum required: 8.1.', 'productforge'), PHP_VERSION),
-            'fix'     => $php_ok ? '' : __('Ask your host to upgrade PHP to 8.1 or newer.', 'productforge'),
+            'message' => sprintf(__('PHP %s detected. Minimum required: 8.1.', 'snelgraveren-product-designer'), PHP_VERSION),
+            'fix'     => $php_ok ? '' : __('Ask your host to upgrade PHP to 8.1 or newer.', 'snelgraveren-product-designer'),
         ];
 
         // finfo — MIME validation for every customer/admin upload (security critical).
         $finfo_ok = function_exists('finfo_file');
         $checks[] = [
             'id'      => 'finfo',
-            'label'   => __('PHP fileinfo extension', 'productforge'),
+            'label'   => __('PHP fileinfo extension', 'snelgraveren-product-designer'),
             'status'  => $finfo_ok ? 'ok' : 'error',
             'message' => $finfo_ok
-                ? __('Available. Uploaded files are MIME-validated.', 'productforge')
-                : __('Missing. Upload validation cannot run, so all uploads are rejected.', 'productforge'),
-            'fix'     => $finfo_ok ? '' : __('Enable the "fileinfo" PHP extension (php.ini or ask your host).', 'productforge'),
+                ? __('Available. Uploaded files are MIME-validated.', 'snelgraveren-product-designer')
+                : __('Missing. Upload validation cannot run, so all uploads are rejected.', 'snelgraveren-product-designer'),
+            'fix'     => $finfo_ok ? '' : __('Enable the "fileinfo" PHP extension (php.ini or ask your host).', 'snelgraveren-product-designer'),
         ];
 
         // SVG→PNG converter — mirrors ExportManager::svg_to_png() detection order.
@@ -85,15 +85,15 @@ class SystemStatus {
             $checks[] = [
                 'id'      => 'dir_' . $dir,
                 /* translators: %s: directory path relative to ABSPATH */
-                'label'   => sprintf(__('Writable: %s', 'productforge'), str_replace(ABSPATH, '', $path)),
+                'label'   => sprintf(__('Writable: %s', 'snelgraveren-product-designer'), str_replace(ABSPATH, '', $path)),
                 'status'  => $writable ? 'ok' : 'error',
                 'message' => $writable
-                    ? __('Writable.', 'productforge')
+                    ? __('Writable.', 'snelgraveren-product-designer')
                     /* translators: %s: what the directory is used for */
-                    : sprintf(__('Not writable — used for %s.', 'productforge'), $purpose),
+                    : sprintf(__('Not writable — used for %s.', 'snelgraveren-product-designer'), $purpose),
                 'fix'     => $writable ? '' : sprintf(
                     /* translators: %s: directory path */
-                    __('Make the directory writable for the web server, e.g. via your hosting file manager or: chmod 755 %s (owner must be the web server user).', 'productforge'),
+                    __('Make the directory writable for the web server, e.g. via your hosting file manager or: chmod 755 %s (owner must be the web server user).', 'snelgraveren-product-designer'),
                     $path
                 ),
             ];
@@ -110,14 +110,14 @@ class SystemStatus {
         $cache_dir_writable = is_dir($cache_dir_path) && wp_is_writable($cache_dir_path);
         $checks[] = [
             'id'      => 'dir_pf_cache',
-            'label'   => __('Writable: uploads/pf-cache/ directory', 'productforge'),
+            'label'   => __('Writable: uploads/pf-cache/ directory', 'snelgraveren-product-designer'),
             'status'  => $cache_dir_writable ? 'ok' : 'warning',
             'message' => $cache_dir_writable
-                ? __('Writable. Hash-named JS copies are created for reliable cache busting.', 'productforge')
-                : __('Not writable. The designer still works, but browsers may serve a stale JS bundle after plugin updates (Safari caches JS for a year).', 'productforge'),
+                ? __('Writable. Hash-named JS copies are created for reliable cache busting.', 'snelgraveren-product-designer')
+                : __('Not writable. The designer still works, but browsers may serve a stale JS bundle after plugin updates (Safari caches JS for a year).', 'snelgraveren-product-designer'),
             'fix'     => $cache_dir_writable ? '' : sprintf(
                 /* translators: %s: directory path */
-                __('Make %s writable for the web server to enable hash-named cache busting.', 'productforge'),
+                __('Make %s writable for the web server to enable hash-named cache busting.', 'snelgraveren-product-designer'),
                 $cache_dir_path
             ),
         ];
@@ -129,9 +129,9 @@ class SystemStatus {
         if (defined('LSCWP_V')) {
             $checks[] = [
                 'id'      => 'litespeed',
-                'label'   => __('LiteSpeed Cache', 'productforge'),
+                'label'   => __('LiteSpeed Cache', 'snelgraveren-product-designer'),
                 'status'  => 'info',
-                'message' => __('Detected. The designer bundle is excluded from JS combining/minification automatically. Remember to purge the cache after plugin updates.', 'productforge'),
+                'message' => __('Detected. The designer bundle is excluded from JS combining/minification automatically. Remember to purge the cache after plugin updates.', 'snelgraveren-product-designer'),
                 'fix'     => '',
             ];
         }
@@ -159,19 +159,19 @@ class SystemStatus {
         }
 
         if ($rsvg) {
-            $message = __('rsvg-convert found (preferred converter).', 'productforge');
+            $message = __('rsvg-convert found (preferred converter).', 'snelgraveren-product-designer');
         } elseif ($imagick_svg) {
-            $message = __('Imagick with SVG support found.', 'productforge');
+            $message = __('Imagick with SVG support found.', 'snelgraveren-product-designer');
         } else {
-            $message = __('Neither rsvg-convert nor Imagick with SVG support found. Exports of designs saved with older plugin versions (SVG data) will fail; current browser-rendered PNG exports still work.', 'productforge');
+            $message = __('Neither rsvg-convert nor Imagick with SVG support found. Exports of designs saved with older plugin versions (SVG data) will fail; current browser-rendered PNG exports still work.', 'snelgraveren-product-designer');
         }
 
         return [
             'id'      => 'svg_converter',
-            'label'   => __('SVG to PNG converter', 'productforge'),
+            'label'   => __('SVG to PNG converter', 'snelgraveren-product-designer'),
             'status'  => ($rsvg || $imagick_svg) ? 'ok' : 'warning',
             'message' => $message,
-            'fix'     => ($rsvg || $imagick_svg) ? '' : __('Install librsvg2-bin (provides /usr/bin/rsvg-convert) or enable the Imagick PHP extension with SVG delegate support.', 'productforge'),
+            'fix'     => ($rsvg || $imagick_svg) ? '' : __('Install librsvg2-bin (provides /usr/bin/rsvg-convert) or enable the Imagick PHP extension with SVG delegate support.', 'snelgraveren-product-designer'),
         ];
     }
 
@@ -189,14 +189,14 @@ class SystemStatus {
 
         return [
             'id'      => 'db_tables',
-            'label'   => __('Database tables', 'productforge'),
+            'label'   => __('Database tables', 'snelgraveren-product-designer'),
             'status'  => empty($missing) ? 'ok' : 'error',
             'message' => empty($missing)
                 /* translators: %d: number of database tables found */
-                ? sprintf(__('All %d tables present.', 'productforge'), count(self::TABLES))
+                ? sprintf(__('All %d tables present.', 'snelgraveren-product-designer'), count(self::TABLES))
                 /* translators: %s: comma-separated list of missing table names */
-                : sprintf(__('Missing tables: %s', 'productforge'), implode(', ', $missing)),
-            'fix'     => empty($missing) ? '' : __('Deactivate and re-activate the plugin to re-run the database migrations.', 'productforge'),
+                : sprintf(__('Missing tables: %s', 'snelgraveren-product-designer'), implode(', ', $missing)),
+            'fix'     => empty($missing) ? '' : __('Deactivate and re-activate the plugin to re-run the database migrations.', 'snelgraveren-product-designer'),
         ];
     }
 

@@ -33,9 +33,9 @@ function UpgradePrompt() {
   return (
     <div className="pf-ca__upgrade">
       <span className="pf-ca__upgrade-badge">PRO</span>
-      <p>{__('Clipart management requires ProductForge Pro.', 'productforge')}</p>
+      <p>{__('Clipart management requires ProductForge Pro.', 'snelgraveren-product-designer')}</p>
       {upgradeUrl && (
-        <a href={upgradeUrl} className="button button-primary">{__('Upgrade Now', 'productforge')}</a>
+        <a href={upgradeUrl} className="button button-primary">{__('Upgrade Now', 'snelgraveren-product-designer')}</a>
       )}
     </div>
   );
@@ -83,14 +83,14 @@ function DropZone({ collectionId, onUploaded }) {
     >
       {uploading ? (
         <span className="pf-ca__dropzone-text">
-          {__('Uploading', 'productforge')} {progress}...
+          {__('Uploading', 'snelgraveren-product-designer')} {progress}...
         </span>
       ) : (
         <>
           <span className="pf-ca__dropzone-text">
-            {__('Drop SVG files here or', 'productforge')}{' '}
+            {__('Drop SVG files here or', 'snelgraveren-product-designer')}{' '}
             <button type="button" className="pf-ca__dropzone-btn" onClick={() => fileRef.current?.click()}>
-              {__('browse', 'productforge')}
+              {__('browse', 'snelgraveren-product-designer')}
             </button>
           </span>
           <input
@@ -146,7 +146,7 @@ function CollectionCard({ collection, onRefresh }) {
   };
 
   const handleDelete = async () => {
-    if (!confirm(__('Delete collection "%s" and all its items?', 'productforge').replace('%s', collection.name))) return;
+    if (!confirm(__('Delete collection "%s" and all its items?', 'snelgraveren-product-designer').replace('%s', collection.name))) return;
     try {
       await api(`/clipart/collections/${collection.id}`, { method: 'DELETE' });
       onRefresh();
@@ -157,7 +157,7 @@ function CollectionCard({ collection, onRefresh }) {
 
   const handleDeleteSelected = async () => {
     if (selected.size === 0) return;
-    if (!confirm(__('Delete %d selected items?', 'productforge').replace('%d', selected.size))) return;
+    if (!confirm(__('Delete %d selected items?', 'snelgraveren-product-designer').replace('%d', selected.size))) return;
     setDeleting(true);
     for (const id of selected) {
       try {
@@ -223,19 +223,19 @@ function CollectionCard({ collection, onRefresh }) {
           {editing ? (
             <>
               <button className="button button-small button-primary" onClick={handleRename}>
-                {__('Save', 'productforge')}
+                {__('Save', 'snelgraveren-product-designer')}
               </button>
               <button className="button button-small" onClick={() => setEditing(false)}>
-                {__('Cancel', 'productforge')}
+                {__('Cancel', 'snelgraveren-product-designer')}
               </button>
             </>
           ) : (
             <>
               <button className="button button-small" onClick={() => { setEditName(collection.name); setEditing(true); }}>
-                {__('Rename', 'productforge')}
+                {__('Rename', 'snelgraveren-product-designer')}
               </button>
               <button className="button button-small pf-ca__btn-danger" onClick={handleDelete}>
-                {__('Delete', 'productforge')}
+                {__('Delete', 'snelgraveren-product-designer')}
               </button>
             </>
           )}
@@ -245,7 +245,7 @@ function CollectionCard({ collection, onRefresh }) {
       {expanded && (
         <div className="pf-ca__card-body">
           {items === null ? (
-            <p className="pf-ca__loading">{__('Loading...', 'productforge')}</p>
+            <p className="pf-ca__loading">{__('Loading...', 'snelgraveren-product-designer')}</p>
           ) : (
             <>
               {items.length > 0 && (
@@ -256,7 +256,7 @@ function CollectionCard({ collection, onRefresh }) {
                       checked={items.length > 0 && selected.size === items.length}
                       onChange={toggleSelectAll}
                     />
-                    {__('Select All', 'productforge')}
+                    {__('Select All', 'snelgraveren-product-designer')}
                   </label>
                   {selected.size > 0 && (
                     <button
@@ -265,8 +265,8 @@ function CollectionCard({ collection, onRefresh }) {
                       disabled={deleting}
                     >
                       {deleting
-                        ? __('Deleting...', 'productforge')
-                        : __('Delete Selected', 'productforge') + ` (${selected.size})`}
+                        ? __('Deleting...', 'snelgraveren-product-designer')
+                        : __('Delete Selected', 'snelgraveren-product-designer') + ` (${selected.size})`}
                     </button>
                   )}
                 </div>
@@ -350,7 +350,7 @@ export default function App() {
         <input
           type="text"
           className="pf-ca__create-input"
-          placeholder={__('New collection name...', 'productforge')}
+          placeholder={__('New collection name...', 'snelgraveren-product-designer')}
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(); }}
@@ -360,15 +360,15 @@ export default function App() {
           onClick={handleCreate}
           disabled={creating || !newName.trim()}
         >
-          {creating ? __('Creating...', 'productforge') : __('Create Collection', 'productforge')}
+          {creating ? __('Creating...', 'snelgraveren-product-designer') : __('Create Collection', 'snelgraveren-product-designer')}
         </button>
       </div>
 
       {loading ? (
-        <p>{__('Loading collections...', 'productforge')}</p>
+        <p>{__('Loading collections...', 'snelgraveren-product-designer')}</p>
       ) : collections.length === 0 ? (
         <div className="pf-ca__empty">
-          <p>{__('No clip art collections yet. Create one to get started.', 'productforge')}</p>
+          <p>{__('No clip art collections yet. Create one to get started.', 'snelgraveren-product-designer')}</p>
         </div>
       ) : (
         <div className="pf-ca__list">

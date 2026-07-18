@@ -37,12 +37,12 @@ export default function ElementTab() {
       )}
 
       {!selectedObject && (
-        <p className="pf-element__hint">{__('Select an element to edit its properties', 'productforge')}</p>
+        <p className="pf-element__hint">{__('Select an element to edit its properties', 'snelgraveren-product-designer')}</p>
       )}
 
       {selectedObject && (
         <>
-          <h3 className="pf-sidebar__heading">{type === 'engraving-text' ? (<>{__('Engraving', 'productforge')}{__(' Properties', 'productforge')} <span style={{ fontSize: '10px', color: '#fff', background: '#2271b1', padding: '1px 6px', borderRadius: '3px', marginLeft: '6px', fontWeight: 'normal', verticalAlign: 'middle' }}>⠁ single-line</span></>) : (<>{type.charAt(0).toUpperCase() + type.slice(1)}{__(' Properties', 'productforge')}</>)}</h3>
+          <h3 className="pf-sidebar__heading">{type === 'engraving-text' ? (<>{__('Engraving', 'snelgraveren-product-designer')}{__(' Properties', 'snelgraveren-product-designer')} <span style={{ fontSize: '10px', color: '#fff', background: '#2271b1', padding: '1px 6px', borderRadius: '3px', marginLeft: '6px', fontWeight: 'normal', verticalAlign: 'middle' }}>⠁ single-line</span></>) : (<>{type.charAt(0).toUpperCase() + type.slice(1)}{__(' Properties', 'snelgraveren-product-designer')}</>)}</h3>
 
           {type === 'text' && (
             <TextProperties
@@ -104,7 +104,7 @@ export default function ElementTab() {
                 }
               }}
             >
-              {__('Delete', 'productforge')}
+              {__('Delete', 'snelgraveren-product-designer')}
             </button>
           )}
         </>
@@ -154,7 +154,7 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
       {/* Font family */}
       {perms.change_font !== false && allowedFonts.length > 0 && (
         <label className="pf-element__field">
-          <span>{__('Font', 'productforge')}</span>
+          <span>{__('Font', 'snelgraveren-product-designer')}</span>
           <select
             value={fontFamily}
             onChange={(e) => {
@@ -171,7 +171,7 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
 
       {/* Font size */}
       <label className="pf-element__field">
-        <span>{__('Size', 'productforge')}</span>
+        <span>{__('Size', 'snelgraveren-product-designer')}</span>
         <input
           type="number"
           min="8"
@@ -188,7 +188,7 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
       {/* Color */}
       {elementColorsEnabled && perms.recolor !== false && (
         <label className="pf-element__field">
-          <span>{__('Color', 'productforge')}</span>
+          <span>{__('Color', 'snelgraveren-product-designer')}</span>
           {anyColor ? (
             <input
               type="color"
@@ -322,17 +322,17 @@ function AlignmentButtons({ fabricObj, template, currentViewIndex, snapshotView 
   }, [handleAlign]);
 
   const dirs = [
-    ['left', '⬅', __('Align left', 'productforge')],
-    ['center', '↔', __('Align center', 'productforge')],
-    ['right', '➡', __('Align right', 'productforge')],
-    ['top', '⬆', __('Align top', 'productforge')],
-    ['middle', '↕', __('Align middle', 'productforge')],
-    ['bottom', '⬇', __('Align bottom', 'productforge')],
+    ['left', '⬅', __('Align left', 'snelgraveren-product-designer')],
+    ['center', '↔', __('Align center', 'snelgraveren-product-designer')],
+    ['right', '➡', __('Align right', 'snelgraveren-product-designer')],
+    ['top', '⬆', __('Align top', 'snelgraveren-product-designer')],
+    ['middle', '↕', __('Align middle', 'snelgraveren-product-designer')],
+    ['bottom', '⬇', __('Align bottom', 'snelgraveren-product-designer')],
   ];
 
   return (
     <div className="pf-element__align">
-      <span className="pf-element__align-label">{__('Align', 'productforge')}</span>
+      <span className="pf-element__align-label">{__('Align', 'snelgraveren-product-designer')}</span>
       <div className="pf-element__align-btns" ref={groupRef}>
         {dirs.map(([dir, icon, title]) => (
           <button key={dir} type="button" className="pf-element__align-btn" data-align={dir} title={title}>{icon}</button>
@@ -379,14 +379,14 @@ function ImageProperties({ fabricObj, type, perms, globalConfig, snapshotView, c
 
       {fabricObj?.type?.toLowerCase() === 'image' && getImageQuality(fabricObj) === 'upscaled' && (
         <p className="pf-element__warning">
-          {__('This image is scaled beyond its resolution — the result may look blurry or pixelated. Use a larger image for a sharp result.', 'productforge')}
+          {__('This image is scaled beyond its resolution — the result may look blurry or pixelated. Use a larger image for a sharp result.', 'snelgraveren-product-designer')}
         </p>
       )}
 
       {/* SVG recolor */}
       {type === 'svg' && elementColorsEnabled && perms.recolor !== false && !fabricObj.data?.clipartNoRecolor && (
         <label className="pf-element__field">
-          <span>{__('Tint Color', 'productforge')}</span>
+          <span>{__('Tint Color', 'snelgraveren-product-designer')}</span>
           {anyColor || allowedColors.length === 0 ? (
             <input
               type="color"
@@ -481,7 +481,7 @@ function ZoneFillSection({ zones, editableZones, globalConfig, fabricCanvasRef, 
 
   return (
     <div className="pf-zone-fill">
-      <h3 className="pf-sidebar__heading">{__('Product Color', 'productforge')}</h3>
+      <h3 className="pf-sidebar__heading">{__('Product Color', 'snelgraveren-product-designer')}</h3>
       {editableZones.map((zone) => {
         const zoneIndex = zones.indexOf(zone);
         const currentColor = (isSolid && solidColor) ? solidColor : (zoneFillColors[zoneIndex] || zone.svg_fill_color || '#ffffff');
@@ -571,7 +571,7 @@ function EngravingTextProperties({ fabricObj, snapshotView, currentViewIndex }) 
 
   return (
     <div className="pf-element__section">
-      <label className="pf-element__label">{__('Text', 'productforge')}</label>
+      <label className="pf-element__label">{__('Text', 'snelgraveren-product-designer')}</label>
       <input
         type="text"
         className="pf-element__input"
@@ -582,7 +582,7 @@ function EngravingTextProperties({ fabricObj, snapshotView, currentViewIndex }) 
         }}
       />
 
-      <label className="pf-element__label">{__('Engraving Font', 'productforge')} <span style={{ fontSize: '10px', color: '#888', fontWeight: 'normal', marginLeft: '4px', background: '#f0f0f0', padding: '1px 5px', borderRadius: '3px' }}>single-line</span></label>
+      <label className="pf-element__label">{__('Engraving Font', 'snelgraveren-product-designer')} <span style={{ fontSize: '10px', color: '#888', fontWeight: 'normal', marginLeft: '4px', background: '#f0f0f0', padding: '1px 5px', borderRadius: '3px' }}>single-line</span></label>
       <div className="pf-element__font-picker" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
         {ENGRAVING_FONTS.map((f) => {
           const preview = renderHersheyText('Abc', f.id, { fontSize: 18 });
@@ -612,7 +612,7 @@ function EngravingTextProperties({ fabricObj, snapshotView, currentViewIndex }) 
         })}
       </div>
 
-      <label className="pf-element__label">{__('Size', 'productforge')}</label>
+      <label className="pf-element__label">{__('Size', 'snelgraveren-product-designer')}</label>
       <input
         type="number"
         className="pf-element__input pf-element__input--short"
@@ -626,7 +626,7 @@ function EngravingTextProperties({ fabricObj, snapshotView, currentViewIndex }) 
         }}
       />
 
-      <label className="pf-element__label">{__('Color', 'productforge')}</label>
+      <label className="pf-element__label">{__('Color', 'snelgraveren-product-designer')}</label>
       <input
         type="color"
         className="pf-element__color-input"

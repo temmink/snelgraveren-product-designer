@@ -26,7 +26,7 @@ export default function PermissionsPanel() {
 
   const ELEMENT_TYPES = ELEMENT_TYPE_KEYS.map(({ key, labelKey, extras }) => ({
     key,
-    label: __( labelKey, 'productforge' ),
+    label: __( labelKey, 'snelgraveren-product-designer' ),
     extras,
   }));
 
@@ -50,7 +50,7 @@ export default function PermissionsPanel() {
             ))}
             <div className="pf-permissions__scales">
               <label>
-                { __( 'Min scale', 'productforge' ) }
+                { __( 'Min scale', 'snelgraveren-product-designer' ) }
                 <input
                   type="number" step="0.1" min="0.01"
                   value={perm.min_scale ?? 0.1}
@@ -59,7 +59,7 @@ export default function PermissionsPanel() {
                 />
               </label>
               <label>
-                { __( 'Max scale', 'productforge' ) }
+                { __( 'Max scale', 'snelgraveren-product-designer' ) }
                 <input
                   type="number" step="0.1" min="0.1"
                   value={perm.max_scale ?? 10}
@@ -69,7 +69,7 @@ export default function PermissionsPanel() {
               </label>
               {perm.snap_to_grid && (
                 <label>
-                  { __( 'Grid size (px)', 'productforge' ) }
+                  { __( 'Grid size (px)', 'snelgraveren-product-designer' ) }
                   <input
                     type="number" min="1"
                     value={perm.grid_size ?? 10}

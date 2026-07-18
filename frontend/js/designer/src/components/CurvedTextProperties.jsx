@@ -55,7 +55,7 @@ export default function CurvedTextProperties({ fabricObj, snapshotView, currentV
       </div>
 
       <label className="pf-element__field">
-        <span>{__('Curve intensity', 'productforge')}</span>
+        <span>{__('Curve intensity', 'snelgraveren-product-designer')}</span>
         <input type="range" min="-100" max="100" value={intensity}
           onChange={(e) => {
             const val = parseInt(e.target.value, 10);
@@ -66,7 +66,7 @@ export default function CurvedTextProperties({ fabricObj, snapshotView, currentV
       </label>
 
       <label className="pf-element__field">
-        <span>{__('Letter spacing', 'productforge')}</span>
+        <span>{__('Letter spacing', 'snelgraveren-product-designer')}</span>
         <input type="range" min="-50" max="200" value={letterSpacing}
           onChange={(e) => {
             const val = parseInt(e.target.value, 10);

@@ -7,23 +7,23 @@ const DEFAULT_FILTERS = ['Brightness', 'Contrast', 'Saturation', 'Grayscale', 'S
 export default function SettingsTools({ globalConfig, update }) {
   return (
     <>
-      <h3 className="pf-settings__section-title">{__('Tools', 'productforge')}</h3>
-      <p className="pf-settings__section-desc">{__('Configure which tools are available to customers.', 'productforge')}</p>
+      <h3 className="pf-settings__section-title">{__('Tools', 'snelgraveren-product-designer')}</h3>
+      <p className="pf-settings__section-desc">{__('Configure which tools are available to customers.', 'snelgraveren-product-designer')}</p>
 
       <fieldset className="pf-settings__fieldset">
-        <legend>{__('Drawing Tool', 'productforge')}</legend>
+        <legend>{__('Drawing Tool', 'snelgraveren-product-designer')}</legend>
         <label className="pf-settings__check">
           <input
             type="checkbox"
             checked={globalConfig.drawing_enabled || false}
             onChange={(e) => update('drawing_enabled', e.target.checked)}
           />
-          {__('Enable drawing tool', 'productforge')}
+          {__('Enable drawing tool', 'snelgraveren-product-designer')}
         </label>
         {globalConfig.drawing_enabled && (
           <div style={{ paddingLeft: 20, marginTop: 8 }}>
             <label className="pf-settings__field">
-              <span>{__('Default stroke width', 'productforge')}</span>
+              <span>{__('Default stroke width', 'snelgraveren-product-designer')}</span>
               <input
                 type="number"
                 min="1"
@@ -33,7 +33,7 @@ export default function SettingsTools({ globalConfig, update }) {
               />
             </label>
             <label className="pf-settings__field">
-              <span>{__('Default stroke color', 'productforge')}</span>
+              <span>{__('Default stroke color', 'snelgraveren-product-designer')}</span>
               <input
                 type="color"
                 value={globalConfig.drawing_default_color || '#000000'}
@@ -45,18 +45,18 @@ export default function SettingsTools({ globalConfig, update }) {
       </fieldset>
 
       <fieldset className="pf-settings__fieldset">
-        <legend>{__('Image Filters', 'productforge')}</legend>
+        <legend>{__('Image Filters', 'snelgraveren-product-designer')}</legend>
         <label className="pf-settings__check">
           <input
             type="checkbox"
             checked={globalConfig.filters_enabled || false}
             onChange={(e) => update('filters_enabled', e.target.checked)}
           />
-          {__('Enable image filters', 'productforge')}
+          {__('Enable image filters', 'snelgraveren-product-designer')}
         </label>
         {globalConfig.filters_enabled && (
           <div style={{ paddingLeft: 20, marginTop: 8 }}>
-            <div className="pf-settings__filter-label">{__('Available filters:', 'productforge')}</div>
+            <div className="pf-settings__filter-label">{__('Available filters:', 'snelgraveren-product-designer')}</div>
             <div className="pf-settings__filter-pills">
               {ALL_FILTERS.map((f) => {
                 const allowed = globalConfig.allowed_filters || DEFAULT_FILTERS;
@@ -82,14 +82,14 @@ export default function SettingsTools({ globalConfig, update }) {
         )}
       </fieldset>
       <fieldset className="pf-settings__fieldset">
-        <legend>{__('Curved Text', 'productforge')}</legend>
+        <legend>{__('Curved Text', 'snelgraveren-product-designer')}</legend>
         <label className="pf-settings__check">
           <input
             type="checkbox"
             checked={globalConfig.curved_text_enabled || false}
             onChange={(e) => update('curved_text_enabled', e.target.checked)}
           />
-          {__('Enable curved text tool', 'productforge')}
+          {__('Enable curved text tool', 'snelgraveren-product-designer')}
         </label>
       </fieldset>
     </>

@@ -21,7 +21,7 @@ export default function DesignTemplates({ templateId, allowedIds }) {
     const canvas = fabricCanvasRef;
     if (!canvas) return;
 
-    if (!confirm(__('Apply this template? This will replace your current design elements.', 'productforge'))) {
+    if (!confirm(__('Apply this template? This will replace your current design elements.', 'snelgraveren-product-designer'))) {
       return;
     }
 
@@ -54,7 +54,7 @@ export default function DesignTemplates({ templateId, allowedIds }) {
   };
 
   if (loading) {
-    return <p style={{ color: '#999', fontSize: 12 }}>{__('Loading templates...', 'productforge')}</p>;
+    return <p style={{ color: '#999', fontSize: 12 }}>{__('Loading templates...', 'snelgraveren-product-designer')}</p>;
   }
 
   if (templates.length === 0) {
@@ -68,14 +68,14 @@ export default function DesignTemplates({ templateId, allowedIds }) {
 
   return (
     <div className="pf-design-templates">
-      <div className="pf-add-tools__heading">{__('Design Templates', 'productforge')}</div>
+      <div className="pf-add-tools__heading">{__('Design Templates', 'snelgraveren-product-designer')}</div>
       {categories.length > 1 && (
         <select
           className="pf-design-templates__category-filter"
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
         >
-          <option value="">{__('All categories', 'productforge')}</option>
+          <option value="">{__('All categories', 'snelgraveren-product-designer')}</option>
           {categories.map((c) => (
             <option key={c} value={c}>{c}</option>
           ))}

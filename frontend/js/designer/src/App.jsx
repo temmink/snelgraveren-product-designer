@@ -97,7 +97,7 @@ export default function App() {
         // delivery problem, not a store-configuration problem — show an
         // accurate message and KEEP polling (slowly) so a late config still
         // recovers without a manual reload.
-        setError(__('The designer could not load. Please reload the page.', 'productforge'));
+        setError(__('The designer could not load. Please reload the page.', 'snelgraveren-product-designer'));
         setLoading(false);
       }
       timer = setTimeout(tick, attempts < 40 ? 50 : 1000);
@@ -414,7 +414,7 @@ export default function App() {
       // If customization is required but no design was saved, block submission
       if (customizationRequired && !store.designHash && Object.keys(store.canvasSnapshots).length === 0) {
         e.preventDefault();
-        setError(__('Please customize your product before adding to cart.', 'productforge'));
+        setError(__('Please customize your product before adding to cart.', 'snelgraveren-product-designer'));
         return;
       }
 
@@ -489,7 +489,7 @@ export default function App() {
           form.submit();
         } catch (err) {
           savingForCartRef.current = false;
-          setError(__('Failed to save design. Please try again.', 'productforge'));
+          setError(__('Failed to save design. Please try again.', 'snelgraveren-product-designer'));
         }
         return;
       }
@@ -577,11 +577,11 @@ export default function App() {
   };
 
   if (loading) {
-    return <div className="pf-designer pf-designer--loading">{__('Loading designer...', 'productforge')}</div>;
+    return <div className="pf-designer pf-designer--loading">{__('Loading designer...', 'snelgraveren-product-designer')}</div>;
   }
 
   if (!template) {
-    return <div className="pf-designer pf-designer--error">{error || __('Template not available.', 'productforge')}</div>;
+    return <div className="pf-designer pf-designer--error">{error || __('Template not available.', 'snelgraveren-product-designer')}</div>;
   }
 
   const isModal = effectiveDisplayMode === 'modal';
@@ -599,7 +599,7 @@ export default function App() {
           className="pf-open-designer button"
           onClick={() => setDesignerOpen(true)}
         >
-          {__('Customize Product', 'productforge')}
+          {__('Customize Product', 'snelgraveren-product-designer')}
         </button>
       )}
       <div
@@ -607,7 +607,7 @@ export default function App() {
         className={wrapperClass}
         role={isModal ? 'dialog' : undefined}
         aria-modal={isModal ? 'true' : undefined}
-        aria-label={isModal ? __('ProductForge designer', 'productforge') : undefined}
+        aria-label={isModal ? __('ProductForge designer', 'snelgraveren-product-designer') : undefined}
         onClick={isModal ? (e) => { e.stopPropagation(); setDesignerOpen(false); } : undefined}
       >
         <Toolbar />
@@ -622,7 +622,7 @@ export default function App() {
             )}
             {pricePreview && pricePreview.surcharge > 0 && (
               <div className="pf-designer__price" aria-live="polite">
-                {__('Design surcharge:', 'productforge')}{' '}
+                {__('Design surcharge:', 'snelgraveren-product-designer')}{' '}
                 <strong>{pricePreview.currency_symbol}{pricePreview.surcharge.toFixed(2)}</strong>
               </div>
             )}
@@ -633,7 +633,7 @@ export default function App() {
               disabled={isSaving || !isDirty}
             >
               <span aria-live="polite">
-                {isSaving ? __('Saving...', 'productforge') : savedRecently ? __('Saved!', 'productforge') : __('Save Design', 'productforge')}
+                {isSaving ? __('Saving...', 'snelgraveren-product-designer') : savedRecently ? __('Saved!', 'snelgraveren-product-designer') : __('Save Design', 'snelgraveren-product-designer')}
               </span>
             </button>
             {isModal && (
@@ -642,7 +642,7 @@ export default function App() {
                 className="pf-designer__close-btn"
                 onClick={(e) => { e.stopPropagation(); setDesignerOpen(false); }}
               >
-                {__('Close Designer', 'productforge')}
+                {__('Close Designer', 'snelgraveren-product-designer')}
               </button>
             )}
           </div>

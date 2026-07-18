@@ -15,7 +15,7 @@ class ProductIntegration {
 
     public function add_product_tab(array $tabs): array {
         $tabs['productforge'] = [
-            'label'    => __('ProductForge', 'productforge'),
+            'label'    => __('ProductForge', 'snelgraveren-product-designer'),
             'target'   => 'pf_productforge_data',
             'class'    => [],
             'priority' => 80,
@@ -39,29 +39,29 @@ class ProductIntegration {
                 <?php
                 woocommerce_wp_checkbox([
                     'id'          => '_pf_designer_enabled',
-                    'label'       => __('Enable Designer', 'productforge'),
-                    'description' => __('Allow customers to personalise this product.', 'productforge'),
+                    'label'       => __('Enable Designer', 'snelgraveren-product-designer'),
+                    'description' => __('Allow customers to personalise this product.', 'snelgraveren-product-designer'),
                     'value'       => $enabled ? 'yes' : '',
                 ]);
 
-                $template_options = ['' => __('— Select template —', 'productforge')];
+                $template_options = ['' => __('— Select template —', 'snelgraveren-product-designer')];
                 foreach ($templates as $tpl) {
                     $template_options[$tpl['id']] = esc_html($tpl['title']);
                 }
 
                 woocommerce_wp_select([
                     'id'      => '_pf_template_id',
-                    'label'   => __('Template', 'productforge'),
+                    'label'   => __('Template', 'snelgraveren-product-designer'),
                     'options' => $template_options,
                     'value'   => $template_id ?: '',
                 ]);
 
                 woocommerce_wp_select([
                     'id'      => '_pf_display_mode',
-                    'label'   => __('Display Mode', 'productforge'),
+                    'label'   => __('Display Mode', 'snelgraveren-product-designer'),
                     'options' => [
-                        'embedded' => __('Embedded on product page', 'productforge'),
-                        'modal'    => __('Open in modal popup', 'productforge'),
+                        'embedded' => __('Embedded on product page', 'snelgraveren-product-designer'),
+                        'modal'    => __('Open in modal popup', 'snelgraveren-product-designer'),
                     ],
                     'value'   => $display_mode,
                 ]);

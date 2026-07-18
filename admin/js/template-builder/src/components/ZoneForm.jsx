@@ -62,7 +62,7 @@ function FillColorPicker({ value, onChange, onClear, globalConfig }) {
           ))}
           {onClear && (
             <button type="button" className="button button-small" onClick={onClear}>
-              { __( 'Clear', 'productforge' ) }
+              { __( 'Clear', 'snelgraveren-product-designer' ) }
             </button>
           )}
         </>
@@ -76,7 +76,7 @@ function FillColorPicker({ value, onChange, onClear, globalConfig }) {
           />
           {onClear && (
             <button type="button" className="button button-small" onClick={onClear}>
-              { __( 'Clear', 'productforge' ) }
+              { __( 'Clear', 'snelgraveren-product-designer' ) }
             </button>
           )}
         </>
@@ -127,42 +127,42 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
     <form onSubmit={handleSubmit} className="pf-zone-form">
       <div className="pf-zone-form__row">
         <label className="pf-zone-form__label">
-          { __( 'Name', 'productforge' ) }
+          { __( 'Name', 'snelgraveren-product-designer' ) }
           <input
             type="text" value={data.name} required
             onChange={(e) => set('name', e.target.value)}
             className="pf-zone-form__input"
-            placeholder={ __( 'e.g. Front Print Area', 'productforge' ) }
+            placeholder={ __( 'e.g. Front Print Area', 'snelgraveren-product-designer' ) }
           />
         </label>
       </div>
 
       <div className="pf-zone-form__row">
         <label className="pf-zone-form__label">
-          { __( 'Type', 'productforge' ) }
+          { __( 'Type', 'snelgraveren-product-designer' ) }
           <select value={data.type} onChange={(e) => set('type', e.target.value)} className="pf-zone-form__select">
-            <option value="safe_area">{ __( 'Safe Area', 'productforge' ) }</option>
-            <option value="upload_zone">{ __( 'Upload Zone', 'productforge' ) }</option>
+            <option value="safe_area">{ __( 'Safe Area', 'snelgraveren-product-designer' ) }</option>
+            <option value="upload_zone">{ __( 'Upload Zone', 'snelgraveren-product-designer' ) }</option>
           </select>
         </label>
         <label className="pf-zone-form__label">
-          { __( 'Behavior', 'productforge' ) }
+          { __( 'Behavior', 'snelgraveren-product-designer' ) }
           <select value={data.behavior} onChange={(e) => set('behavior', e.target.value)} className="pf-zone-form__select">
-            <option value="restrict">{ __( "Restrict (can't leave)", 'productforge' ) }</option>
-            <option value="clip">{ __( 'Clip at boundary', 'productforge' ) }</option>
+            <option value="restrict">{ __( "Restrict (can't leave)", 'snelgraveren-product-designer' ) }</option>
+            <option value="clip">{ __( 'Clip at boundary', 'snelgraveren-product-designer' ) }</option>
           </select>
         </label>
       </div>
 
       {/* Boundary Type */}
       <label className="pf-zone-form__field">
-        <span>{ __( 'Boundary', 'productforge' ) }</span>
+        <span>{ __( 'Boundary', 'snelgraveren-product-designer' ) }</span>
         <select
           value={data.boundary_type || 'rect'}
           onChange={(e) => set('boundary_type', e.target.value)}
         >
-          <option value="rect">{ __( 'Rectangle', 'productforge' ) }</option>
-          {isPremium && <option value="svg">{ __( 'SVG Shape', 'productforge' ) }</option>}
+          <option value="rect">{ __( 'Rectangle', 'snelgraveren-product-designer' ) }</option>
+          {isPremium && <option value="svg">{ __( 'SVG Shape', 'snelgraveren-product-designer' ) }</option>}
         </select>
       </label>
 
@@ -171,13 +171,13 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
         <div className="pf-zone-form__svg-upload">
           {data.svg_url ? (
             <div className="pf-zone-form__svg-preview">
-              <img src={data.svg_url} alt={ __( 'Zone shape', 'productforge' ) } style={{ maxWidth: '100%', maxHeight: '80px' }} />
+              <img src={data.svg_url} alt={ __( 'Zone shape', 'snelgraveren-product-designer' ) } style={{ maxWidth: '100%', maxHeight: '80px' }} />
               <button type="button" onClick={() => setData((d) => {
                 const next = { ...d, svg_url: '', svg_path_data: '' };
                 if (onChange) onChange(next);
                 return next;
               })}>
-                { __( 'Remove', 'productforge' ) }
+                { __( 'Remove', 'snelgraveren-product-designer' ) }
               </button>
             </div>
           ) : (
@@ -186,8 +186,8 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
               onClick={() => {
                 if (!window.wp?.media) return;
                 const frame = window.wp.media({
-                  title: __( 'Select SVG Zone Shape', 'productforge' ),
-                  button: { text: __( 'Use Shape', 'productforge' ) },
+                  title: __( 'Select SVG Zone Shape', 'snelgraveren-product-designer' ),
+                  button: { text: __( 'Use Shape', 'snelgraveren-product-designer' ) },
                   multiple: false,
                   library: { type: 'image/svg+xml' },
                 });
@@ -198,7 +198,7 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
                     const svgText = await resp.text();
                     const bbox = await extractSvgBoundingBox(svgText);
                     if (!bbox) {
-                      alert( __( 'Could not parse SVG file.', 'productforge' ) );
+                      alert( __( 'Could not parse SVG file.', 'snelgraveren-product-designer' ) );
                       return;
                     }
                     setData((d) => {
@@ -217,19 +217,19 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
                       return next;
                     });
                   } catch {
-                    alert( __( 'Failed to parse SVG file.', 'productforge' ) );
+                    alert( __( 'Failed to parse SVG file.', 'snelgraveren-product-designer' ) );
                   }
                 });
                 frame.open();
               }}
             >
-              { __( 'Upload SVG Shape', 'productforge' ) }
+              { __( 'Upload SVG Shape', 'snelgraveren-product-designer' ) }
             </button>
           )}
           {data.svg_url && (
             <>
               <label className="pf-zone-form__field">
-                <span>{ __( 'Scale', 'productforge' ) }</span>
+                <span>{ __( 'Scale', 'snelgraveren-product-designer' ) }</span>
                 <input
                   type="number" step="any" min="0.1"
                   value={Math.round((data.svg_scale || 1) * 100) / 100}
@@ -237,7 +237,7 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
                 />
               </label>
               <label className="pf-zone-form__field">
-                <span>{ __( 'Rotation', 'productforge' ) }</span>
+                <span>{ __( 'Rotation', 'snelgraveren-product-designer' ) }</span>
                 <input
                   type="number" step="1" min="0" max="360"
                   value={data.svg_rotation || 0}
@@ -245,7 +245,7 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
                 />
               </label>
               <label className="pf-zone-form__field">
-                <span>{ __( 'Fill Color', 'productforge' ) }</span>
+                <span>{ __( 'Fill Color', 'snelgraveren-product-designer' ) }</span>
                 <FillColorPicker
                   value={data.svg_fill_color || '#ffffff'}
                   onChange={(color) => set('svg_fill_color', color)}
@@ -259,7 +259,7 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
                   checked={data.svg_fill_editable || false}
                   onChange={(e) => set('svg_fill_editable', e.target.checked)}
                 />
-                { __( 'Customer can change fill color', 'productforge' ) }
+                { __( 'Customer can change fill color', 'snelgraveren-product-designer' ) }
               </label>
             </>
           )}
@@ -278,7 +278,7 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
                 readOnly={isSvgSize}
                 className="pf-zone-form__input pf-zone-form__input--number"
                 style={isSvgSize ? { opacity: 0.6 } : undefined}
-                title={isSvgSize ? __( 'Resize the SVG on canvas or change Scale to adjust', 'productforge' ) : undefined}
+                title={isSvgSize ? __( 'Resize the SVG on canvas or change Scale to adjust', 'snelgraveren-product-designer' ) : undefined}
               />
             </label>
           );
@@ -286,7 +286,7 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
       </div>
 
       <fieldset className="pf-zone-form__fieldset">
-        <legend>{ __( 'Allowed element types', 'productforge' ) }</legend>
+        <legend>{ __( 'Allowed element types', 'snelgraveren-product-designer' ) }</legend>
         {['text', 'image', 'svg'].map((t) => (
           <label key={t} className="pf-zone-form__checkbox-label">
             <input
@@ -308,13 +308,13 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
         return (
           <div className="pf-zone-form__row">
             <label className="pf-zone-form__label">
-              { __( 'Default Font', 'productforge' ) }
+              { __( 'Default Font', 'snelgraveren-product-designer' ) }
               <select
                 value={data.defaultFontFamily || ''}
                 onChange={(e) => set('defaultFontFamily', e.target.value)}
                 className="pf-zone-form__select"
               >
-                <option value="">{ __( 'Default (Arial)', 'productforge' ) }</option>
+                <option value="">{ __( 'Default (Arial)', 'snelgraveren-product-designer' ) }</option>
                 {fontOptions.map((f) => (
                   <option key={f.family} value={f.family}>
                     {f.family} ({f.category})
@@ -329,7 +329,7 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
       {data.type === 'upload_zone' && (
         <div className="pf-zone-form__row">
           <label className="pf-zone-form__label">
-            { __( 'Mask SVG URL', 'productforge' ) }
+            { __( 'Mask SVG URL', 'snelgraveren-product-designer' ) }
             <input
               type="url" value={data.mask_svg_url || ''}
               onChange={(e) => set('mask_svg_url', e.target.value)}
@@ -341,8 +341,8 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
       )}
 
       <div className="pf-zone-form__actions">
-        <button type="submit" className="button button-primary">{ __( 'Save Boundary', 'productforge' ) }</button>
-        <button type="button" className="button" onClick={onCancel}>{ __( 'Cancel', 'productforge' ) }</button>
+        <button type="submit" className="button button-primary">{ __( 'Save Boundary', 'snelgraveren-product-designer' ) }</button>
+        <button type="button" className="button" onClick={onCancel}>{ __( 'Cancel', 'snelgraveren-product-designer' ) }</button>
       </div>
     </form>
   );

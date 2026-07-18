@@ -105,10 +105,10 @@ class Cleanup {
         wp_mail(
             get_option('admin_email'),
             /* translators: %s: site hostname */
-            sprintf(__('[%s] ProductForge: server configuration problem', 'productforge'), wp_parse_url(home_url(), PHP_URL_HOST)),
+            sprintf(__('[%s] ProductForge: server configuration problem', 'snelgraveren-product-designer'), wp_parse_url(home_url(), PHP_URL_HOST)),
             sprintf(
                 /* translators: 1: failure list, 2: settings page URL */
-                __("The following ProductForge system checks are failing:\n\n%1\$s\n\nDetails and fixes: %2\$s", 'productforge'),
+                __("The following ProductForge system checks are failing:\n\n%1\$s\n\nDetails and fixes: %2\$s", 'snelgraveren-product-designer'),
                 implode("\n", $lines),
                 admin_url('admin.php?page=pf-settings')
             )

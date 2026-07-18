@@ -1,4 +1,4 @@
-=== ProductForge for WooCommerce ===
+=== Snelgraveren Product Designer for WooCommerce ===
 Contributors: snelgraveren
 Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
@@ -52,7 +52,7 @@ Built from the ground up as a secure alternative to legacy product designers, wi
 2. Activate the plugin (WooCommerce must be installed and active).
 3. Open ProductForge → Templates and import a starter template, or build your own.
 4. Edit a product, enable the designer, and pick a template.
-5. Block theme? Place the "ProductForge Designer" block in your Single Product template or product description.
+5. Block theme? Place the "Snelgraveren Product Designer" block in your Single Product template or product description.
 
 == Frequently Asked Questions ==
 

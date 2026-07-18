@@ -71,7 +71,7 @@ class CartSurcharge {
     public function display_surcharge(array $item_data, array $cart_item): array {
         if (!empty($cart_item['pf_surcharge']) && $cart_item['pf_surcharge'] > 0) {
             $item_data[] = [
-                'key'   => __('Design surcharge', 'productforge'),
+                'key'   => __('Design surcharge', 'snelgraveren-product-designer'),
                 'value' => wc_price($cart_item['pf_surcharge']),
             ];
         }

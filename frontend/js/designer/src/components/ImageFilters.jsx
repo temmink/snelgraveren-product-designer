@@ -83,9 +83,9 @@ export default function ImageFilters({ fabricObj, allowedFilters, snapshotView, 
   return (
     <div className="pf-filters">
       <div className="pf-filters__header">
-        <span className="pf-filters__title">{__('Filters', 'productforge')}</span>
+        <span className="pf-filters__title">{__('Filters', 'snelgraveren-product-designer')}</span>
         <button type="button" className="pf-filters__reset" style={{ color: '#2271b1' }} onClick={resetFilters}>
-          {__('Reset', 'productforge')}
+          {__('Reset', 'snelgraveren-product-designer')}
         </button>
       </div>
 
@@ -97,7 +97,7 @@ export default function ImageFilters({ fabricObj, allowedFilters, snapshotView, 
             style={{ color: !activePreset ? '#2271b1' : '#333' }}
             onClick={() => { setActivePreset(null); applyFilters(null, adjustments); }}
           >
-            {__('None', 'productforge')}
+            {__('None', 'snelgraveren-product-designer')}
           </button>
           {visiblePresets.map((p) => (
             <button

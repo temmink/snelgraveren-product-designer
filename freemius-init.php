@@ -20,9 +20,12 @@ if ( ! function_exists( 'pf_fs' ) ) {
         global $pf_fs;
         if ( ! isset( $pf_fs ) ) {
             require_once __DIR__ . '/freemius/start.php';
+            // NOTE: the Freemius dashboard slug must be updated to match this
+            // value manually (Freemius Developer Dashboard → plugin settings)
+            // — it does not auto-follow this SDK config change.
             $pf_fs = fs_dynamic_init( array(
                 'id'               => '26301',
-                'slug'             => 'productforge',
+                'slug'             => 'snelgraveren-product-designer',
                 'type'             => 'plugin',
                 'public_key'       => 'pk_5db43e71632e44a3d963b594e9eb6',
                 'is_premium'       => false,

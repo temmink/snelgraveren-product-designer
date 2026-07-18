@@ -28,14 +28,14 @@ class AccountDesigns {
         add_filter('woocommerce_account_menu_items', [$this, 'menu_item']);
         add_action('woocommerce_account_' . self::ENDPOINT . '_endpoint', [$this, 'render']);
         add_filter('woocommerce_endpoint_' . self::ENDPOINT . '_title', static function () {
-            return __('My designs', 'productforge');
+            return __('My designs', 'snelgraveren-product-designer');
         });
     }
 
     public function menu_item(array $items): array {
         $logout = $items['customer-logout'] ?? null;
         unset($items['customer-logout']);
-        $items[self::ENDPOINT] = __('My designs', 'productforge');
+        $items[self::ENDPOINT] = __('My designs', 'snelgraveren-product-designer');
         if ($logout !== null) {
             $items['customer-logout'] = $logout;
         }
@@ -50,14 +50,14 @@ class AccountDesigns {
 
         $designs = (new DesignRepository())->list_by_customer($user_id);
         if (empty($designs)) {
-            echo '<p>' . esc_html__('You have no saved designs yet. Start designing on any customizable product!', 'productforge') . '</p>';
+            echo '<p>' . esc_html__('You have no saved designs yet. Start designing on any customizable product!', 'snelgraveren-product-designer') . '</p>';
             return;
         }
 
         echo '<table class="woocommerce-orders-table shop_table shop_table_responsive"><thead><tr>';
-        echo '<th>' . esc_html__('Design', 'productforge') . '</th>';
-        echo '<th>' . esc_html__('Product', 'productforge') . '</th>';
-        echo '<th>' . esc_html__('Last edited', 'productforge') . '</th>';
+        echo '<th>' . esc_html__('Design', 'snelgraveren-product-designer') . '</th>';
+        echo '<th>' . esc_html__('Product', 'snelgraveren-product-designer') . '</th>';
+        echo '<th>' . esc_html__('Last edited', 'snelgraveren-product-designer') . '</th>';
         echo '<th></th></tr></thead><tbody>';
 
         foreach ($designs as $design) {
@@ -74,7 +74,7 @@ class AccountDesigns {
             echo '</td>';
             echo '<td><a href="' . esc_url($product->get_permalink()) . '">' . esc_html($product->get_name()) . '</a></td>';
             echo '<td>' . esc_html(date_i18n(get_option('date_format'), strtotime($design['updated_at']))) . '</td>';
-            echo '<td><a class="woocommerce-button button" href="' . esc_url($reopen) . '">' . esc_html__('Open in designer', 'productforge') . '</a></td>';
+            echo '<td><a class="woocommerce-button button" href="' . esc_url($reopen) . '">' . esc_html__('Open in designer', 'snelgraveren-product-designer') . '</a></td>';
             echo '</tr>';
         }
         echo '</tbody></table>';

@@ -1,13 +1,13 @@
 {
     "$schema": "https://schemas.wp.org/trunk/block.json",
     "apiVersion": 3,
-    "name": "productforge/designer",
-    "title": "ProductForge Designer",
+    "name": "snelgraveren/product-designer",
+    "title": "Snelgraveren Product Designer",
     "category": "woocommerce",
     "icon": "art",
     "description": "Shows the product designer on a customizable product page. Place it anywhere in the product template or description.",
     "keywords": ["designer", "personalize", "productforge"],
-    "textdomain": "productforge",
+    "textdomain": "snelgraveren-product-designer",
     "supports": {
         "html": false,
         "multiple": false,

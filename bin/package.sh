@@ -3,8 +3,8 @@
 # Usage: bash bin/package.sh
 set -e
 
-PLUGIN_SLUG="productforge"
-PLUGIN_FILE="productforge.php"
+PLUGIN_SLUG="snelgraveren-product-designer"
+PLUGIN_FILE="snelgraveren-product-designer.php"
 VERSION=$(grep "Version:" "$PLUGIN_FILE" | head -1 | awk '{print $NF}')
 OUTPUT="${PLUGIN_SLUG}-${VERSION}.zip"
 STAGE_DIR="/tmp/${PLUGIN_SLUG}-package"
@@ -35,10 +35,11 @@ cp -r includes/ "${STAGE_DIR}/${PLUGIN_SLUG}/includes/"
 cp -r vendor/ "${STAGE_DIR}/${PLUGIN_SLUG}/vendor/"
 cp -r dist/ "${STAGE_DIR}/${PLUGIN_SLUG}/dist/"
 [ -d assets/ ] && cp -r assets/ "${STAGE_DIR}/${PLUGIN_SLUG}/assets/"
-[ -d languages/ ] && cp -r languages/ "${STAGE_DIR}/${PLUGIN_SLUG}/languages/"
+# languages/ intentionally NOT bundled — wp.org review requires translation
+# files to stay in the plugin's repository, not the distributed ZIP.
 [ -d blocks/ ] && cp -r blocks/ "${STAGE_DIR}/${PLUGIN_SLUG}/blocks/"
 [ -d templates/ ] && cp -r templates/ "${STAGE_DIR}/${PLUGIN_SLUG}/templates/"
-# Freemius: productforge.php loads freemius-init.php, which requires
+# Freemius: the main plugin file loads freemius-init.php, which requires
 # freemius/start.php. Without these the live site silently loses all
 # premium feature gating (is_premium() returns false).
 [ -f freemius-init.php ] && cp freemius-init.php "${STAGE_DIR}/${PLUGIN_SLUG}/"

@@ -30,7 +30,7 @@ function CollectionManager({ collections, onUpdate }) {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm(__('Delete this collection and all its clip art?', 'productforge'))) return;
+    if (!window.confirm(__('Delete this collection and all its clip art?', 'snelgraveren-product-designer'))) return;
     setError(null);
     try {
       await clipartApi.deleteCollection(id);
@@ -115,7 +115,7 @@ function CollectionManager({ collections, onUpdate }) {
 
   return (
     <div className="pf-collection-manager">
-      <h4>{__('Clip Art Collections', 'productforge')}</h4>
+      <h4>{__('Clip Art Collections', 'snelgraveren-product-designer')}</h4>
       {error && <p className="pf-settings__error">{error}</p>}
 
       {collections.map((c) => (
@@ -131,10 +131,10 @@ function CollectionManager({ collections, onUpdate }) {
                   onKeyDown={(e) => e.key === 'Enter' && handleRename(c.id)}
                 />
                 <button type="button" className="button button-primary button-small" onClick={() => handleRename(c.id)}>
-                  {__('Save', 'productforge')}
+                  {__('Save', 'snelgraveren-product-designer')}
                 </button>
                 <button type="button" className="button button-small" onClick={() => setEditingId(null)}>
-                  {__('Cancel', 'productforge')}
+                  {__('Cancel', 'snelgraveren-product-designer')}
                 </button>
               </div>
             ) : (
@@ -148,10 +148,10 @@ function CollectionManager({ collections, onUpdate }) {
                 </button>
                 <div className="pf-collection-manager__actions">
                   <button type="button" className="button button-small" onClick={() => { setEditingId(c.id); setEditName(c.name); }}>
-                    {__('Rename', 'productforge')}
+                    {__('Rename', 'snelgraveren-product-designer')}
                   </button>
                   <button type="button" className="button button-small pf-btn--danger" onClick={() => handleDelete(c.id)}>
-                    {__('Delete', 'productforge')}
+                    {__('Delete', 'snelgraveren-product-designer')}
                   </button>
                 </div>
               </div>
@@ -176,7 +176,7 @@ function CollectionManager({ collections, onUpdate }) {
                 ))}
               </div>
               <label className="button button-small pf-collection-manager__upload-btn">
-                {isUploading ? __('Uploading\u2026', 'productforge') : __('Upload SVGs', 'productforge')}
+                {isUploading ? __('Uploading\u2026', 'snelgraveren-product-designer') : __('Upload SVGs', 'snelgraveren-product-designer')}
                 <input
                   type="file"
                   accept=".svg"
@@ -197,7 +197,7 @@ function CollectionManager({ collections, onUpdate }) {
           type="text"
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
-          placeholder={__('New collection name', 'productforge')}
+          placeholder={__('New collection name', 'snelgraveren-product-designer')}
           className="pf-settings__input"
           onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
         />
@@ -207,7 +207,7 @@ function CollectionManager({ collections, onUpdate }) {
           onClick={handleCreate}
           disabled={!newName.trim()}
         >
-          {__('Create', 'productforge')}
+          {__('Create', 'snelgraveren-product-designer')}
         </button>
       </div>
     </div>
@@ -219,27 +219,27 @@ export default function SettingsAssets({ globalConfig, update, clipartCollection
 
   return (
     <>
-      <h3 className="pf-settings__section-title">{__('Assets', 'productforge')}</h3>
-      <p className="pf-settings__section-desc">{__('Manage clip art libraries available to customers.', 'productforge')}</p>
+      <h3 className="pf-settings__section-title">{__('Assets', 'snelgraveren-product-designer')}</h3>
+      <p className="pf-settings__section-desc">{__('Manage clip art libraries available to customers.', 'snelgraveren-product-designer')}</p>
 
       <fieldset className="pf-settings__fieldset">
-        <legend>{__('Clip Art', 'productforge')}</legend>
+        <legend>{__('Clip Art', 'snelgraveren-product-designer')}</legend>
         <label className="pf-settings__check">
           <input type="checkbox" checked={globalConfig.clipart_enabled || false}
             onChange={(e) => update('clipart_enabled', e.target.checked)} />
-          {__('Enable clip art library', 'productforge')}
+          {__('Enable clip art library', 'snelgraveren-product-designer')}
         </label>
         {globalConfig.clipart_enabled && (
           <>
             <label className="pf-settings__check">
               <input type="checkbox" checked={globalConfig.clipart_recolor !== false}
                 onChange={(e) => update('clipart_recolor', e.target.checked)} />
-              {__('Allow recoloring clip art', 'productforge')}
+              {__('Allow recoloring clip art', 'snelgraveren-product-designer')}
             </label>
 
             {clipartCollections.length > 0 && (
               <div className="pf-settings__clipart-collections">
-                <span className="pf-settings__label">{__('Available collections:', 'productforge')}</span>
+                <span className="pf-settings__label">{__('Available collections:', 'snelgraveren-product-designer')}</span>
                 {clipartCollections.map((c) => {
                   const allowed = globalConfig.allowed_clipart_collections || [];
                   const isSelected = allowed.length === 0 || allowed.includes(c.id);
@@ -277,24 +277,24 @@ export default function SettingsAssets({ globalConfig, update, clipartCollection
             )}
 
             <p className="pf-settings__note" style={{ marginTop: 8 }}>
-              {__('Manage collections and upload SVGs from the', 'productforge')}{' '}
-              <a href="?page=pf-clipart">{__('Clipart', 'productforge')}</a>{' '}
-              {__('admin page.', 'productforge')}
+              {__('Manage collections and upload SVGs from the', 'snelgraveren-product-designer')}{' '}
+              <a href="?page=pf-clipart">{__('Clipart', 'snelgraveren-product-designer')}</a>{' '}
+              {__('admin page.', 'snelgraveren-product-designer')}
             </p>
           </>
         )}
       </fieldset>
 
       <fieldset className="pf-settings__fieldset">
-        <legend>{__('Design Templates', 'productforge')}</legend>
+        <legend>{__('Design Templates', 'snelgraveren-product-designer')}</legend>
         <label className="pf-settings__check">
           <input type="checkbox" checked={globalConfig.design_templates_enabled || false}
             onChange={(e) => update('design_templates_enabled', e.target.checked)} />
-          {__('Enable design templates', 'productforge')}
+          {__('Enable design templates', 'snelgraveren-product-designer')}
         </label>
         {globalConfig.design_templates_enabled && (
           <p className="pf-settings__hint">
-            {__('Manage design templates from the ProductForge \u2192 Design Templates admin page.', 'productforge')}
+            {__('Manage design templates from the ProductForge \u2192 Design Templates admin page.', 'snelgraveren-product-designer')}
           </p>
         )}
       </fieldset>

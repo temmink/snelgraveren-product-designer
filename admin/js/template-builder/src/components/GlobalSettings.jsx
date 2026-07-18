@@ -37,27 +37,27 @@ export default function GlobalSettings() {
       case 'colors':
         return isPremium
           ? <SettingsColors globalConfig={globalConfig} update={update} colorPalettes={colorPalettes} setColorPalettes={setColorPalettes} />
-          : <UpgradePrompt feature="product_colors" description={__('Configure product color palettes and element color modes with Pro.', 'productforge')} />;
+          : <UpgradePrompt feature="product_colors" description={__('Configure product color palettes and element color modes with Pro.', 'snelgraveren-product-designer')} />;
       case 'fonts':
         return isPremium
           ? <SettingsFonts globalConfig={globalConfig} update={update} />
-          : <UpgradePrompt feature="custom_fonts" description={__('Upload custom fonts for your designs with Pro.', 'productforge')} />;
+          : <UpgradePrompt feature="custom_fonts" description={__('Upload custom fonts for your designs with Pro.', 'snelgraveren-product-designer')} />;
       case 'tools':
         return <SettingsTools globalConfig={globalConfig} update={update} />;
       case 'assets':
         return isPremium
           ? <SettingsAssets globalConfig={globalConfig} update={update} clipartCollections={clipartCollections} setClipartCollections={setClipartCollections} />
-          : <UpgradePrompt feature="clipart" description={__('Create clip art libraries for customers with Pro.', 'productforge')} />;
+          : <UpgradePrompt feature="clipart" description={__('Create clip art libraries for customers with Pro.', 'snelgraveren-product-designer')} />;
       case 'uploads':
         return <SettingsUploads globalConfig={globalConfig} update={update} />;
       case 'pricing':
         return isPremium
           ? <SettingsPricing globalConfig={globalConfig} update={update} />
-          : <UpgradePrompt feature="pricing" description={__('Add design surcharges and per-element pricing with Pro.', 'productforge')} />;
+          : <UpgradePrompt feature="pricing" description={__('Add design surcharges and per-element pricing with Pro.', 'snelgraveren-product-designer')} />;
       case 'permissions':
         return isPremium
           ? <SettingsPermissions globalConfig={globalConfig} update={update} />
-          : <UpgradePrompt feature="permissions" description={__('Fine-tune element permissions per type with Pro.', 'productforge')} />;
+          : <UpgradePrompt feature="permissions" description={__('Fine-tune element permissions per type with Pro.', 'snelgraveren-product-designer')} />;
       default:
         return null;
     }
@@ -73,7 +73,7 @@ export default function GlobalSettings() {
             className={`pf-settings__nav-btn${activeSection === section.id ? ' pf-settings__nav-btn--active' : ''}`}
             onClick={() => setActiveSection(section.id)}
           >
-            {__(section.label, 'productforge')}
+            {__(section.label, 'snelgraveren-product-designer')}
           </button>
         ))}
       </nav>

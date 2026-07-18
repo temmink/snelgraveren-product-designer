@@ -90,7 +90,7 @@ class Frontend {
 
         $html = '<div style="display:flex;gap:4px;">';
         foreach ($urls as $url) {
-            $html .= '<img src="' . esc_url($url) . '" alt="' . esc_attr__('Custom design', 'productforge') . '" style="max-width:80px;max-height:80px;border-radius:3px;" />';
+            $html .= '<img src="' . esc_url($url) . '" alt="' . esc_attr__('Custom design', 'snelgraveren-product-designer') . '" style="max-width:80px;max-height:80px;border-radius:3px;" />';
         }
         $html .= '</div>';
         return $html;
@@ -118,9 +118,9 @@ class Frontend {
                 'srcset'    => '',
                 'sizes'     => '',
                 /* translators: %d: view number */
-                'name'      => sprintf(__('Custom Design – View %d', 'productforge'), $i + 1),
+                'name'      => sprintf(__('Custom Design – View %d', 'snelgraveren-product-designer'), $i + 1),
                 /* translators: %d: view number */
-                'alt'       => sprintf(__('Your custom product design – view %d', 'productforge'), $i + 1),
+                'alt'       => sprintf(__('Your custom product design – view %d', 'snelgraveren-product-designer'), $i + 1),
             ];
         }
         return $result;
@@ -132,8 +132,8 @@ class Frontend {
     public function display_cart_item_data(array $item_data, array $cart_item): array {
         if (!empty($cart_item['pf_design_hash'])) {
             $item_data[] = [
-                'key'   => __('Design', 'productforge'),
-                'value' => __('Customized', 'productforge'),
+                'key'   => __('Design', 'snelgraveren-product-designer'),
+                'value' => __('Customized', 'snelgraveren-product-designer'),
             ];
         }
         return $item_data;
@@ -179,7 +179,7 @@ class Frontend {
         $thumb_url = $urls[0] ?? '';
         if (!empty($thumb_url)) {
             return '<div data-thumb="' . esc_url($thumb_url) . '" class="woocommerce-product-gallery__image">'
-                . '<img src="' . esc_url($thumb_url) . '" alt="' . esc_attr__('Your custom design', 'productforge') . '" class="wp-post-image" />'
+                . '<img src="' . esc_url($thumb_url) . '" alt="' . esc_attr__('Your custom design', 'snelgraveren-product-designer') . '" class="wp-post-image" />'
                 . '</div>';
         }
 
@@ -298,7 +298,7 @@ class Frontend {
             // Load translations inline to work with JS-combining caches (LiteSpeed, etc.)
             // wp_set_script_translations breaks when caching plugins rewrite the JS URL,
             // because WordPress can't match the hash to find the JSON file.
-            $this->inline_script_translations('pf-frontend-designer', 'productforge', 'dist/frontend-designer.js');
+            $this->inline_script_translations('pf-frontend-designer', 'snelgraveren-product-designer', 'dist/frontend-designer.js');
 
             $this->js_config = $this->build_js_config($product_id, $template_id);
 
@@ -391,7 +391,7 @@ class Frontend {
 
     /**
      * Check if the current product's content contains the [productforge]
-     * shortcode or the productforge/designer block. Both mean "the merchant
+     * shortcode or the snelgraveren/product-designer block. Both mean "the merchant
      * placed the designer explicitly" — the before-add-to-cart auto-render
      * must then stay out of the way (no duplicate #pf-designer-root) and the
      * display mode is forced to embedded.
@@ -402,13 +402,13 @@ class Frontend {
             return false;
         }
         return has_shortcode($post->post_content, 'productforge')
-            || has_block('productforge/designer', $post)
+            || has_block('snelgraveren/product-designer', $post)
             || $this->template_has_designer_block();
     }
 
     /**
      * Whether the resolved block template (block themes / Site Editor) itself
-     * contains the productforge/designer block. WP core stores the current
+     * contains the snelgraveren/product-designer block. WP core stores the current
      * template's markup in $_wp_current_template_content before rendering, so
      * hooks firing mid-template (like woocommerce_before_add_to_cart_button)
      * can detect an explicit template placement and skip the auto-render —
@@ -417,7 +417,7 @@ class Frontend {
     private function template_has_designer_block(): bool {
         global $_wp_current_template_content;
         return is_string($_wp_current_template_content ?? null)
-            && has_block('productforge/designer', $_wp_current_template_content);
+            && has_block('snelgraveren/product-designer', $_wp_current_template_content);
     }
 
     public function render_designer(): void {
@@ -440,7 +440,7 @@ class Frontend {
         echo '<div id="pf-designer-root" data-mode="' . esc_attr($mode) . '"' . $this->data_config_attr() . '></div>';
 
         if ($mode === 'modal') {
-            echo '<button type="button" class="pf-open-designer button">' . esc_html__('Customize Product', 'productforge') . '</button>';
+            echo '<button type="button" class="pf-open-designer button">' . esc_html__('Customize Product', 'snelgraveren-product-designer') . '</button>';
         }
 
         $this->designer_rendered = true;

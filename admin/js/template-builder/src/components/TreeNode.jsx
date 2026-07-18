@@ -99,7 +99,7 @@ export default function TreeNode({ node, nodeType, isSelected, isExpanded, onSel
 
   const isZone = nodeType === 'zone';
   const icon = isZone ? Icons.zone : (TYPE_ICON_MAP[node.type] || Icons.text);
-  const label = isZone ? (node.name || __( 'Unnamed Zone', 'productforge' )) : (node.name || node.text || node.type || __( 'Layer', 'productforge' ));
+  const label = isZone ? (node.name || __( 'Unnamed Zone', 'snelgraveren-product-designer' )) : (node.name || node.text || node.type || __( 'Layer', 'snelgraveren-product-designer' ));
   const hasChildren = isZone && (node.layers || []).length > 0;
 
   const handleDoubleClick = (e) => {
@@ -134,7 +134,7 @@ export default function TreeNode({ node, nodeType, isSelected, isExpanded, onSel
         onClick={(e) => { e.stopPropagation(); onSelect(node, nodeType); }}
       >
         {/* Drag handle */}
-        <button className="pf-tree-node__drag" {...listeners} aria-label={ __( 'Drag to reorder', 'productforge' ) } title={ __( 'Drag to reorder', 'productforge' ) }>
+        <button className="pf-tree-node__drag" {...listeners} aria-label={ __( 'Drag to reorder', 'snelgraveren-product-designer' ) } title={ __( 'Drag to reorder', 'snelgraveren-product-designer' ) }>
           {Icons.drag}
         </button>
 
@@ -143,7 +143,7 @@ export default function TreeNode({ node, nodeType, isSelected, isExpanded, onSel
           <button
             className="pf-tree-node__expand"
             onClick={(e) => { e.stopPropagation(); onToggleExpand?.(); }}
-            aria-label={ isExpanded ? __( 'Collapse', 'productforge' ) : __( 'Expand', 'productforge' ) }
+            aria-label={ isExpanded ? __( 'Collapse', 'snelgraveren-product-designer' ) : __( 'Expand', 'snelgraveren-product-designer' ) }
           >
             {isExpanded ? Icons.chevronDown : Icons.chevronRight}
           </button>
@@ -191,27 +191,27 @@ export default function TreeNode({ node, nodeType, isSelected, isExpanded, onSel
             <button
               className="pf-tree-node__action pf-tree-node__action--add"
               onClick={(e) => { e.stopPropagation(); onAction('add-layer', node); }}
-              aria-label={ __( 'Add layer', 'productforge' ) }
-              title={ __( 'Add layer', 'productforge' ) }
+              aria-label={ __( 'Add layer', 'snelgraveren-product-designer' ) }
+              title={ __( 'Add layer', 'snelgraveren-product-designer' ) }
             >{Icons.plus}</button>
           )}
           <button
             className="pf-tree-node__action"
             onClick={(e) => { e.stopPropagation(); onAction('toggle-visibility', node); }}
-            aria-label={ node.visible === false ? __( 'Show', 'productforge' ) : __( 'Hide', 'productforge' ) }
-            title={ node.visible === false ? __( 'Show', 'productforge' ) : __( 'Hide', 'productforge' ) }
+            aria-label={ node.visible === false ? __( 'Show', 'snelgraveren-product-designer' ) : __( 'Hide', 'snelgraveren-product-designer' ) }
+            title={ node.visible === false ? __( 'Show', 'snelgraveren-product-designer' ) : __( 'Hide', 'snelgraveren-product-designer' ) }
           >{node.visible === false ? Icons.eyeClosed : Icons.eyeOpen}</button>
           <button
             className="pf-tree-node__action"
             onClick={(e) => { e.stopPropagation(); onAction('toggle-lock', node); }}
-            aria-label={ node.locked ? __( 'Unlock', 'productforge' ) : __( 'Lock', 'productforge' ) }
-            title={ node.locked ? __( 'Unlock', 'productforge' ) : __( 'Lock', 'productforge' ) }
+            aria-label={ node.locked ? __( 'Unlock', 'snelgraveren-product-designer' ) : __( 'Lock', 'snelgraveren-product-designer' ) }
+            title={ node.locked ? __( 'Unlock', 'snelgraveren-product-designer' ) : __( 'Lock', 'snelgraveren-product-designer' ) }
           >{node.locked ? Icons.locked : Icons.unlocked}</button>
           <button
             className="pf-tree-node__action pf-tree-node__action--danger"
             onClick={(e) => { e.stopPropagation(); onAction('delete', node); }}
-            aria-label={ __( 'Delete', 'productforge' ) }
-            title={ __( 'Delete', 'productforge' ) }
+            aria-label={ __( 'Delete', 'snelgraveren-product-designer' ) }
+            title={ __( 'Delete', 'snelgraveren-product-designer' ) }
           >{Icons.trash}</button>
         </span>
       </div>

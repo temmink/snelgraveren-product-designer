@@ -69,10 +69,10 @@ class RestExports {
         $order_id = (int) ($request->get_param('order_id') ?: 0);
 
         if ( $format === 'pdf' && ! ProductForge::has_feature( 'pdf_export' ) ) {
-            return new \WP_REST_Response( ['error' => __( 'PDF export requires ProductForge Pro.', 'productforge' )], 403 );
+            return new \WP_REST_Response( ['error' => __( 'PDF export requires ProductForge Pro.', 'snelgraveren-product-designer' )], 403 );
         }
         if ( $format === 'svg' && ! ProductForge::has_feature( 'svg_export' ) ) {
-            return new \WP_REST_Response( ['error' => __( 'SVG export requires ProductForge Pro.', 'productforge' )], 403 );
+            return new \WP_REST_Response( ['error' => __( 'SVG export requires ProductForge Pro.', 'snelgraveren-product-designer' )], 403 );
         }
 
         $result = $this->manager()->generate_export($hash, $format, $order_id);

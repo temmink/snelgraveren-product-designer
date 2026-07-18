@@ -28,7 +28,7 @@ function DesignTemplateForm({ item, templates, onSave, onCancel }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name.trim()) {
-      setError(__('Name is required.', 'productforge'));
+      setError(__('Name is required.', 'snelgraveren-product-designer'));
       return;
     }
     setSaving(true);
@@ -55,23 +55,23 @@ function DesignTemplateForm({ item, templates, onSave, onCancel }) {
 
   return (
     <form onSubmit={handleSubmit} style={{ maxWidth: 500, marginBottom: 20 }}>
-      <h2>{item?.id ? __('Edit Design Template', 'productforge') : __('New Design Template', 'productforge')}</h2>
+      <h2>{item?.id ? __('Edit Design Template', 'snelgraveren-product-designer') : __('New Design Template', 'snelgraveren-product-designer')}</h2>
       {error && <div className="notice notice-error"><p>{error}</p></div>}
       <table className="form-table">
         <tbody>
           <tr>
-            <th><label>{__('Name', 'productforge')}</label></th>
+            <th><label>{__('Name', 'snelgraveren-product-designer')}</label></th>
             <td><input type="text" className="regular-text" value={name} onChange={(e) => setName(e.target.value)} /></td>
           </tr>
           <tr>
-            <th><label>{__('Category', 'productforge')}</label></th>
-            <td><input type="text" className="regular-text" value={category} onChange={(e) => setCategory(e.target.value)} placeholder={__('e.g. T-Shirt, Mug', 'productforge')} /></td>
+            <th><label>{__('Category', 'snelgraveren-product-designer')}</label></th>
+            <td><input type="text" className="regular-text" value={category} onChange={(e) => setCategory(e.target.value)} placeholder={__('e.g. T-Shirt, Mug', 'snelgraveren-product-designer')} /></td>
           </tr>
           <tr>
-            <th><label>{__('Product Template', 'productforge')}</label></th>
+            <th><label>{__('Product Template', 'snelgraveren-product-designer')}</label></th>
             <td>
               <select value={templateId} onChange={(e) => setTemplateId(e.target.value)}>
-                <option value="">{__('Any template', 'productforge')}</option>
+                <option value="">{__('Any template', 'snelgraveren-product-designer')}</option>
                 {(templates || []).map((t) => (
                   <option key={t.id} value={t.id}>{t.title}</option>
                 ))}
@@ -79,11 +79,11 @@ function DesignTemplateForm({ item, templates, onSave, onCancel }) {
             </td>
           </tr>
           <tr>
-            <th><label>{__('Status', 'productforge')}</label></th>
+            <th><label>{__('Status', 'snelgraveren-product-designer')}</label></th>
             <td>
               <select value={status} onChange={(e) => setStatus(e.target.value)}>
-                <option value="active">{__('Active', 'productforge')}</option>
-                <option value="inactive">{__('Inactive', 'productforge')}</option>
+                <option value="active">{__('Active', 'snelgraveren-product-designer')}</option>
+                <option value="inactive">{__('Inactive', 'snelgraveren-product-designer')}</option>
               </select>
             </td>
           </tr>
@@ -91,10 +91,10 @@ function DesignTemplateForm({ item, templates, onSave, onCancel }) {
       </table>
       <p>
         <button type="submit" className="button button-primary" disabled={saving}>
-          {saving ? __('Saving...', 'productforge') : __('Save', 'productforge')}
+          {saving ? __('Saving...', 'snelgraveren-product-designer') : __('Save', 'snelgraveren-product-designer')}
         </button>
         {' '}
-        <button type="button" className="button" onClick={onCancel}>{__('Cancel', 'productforge')}</button>
+        <button type="button" className="button" onClick={onCancel}>{__('Cancel', 'snelgraveren-product-designer')}</button>
       </p>
     </form>
   );
@@ -159,7 +159,7 @@ export default function App() {
   useEffect(() => { loadItems(); }, [loadItems]);
 
   const handleDelete = async (id, name) => {
-    if (!confirm(__('Delete design template "%s"?', 'productforge').replace('%s', name))) return;
+    if (!confirm(__('Delete design template "%s"?', 'snelgraveren-product-designer').replace('%s', name))) return;
     try {
       await api(`/design-templates/${id}`, { method: 'DELETE' });
       loadItems();
@@ -190,28 +190,28 @@ export default function App() {
     <div>
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
         <button className="button button-primary" onClick={() => setEditing({})}>
-          {__('Add New', 'productforge')}
+          {__('Add New', 'snelgraveren-product-designer')}
         </button>
         <label className="button" style={{ position: 'relative', cursor: 'pointer' }}>
-          {importing ? __('Importing...', 'productforge') : __('Import JSON', 'productforge')}
+          {importing ? __('Importing...', 'snelgraveren-product-designer') : __('Import JSON', 'snelgraveren-product-designer')}
           <input type="file" accept=".json" onChange={handleImport} style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', left: 0, top: 0, cursor: 'pointer' }} />
         </label>
       </div>
 
       {loading ? (
-        <p>{__('Loading...', 'productforge')}</p>
+        <p>{__('Loading...', 'snelgraveren-product-designer')}</p>
       ) : items.length === 0 ? (
-        <p>{__('No design templates yet. Create one to get started.', 'productforge')}</p>
+        <p>{__('No design templates yet. Create one to get started.', 'snelgraveren-product-designer')}</p>
       ) : (
         <table className="wp-list-table widefat fixed striped">
           <thead>
             <tr>
-              <th style={{ width: '25%' }}>{__('Name', 'productforge')}</th>
-              <th style={{ width: '15%' }}>{__('Category', 'productforge')}</th>
-              <th style={{ width: '20%' }}>{__('Product Template', 'productforge')}</th>
-              <th style={{ width: '10%' }}>{__('Views', 'productforge')}</th>
-              <th style={{ width: '10%' }}>{__('Status', 'productforge')}</th>
-              <th style={{ width: '20%' }}>{__('Actions', 'productforge')}</th>
+              <th style={{ width: '25%' }}>{__('Name', 'snelgraveren-product-designer')}</th>
+              <th style={{ width: '15%' }}>{__('Category', 'snelgraveren-product-designer')}</th>
+              <th style={{ width: '20%' }}>{__('Product Template', 'snelgraveren-product-designer')}</th>
+              <th style={{ width: '10%' }}>{__('Views', 'snelgraveren-product-designer')}</th>
+              <th style={{ width: '10%' }}>{__('Status', 'snelgraveren-product-designer')}</th>
+              <th style={{ width: '20%' }}>{__('Actions', 'snelgraveren-product-designer')}</th>
             </tr>
           </thead>
           <tbody>
@@ -219,7 +219,7 @@ export default function App() {
               <tr key={item.id}>
                 <td><strong>{item.name}</strong></td>
                 <td>{item.category || '—'}</td>
-                <td>{item.template_id ? templateName(parseInt(item.template_id, 10)) : __('Any', 'productforge')}</td>
+                <td>{item.template_id ? templateName(parseInt(item.template_id, 10)) : __('Any', 'snelgraveren-product-designer')}</td>
                 <td>{item.view_count ?? '—'}</td>
                 <td>
                   <span style={{
@@ -229,20 +229,20 @@ export default function App() {
                     background: item.status === 'active' ? '#dff0d8' : '#f2dede',
                     color: item.status === 'active' ? '#3c763d' : '#a94442',
                   }}>
-                    {item.status === 'active' ? __('Active', 'productforge') : __('Inactive', 'productforge')}
+                    {item.status === 'active' ? __('Active', 'snelgraveren-product-designer') : __('Inactive', 'snelgraveren-product-designer')}
                   </span>
                 </td>
                 <td>
                   <button className="button button-small" onClick={() => setEditing(item)}>
-                    {__('Edit', 'productforge')}
+                    {__('Edit', 'snelgraveren-product-designer')}
                   </button>
                   {' '}
                   <button className="button button-small" onClick={() => handleExport(item.id, item.name)}>
-                    {__('Export', 'productforge')}
+                    {__('Export', 'snelgraveren-product-designer')}
                   </button>
                   {' '}
                   <button className="button button-small button-link-delete" onClick={() => handleDelete(item.id, item.name)}>
-                    {__('Delete', 'productforge')}
+                    {__('Delete', 'snelgraveren-product-designer')}
                   </button>
                 </td>
               </tr>

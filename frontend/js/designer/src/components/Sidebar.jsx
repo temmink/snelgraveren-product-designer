@@ -42,17 +42,17 @@ export default function Sidebar() {
           className="pf-sidebar__collapse-toggle"
           onClick={() => setCollapsed(!collapsed)}
           aria-expanded={!collapsed}
-          aria-label={collapsed ? __('Show options', 'productforge') : __('Hide options', 'productforge')}
+          aria-label={collapsed ? __('Show options', 'snelgraveren-product-designer') : __('Hide options', 'snelgraveren-product-designer')}
         >
           {activeTab === 'element' && selectedObject
-            ? __('Element Options', 'productforge')
+            ? __('Element Options', 'snelgraveren-product-designer')
             : activeTab === 'add'
-              ? __('Add Element', 'productforge')
-              : __('Views', 'productforge')
+              ? __('Add Element', 'snelgraveren-product-designer')
+              : __('Views', 'snelgraveren-product-designer')
           }
         </button>
       )}
-      <div className="pf-sidebar__tabs" role="tablist" aria-label={__('Designer tools', 'productforge')}>
+      <div className="pf-sidebar__tabs" role="tablist" aria-label={__('Designer tools', 'snelgraveren-product-designer')}>
         <button
           type="button"
           role="tab"
@@ -62,7 +62,7 @@ export default function Sidebar() {
           className={`pf-sidebar__tab${activeTab === 'views' ? ' pf-sidebar__tab--active' : ''}`}
           onClick={() => setActiveTab('views')}
         >
-          {__('Views', 'productforge')}
+          {__('Views', 'snelgraveren-product-designer')}
         </button>
         <button
           type="button"
@@ -74,7 +74,7 @@ export default function Sidebar() {
           onClick={() => setActiveTab('element')}
           disabled={!selectedObject && !hasEditableZones}
         >
-          {__('Element', 'productforge')}
+          {__('Element', 'snelgraveren-product-designer')}
         </button>
         <button
           type="button"
@@ -85,7 +85,7 @@ export default function Sidebar() {
           className={`pf-sidebar__tab${activeTab === 'add' ? ' pf-sidebar__tab--active' : ''}`}
           onClick={() => setActiveTab('add')}
         >
-          {__('Add', 'productforge')}
+          {__('Add', 'snelgraveren-product-designer')}
         </button>
       </div>
       <div className="pf-sidebar__content">

@@ -25,8 +25,8 @@ class ExportDashboard {
     public function register_menu(): void {
         add_submenu_page(
             'productforge',
-            __('Production', 'productforge'),
-            __('Production', 'productforge'),
+            __('Production', 'snelgraveren-product-designer'),
+            __('Production', 'snelgraveren-product-designer'),
             'edit_pf_templates',
             self::PAGE_SLUG,
             [$this, 'render']
@@ -70,7 +70,7 @@ class ExportDashboard {
 
     public function render(): void {
         if (!current_user_can('edit_pf_templates')) {
-            wp_die(esc_html__('You do not have permission to access this page.', 'productforge'));
+            wp_die(esc_html__('You do not have permission to access this page.', 'snelgraveren-product-designer'));
         }
 
         // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only filters
@@ -81,7 +81,7 @@ class ExportDashboard {
         $statuses = wc_get_order_statuses();
         ?>
         <div class="wrap">
-            <h1><?php esc_html_e('Production — design exports', 'productforge'); ?></h1>
+            <h1><?php esc_html_e('Production — design exports', 'snelgraveren-product-designer'); ?></h1>
             <form method="get" style="margin:12px 0;">
                 <input type="hidden" name="page" value="<?php echo esc_attr(self::PAGE_SLUG); ?>" />
                 <select name="pf_status">
@@ -91,15 +91,15 @@ class ExportDashboard {
                     <?php endforeach; ?>
                 </select>
                 <label>
-                    <?php esc_html_e('Last', 'productforge'); ?>
+                    <?php esc_html_e('Last', 'snelgraveren-product-designer'); ?>
                     <input type="number" name="pf_days" value="<?php echo esc_attr($days); ?>" min="1" max="90" class="small-text" />
-                    <?php esc_html_e('days', 'productforge'); ?>
+                    <?php esc_html_e('days', 'snelgraveren-product-designer'); ?>
                 </label>
-                <button class="button"><?php esc_html_e('Filter', 'productforge'); ?></button>
+                <button class="button"><?php esc_html_e('Filter', 'snelgraveren-product-designer'); ?></button>
             </form>
 
             <?php if (!$rows) : ?>
-                <p><?php esc_html_e('No orders with designs found for this filter.', 'productforge'); ?></p>
+                <p><?php esc_html_e('No orders with designs found for this filter.', 'snelgraveren-product-designer'); ?></p>
             <?php else : ?>
                 <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                     <input type="hidden" name="action" value="pf_bulk_export" />
@@ -107,9 +107,9 @@ class ExportDashboard {
                     <table class="widefat striped">
                         <thead><tr>
                             <th style="width:24px;"><input type="checkbox" onclick="document.querySelectorAll('.pf-bulk-cb').forEach(c=>c.checked=this.checked)" /></th>
-                            <th><?php esc_html_e('Order', 'productforge'); ?></th>
-                            <th><?php esc_html_e('Product', 'productforge'); ?></th>
-                            <th><?php esc_html_e('Notes', 'productforge'); ?></th>
+                            <th><?php esc_html_e('Order', 'snelgraveren-product-designer'); ?></th>
+                            <th><?php esc_html_e('Product', 'snelgraveren-product-designer'); ?></th>
+                            <th><?php esc_html_e('Notes', 'snelgraveren-product-designer'); ?></th>
                         </tr></thead>
                         <tbody>
                         <?php foreach ($rows as $row) :
@@ -121,13 +121,13 @@ class ExportDashboard {
                                 <td><a href="<?php echo esc_url($order->get_edit_order_url()); ?>">#<?php echo esc_html($order->get_order_number()); ?></a>
                                     — <?php echo esc_html($order->get_formatted_billing_full_name()); ?></td>
                                 <td><?php echo esc_html($entry['item']->get_name()); ?></td>
-                                <td><?php echo $entry['raster'] ? '<span style="color:#b32d2e;">⚠ ' . esc_html__('contains raster images', 'productforge') . '</span>' : ''; ?></td>
+                                <td><?php echo $entry['raster'] ? '<span style="color:#b32d2e;">⚠ ' . esc_html__('contains raster images', 'snelgraveren-product-designer') . '</span>' : ''; ?></td>
                             </tr>
                             <?php endforeach;
                         endforeach; ?>
                         </tbody>
                     </table>
-                    <p><button class="button button-primary"><?php esc_html_e('Download selection as ZIP', 'productforge'); ?></button></p>
+                    <p><button class="button button-primary"><?php esc_html_e('Download selection as ZIP', 'snelgraveren-product-designer'); ?></button></p>
                 </form>
             <?php endif; ?>
         </div>
@@ -136,7 +136,7 @@ class ExportDashboard {
 
     public function handle_bulk_download(): void {
         if (!current_user_can('edit_pf_templates')) {
-            wp_die(esc_html__('You do not have permission to access this page.', 'productforge'));
+            wp_die(esc_html__('You do not have permission to access this page.', 'snelgraveren-product-designer'));
         }
         check_admin_referer('pf_bulk_export');
 
@@ -159,7 +159,7 @@ class ExportDashboard {
         $zip      = new \ZipArchive();
         if ($zip->open($zip_path, \ZipArchive::OVERWRITE) !== true) {
             wp_delete_file($zip_path);
-            wp_die(esc_html__('Could not create the export ZIP file.', 'productforge'));
+            wp_die(esc_html__('Could not create the export ZIP file.', 'snelgraveren-product-designer'));
         }
         $added = 0;
 
@@ -201,7 +201,7 @@ class ExportDashboard {
 
         if (!$added) {
             wp_delete_file($zip_path);
-            wp_die(esc_html__('No export files could be generated for the selection.', 'productforge'));
+            wp_die(esc_html__('No export files could be generated for the selection.', 'snelgraveren-product-designer'));
         }
 
         nocache_headers();

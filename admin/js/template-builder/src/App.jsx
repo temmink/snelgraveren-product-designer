@@ -14,10 +14,10 @@ import { fontApi, paletteApi, clipartApi } from './api/templateApi';
 const isPremium = window.pfTemplateBuilder?.isPremium;
 
 const TABS = [
-  { label: __( 'Structure',   'productforge' ), Component: TreePanel },
-  ...(isPremium ? [{ label: __( 'Permissions', 'productforge' ), Component: PermissionsPanel }] : []),
-  ...(isPremium ? [{ label: __( 'Pricing',     'productforge' ), Component: PricingPanel }] : []),
-  { label: __( 'Settings',    'productforge' ), Component: GlobalSettings },
+  { label: __( 'Structure',   'snelgraveren-product-designer' ), Component: TreePanel },
+  ...(isPremium ? [{ label: __( 'Permissions', 'snelgraveren-product-designer' ), Component: PermissionsPanel }] : []),
+  ...(isPremium ? [{ label: __( 'Pricing',     'snelgraveren-product-designer' ), Component: PricingPanel }] : []),
+  { label: __( 'Settings',    'snelgraveren-product-designer' ), Component: GlobalSettings },
 ];
 
 export default function App() {
@@ -92,7 +92,7 @@ export default function App() {
     } else if (views.length === 0) {
       // New template: seed a default "Front" view.
       addView({
-        name: __( 'Front', 'productforge' ),
+        name: __( 'Front', 'snelgraveren-product-designer' ),
         canvas_width: 800,
         canvas_height: 600,
         background_url: '',
@@ -130,7 +130,7 @@ export default function App() {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      setSaveError( __( 'Title is required.', 'productforge' ) );
+      setSaveError( __( 'Title is required.', 'snelgraveren-product-designer' ) );
       return;
     }
     setSaveError(null);
@@ -185,7 +185,7 @@ export default function App() {
 
       setIsDirty(false);
     } catch (err) {
-      setSaveError( err.message || __( 'Save failed.', 'productforge' ) );
+      setSaveError( err.message || __( 'Save failed.', 'snelgraveren-product-designer' ) );
     } finally {
       setIsSaving(false);
     }
@@ -194,7 +194,7 @@ export default function App() {
   const { Component: ActivePanel } = TABS[activeTab];
 
   if (isLoading) {
-    return <div className="pf-builder pf-builder--loading">{ __( 'Loading template…', 'productforge' ) }</div>;
+    return <div className="pf-builder pf-builder--loading">{ __( 'Loading template…', 'snelgraveren-product-designer' ) }</div>;
   }
 
   return (
@@ -203,30 +203,30 @@ export default function App() {
       {/* ── Header bar ─────────────────────────────────────────────────── */}
       <div className="pf-builder__header">
         <a href="?page=productforge" className="pf-builder__back button">
-          { __( '← Templates', 'productforge' ) }
+          { __( '← Templates', 'snelgraveren-product-designer' ) }
         </a>
         <input
           type="text"
           className="pf-builder__title-input"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder={ __( 'Template title…', 'productforge' ) }
+          placeholder={ __( 'Template title…', 'snelgraveren-product-designer' ) }
         />
         <select
           className="pf-builder__status-select"
           value={status}
           onChange={(e) => setStatus(e.target.value)}
         >
-          <option value="draft">{ __( 'Draft', 'productforge' ) }</option>
-          <option value="published">{ __( 'Published', 'productforge' ) }</option>
-          <option value="archived">{ __( 'Archived', 'productforge' ) }</option>
+          <option value="draft">{ __( 'Draft', 'snelgraveren-product-designer' ) }</option>
+          <option value="published">{ __( 'Published', 'snelgraveren-product-designer' ) }</option>
+          <option value="archived">{ __( 'Archived', 'snelgraveren-product-designer' ) }</option>
         </select>
         <button
           className="pf-builder__save-btn button button-primary"
           onClick={handleSave}
           disabled={isSaving}
         >
-          { isSaving ? __( 'Saving…', 'productforge' ) : isDirty ? __( 'Save', 'productforge' ) : __( 'Saved ✓', 'productforge' ) }
+          { isSaving ? __( 'Saving…', 'snelgraveren-product-designer' ) : isDirty ? __( 'Save', 'snelgraveren-product-designer' ) : __( 'Saved ✓', 'snelgraveren-product-designer' ) }
         </button>
         {saveError && <span className="pf-builder__save-error">{saveError}</span>}
       </div>

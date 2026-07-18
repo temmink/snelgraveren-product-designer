@@ -1,12 +1,12 @@
 <?php
 /**
- * Plugin Name: ProductForge for WooCommerce
+ * Plugin Name: Snelgraveren Product Designer for WooCommerce
  * Plugin URI:  https://www.snelgraveren.nl/productforge/
  * Description: Let customers personalise products with text, images, and SVGs using a drag-and-drop editor.
  * Version:     1.0.4
  * Author:      Martin Temmink
  * License:     GPL-2.0-or-later
- * Text Domain: productforge
+ * Text Domain: snelgraveren-product-designer
  * Domain Path: /languages
  * Requires at least: 6.4
  * Requires PHP:      8.1
@@ -49,7 +49,7 @@ add_action('before_woocommerce_init', function () {
 
 // Load plugin text domain before booting so translated strings in plugins_loaded work
 add_action('plugins_loaded', function () {
-    load_plugin_textdomain('productforge', false, dirname(plugin_basename(__FILE__)) . '/languages');
+    load_plugin_textdomain('snelgraveren-product-designer', false, dirname(plugin_basename(__FILE__)) . '/languages');
 }, 1);
 
 // Boot plugin. Hard requirement: WooCommerce. The "Requires Plugins" header
@@ -60,7 +60,7 @@ add_action('plugins_loaded', function () {
     if (!class_exists('WooCommerce')) {
         add_action('admin_notices', function () {
             echo '<div class="notice notice-error"><p>'
-                . esc_html__('ProductForge for WooCommerce requires WooCommerce to be installed and active. The plugin is idle until WooCommerce is activated.', 'productforge')
+                . esc_html__('Snelgraveren Product Designer for WooCommerce requires WooCommerce to be installed and active. The plugin is idle until WooCommerce is activated.', 'snelgraveren-product-designer')
                 . '</p></div>';
         });
         return;

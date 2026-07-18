@@ -26,14 +26,14 @@ export default function Toolbar() {
           className="pf-toolbar__btn"
           onClick={undo}
           disabled={!canUndo}
-          title={__('Undo (Ctrl+Z)', 'productforge')}
+          title={__('Undo (Ctrl+Z)', 'snelgraveren-product-designer')}
         >↩</button>
         <button
           type="button"
           className="pf-toolbar__btn"
           onClick={redo}
           disabled={!canRedo}
-          title={__('Redo (Ctrl+Shift+Z)', 'productforge')}
+          title={__('Redo (Ctrl+Shift+Z)', 'snelgraveren-product-designer')}
         >↪</button>
       </div>
 
@@ -45,19 +45,19 @@ export default function Toolbar() {
               type="button"
               className={`pf-toolbar__btn${activeTool === 'select' || !['draw', 'erase'].includes(activeTool) ? ' pf-toolbar__btn--active' : ''}`}
               onClick={() => setActiveTool('select')}
-              title={__('Select', 'productforge')}
+              title={__('Select', 'snelgraveren-product-designer')}
             >↖</button>
             <button
               type="button"
               className={`pf-toolbar__btn${activeTool === 'draw' ? ' pf-toolbar__btn--active' : ''}`}
               onClick={() => setActiveTool(activeTool === 'draw' ? 'select' : 'draw')}
-              title={__('Draw', 'productforge')}
+              title={__('Draw', 'snelgraveren-product-designer')}
             >✏</button>
             <button
               type="button"
               className={`pf-toolbar__btn${activeTool === 'erase' ? ' pf-toolbar__btn--active' : ''}`}
               onClick={() => setActiveTool(activeTool === 'erase' ? 'select' : 'erase')}
-              title={__('Eraser', 'productforge')}
+              title={__('Eraser', 'snelgraveren-product-designer')}
             >🧹</button>
           </div>
           <DrawingOptions />
@@ -77,7 +77,7 @@ function DrawingOptions() {
       <div className="pf-toolbar__separator" />
       <div className="pf-toolbar__group pf-toolbar__group--options">
         <label className="pf-toolbar__option">
-          <span>{__('Size', 'productforge')}</span>
+          <span>{__('Size', 'snelgraveren-product-designer')}</span>
           <input
             type="range"
             min="1"
@@ -88,7 +88,7 @@ function DrawingOptions() {
         </label>
         {activeTool === 'draw' && (
           <label className="pf-toolbar__option">
-            <span>{__('Color', 'productforge')}</span>
+            <span>{__('Color', 'snelgraveren-product-designer')}</span>
             <input
               type="color"
               value={drawingStrokeColor}

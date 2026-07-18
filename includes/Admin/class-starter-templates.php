@@ -82,7 +82,7 @@ class StarterTemplates {
         if ($entry === null) {
             return new \WP_Error(
                 'pf_starter_not_found',
-                __('Starter template not found.', 'productforge'),
+                __('Starter template not found.', 'snelgraveren-product-designer'),
                 ['status' => 404]
             );
         }
@@ -91,7 +91,7 @@ class StarterTemplates {
         if ($this->repo->get_by_slug($slug)) {
             return new \WP_Error(
                 'pf_starter_already_imported',
-                __('This starter template has already been imported.', 'productforge'),
+                __('This starter template has already been imported.', 'snelgraveren-product-designer'),
                 ['status' => 409]
             );
         }
@@ -99,7 +99,7 @@ class StarterTemplates {
         if (!class_exists(\enshrined\svgSanitize\Sanitizer::class)) {
             return new \WP_Error(
                 'pf_svg_sanitizer_missing',
-                __('SVG sanitizer is not available.', 'productforge'),
+                __('SVG sanitizer is not available.', 'snelgraveren-product-designer'),
                 ['status' => 500]
             );
         }
@@ -143,7 +143,7 @@ class StarterTemplates {
         if (!$template_id) {
             return new \WP_Error(
                 'pf_starter_create_failed',
-                __('Failed to create template.', 'productforge'),
+                __('Failed to create template.', 'snelgraveren-product-designer'),
                 ['status' => 500]
             );
         }
@@ -180,7 +180,7 @@ class StarterTemplates {
             return new \WP_Error(
                 'pf_starter_asset_missing',
                 /* translators: %s: asset filename */
-                sprintf(__('Starter asset "%s" not found.', 'productforge'), $filename),
+                sprintf(__('Starter asset "%s" not found.', 'snelgraveren-product-designer'), $filename),
                 ['status' => 500]
             );
         }
@@ -189,7 +189,7 @@ class StarterTemplates {
         if ($dirty === false) {
             return new \WP_Error(
                 'pf_starter_asset_unreadable',
-                __('Could not read starter asset.', 'productforge'),
+                __('Could not read starter asset.', 'snelgraveren-product-designer'),
                 ['status' => 500]
             );
         }
@@ -199,7 +199,7 @@ class StarterTemplates {
         if ($clean === false || $clean === '') {
             return new \WP_Error(
                 'pf_starter_asset_invalid',
-                __('Starter asset failed SVG sanitization.', 'productforge'),
+                __('Starter asset failed SVG sanitization.', 'snelgraveren-product-designer'),
                 ['status' => 500]
             );
         }
@@ -213,7 +213,7 @@ class StarterTemplates {
         if (file_put_contents($dest, $clean) === false) {
             return new \WP_Error(
                 'pf_starter_asset_write_failed',
-                __('Could not store starter asset.', 'productforge'),
+                __('Could not store starter asset.', 'snelgraveren-product-designer'),
                 ['status' => 500]
             );
         }

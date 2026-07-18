@@ -658,7 +658,7 @@ export default function DesignerCanvas() {
       const defaultFont = zone?.defaultFontFamily || 'Arial';
 
       const textWidth = zone ? zone.width - 20 : 200;
-      const text = new Textbox(__('Your text here', 'productforge'), {
+      const text = new Textbox(__('Your text here', 'snelgraveren-product-designer'), {
         left: ptr.x,
         top: ptr.y,
         width: textWidth,
@@ -705,7 +705,7 @@ export default function DesignerCanvas() {
       const zone = zoneIdx >= 0 ? zones[zoneIdx] : null;
       const defaultFont = zone?.defaultFontFamily || 'Arial';
 
-      const defaultText = __('Your text here', 'productforge');
+      const defaultText = __('Your text here', 'snelgraveren-product-designer');
       const pathWidth = 200;
       const pathStr = archUpPath(pathWidth, 60);
       const pathObj = new FabricPath(pathStr, { visible: false });
@@ -755,7 +755,7 @@ export default function DesignerCanvas() {
       const ptr = canvas.getPointer(opt.e);
       const zoneIdx = findZoneForPoint(ptr.x, ptr.y, 'text');
 
-      const defaultText = __('Your text', 'productforge');
+      const defaultText = __('Your text', 'snelgraveren-product-designer');
       const fontId = 'hershey-simplex';
       const fontSize = 24;
       const { d, width, height } = renderHersheyText(defaultText, fontId, { fontSize });
@@ -802,7 +802,7 @@ export default function DesignerCanvas() {
 
   const handleFileUpload = useCallback(async (file, elementType) => {
     if (elementType === 'image' && template?.global_config?.vector_only) {
-      setError(__('Photos are not possible on this product (engraving requires vector artwork).', 'productforge'));
+      setError(__('Photos are not possible on this product (engraving requires vector artwork).', 'snelgraveren-product-designer'));
       return;
     }
 

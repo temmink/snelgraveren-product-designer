@@ -838,8 +838,8 @@ export default function Canvas() {
     if (!window.wp?.media) return;
 
     const frame = window.wp.media({
-      title: __( 'Select Background Image', 'productforge' ),
-      button: { text: __( 'Set Background', 'productforge' ) },
+      title: __( 'Select Background Image', 'snelgraveren-product-designer' ),
+      button: { text: __( 'Set Background', 'snelgraveren-product-designer' ) },
       multiple: false,
       library: { type: 'image' },
     });
@@ -1006,59 +1006,59 @@ export default function Canvas() {
         <button
           className={`pf-canvas-toolbar__btn${isFreeMove ? ' pf-canvas-toolbar__btn--active' : ''}`}
           onClick={isFreeMove ? disableFreeMove : enableFreeMove}
-          title={ isFreeMove ? __( 'Enable zone enforcement', 'productforge' ) : __( 'Disable zone enforcement for free positioning', 'productforge' ) }
+          title={ isFreeMove ? __( 'Enable zone enforcement', 'snelgraveren-product-designer' ) : __( 'Disable zone enforcement for free positioning', 'snelgraveren-product-designer' ) }
         >
-          { isFreeMove ? __( 'Enforce Zones', 'productforge' ) : __( 'Free Move', 'productforge' ) }
+          { isFreeMove ? __( 'Enforce Zones', 'snelgraveren-product-designer' ) : __( 'Free Move', 'snelgraveren-product-designer' ) }
         </button>
         <button
           className="pf-canvas-toolbar__btn"
           onClick={openMediaPicker}
-          title={ __( 'Set background image', 'productforge' ) }
+          title={ __( 'Set background image', 'snelgraveren-product-designer' ) }
         >
-          { currentView?.background_url ? __( 'Change Background', 'productforge' ) : __( 'Set Background', 'productforge' ) }
+          { currentView?.background_url ? __( 'Change Background', 'snelgraveren-product-designer' ) : __( 'Set Background', 'snelgraveren-product-designer' ) }
         </button>
         {currentView?.background_url && !editingBg && (
           <button
             className="pf-canvas-toolbar__btn"
             onClick={enterBgEdit}
-            title={ __( 'Resize and reposition the background image', 'productforge' ) }
+            title={ __( 'Resize and reposition the background image', 'snelgraveren-product-designer' ) }
           >
-            { __( 'Resize BG', 'productforge' ) }
+            { __( 'Resize BG', 'snelgraveren-product-designer' ) }
           </button>
         )}
         {editingBg && (
           <button
             className="pf-canvas-toolbar__btn pf-canvas-toolbar__btn--active"
             onClick={exitBgEdit}
-            title={ __( 'Apply background position', 'productforge' ) }
+            title={ __( 'Apply background position', 'snelgraveren-product-designer' ) }
           >
-            { __( 'Done', 'productforge' ) }
+            { __( 'Done', 'snelgraveren-product-designer' ) }
           </button>
         )}
         {currentView?.background_url && (
           <button
             className="pf-canvas-toolbar__btn"
             onClick={removeBackground}
-            title={ __( 'Remove background image', 'productforge' ) }
+            title={ __( 'Remove background image', 'snelgraveren-product-designer' ) }
           >
-            { __( 'Remove BG', 'productforge' ) }
+            { __( 'Remove BG', 'snelgraveren-product-designer' ) }
           </button>
         )}
         <button
           className="pf-canvas-toolbar__btn"
           onClick={applyUndo}
           disabled={!canUndo(viewKey)}
-          title={ __( 'Undo (Ctrl+Z)', 'productforge' ) }
+          title={ __( 'Undo (Ctrl+Z)', 'snelgraveren-product-designer' ) }
         >
-          { __( '↩ Undo', 'productforge' ) }
+          { __( '↩ Undo', 'snelgraveren-product-designer' ) }
         </button>
         <button
           className="pf-canvas-toolbar__btn"
           onClick={applyRedo}
           disabled={!canRedo(viewKey)}
-          title={ __( 'Redo (Ctrl+Shift+Z)', 'productforge' ) }
+          title={ __( 'Redo (Ctrl+Shift+Z)', 'snelgraveren-product-designer' ) }
         >
-          { __( '↪ Redo', 'productforge' ) }
+          { __( '↪ Redo', 'snelgraveren-product-designer' ) }
         </button>
         {!editingBg && (
           <AlignToolbar hasSelection={hasSelection} handleAlign={handleAlign} />
@@ -1098,12 +1098,12 @@ function AlignToolbar({ hasSelection, handleAlign }) {
   }, []);
 
   const dirs = [
-    ['left', '⬅', __('Align left', 'productforge')],
-    ['center', '↔', __('Align center', 'productforge')],
-    ['right', '➡', __('Align right', 'productforge')],
-    ['top', '⬆', __('Align top', 'productforge')],
-    ['middle', '↕', __('Align middle', 'productforge')],
-    ['bottom', '⬇', __('Align bottom', 'productforge')],
+    ['left', '⬅', __('Align left', 'snelgraveren-product-designer')],
+    ['center', '↔', __('Align center', 'snelgraveren-product-designer')],
+    ['right', '➡', __('Align right', 'snelgraveren-product-designer')],
+    ['top', '⬆', __('Align top', 'snelgraveren-product-designer')],
+    ['middle', '↕', __('Align middle', 'snelgraveren-product-designer')],
+    ['bottom', '⬇', __('Align bottom', 'snelgraveren-product-designer')],
   ];
 
   return (

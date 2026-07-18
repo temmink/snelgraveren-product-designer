@@ -36,11 +36,11 @@ class TemplateListTable extends \WP_List_Table {
     public function get_columns(): array {
         return [
             'cb'           => '<input type="checkbox">',
-            'title'        => __('Title', 'productforge'),
-            'status'       => __('Status', 'productforge'),
-            'view_count'   => __('Views', 'productforge'),
-            'product_count'=> __('Products', 'productforge'),
-            'created_at'   => __('Created', 'productforge'),
+            'title'        => __('Title', 'snelgraveren-product-designer'),
+            'status'       => __('Status', 'snelgraveren-product-designer'),
+            'view_count'   => __('Views', 'snelgraveren-product-designer'),
+            'product_count'=> __('Products', 'snelgraveren-product-designer'),
+            'created_at'   => __('Created', 'snelgraveren-product-designer'),
         ];
     }
 
@@ -55,14 +55,14 @@ class TemplateListTable extends \WP_List_Table {
     protected function get_bulk_actions(): array {
         if ($this->is_trash_view()) {
             return [
-                'restore'          => __('Restore', 'productforge'),
-                'delete_permanent' => __('Delete Permanently', 'productforge'),
+                'restore'          => __('Restore', 'snelgraveren-product-designer'),
+                'delete_permanent' => __('Delete Permanently', 'snelgraveren-product-designer'),
             ];
         }
         return [
-            'publish' => __('Publish', 'productforge'),
-            'archive' => __('Archive', 'productforge'),
-            'trash'   => __('Move to Trash', 'productforge'),
+            'publish' => __('Publish', 'snelgraveren-product-designer'),
+            'archive' => __('Archive', 'snelgraveren-product-designer'),
+            'trash'   => __('Move to Trash', 'snelgraveren-product-designer'),
         ];
     }
 
@@ -166,9 +166,9 @@ class TemplateListTable extends \WP_List_Table {
             );
 
             $actions = [
-                'restore' => '<a href="' . esc_url($restore_url) . '">' . __('Restore', 'productforge') . '</a>',
+                'restore' => '<a href="' . esc_url($restore_url) . '">' . __('Restore', 'snelgraveren-product-designer') . '</a>',
                 'delete'  => '<a href="' . esc_url($delete_url) . '" onclick="return confirm(\'Delete this template permanently?\')">'
-                             . __('Delete Permanently', 'productforge') . '</a>',
+                             . __('Delete Permanently', 'snelgraveren-product-designer') . '</a>',
             ];
         } else {
             $edit_url  = admin_url('admin.php?page=pf-template-builder&template_id=' . $id);
@@ -180,8 +180,8 @@ class TemplateListTable extends \WP_List_Table {
             $title = '<strong><a href="' . esc_url($edit_url) . '">' . esc_html($item['title']) . '</a></strong>';
 
             $actions = [
-                'edit'  => '<a href="' . esc_url($edit_url) . '">' . __('Edit', 'productforge') . '</a>',
-                'trash' => '<a href="' . esc_url($trash_url) . '">' . __('Trash', 'productforge') . '</a>',
+                'edit'  => '<a href="' . esc_url($edit_url) . '">' . __('Edit', 'snelgraveren-product-designer') . '</a>',
+                'trash' => '<a href="' . esc_url($trash_url) . '">' . __('Trash', 'snelgraveren-product-designer') . '</a>',
             ];
         }
 
@@ -190,10 +190,10 @@ class TemplateListTable extends \WP_List_Table {
 
     protected function column_status(array $item): string {
         $labels = [
-            'draft'     => __('Draft', 'productforge'),
-            'published' => __('Published', 'productforge'),
-            'archived'  => __('Archived', 'productforge'),
-            'trashed'   => __('Trashed', 'productforge'),
+            'draft'     => __('Draft', 'snelgraveren-product-designer'),
+            'published' => __('Published', 'snelgraveren-product-designer'),
+            'archived'  => __('Archived', 'snelgraveren-product-designer'),
+            'trashed'   => __('Trashed', 'snelgraveren-product-designer'),
         ];
         return esc_html($labels[$item['status']] ?? $item['status']);
     }
@@ -220,15 +220,15 @@ class TemplateListTable extends \WP_List_Table {
         $base_url    = admin_url('admin.php?page=productforge');
 
         $tabs = [
-            ''          => __('All', 'productforge') . " ({$total})",
-            'draft'     => __('Draft', 'productforge') . " ({$counts['draft']})",
-            'published' => __('Published', 'productforge') . " ({$counts['published']})",
-            'archived'  => __('Archived', 'productforge') . " ({$counts['archived']})",
+            ''          => __('All', 'snelgraveren-product-designer') . " ({$total})",
+            'draft'     => __('Draft', 'snelgraveren-product-designer') . " ({$counts['draft']})",
+            'published' => __('Published', 'snelgraveren-product-designer') . " ({$counts['published']})",
+            'archived'  => __('Archived', 'snelgraveren-product-designer') . " ({$counts['archived']})",
         ];
 
         // Only show Trash tab if there are trashed items.
         if ($counts['trashed'] > 0) {
-            $tabs['trashed'] = __('Trash', 'productforge') . " ({$counts['trashed']})";
+            $tabs['trashed'] = __('Trash', 'snelgraveren-product-designer') . " ({$counts['trashed']})";
         }
 
         echo '<ul class="subsubsub">';

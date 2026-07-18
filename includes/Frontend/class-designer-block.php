@@ -4,7 +4,7 @@ namespace ProductForge\Frontend;
 defined('ABSPATH') || exit;
 
 /**
- * Gutenberg block "productforge/designer" — the block-theme equivalent of the
+ * Gutenberg block "snelgraveren/product-designer" — the block-theme equivalent of the
  * [productforge] shortcode. WooCommerce's blockified single-product template
  * never fires woocommerce_before_add_to_cart_button, so the hook-based
  * auto-render silently does nothing there; this block gives merchants an
@@ -31,7 +31,7 @@ class DesignerBlock {
         ]);
 
         // Handle is derived by WP from block.json (name + "editor-script").
-        wp_set_script_translations('productforge-designer-editor-script', 'productforge', PF_PLUGIN_DIR . 'languages');
+        wp_set_script_translations('snelgraveren-product-designer-editor-script', 'snelgraveren-product-designer', PF_PLUGIN_DIR . 'languages');
     }
 
     /**

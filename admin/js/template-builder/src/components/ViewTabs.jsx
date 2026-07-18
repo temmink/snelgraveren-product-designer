@@ -17,7 +17,7 @@ export default function ViewTabs() {
   const handleAdd = () => {
     addView({
       /* translators: %d is the view number */
-      name:            `${ __( 'View', 'productforge' ) } ${views.length + 1}`,
+      name:            `${ __( 'View', 'snelgraveren-product-designer' ) } ${views.length + 1}`,
       canvas_width:         800,
       canvas_height:        600,
       background_url: '',
@@ -79,19 +79,19 @@ export default function ViewTabs() {
               <span
                 className="pf-builder__view-tab-name"
                 onDoubleClick={(e) => startRename(e, index)}
-                title={ __( 'Double-click to rename', 'productforge' ) }
+                title={ __( 'Double-click to rename', 'snelgraveren-product-designer' ) }
               >
                 {view.name}
               </span>
               {views.length > 1 && (
                 <button
                   className="pf-builder__view-tab-remove"
-                  aria-label={ `${ __( 'Remove', 'productforge' ) } ${view.name}` }
+                  aria-label={ `${ __( 'Remove', 'snelgraveren-product-designer' ) } ${view.name}` }
                   disabled={isSaving}
                   onClick={(e) => {
                     e.stopPropagation();
                     /* translators: %s is the view name */
-                    if (window.confirm( `${ __( 'Remove view', 'productforge' ) } "${view.name}"?` )) {
+                    if (window.confirm( `${ __( 'Remove view', 'snelgraveren-product-designer' ) } "${view.name}"?` )) {
                       removeView(index);
                     }
                   }}
@@ -106,11 +106,11 @@ export default function ViewTabs() {
       <button
         className="pf-builder__view-tab-add"
         onClick={handleAdd}
-        aria-label={ __( 'Add view', 'productforge' ) }
+        aria-label={ __( 'Add view', 'snelgraveren-product-designer' ) }
         disabled={isSaving || (!isPremium && views.length >= 1)}
-        title={!isPremium && views.length >= 1 ? __( 'Multiple views require Pro', 'productforge' ) : ''}
+        title={!isPremium && views.length >= 1 ? __( 'Multiple views require Pro', 'snelgraveren-product-designer' ) : ''}
       >
-        { __( '+ Add View', 'productforge' ) }
+        { __( '+ Add View', 'snelgraveren-product-designer' ) }
         {!isPremium && views.length >= 1 && <span style={{ marginLeft: 4, fontSize: 10, opacity: 0.7 }}>Pro</span>}
       </button>
     </div>

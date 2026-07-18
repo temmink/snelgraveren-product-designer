@@ -11,7 +11,7 @@
     var el = element.createElement;
     var __ = i18n.__;
 
-    blocks.registerBlockType('productforge/designer', {
+    blocks.registerBlockType('snelgraveren/product-designer', {
         edit: function () {
             var blockProps = blockEditor.useBlockProps({
                 style: {
@@ -28,11 +28,11 @@
                 'div',
                 blockProps,
                 el('div', { style: { fontSize: '28px', lineHeight: 1 } }, '🎨'),
-                el('div', { style: { fontWeight: 600, margin: '8px 0 4px' } }, __('ProductForge Designer', 'productforge')),
+                el('div', { style: { fontWeight: 600, margin: '8px 0 4px' } }, __('ProductForge Designer', 'snelgraveren-product-designer')),
                 el(
                     'div',
                     { style: { fontSize: '13px' } },
-                    __('The product designer renders here for customers, on products that have a designer template enabled.', 'productforge')
+                    __('The product designer renders here for customers, on products that have a designer template enabled.', 'snelgraveren-product-designer')
                 )
             );
         },

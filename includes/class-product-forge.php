@@ -109,7 +109,7 @@ class ProductForge {
      */
     public static function premium_error( string $feature, string $message = '' ): \WP_Error {
         if ( ! $message ) {
-            $message = __( 'This feature requires ProductForge Pro.', 'productforge' );
+            $message = __( 'This feature requires ProductForge Pro.', 'snelgraveren-product-designer' );
         }
         return new \WP_Error(
             'pf_premium_required',
@@ -137,7 +137,7 @@ class ProductForge {
 
     private function init_pricing(): void {
         // The pricing engine is premium-only and stripped from the free build
-        // (@fs_premium_only in productforge.php) — guard so free degrades cleanly.
+        // (@fs_premium_only in snelgraveren-product-designer.php) — guard so free degrades cleanly.
         if (class_exists(Pricing\CartSurcharge::class)) {
             $surcharge = new Pricing\CartSurcharge();
             $surcharge->init();
@@ -161,7 +161,7 @@ class ProductForge {
             (new Admin\StarterTemplates())->register_routes();
 
             // Premium-only controllers — stripped from the free build via
-            // @fs_premium_only in productforge.php, hence the guards. The
+            // @fs_premium_only in snelgraveren-product-designer.php, hence the guards. The
             // admin UI for these features is Pro-gated client-side, so the
             // free build never calls the missing routes.
             if (class_exists(API\RestPalettes::class)) {

@@ -162,7 +162,7 @@ export default function TreePanel() {
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={allSortableKeys} strategy={verticalListSortingStrategy}>
           {zones.length === 0 && (
-            <p className="pf-tree-panel__empty">{ __( 'Add a boundary first to place layers.', 'productforge' ) }</p>
+            <p className="pf-tree-panel__empty">{ __( 'Add a boundary first to place layers.', 'snelgraveren-product-designer' ) }</p>
           )}
           {zones.map((zone, zoneIndex) => {
             const isExpanded = expandedZones[zone._key] !== false; // Default expanded.
@@ -211,11 +211,11 @@ export default function TreePanel() {
         <button
           className="pf-tree-panel__add-zone-btn"
           onClick={() => setIsAddingZone(true)}
-          aria-label={ __( 'Add Boundary', 'productforge' ) }
+          aria-label={ __( 'Add Boundary', 'snelgraveren-product-designer' ) }
         >
-          { __( '+ Add Boundary', 'productforge' ) }
+          { __( '+ Add Boundary', 'snelgraveren-product-designer' ) }
         </button>
-        {savedMsg && <span className="pf-zone-form__saved">{ __( 'Saved Boundary', 'productforge' ) }</span>}
+        {savedMsg && <span className="pf-zone-form__saved">{ __( 'Saved Boundary', 'snelgraveren-product-designer' ) }</span>}
       </div>
 
       {isAddingZone && (
@@ -315,14 +315,14 @@ function AddLayerPanel({ zone, onAdd, onCancel }) {
   };
 
   const handleText = () => {
-    onAdd({ name: __('Text', 'productforge'), type: 'text', locked: false, visible: true, text: __('Text', 'productforge'), fontSize: 24, fontFamily: 'Arial', fill: '#000000', left: zone.x + 20, top: zone.y + 20 });
+    onAdd({ name: __('Text', 'snelgraveren-product-designer'), type: 'text', locked: false, visible: true, text: __('Text', 'snelgraveren-product-designer'), fontSize: 24, fontFamily: 'Arial', fill: '#000000', left: zone.x + 20, top: zone.y + 20 });
   };
 
   const handleMedia = (mediaType) => {
     if (!window.wp?.media) return;
     const frame = window.wp.media({
-      title: mediaType === 'svg' ? __('Select SVG', 'productforge') : __('Select Image', 'productforge'),
-      button: { text: __('Use', 'productforge') },
+      title: mediaType === 'svg' ? __('Select SVG', 'snelgraveren-product-designer') : __('Select Image', 'snelgraveren-product-designer'),
+      button: { text: __('Use', 'snelgraveren-product-designer') },
       multiple: false,
       library: { type: mediaType === 'svg' ? 'image/svg+xml' : 'image' },
     });
@@ -368,18 +368,18 @@ function AddLayerPanel({ zone, onAdd, onCancel }) {
       <div className="pf-add-layer">
         <div className="pf-add-layer__header">
           <button type="button" className="pf-add-layer__back" onClick={() => setMode(null)}>
-            ← {__('Back', 'productforge')}
+            ← {__('Back', 'snelgraveren-product-designer')}
           </button>
-          <span className="pf-add-layer__title">{__('Clipart Library', 'productforge')}</span>
+          <span className="pf-add-layer__title">{__('Clipart Library', 'snelgraveren-product-designer')}</span>
           <button type="button" className="pf-add-layer__close" onClick={onCancel}>×</button>
         </div>
 
         {loading ? (
-          <p className="pf-add-layer__status">{__('Loading...', 'productforge')}</p>
+          <p className="pf-add-layer__status">{__('Loading...', 'snelgraveren-product-designer')}</p>
         ) : collections.length === 0 ? (
           <p className="pf-add-layer__status">
-            {__('No collections yet.', 'productforge')}{' '}
-            <a href="?page=pf-clipart">{__('Create one', 'productforge')}</a>
+            {__('No collections yet.', 'snelgraveren-product-designer')}{' '}
+            <a href="?page=pf-clipart">{__('Create one', 'snelgraveren-product-designer')}</a>
           </p>
         ) : (
           <>
@@ -398,9 +398,9 @@ function AddLayerPanel({ zone, onAdd, onCancel }) {
             </div>
 
             {loadingItems ? (
-              <p className="pf-add-layer__status">{__('Loading...', 'productforge')}</p>
+              <p className="pf-add-layer__status">{__('Loading...', 'snelgraveren-product-designer')}</p>
             ) : items.length === 0 ? (
-              <p className="pf-add-layer__status">{__('Empty collection.', 'productforge')}</p>
+              <p className="pf-add-layer__status">{__('Empty collection.', 'snelgraveren-product-designer')}</p>
             ) : (
               <div className="pf-add-layer__grid">
                 {items.map((item) => (
@@ -427,7 +427,7 @@ function AddLayerPanel({ zone, onAdd, onCancel }) {
   return (
     <div className="pf-add-layer">
       <div className="pf-add-layer__header">
-        <span className="pf-add-layer__title">{__('Add Layer', 'productforge')}</span>
+        <span className="pf-add-layer__title">{__('Add Layer', 'snelgraveren-product-designer')}</span>
         <button type="button" className="pf-add-layer__close" onClick={onCancel}>×</button>
       </div>
       <div className="pf-add-layer__sources">
@@ -436,7 +436,7 @@ function AddLayerPanel({ zone, onAdd, onCancel }) {
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M4 7V4h16v3" /><path d="M9 20h6" /><path d="M12 4v16" />
             </svg>
-            <span>{__('Text', 'productforge')}</span>
+            <span>{__('Text', 'snelgraveren-product-designer')}</span>
           </button>
         )}
         {(allowedTypes.includes('image') || allowedTypes.includes('svg')) && (
@@ -444,7 +444,7 @@ function AddLayerPanel({ zone, onAdd, onCancel }) {
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
             </svg>
-            <span>{__('Media Library', 'productforge')}</span>
+            <span>{__('Media Library', 'snelgraveren-product-designer')}</span>
           </button>
         )}
         {allowedTypes.includes('svg') && (
@@ -452,7 +452,7 @@ function AddLayerPanel({ zone, onAdd, onCancel }) {
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
             </svg>
-            <span>{__('Clipart', 'productforge')}</span>
+            <span>{__('Clipart', 'snelgraveren-product-designer')}</span>
           </button>
         )}
       </div>
@@ -486,7 +486,7 @@ function ColorField({ value, onChange, globalConfig, colorPalettes }) {
   if (anyColor || colors.length === 0) {
     return (
       <label>
-        { __( 'Color', 'productforge' ) }
+        { __( 'Color', 'snelgraveren-product-designer' ) }
         <input type="color" value={value || '#000000'} onChange={(e) => onChange(e.target.value)} />
       </label>
     );
@@ -494,7 +494,7 @@ function ColorField({ value, onChange, globalConfig, colorPalettes }) {
 
   return (
     <div className="pf-tree-panel__color-field">
-      <span className="pf-tree-panel__color-label">{ __( 'Color', 'productforge' ) }</span>
+      <span className="pf-tree-panel__color-label">{ __( 'Color', 'snelgraveren-product-designer' ) }</span>
       <div className="pf-tree-panel__color-swatches">
         {colors.map((c) => (
           <button
@@ -523,17 +523,17 @@ function LayerDetail({ layer, onChange }) {
   if (layer.type === 'text') {
     return (
       <div className="pf-tree-panel__layer-detail">
-        <h4>{ __( 'Text Properties', 'productforge' ) }</h4>
+        <h4>{ __( 'Text Properties', 'snelgraveren-product-designer' ) }</h4>
         <label>
-          { __( 'Text', 'productforge' ) }
+          { __( 'Text', 'snelgraveren-product-designer' ) }
           <input type="text" value={layer.text || ''} onChange={(e) => onChange({ text: e.target.value })} />
         </label>
         <label>
-          { __( 'Font Size', 'productforge' ) }
+          { __( 'Font Size', 'snelgraveren-product-designer' ) }
           <input type="number" min="8" max="200" value={layer.fontSize || 24} onChange={(e) => onChange({ fontSize: parseInt(e.target.value, 10) || 24 })} />
         </label>
         <label>
-          { __( 'Font Family', 'productforge' ) }
+          { __( 'Font Family', 'snelgraveren-product-designer' ) }
           <select value={layer.fontFamily || 'Arial'} onChange={(e) => onChange({ fontFamily: e.target.value })}>
             {fontOptions.map((f) => (
               <option key={f} value={f}>{f}</option>
@@ -547,24 +547,24 @@ function LayerDetail({ layer, onChange }) {
           colorPalettes={colorPalettes}
         />
         <label>
-          { __( 'Text Align', 'productforge' ) }
+          { __( 'Text Align', 'snelgraveren-product-designer' ) }
           <select value={layer.textAlign || 'left'} onChange={(e) => onChange({ textAlign: e.target.value })}>
-            <option value="left">{ __( 'Left', 'productforge' ) }</option>
-            <option value="center">{ __( 'Center', 'productforge' ) }</option>
-            <option value="right">{ __( 'Right', 'productforge' ) }</option>
+            <option value="left">{ __( 'Left', 'snelgraveren-product-designer' ) }</option>
+            <option value="center">{ __( 'Center', 'snelgraveren-product-designer' ) }</option>
+            <option value="right">{ __( 'Right', 'snelgraveren-product-designer' ) }</option>
           </select>
         </label>
         <label>
-          { __( 'Width', 'productforge' ) }
+          { __( 'Width', 'snelgraveren-product-designer' ) }
           <input type="number" min="20" value={layer.width || 200} onChange={(e) => onChange({ width: parseInt(e.target.value, 10) || 200 })} />
         </label>
         <div className="pf-tree-panel__coord-row">
           <label>
-            { __( 'X', 'productforge' ) }
+            { __( 'X', 'snelgraveren-product-designer' ) }
             <input type="number" value={layer.left || 0} onChange={(e) => onChange({ left: parseInt(e.target.value, 10) || 0 })} />
           </label>
           <label>
-            { __( 'Y', 'productforge' ) }
+            { __( 'Y', 'snelgraveren-product-designer' ) }
             <input type="number" value={layer.top || 0} onChange={(e) => onChange({ top: parseInt(e.target.value, 10) || 0 })} />
           </label>
         </div>
@@ -572,42 +572,42 @@ function LayerDetail({ layer, onChange }) {
     );
   }
 
-  const typeLabel = (layer.type || __( 'Layer', 'productforge' )).charAt(0).toUpperCase() + (layer.type || '').slice(1);
+  const typeLabel = (layer.type || __( 'Layer', 'snelgraveren-product-designer' )).charAt(0).toUpperCase() + (layer.type || '').slice(1);
   return (
     <div className="pf-tree-panel__layer-detail">
       {/* translators: %s is the layer type (e.g. Image, SVG) */}
-      <h4>{ `${typeLabel} ${ __( 'Properties', 'productforge' ) }` }</h4>
+      <h4>{ `${typeLabel} ${ __( 'Properties', 'snelgraveren-product-designer' ) }` }</h4>
       <label>
-        { __( 'Name', 'productforge' ) }
+        { __( 'Name', 'snelgraveren-product-designer' ) }
         <input type="text" value={layer.name || ''} onChange={(e) => onChange({ name: e.target.value })} />
       </label>
       {layer.src && (
         <div style={{ margin: '8px 0' }}>
-          <img src={layer.src} alt={ __( 'Preview', 'productforge' ) } style={{ maxWidth: '100%', maxHeight: 60, borderRadius: 4 }} />
+          <img src={layer.src} alt={ __( 'Preview', 'snelgraveren-product-designer' ) } style={{ maxWidth: '100%', maxHeight: 60, borderRadius: 4 }} />
         </div>
       )}
       <div className="pf-tree-panel__coord-row">
         <label>
-          { __( 'X', 'productforge' ) }
+          { __( 'X', 'snelgraveren-product-designer' ) }
           <input type="number" value={layer.left || 0} onChange={(e) => onChange({ left: parseInt(e.target.value, 10) || 0 })} />
         </label>
         <label>
-          { __( 'Y', 'productforge' ) }
+          { __( 'Y', 'snelgraveren-product-designer' ) }
           <input type="number" value={layer.top || 0} onChange={(e) => onChange({ top: parseInt(e.target.value, 10) || 0 })} />
         </label>
       </div>
       <div className="pf-tree-panel__coord-row">
         <label>
-          { __( 'Scale X', 'productforge' ) }
+          { __( 'Scale X', 'snelgraveren-product-designer' ) }
           <input type="number" step="0.1" min="0.1" value={layer.scaleX || 1} onChange={(e) => onChange({ scaleX: parseFloat(e.target.value) || 1 })} />
         </label>
         <label>
-          { __( 'Scale Y', 'productforge' ) }
+          { __( 'Scale Y', 'snelgraveren-product-designer' ) }
           <input type="number" step="0.1" min="0.1" value={layer.scaleY || 1} onChange={(e) => onChange({ scaleY: parseFloat(e.target.value) || 1 })} />
         </label>
       </div>
       <label>
-        { __( 'Rotation', 'productforge' ) }
+        { __( 'Rotation', 'snelgraveren-product-designer' ) }
         <input type="number" min="0" max="360" value={layer.angle || 0} onChange={(e) => onChange({ angle: parseInt(e.target.value, 10) || 0 })} />
       </label>
     </div>
