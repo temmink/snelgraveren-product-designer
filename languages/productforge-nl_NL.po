@@ -4,8 +4,8 @@
 # Martin Temmink <martin@example.com>, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: ProductForge 1.0.0\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/productforge\n"
+"Project-Id-Version: Snelgraveren Product Designer 1.1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/snelgraveren-product-designer\n"
 "POT-Creation-Date: 2026-03-19T13:15:57+00:00\n"
 "PO-Revision-Date: 2026-03-19 14:00+0000\n"
 "Last-Translator: Martin Temmink <martin@example.com>\n"

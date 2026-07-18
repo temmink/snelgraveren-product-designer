@@ -2,8 +2,8 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: ProductForge for WooCommerce 1.0.1\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/productforge\n"
+"Project-Id-Version: Snelgraveren Product Designer for WooCommerce 1.1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/snelgraveren-product-designer\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"

@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.0.4
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -69,6 +69,17 @@ Exports (PDF, PNG, SVG) are generated locally on your server — nothing is sent
 The free version includes the full designer with unlimited templates and PNG export. Pro unlocks multiple product views, PDF/SVG production export, automatic exports on order status, pricing rules, custom fonts, clip art management, color palettes, and more.
 
 == Changelog ==
+
+= 1.1.0 =
+* Change: plugin renamed to "Snelgraveren Product Designer for WooCommerce" (slug: `snelgraveren-product-designer`). The `[productforge]` shortcode, `pf/v1` REST namespace, `pf-` CSS classes, and `pf_*` option names are unchanged for backward compatibility with existing installs.
+* Change: the Gutenberg block is now `snelgraveren/product-designer` (was `productforge/designer`).
+* Fix: the public template REST endpoint no longer strips views, colors, pricing, permissions, or SVG zone boundaries for free-tier users — per wp.org guideline 5, the free plugin does not artificially limit functionality server-side.
+* Fix: the public design-templates REST endpoints now only ever return published templates to non-admin requests, ignoring any client-supplied status filter.
+* Fix: removed inline `<style>`/`<script>` blocks from admin-rendered HTML in favor of `wp_add_inline_style`/`wp_add_inline_script`.
+* Fix: file uploads (customer uploads, clip art, fonts) now go through `wp_handle_upload()` instead of a raw `move_uploaded_file()` call.
+* Fix: boolean settings now use `rest_sanitize_boolean` as their `sanitize_callback`.
+* Fix: removed the manual `load_plugin_textdomain()` call — wp.org loads translations for hosted plugins automatically.
+* Maintenance: translation files (`languages/`) are no longer bundled in the distributed ZIP; they remain in the plugin's Subversion/GitHub repository.
 
 = 1.0.4 =
 * Change: premium functionality (PDF/SVG export, auto-export, pricing engine, clip art / font / palette management) is no longer bundled in the free version — it now ships only with Pro.
