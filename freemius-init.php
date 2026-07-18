@@ -26,10 +26,18 @@ if ( ! function_exists( 'pf_fs' ) ) {
             $pf_fs = fs_dynamic_init( array(
                 'id'               => '26301',
                 'slug'             => 'snelgraveren-product-designer',
+                'premium_slug'     => 'snelgraveren-product-designer-premium',
                 'type'             => 'plugin',
                 'public_key'       => 'pk_5db43e71632e44a3d963b594e9eb6',
-                'is_premium'       => false,
-                'is_premium_only'  => false,
+                // This source IS the premium codebase; the Freemius deployment
+                // processor flips this per generated build. Our hand-made
+                // wp.org free build (bin/free-build) sets it to false and
+                // strips the wp_org_gatekeeper line below.
+                'is_premium'          => true,
+                'premium_suffix'      => 'Pro',
+                'has_premium_version' => true,
+                'is_premium_only'     => false,
+                'wp_org_gatekeeper'   => 'OA7#BoRiBNqdf52FvzEf!!074aRLPs8fspif$7K1#4u4Csys1fQlCecVcUTOs2mcpeVHi#C2j9d09fOTvbC0HloPT7fFee5WdS3G',
                 'has_addons'       => false,
                 'has_paid_plans'   => true,
                 'is_org_compliant' => true,
