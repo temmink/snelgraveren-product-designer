@@ -122,7 +122,7 @@ class OrderIntegration {
 
         $thumb_url = $this->get_design_thumbnail_url($hash);
         if (!empty($thumb_url)) {
-            return '<img src="' . esc_url($thumb_url) . '" alt="' . esc_attr__('Custom design', 'productforge') . '" style="max-width:100px;max-height:100px;" />';
+            return '<img src="' . esc_url($thumb_url) . '" alt="' . esc_attr__('Custom design', 'snelgraveren-product-designer') . '" style="max-width:100px;max-height:100px;" />';
         }
 
         return $thumbnail;
@@ -143,7 +143,7 @@ class OrderIntegration {
 
         $thumb_url = $this->get_design_thumbnail_url($hash);
         if (!empty($thumb_url)) {
-            return '<img src="' . esc_url($thumb_url) . '" alt="' . esc_attr__('Custom design', 'productforge') . '" class="wc-order-item-thumbnail" width="38" height="38" />';
+            return '<img src="' . esc_url($thumb_url) . '" alt="' . esc_attr__('Custom design', 'snelgraveren-product-designer') . '" class="wc-order-item-thumbnail" width="38" height="38" />';
         }
 
         return $image;
@@ -161,8 +161,8 @@ class OrderIntegration {
         $formatted_meta['pf_design'] = (object) [
             'key'           => '_pf_design_hash',
             'value'         => $hash,
-            'display_key'   => __('Design', 'productforge'),
-            'display_value' => __('Customized', 'productforge'),
+            'display_key'   => __('Design', 'snelgraveren-product-designer'),
+            'display_value' => __('Customized', 'snelgraveren-product-designer'),
         ];
 
         return $formatted_meta;
@@ -196,11 +196,11 @@ class OrderIntegration {
         // Show raster warning if design contains images
         if ($design && \ProductForge\Export\DesignInspector::contains_raster($design['views'] ?? [])) {
             echo '<p style="color:#b32d2e;margin:4px 0;">⚠ '
-                . esc_html__('This design contains raster images (photos) — check engraving suitability before production.', 'productforge')
+                . esc_html__('This design contains raster images (photos) — check engraving suitability before production.', 'snelgraveren-product-designer')
                 . '</p>';
         }
 
-        echo '<strong style="display:block;margin-bottom:4px;">' . esc_html__('Export Design:', 'productforge') . '</strong>';
+        echo '<strong style="display:block;margin-bottom:4px;">' . esc_html__('Export Design:', 'snelgraveren-product-designer') . '</strong>';
 
         // Export buttons — gate PDF/SVG for Pro
         foreach (['png', 'pdf', 'svg'] as $format) {
@@ -220,7 +220,7 @@ class OrderIntegration {
 
         if ( ! ProductForge::is_premium() ) {
             echo '<span style="font-size:11px;color:#666;margin-left:4px;">'
-               . esc_html__( 'Pro: PDF & SVG export', 'productforge' ) . '</span>';
+               . esc_html__( 'Pro: PDF & SVG export', 'snelgraveren-product-designer' ) . '</span>';
         }
 
         // Show existing exports with download links (latest per format only)
@@ -251,53 +251,55 @@ class OrderIntegration {
 
         echo '</div>';
 
-        // Inline JS for export buttons (only output once)
+        // JS for export buttons (only registered/output once per request).
+        // wp.org guidelines disallow inline <script> tags in admin-rendered HTML,
+        // so this uses a "false"-src script handle purely as an inline-script carrier.
         static $script_output = false;
         if (!$script_output) {
             $script_output = true;
-            ?>
-            <script>
-            document.addEventListener('click', function(e) {
-                var btn = e.target.closest('.pf-export-btn');
-                if (!btn) return;
-                e.preventDefault();
-                var hash = btn.dataset.hash;
-                var format = btn.dataset.format;
-                var api = btn.dataset.api;
-                var nonce = btn.dataset.nonce;
-                btn.disabled = true;
-                btn.textContent = format.toUpperCase() + '...';
-                fetch(api + '/exports/' + hash, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-WP-Nonce': nonce
-                    },
-                    body: JSON.stringify({ format: format })
-                })
-                .then(function(r) { return r.json(); })
-                .then(function(data) {
-                    if (data.export_id) {
-                        btn.textContent = '✓ ' + format.toUpperCase();
-                        // Auto-download
-                        window.location.href = api + '/exports/' + data.export_id + '/download?_wpnonce=' + nonce;
-                    } else {
+            wp_register_script('pf-order-export-actions', false, [], PF_VERSION, true);
+            wp_enqueue_script('pf-order-export-actions');
+            wp_add_inline_script('pf-order-export-actions', "
+                document.addEventListener('click', function(e) {
+                    var btn = e.target.closest('.pf-export-btn');
+                    if (!btn) return;
+                    e.preventDefault();
+                    var hash = btn.dataset.hash;
+                    var format = btn.dataset.format;
+                    var api = btn.dataset.api;
+                    var nonce = btn.dataset.nonce;
+                    btn.disabled = true;
+                    btn.textContent = format.toUpperCase() + '...';
+                    fetch(api + '/exports/' + hash, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-WP-Nonce': nonce
+                        },
+                        body: JSON.stringify({ format: format })
+                    })
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (data.export_id) {
+                            btn.textContent = '✓ ' + format.toUpperCase();
+                            // Auto-download
+                            window.location.href = api + '/exports/' + data.export_id + '/download?_wpnonce=' + nonce;
+                        } else {
+                            btn.textContent = '✗ ' + format.toUpperCase();
+                            alert('Export failed: ' + (data.error || 'Unknown error'));
+                        }
+                    })
+                    .catch(function() {
                         btn.textContent = '✗ ' + format.toUpperCase();
-                        alert('Export failed: ' + (data.error || 'Unknown error'));
-                    }
-                })
-                .catch(function() {
-                    btn.textContent = '✗ ' + format.toUpperCase();
-                })
-                .finally(function() {
-                    setTimeout(function() {
-                        btn.disabled = false;
-                        btn.textContent = format.toUpperCase();
-                    }, 3000);
+                    })
+                    .finally(function() {
+                        setTimeout(function() {
+                            btn.disabled = false;
+                            btn.textContent = format.toUpperCase();
+                        }, 3000);
+                    });
                 });
-            });
-            </script>
-            <?php
+            ");
         }
     }
 }

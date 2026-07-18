@@ -56,6 +56,22 @@ class ClipartValidator {
     }
 
     private static function move_file(array $file): array {
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+
+        // MIME is already verified above via finfo, and the SVG content is
+        // already sanitized; skip wp_handle_upload()'s own
+        // wp_check_filetype_and_ext() re-check — it can't fingerprint SVG via
+        // getimagesize() and is known to false-reject valid SVG uploads.
+        $uploaded = wp_handle_upload($file, [
+            'test_form' => false,
+            'test_type' => false,
+        ]);
+        if (!empty($uploaded['error'])) {
+            throw new \RuntimeException(esc_html($uploaded['error']), 500);
+        }
+
+        // wp_handle_upload() places the file in the default uploads/Y/m dir;
+        // relocate it into our dedicated subdirectory with a random filename.
         $upload_dir = wp_upload_dir();
         $dir        = $upload_dir['basedir'] . '/pf-clipart';
         wp_mkdir_p($dir);
@@ -63,8 +79,11 @@ class ClipartValidator {
         $filename = bin2hex(random_bytes(8)) . '.svg';
         $dest     = $dir . '/' . $filename;
 
-        // phpcs:ignore WordPress.WP.AlternativeFunctions, Generic.PHP.ForbiddenFunctions.Found -- move_uploaded_file() verifies the source is a genuine PHP upload (is_uploaded_file() check); WP_Filesystem has no equivalent safety check for $_FILES tmp_name
-        if (!move_uploaded_file($file['tmp_name'], $dest)) {
+        global $wp_filesystem;
+        if (empty($wp_filesystem)) {
+            WP_Filesystem();
+        }
+        if (!$wp_filesystem || !$wp_filesystem->move($uploaded['file'], $dest, true)) {
             throw new \RuntimeException('Failed to move uploaded clip art file.', 500);
         }
 

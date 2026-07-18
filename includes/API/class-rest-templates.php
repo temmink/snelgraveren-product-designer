@@ -4,7 +4,6 @@ namespace ProductForge\API;
 defined('ABSPATH') || exit;
 
 use ProductForge\Database\TemplateRepository;
-use ProductForge\ProductForge;
 
 class RestTemplates {
 
@@ -207,34 +206,6 @@ class RestTemplates {
 
         // Remove legacy internal fields
         unset($global_config['color_mode'], $global_config['color_palette_id']);
-
-        // Strip premium features for free users
-        if ( ! ProductForge::is_premium() ) {
-            unset( $global_config['product_colors_enabled'] );
-            unset( $global_config['product_allowed_colors'] );
-            unset( $global_config['product_any_color'] );
-            unset( $global_config['pricing'] );
-            unset( $global_config['permissions'] );
-            unset( $global_config['clipart_enabled'] );
-            unset( $global_config['solid_color'] );
-            unset( $global_config['filters_enabled'] );
-
-            // Enforce single view
-            $sanitized_views = array_slice( $sanitized_views, 0, 1 );
-
-            // Downgrade SVG boundaries to rect
-            foreach ( $sanitized_views as &$sv ) {
-                if ( ! empty( $sv['zones_config'] ) ) {
-                    foreach ( $sv['zones_config'] as &$zone ) {
-                        if ( ( $zone['boundary_type'] ?? 'rect' ) === 'svg' ) {
-                            $zone['boundary_type'] = 'rect';
-                            unset( $zone['svg_url'], $zone['svg_path_data'] );
-                        }
-                    }
-                }
-            }
-            unset( $sv, $zone );
-        }
 
         $response = rest_ensure_response([
             'id'            => (int) $template['id'],

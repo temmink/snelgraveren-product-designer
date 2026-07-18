@@ -64,7 +64,15 @@ class RestDesignTemplates {
     }
 
     public function list_templates(\WP_REST_Request $request): \WP_REST_Response {
-        $status      = sanitize_text_field($request->get_param('status') ?? 'active');
+        $status = sanitize_text_field($request->get_param('status') ?? 'active');
+        // Only users who can manage templates may request a non-published
+        // status (e.g. to see archived design templates in the admin UI).
+        // Everyone else — guest customers included, since this endpoint is
+        // public — only ever sees published ("active") design templates,
+        // regardless of what status they pass in the query string.
+        if (!$this->can_edit()) {
+            $status = 'active';
+        }
         $template_id = $request->get_param('template_id');
         $ids_param   = $request->get_param('ids');
 
@@ -91,6 +99,15 @@ class RestDesignTemplates {
         $row = DesignTemplateRepository::get($id);
 
         if (!$row) {
+            return new \WP_Error('not_found', 'Design template not found.', ['status' => 404]);
+        }
+
+        // This endpoint is public (guest customers load design templates in
+        // the frontend designer). Non-published ("active") design templates
+        // are only visible to users who can manage them — everyone else gets
+        // the same 404 as a genuinely missing template, so drafts/archived
+        // templates never leak their existence or content.
+        if (($row['status'] ?? '') !== 'active' && !$this->can_edit()) {
             return new \WP_Error('not_found', 'Design template not found.', ['status' => 404]);
         }
 

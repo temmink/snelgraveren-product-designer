@@ -47,11 +47,6 @@ add_action('before_woocommerce_init', function () {
     }
 });
 
-// Load plugin text domain before booting so translated strings in plugins_loaded work
-add_action('plugins_loaded', function () {
-    load_plugin_textdomain('snelgraveren-product-designer', false, dirname(plugin_basename(__FILE__)) . '/languages');
-}, 1);
-
 // Boot plugin. Hard requirement: WooCommerce. The "Requires Plugins" header
 // enforces this on WP 6.5+, but a runtime guard is still needed for older
 // WordPress versions and manual/FTP installs — without it every frontend
