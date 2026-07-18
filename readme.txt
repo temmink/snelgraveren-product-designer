@@ -54,6 +54,14 @@ Built from the ground up as a secure alternative to legacy product designers, wi
 4. Edit a product, enable the designer, and pick a template.
 5. Block theme? Place the "Snelgraveren Product Designer" block in your Single Product template or product description.
 
+== Development ==
+
+The full source code (including the un-minified JavaScript sources for the compiled files in `dist/`) and build tooling are publicly available at:
+
+https://github.com/temmink/snelgraveren-product-designer
+
+Build steps: `npm install && npm run build` (Vite) compiles the designer and admin bundles into `dist/`; `composer install --no-dev` installs the PHP dependencies. See the repository README for details.
+
 == Frequently Asked Questions ==
 
 = Does it work with block themes? =
