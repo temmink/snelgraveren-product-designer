@@ -14,9 +14,9 @@ class ProductIntegration {
     }
 
     public function add_product_tab(array $tabs): array {
-        $tabs['productforge'] = [
-            'label'    => __('ProductForge', 'snelgraveren-product-designer'),
-            'target'   => 'pf_productforge_data',
+        $tabs['sgpd_designer'] = [
+            'label'    => __('Product Designer', 'snelgraveren-product-designer'),
+            'target'   => 'sgpd_designer_data',
             'class'    => [],
             'priority' => 80,
         ];
@@ -34,7 +34,7 @@ class ProductIntegration {
         $repo      = new TemplateRepository();
         $templates = $repo->list(100, 1);
         ?>
-        <div id="pf_productforge_data" class="panel woocommerce_options_panel hidden">
+        <div id="sgpd_designer_data" class="panel woocommerce_options_panel hidden">
             <div class="options_group">
                 <?php
                 woocommerce_wp_checkbox([
