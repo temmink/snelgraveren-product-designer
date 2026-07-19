@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -76,7 +76,29 @@ Exports (PDF, PNG, SVG) are generated locally on your server — nothing is sent
 
 The free version includes the full designer with unlimited templates and PNG export. Pro unlocks multiple product views, PDF/SVG production export, automatic exports on order status, pricing rules, custom fonts, clip art management, color palettes, and more.
 
+== External Services ==
+
+This plugin uses the Freemius SDK for license validation, plugin update delivery, and optional usage analytics.
+
+**No data is sent anywhere before you act.** On activation, Freemius shows an opt-in screen with two choices:
+
+* **"Skip"** — nothing is sent. The plugin works fully offline; only your Pro license key (if you have one) is validated against Freemius' servers when you activate a license.
+* **"Allow & Continue"** — you opt in to license validation, update delivery, and anonymized usage analytics. Only then does the plugin share: your site URL, WordPress and PHP versions, the list of active plugins and theme, and the admin e-mail address, with Freemius (freemius.com), a licensing and analytics service used by many WordPress and WooCommerce plugins.
+
+You can review or withdraw this consent at any time from the plugin's account/opt-in prompts. This service is used for licensing and update delivery — no customer, design, or order data is ever sent to Freemius.
+
+Freemius Privacy Policy: https://freemius.com/privacy/
+Freemius Terms of Service: https://freemius.com/terms/
+
+No other external services are used. Design exports (PDF/PNG/SVG) are rendered entirely on your own server — nothing about your customers' designs, uploads, or orders is ever sent off-site.
+
 == Changelog ==
+
+= 1.2.0 =
+* Change: renamed all globally-namespaced identifiers (constants, options, transients, the Freemius helper function/global, the cron hook, the `edit_pf_templates` capability, script/style handles, JS globals, and admin menu slugs) from the `pf`/`PF_`/`productforge` prefix to `sgpd`/`SGPD_`, per wp.org review feedback that `pf` is too short/generic. A one-time migration copies every existing `pf_*` option/transient to its `sgpd_*` name and clears the old cron schedule on upgrade — no settings are lost. DB tables, the `pf/v1` REST namespace, `pf-` CSS classes, the `pf-designer-root` DOM id, and the `pf_design_hash` cart/order-meta keys are intentionally unchanged (breaking to rename, not a real collision risk). The `[productforge]` shortcode keeps working; `[sgpd_designer]` is now available as an alias. See CLAUDE.md "Prefix Rename" for the full old → new mapping.
+* Add: "External Services" section disclosing the optional Freemius licensing/analytics integration and what it shares if you opt in.
+* Fix: cart design-hash attachment (`pf_design_hash`) now validates that the requester actually owns the design (matching customer/session id) before attaching it to the cart, instead of only checking the hash format — closes a gap where a guessed or leaked design hash could be attached to someone else's cart. A nonce is also checked as defense-in-depth (not authoritative, since LiteSpeed page-caching can serve a stale nonce to a legitimate customer).
+* Fix: SQL prepare-statement hardening across `includes/Database/` — remaining unprepared queries are either wrapped in `$wpdb->prepare()` or documented with a `phpcs:ignore` where only internal table/column names (no user input) are interpolated.
 
 = 1.1.0 =
 * Change: plugin renamed to "Snelgraveren Product Designer for WooCommerce" (slug: `snelgraveren-product-designer`). The `[productforge]` shortcode, `pf/v1` REST namespace, `pf-` CSS classes, and `pf_*` option names are unchanged for backward compatibility with existing installs.
