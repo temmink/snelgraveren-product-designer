@@ -27,7 +27,14 @@ rm -f  "$STAGE/$PLUGIN_SLUG/includes/API/class-rest-fonts-admin.php"
 rm -f  "$STAGE/$PLUGIN_SLUG/includes/API/class-rest-clipart-admin.php"
 rm -rf "$STAGE/$PLUGIN_SLUG/vendor/tecnickcom"
 
-# 2 + 3. Free-mode Freemius init
+# 2. Freemius SDK translation files — wp.org manages plugin translations via
+# translate.wordpress.org and flags bundled .po/.mo/.pot. Our own translations
+# are already excluded (package.sh doesn't bundle languages/); strip the SDK's
+# too so the uploaded ZIP contains ZERO gettext files. The Freemius opt-in UI
+# just falls back to English, which is fine for the free build.
+rm -rf "$STAGE/$PLUGIN_SLUG/freemius/languages"
+
+# 3 + 4. Free-mode Freemius init
 sed -i '' "/wp_org_gatekeeper/d" "$STAGE/$PLUGIN_SLUG/freemius-init.php"
 sed -i '' "s/'is_premium'          => true,/'is_premium'          => false,/" "$STAGE/$PLUGIN_SLUG/freemius-init.php"
 
