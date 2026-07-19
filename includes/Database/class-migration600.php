@@ -41,6 +41,7 @@ class Migration600 {
         dbDelta($sql2);
 
         // Add foreign key via raw query (dbDelta doesn't handle FK reliably)
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- static DDL, table names are internal, no user input
         $wpdb->query(
             "ALTER TABLE `{$views_table}`
              ADD CONSTRAINT `fk_dtv_dt` FOREIGN KEY (`design_template_id`)

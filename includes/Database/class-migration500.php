@@ -35,6 +35,7 @@ class Migration500 {
         dbDelta($sql2);
 
         // Add foreign key via raw query (dbDelta doesn't handle FK reliably)
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- static DDL, table names are internal, no user input
         $wpdb->query(
             "ALTER TABLE `{$clipart_table}`
              ADD CONSTRAINT `fk_clipart_collection` FOREIGN KEY (`collection_id`)

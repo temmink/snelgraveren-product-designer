@@ -32,6 +32,7 @@ class Migration200 {
             $new_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $new_table));
 
             if ($old_exists && !$new_exists) {
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names come from a static rename map above, no user input
                 $wpdb->query("RENAME TABLE `{$old_table}` TO `{$new_table}`");
             }
         }
@@ -60,6 +61,7 @@ class Migration200 {
         }
 
         // Migrate transients (just delete old ones — they'll be rebuilt).
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- static LIKE pattern, no user input
         $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_pd_template_%' OR option_name LIKE '_transient_timeout_pd_template_%'");
 
     }
