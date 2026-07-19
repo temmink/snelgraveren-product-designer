@@ -12,7 +12,7 @@ Let customers personalize WooCommerce products with text, images, and SVGs in a 
 
 == Description ==
 
-ProductForge adds a modern, secure product designer to your WooCommerce store. Customers add text, photos, clip art, and SVG artwork onto your products, see a live price, and their design flows straight into your order and production workflow.
+Snelgraveren Product Designer adds a modern, secure product designer to your WooCommerce store. Customers add text, photos, clip art, and SVG artwork onto your products, see a live price, and their design flows straight into your order and production workflow.
 
 Built from the ground up as a secure alternative to legacy product designers, with server-side price calculation, strict file validation, and SVG sanitization on every upload.
 
@@ -50,7 +50,7 @@ Built from the ground up as a secure alternative to legacy product designers, wi
 
 1. Upload the plugin ZIP via Plugins → Add New → Upload Plugin, or unzip into `wp-content/plugins/`.
 2. Activate the plugin (WooCommerce must be installed and active).
-3. Open ProductForge → Templates and import a starter template, or build your own.
+3. Open Product Designer → Templates and import a starter template, or build your own.
 4. Edit a product, enable the designer, and pick a template.
 5. Block theme? Place the "Snelgraveren Product Designer" block in your Single Product template or product description.
 
@@ -66,7 +66,7 @@ Build steps: `npm install && npm run build` (Vite) compiles the designer and adm
 
 = Does it work with block themes? =
 
-Yes. Classic themes render the designer automatically on the product page (or via the `[productforge]` shortcode). Block themes use the ProductForge Designer block in the Site Editor or product description.
+Yes. Classic themes render the designer automatically on the product page (or via the `[productforge]` / `[sgpd_designer]` shortcode). Block themes use the Snelgraveren Product Designer block in the Site Editor or product description.
 
 = Where are the production files? =
 
