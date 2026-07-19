@@ -607,7 +607,7 @@ export default function App() {
         className={wrapperClass}
         role={isModal ? 'dialog' : undefined}
         aria-modal={isModal ? 'true' : undefined}
-        aria-label={isModal ? __('ProductForge designer', 'snelgraveren-product-designer') : undefined}
+        aria-label={isModal ? __('Product Designer', 'snelgraveren-product-designer') : undefined}
         onClick={isModal ? (e) => { e.stopPropagation(); setDesignerOpen(false); } : undefined}
       >
         <Toolbar />

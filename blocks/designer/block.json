@@ -6,7 +6,7 @@
     "category": "woocommerce",
     "icon": "art",
     "description": "Shows the product designer on a customizable product page. Place it anywhere in the product template or description.",
-    "keywords": ["designer", "personalize", "productforge"],
+    "keywords": ["designer", "personalize", "product designer"],
     "textdomain": "snelgraveren-product-designer",
     "supports": {
         "html": false,

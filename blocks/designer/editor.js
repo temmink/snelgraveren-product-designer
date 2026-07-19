@@ -28,7 +28,7 @@
                 'div',
                 blockProps,
                 el('div', { style: { fontSize: '28px', lineHeight: 1 } }, '🎨'),
-                el('div', { style: { fontWeight: 600, margin: '8px 0 4px' } }, __('ProductForge Designer', 'snelgraveren-product-designer')),
+                el('div', { style: { fontWeight: 600, margin: '8px 0 4px' } }, __('Product Designer', 'snelgraveren-product-designer')),
                 el(
                     'div',
                     { style: { fontSize: '13px' } },

@@ -105,7 +105,7 @@ class SettingsPage {
         $statuses        = function_exists('wc_get_order_statuses') ? wc_get_order_statuses() : [];
         ?>
         <div class="wrap">
-            <h1><?php esc_html_e('ProductForge Settings', 'snelgraveren-product-designer'); ?></h1>
+            <h1><?php esc_html_e('Product Designer Settings', 'snelgraveren-product-designer'); ?></h1>
 
             <form method="post" action="options.php">
                 <?php settings_fields(self::OPTION_GROUP); ?>
@@ -139,7 +139,7 @@ class SettingsPage {
                                 <?php endforeach; ?>
                             </select>
                             <?php if (!$has_premium_exports) : ?>
-                                <p class="description"><?php esc_html_e('PDF and SVG export are available in ProductForge Pro.', 'snelgraveren-product-designer'); ?></p>
+                                <p class="description"><?php esc_html_e('PDF and SVG export are available in Snelgraveren Product Designer Pro.', 'snelgraveren-product-designer'); ?></p>
                             <?php endif; ?>
                         </td>
                     </tr>
@@ -273,7 +273,7 @@ class SettingsPage {
         ?>
         <div class="notice notice-error">
             <p>
-                <strong><?php esc_html_e('ProductForge: server configuration problem.', 'snelgraveren-product-designer'); ?></strong>
+                <strong><?php esc_html_e('Snelgraveren Product Designer: server configuration problem.', 'snelgraveren-product-designer'); ?></strong>
                 <?php echo esc_html(sprintf(
                     /* translators: %s: comma-separated list of failed checks */
                     __('Failed checks: %s.', 'snelgraveren-product-designer'),

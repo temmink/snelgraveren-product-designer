@@ -33,7 +33,7 @@ function UpgradePrompt() {
   return (
     <div className="pf-ca__upgrade">
       <span className="pf-ca__upgrade-badge">PRO</span>
-      <p>{__('Clipart management requires ProductForge Pro.', 'snelgraveren-product-designer')}</p>
+      <p>{__('Clipart management requires Snelgraveren Product Designer Pro.', 'snelgraveren-product-designer')}</p>
       {upgradeUrl && (
         <a href={upgradeUrl} className="button button-primary">{__('Upgrade Now', 'snelgraveren-product-designer')}</a>
       )}

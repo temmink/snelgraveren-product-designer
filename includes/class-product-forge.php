@@ -116,7 +116,7 @@ class ProductForge {
      */
     public static function premium_error( string $feature, string $message = '' ): \WP_Error {
         if ( ! $message ) {
-            $message = __( 'This feature requires ProductForge Pro.', 'snelgraveren-product-designer' );
+            $message = __( 'This feature requires Snelgraveren Product Designer Pro.', 'snelgraveren-product-designer' );
         }
         return new \WP_Error(
             'pf_premium_required',

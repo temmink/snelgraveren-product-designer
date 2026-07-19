@@ -294,7 +294,7 @@ export default function SettingsAssets({ globalConfig, update, clipartCollection
         </label>
         {globalConfig.design_templates_enabled && (
           <p className="pf-settings__hint">
-            {__('Manage design templates from the ProductForge \u2192 Design Templates admin page.', 'snelgraveren-product-designer')}
+            {__('Manage design templates from the Product Designer \u2192 Design Templates admin page.', 'snelgraveren-product-designer')}
           </p>
         )}
       </fieldset>

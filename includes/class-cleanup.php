@@ -50,7 +50,7 @@ class Cleanup {
             $design = $repo->get((int) $row['id']);
 
             if (!$repo->delete((int) $row['id'])) {
-                error_log('ProductForge cleanup: could not delete design ' . $row['id']);
+                error_log('Snelgraveren Product Designer cleanup: could not delete design ' . $row['id']);
                 continue;
             }
 
@@ -105,10 +105,10 @@ class Cleanup {
         wp_mail(
             get_option('admin_email'),
             /* translators: %s: site hostname */
-            sprintf(__('[%s] ProductForge: server configuration problem', 'snelgraveren-product-designer'), wp_parse_url(home_url(), PHP_URL_HOST)),
+            sprintf(__('[%s] Snelgraveren Product Designer: server configuration problem', 'snelgraveren-product-designer'), wp_parse_url(home_url(), PHP_URL_HOST)),
             sprintf(
                 /* translators: 1: failure list, 2: settings page URL */
-                __("The following ProductForge system checks are failing:\n\n%1\$s\n\nDetails and fixes: %2\$s", 'snelgraveren-product-designer'),
+                __("The following Snelgraveren Product Designer system checks are failing:\n\n%1\$s\n\nDetails and fixes: %2\$s", 'snelgraveren-product-designer'),
                 implode("\n", $lines),
                 admin_url('admin.php?page=sgpd-settings')
             )

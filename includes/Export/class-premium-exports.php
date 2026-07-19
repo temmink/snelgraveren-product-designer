@@ -111,8 +111,8 @@ class PremiumExports {
 
         try {
             $pdf = new \TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
-            $pdf->SetCreator('ProductForge');
-            $pdf->SetAuthor('ProductForge for WooCommerce');
+            $pdf->SetCreator('Snelgraveren Product Designer');
+            $pdf->SetAuthor('Snelgraveren Product Designer for WooCommerce');
             $pdf->SetTitle('Design Export');
             $pdf->setPrintHeader(false);
             $pdf->setPrintFooter(false);

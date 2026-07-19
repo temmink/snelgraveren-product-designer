@@ -27,8 +27,8 @@ class Admin {
 
     public function register_menus(): void {
         add_menu_page(
-            __('ProductForge', 'snelgraveren-product-designer'),
-            __('ProductForge', 'snelgraveren-product-designer'),
+            __('Product Designer', 'snelgraveren-product-designer'),
+            __('Product Designer', 'snelgraveren-product-designer'),
             'edit_sgpd_templates',
             'sgpd-templates',
             [$this, 'render_list_page'],
