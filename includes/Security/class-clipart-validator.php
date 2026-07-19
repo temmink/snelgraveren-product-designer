@@ -18,7 +18,7 @@ class ClipartValidator {
     }
 
     private static function check_rate_limit(): void {
-        $key   = 'pf_clipart_upload_' . get_current_user_id();
+        $key   = 'sgpd_clipart_upload_' . get_current_user_id();
         $count = (int) get_transient($key);
         if ($count >= self::RATE_LIMIT) {
             throw new \RuntimeException('Upload rate limit exceeded. Please wait a minute.', 429);

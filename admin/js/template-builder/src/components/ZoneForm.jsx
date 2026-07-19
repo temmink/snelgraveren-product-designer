@@ -4,7 +4,7 @@ import { extractSvgBoundingBox } from '../utils/svgPathUtils';
 import useTemplateStore from '../store/useTemplateStore';
 import { AVAILABLE_FONTS, mergeCustomFonts } from '../utils/fonts';
 
-const isPremium = window.pfTemplateBuilder?.isPremium;
+const isPremium = window.sgpdTemplateBuilder?.isPremium;
 
 const DEFAULT = {
   name: '', type: 'safe_area',

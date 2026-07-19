@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { __ } from '@wordpress/i18n';
 import useTemplateStore from '../store/useTemplateStore';
 
-const isPremium = window.pfTemplateBuilder?.isPremium;
+const isPremium = window.sgpdTemplateBuilder?.isPremium;
 
 export default function ViewTabs() {
   const {

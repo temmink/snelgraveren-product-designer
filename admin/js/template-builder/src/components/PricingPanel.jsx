@@ -4,7 +4,7 @@ import useTemplateStore from '../store/useTemplateStore';
 
 export default function PricingPanel() {
   const { globalConfig, setGlobalConfig } = useTemplateStore();
-  const currencySymbol = window.pfTemplateBuilder?.currency_symbol || '€';
+  const currencySymbol = window.sgpdTemplateBuilder?.currency_symbol || '€';
   const {
     pricing_mode    = 'per_element',
     tiers           = [],

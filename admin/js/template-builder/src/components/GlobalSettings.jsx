@@ -11,7 +11,7 @@ import SettingsUploads from './settings/SettingsUploads';
 import SettingsPricing from './settings/SettingsPricing';
 import SettingsPermissions from './settings/SettingsPermissions';
 
-const isPremium = window.pfTemplateBuilder?.isPremium;
+const isPremium = window.sgpdTemplateBuilder?.isPremium;
 
 const SECTIONS = [
   { id: 'general',     label: 'General' },

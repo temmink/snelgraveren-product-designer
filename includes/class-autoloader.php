@@ -21,7 +21,7 @@ class Autoloader {
         $classname = array_pop($parts);
         // Convert CamelCase class name to lowercase-hyphenated file name.
         $filename  = 'class-' . strtolower(preg_replace('/([A-Z])/', '-$1', lcfirst($classname))) . '.php';
-        $path      = PF_PLUGIN_DIR . 'includes/' . (empty($parts) ? '' : implode('/', $parts) . '/') . $filename;
+        $path      = SGPD_PLUGIN_DIR . 'includes/' . (empty($parts) ? '' : implode('/', $parts) . '/') . $filename;
 
         if (file_exists($path)) {
             require_once $path;

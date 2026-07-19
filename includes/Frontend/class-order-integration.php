@@ -172,7 +172,7 @@ class OrderIntegration {
      * Render export action buttons below order item meta in admin.
      */
     public function render_export_actions(int $item_id, \WC_Order_Item $item, ?\WC_Product $product): void {
-        if (!is_admin() || !current_user_can('edit_pf_templates')) {
+        if (!is_admin() || !current_user_can('edit_sgpd_templates')) {
             return;
         }
 
@@ -257,9 +257,9 @@ class OrderIntegration {
         static $script_output = false;
         if (!$script_output) {
             $script_output = true;
-            wp_register_script('pf-order-export-actions', false, [], PF_VERSION, true);
-            wp_enqueue_script('pf-order-export-actions');
-            wp_add_inline_script('pf-order-export-actions', "
+            wp_register_script('sgpd-order-export-actions', false, [], SGPD_VERSION, true);
+            wp_enqueue_script('sgpd-order-export-actions');
+            wp_add_inline_script('sgpd-order-export-actions', "
                 document.addEventListener('click', function(e) {
                     var btn = e.target.closest('.pf-export-btn');
                     if (!btn) return;

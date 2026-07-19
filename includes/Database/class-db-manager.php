@@ -6,7 +6,7 @@ defined('ABSPATH') || exit;
 class DbManager {
 
     public static function run_migrations(): void {
-        $current = (int) get_option('pf_db_version', 0);
+        $current = (int) get_option('sgpd_db_version', 0);
 
         $migrations = [
             100 => Migration100::class,
@@ -21,7 +21,7 @@ class DbManager {
         foreach ($migrations as $version => $class) {
             if ($current < $version) {
                 (new $class())->up();
-                update_option('pf_db_version', $version);
+                update_option('sgpd_db_version', $version);
                 $current = $version;
             }
         }

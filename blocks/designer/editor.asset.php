@@ -5,5 +5,5 @@ defined('ABSPATH') || exit;
 
 return [
     'dependencies' => ['wp-blocks', 'wp-element', 'wp-i18n', 'wp-block-editor'],
-    'version'      => defined('PF_VERSION') ? PF_VERSION : '1.0.1',
+    'version'      => defined('SGPD_VERSION') ? SGPD_VERSION : '1.0.1',
 ];

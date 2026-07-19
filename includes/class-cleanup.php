@@ -13,7 +13,7 @@ use ProductForge\Export\FileUtils;
  */
 class Cleanup {
 
-    public const HOOK = 'pf_daily_maintenance';
+    public const HOOK = 'sgpd_daily_maintenance';
 
     public function init(): void {
         add_action(self::HOOK, [$this, 'run']);
@@ -34,12 +34,12 @@ class Cleanup {
         // saved before checkout started flipping status to 'ordered'. Without
         // this, the cleanup below would treat them as abandoned drafts and
         // delete designs belonging to real historical orders.
-        if (!get_option('pf_ordered_backfill_done')) {
+        if (!get_option('sgpd_ordered_backfill_done')) {
             $repo->backfill_ordered_from_order_meta();
-            update_option('pf_ordered_backfill_done', 1, false);
+            update_option('sgpd_ordered_backfill_done', 1, false);
         }
 
-        $days = (int) get_option('pf_guest_design_retention_days', 30);
+        $days = (int) get_option('sgpd_guest_design_retention_days', 30);
         if ($days < 1) {
             return ['deleted' => 0];
         }
@@ -79,7 +79,7 @@ class Cleanup {
      * does. Recovery resets the stored hash.
      */
     private function maybe_send_health_alert(): void {
-        if (!get_option('pf_health_email_alerts', 1)) {
+        if (!get_option('sgpd_health_email_alerts', 1)) {
             return;
         }
 
@@ -89,10 +89,10 @@ class Cleanup {
         ));
 
         $hash = $failures ? md5(implode('|', array_column($failures, 'id'))) : '';
-        if ($hash === get_option('pf_health_last_alert_hash', '')) {
+        if ($hash === get_option('sgpd_health_last_alert_hash', '')) {
             return;
         }
-        update_option('pf_health_last_alert_hash', $hash, false);
+        update_option('sgpd_health_last_alert_hash', $hash, false);
 
         if (!$failures) {
             return; // recovered — reset only
@@ -110,7 +110,7 @@ class Cleanup {
                 /* translators: 1: failure list, 2: settings page URL */
                 __("The following ProductForge system checks are failing:\n\n%1\$s\n\nDetails and fixes: %2\$s", 'snelgraveren-product-designer'),
                 implode("\n", $lines),
-                admin_url('admin.php?page=pf-settings')
+                admin_url('admin.php?page=sgpd-settings')
             )
         );
     }

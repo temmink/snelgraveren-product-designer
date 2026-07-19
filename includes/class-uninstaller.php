@@ -10,13 +10,13 @@ defined('ABSPATH') || exit;
  * uninstall.php — Freemius deployment rejects it.
  *
  * Only deletes data when the user explicitly opted in via the plugin
- * settings (pf_delete_data_on_uninstall). This prevents accidental data
+ * settings (sgpd_delete_data_on_uninstall). This prevents accidental data
  * loss when reinstalling or updating the plugin.
  */
 class Uninstaller {
 
     public static function uninstall(): void {
-        $delete_data = get_option('pf_delete_data_on_uninstall', false);
+        $delete_data = get_option('sgpd_delete_data_on_uninstall', false);
 
         if (!$delete_data) {
             return;
@@ -43,7 +43,9 @@ class Uninstaller {
             $wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}{$table}");
         }
 
-        delete_option('pf_db_version');
-        delete_option('pf_delete_data_on_uninstall');
+        delete_option('sgpd_db_version');
+        delete_option('sgpd_delete_data_on_uninstall');
+        delete_option('sgpd_color_palettes');
+        delete_option('sgpd_migrated_from_pf');
     }
 }

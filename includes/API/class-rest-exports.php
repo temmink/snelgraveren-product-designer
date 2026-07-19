@@ -60,7 +60,7 @@ class RestExports {
     }
 
     public function admin_permission(): bool {
-        return current_user_can('edit_pf_templates');
+        return current_user_can('edit_sgpd_templates');
     }
 
     public function trigger_export(\WP_REST_Request $request): \WP_REST_Response {

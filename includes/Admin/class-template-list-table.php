@@ -102,21 +102,21 @@ class TemplateListTable extends \WP_List_Table {
         if ($action === 'trash') {
             check_admin_referer('trash-template_' . $id);
             $this->repo->trash($id);
-            wp_safe_redirect(admin_url('admin.php?page=productforge&trashed=1'));
+            wp_safe_redirect(admin_url('admin.php?page=sgpd-templates&trashed=1'));
             exit;
         }
 
         if ($action === 'restore') {
             check_admin_referer('restore-template_' . $id);
             $this->repo->restore($id);
-            wp_safe_redirect(admin_url('admin.php?page=productforge&restored=1'));
+            wp_safe_redirect(admin_url('admin.php?page=sgpd-templates&restored=1'));
             exit;
         }
 
         if ($action === 'delete_permanent') {
             check_admin_referer('delete-template_' . $id);
             $this->repo->delete($id);
-            wp_safe_redirect(admin_url('admin.php?page=productforge&pf_status=trashed&deleted=1'));
+            wp_safe_redirect(admin_url('admin.php?page=sgpd-templates&pf_status=trashed&deleted=1'));
             exit;
         }
     }
@@ -157,11 +157,11 @@ class TemplateListTable extends \WP_List_Table {
             $title = '<strong>' . esc_html($item['title']) . '</strong>';
 
             $restore_url = wp_nonce_url(
-                admin_url('admin.php?page=productforge&action=restore&template=' . $id),
+                admin_url('admin.php?page=sgpd-templates&action=restore&template=' . $id),
                 'restore-template_' . $id
             );
             $delete_url = wp_nonce_url(
-                admin_url('admin.php?page=productforge&action=delete_permanent&template=' . $id),
+                admin_url('admin.php?page=sgpd-templates&action=delete_permanent&template=' . $id),
                 'delete-template_' . $id
             );
 
@@ -171,9 +171,9 @@ class TemplateListTable extends \WP_List_Table {
                              . __('Delete Permanently', 'snelgraveren-product-designer') . '</a>',
             ];
         } else {
-            $edit_url  = admin_url('admin.php?page=pf-template-builder&template_id=' . $id);
+            $edit_url  = admin_url('admin.php?page=sgpd-template-builder&template_id=' . $id);
             $trash_url = wp_nonce_url(
-                admin_url('admin.php?page=productforge&action=trash&template=' . $id),
+                admin_url('admin.php?page=sgpd-templates&action=trash&template=' . $id),
                 'trash-template_' . $id
             );
 
@@ -217,7 +217,7 @@ class TemplateListTable extends \WP_List_Table {
         $counts      = $this->repo->get_status_counts();
         $total       = $counts['draft'] + $counts['published'] + $counts['archived'];
         $current     = $this->get_current_status();
-        $base_url    = admin_url('admin.php?page=productforge');
+        $base_url    = admin_url('admin.php?page=sgpd-templates');
 
         $tabs = [
             ''          => __('All', 'snelgraveren-product-designer') . " ({$total})",

@@ -16,18 +16,18 @@ use ProductForge\Export\ExportManager;
  */
 class ExportDashboard {
 
-    private const PAGE_SLUG = 'pf-export-dashboard';
+    private const PAGE_SLUG = 'sgpd-export-dashboard';
 
     public function init(): void {
-        add_action('admin_post_pf_bulk_export', [$this, 'handle_bulk_download']);
+        add_action('admin_post_sgpd_bulk_export', [$this, 'handle_bulk_download']);
     }
 
     public function register_menu(): void {
         add_submenu_page(
-            'productforge',
+            'sgpd-templates',
             __('Production', 'snelgraveren-product-designer'),
             __('Production', 'snelgraveren-product-designer'),
-            'edit_pf_templates',
+            'edit_sgpd_templates',
             self::PAGE_SLUG,
             [$this, 'render']
         );
@@ -69,7 +69,7 @@ class ExportDashboard {
     }
 
     public function render(): void {
-        if (!current_user_can('edit_pf_templates')) {
+        if (!current_user_can('edit_sgpd_templates')) {
             wp_die(esc_html__('You do not have permission to access this page.', 'snelgraveren-product-designer'));
         }
 
@@ -102,8 +102,8 @@ class ExportDashboard {
                 <p><?php esc_html_e('No orders with designs found for this filter.', 'snelgraveren-product-designer'); ?></p>
             <?php else : ?>
                 <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-                    <input type="hidden" name="action" value="pf_bulk_export" />
-                    <?php wp_nonce_field('pf_bulk_export'); ?>
+                    <input type="hidden" name="action" value="sgpd_bulk_export" />
+                    <?php wp_nonce_field('sgpd_bulk_export'); ?>
                     <table class="widefat striped">
                         <thead><tr>
                             <th style="width:24px;"><input type="checkbox" onclick="document.querySelectorAll('.pf-bulk-cb').forEach(c=>c.checked=this.checked)" /></th>
@@ -135,10 +135,10 @@ class ExportDashboard {
     }
 
     public function handle_bulk_download(): void {
-        if (!current_user_can('edit_pf_templates')) {
+        if (!current_user_can('edit_sgpd_templates')) {
             wp_die(esc_html__('You do not have permission to access this page.', 'snelgraveren-product-designer'));
         }
-        check_admin_referer('pf_bulk_export');
+        check_admin_referer('sgpd_bulk_export');
 
         $entries = array_map('sanitize_text_field', wp_unslash((array) ($_POST['entries'] ?? [])));
         if (!$entries) {
@@ -146,7 +146,7 @@ class ExportDashboard {
             exit;
         }
 
-        $format = get_option('pf_export_default_format', 'pdf');
+        $format = get_option('sgpd_export_default_format', 'pdf');
         // PDF/SVG generation is premium-only; the free build falls back to PNG.
         if (!class_exists('ProductForge\\Export\\PremiumExports') && $format !== 'png') {
             $format = 'png';

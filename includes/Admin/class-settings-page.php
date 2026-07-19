@@ -9,8 +9,8 @@ defined('ABSPATH') || exit;
  */
 class SettingsPage {
 
-    private const PAGE_SLUG    = 'pf-settings';
-    private const OPTION_GROUP = 'pf_settings';
+    private const PAGE_SLUG    = 'sgpd-settings';
+    private const OPTION_GROUP = 'sgpd_settings';
 
     public function init(): void {
         add_action('admin_init', [$this, 'register_settings']);
@@ -22,7 +22,7 @@ class SettingsPage {
 
     public function register_menu(): void {
         add_submenu_page(
-            'productforge',
+            'sgpd-templates',
             __('Settings', 'snelgraveren-product-designer'),
             __('Settings', 'snelgraveren-product-designer'),
             'manage_woocommerce',
@@ -32,31 +32,31 @@ class SettingsPage {
     }
 
     public function register_settings(): void {
-        register_setting(self::OPTION_GROUP, 'pf_export_trigger_status', [
+        register_setting(self::OPTION_GROUP, 'sgpd_export_trigger_status', [
             'type'              => 'string',
             'default'           => 'completed',
             'sanitize_callback' => [$this, 'sanitize_order_status'],
         ]);
-        register_setting(self::OPTION_GROUP, 'pf_export_default_format', [
+        register_setting(self::OPTION_GROUP, 'sgpd_export_default_format', [
             'type'              => 'string',
             'default'           => 'pdf',
             'sanitize_callback' => static function ($value) {
                 return in_array($value, ['pdf', 'png', 'svg'], true) ? $value : 'pdf';
             },
         ]);
-        register_setting(self::OPTION_GROUP, 'pf_delete_data_on_uninstall', [
+        register_setting(self::OPTION_GROUP, 'sgpd_delete_data_on_uninstall', [
             'type'              => 'boolean',
             'default'           => false,
             'sanitize_callback' => 'rest_sanitize_boolean',
         ]);
-        register_setting(self::OPTION_GROUP, 'pf_guest_design_retention_days', [
+        register_setting(self::OPTION_GROUP, 'sgpd_guest_design_retention_days', [
             'type'              => 'integer',
             'default'           => 30,
             'sanitize_callback' => static function ($value) {
                 return max(0, min(3650, (int) $value));
             },
         ]);
-        register_setting(self::OPTION_GROUP, 'pf_health_email_alerts', [
+        register_setting(self::OPTION_GROUP, 'sgpd_health_email_alerts', [
             'type'              => 'boolean',
             'default'           => true,
             'sanitize_callback' => 'rest_sanitize_boolean',
@@ -91,17 +91,17 @@ class SettingsPage {
         // stripped from the free build) — hide the settings that have no effect.
         $has_premium_exports = class_exists('ProductForge\\Export\\PremiumExports');
 
-        $trigger_status  = get_option('pf_export_trigger_status', 'completed');
-        $default_format  = get_option('pf_export_default_format', 'pdf');
+        $trigger_status  = get_option('sgpd_export_trigger_status', 'completed');
+        $default_format  = get_option('sgpd_export_default_format', 'pdf');
         $format_options  = $has_premium_exports
             ? ['pdf' => 'PDF', 'png' => 'PNG', 'svg' => 'SVG']
             : ['png' => 'PNG'];
         if (!isset($format_options[$default_format])) {
             $default_format = 'png';
         }
-        $delete_data     = (bool) get_option('pf_delete_data_on_uninstall', false);
-        $retention_days  = (int) get_option('pf_guest_design_retention_days', 30);
-        $health_alerts   = (bool) get_option('pf_health_email_alerts', true);
+        $delete_data     = (bool) get_option('sgpd_delete_data_on_uninstall', false);
+        $retention_days  = (int) get_option('sgpd_guest_design_retention_days', 30);
+        $health_alerts   = (bool) get_option('sgpd_health_email_alerts', true);
         $statuses        = function_exists('wc_get_order_statuses') ? wc_get_order_statuses() : [];
         ?>
         <div class="wrap">
@@ -113,10 +113,10 @@ class SettingsPage {
                     <?php if ($has_premium_exports) : ?>
                     <tr>
                         <th scope="row">
-                            <label for="pf_export_trigger_status"><?php esc_html_e('Auto-export on order status', 'snelgraveren-product-designer'); ?></label>
+                            <label for="sgpd_export_trigger_status"><?php esc_html_e('Auto-export on order status', 'snelgraveren-product-designer'); ?></label>
                         </th>
                         <td>
-                            <select name="pf_export_trigger_status" id="pf_export_trigger_status">
+                            <select name="sgpd_export_trigger_status" id="sgpd_export_trigger_status">
                                 <?php foreach ($statuses as $key => $label) :
                                     $status = preg_replace('/^wc-/', '', $key); ?>
                                     <option value="<?php echo esc_attr($status); ?>" <?php selected($trigger_status, $status); ?>>
@@ -130,10 +130,10 @@ class SettingsPage {
                     <?php endif; ?>
                     <tr>
                         <th scope="row">
-                            <label for="pf_export_default_format"><?php esc_html_e('Default export format', 'snelgraveren-product-designer'); ?></label>
+                            <label for="sgpd_export_default_format"><?php esc_html_e('Default export format', 'snelgraveren-product-designer'); ?></label>
                         </th>
                         <td>
-                            <select name="pf_export_default_format" id="pf_export_default_format">
+                            <select name="sgpd_export_default_format" id="sgpd_export_default_format">
                                 <?php foreach ($format_options as $value => $label) : ?>
                                     <option value="<?php echo esc_attr($value); ?>" <?php selected($default_format, $value); ?>><?php echo esc_html($label); ?></option>
                                 <?php endforeach; ?>
@@ -145,10 +145,10 @@ class SettingsPage {
                     </tr>
                     <tr>
                         <th scope="row">
-                            <label for="pf_guest_design_retention_days"><?php esc_html_e('Guest design retention (days)', 'snelgraveren-product-designer'); ?></label>
+                            <label for="sgpd_guest_design_retention_days"><?php esc_html_e('Guest design retention (days)', 'snelgraveren-product-designer'); ?></label>
                         </th>
                         <td>
-                            <input type="number" min="0" max="3650" name="pf_guest_design_retention_days" id="pf_guest_design_retention_days"
+                            <input type="number" min="0" max="3650" name="sgpd_guest_design_retention_days" id="sgpd_guest_design_retention_days"
                                    value="<?php echo esc_attr($retention_days); ?>" class="small-text" />
                             <p class="description"><?php esc_html_e('Abandoned guest designs (never ordered) are deleted after this many days. 0 disables cleanup. Ordered designs and designs of logged-in customers are never deleted.', 'snelgraveren-product-designer'); ?></p>
                         </td>
@@ -156,8 +156,8 @@ class SettingsPage {
                     <tr>
                         <th scope="row"><?php esc_html_e('Delete data on uninstall', 'snelgraveren-product-designer'); ?></th>
                         <td>
-                            <label for="pf_delete_data_on_uninstall">
-                                <input type="checkbox" name="pf_delete_data_on_uninstall" id="pf_delete_data_on_uninstall" value="1" <?php checked($delete_data); ?> />
+                            <label for="sgpd_delete_data_on_uninstall">
+                                <input type="checkbox" name="sgpd_delete_data_on_uninstall" id="sgpd_delete_data_on_uninstall" value="1" <?php checked($delete_data); ?> />
                                 <?php esc_html_e('Permanently delete ALL templates, customer designs, and exports when the plugin is deleted.', 'snelgraveren-product-designer'); ?>
                             </label>
                             <p class="description" style="color:#b32d2e;">
@@ -168,8 +168,8 @@ class SettingsPage {
                     <tr>
                         <th scope="row"><?php esc_html_e('E-mail alerts', 'snelgraveren-product-designer'); ?></th>
                         <td>
-                            <label for="pf_health_email_alerts">
-                                <input type="checkbox" name="pf_health_email_alerts" id="pf_health_email_alerts" value="1" <?php checked($health_alerts); ?> />
+                            <label for="sgpd_health_email_alerts">
+                                <input type="checkbox" name="sgpd_health_email_alerts" id="sgpd_health_email_alerts" value="1" <?php checked($health_alerts); ?> />
                                 <?php esc_html_e('E-mail the site admin when a critical system check starts failing (checked daily).', 'snelgraveren-product-designer'); ?>
                             </label>
                         </td>
@@ -255,8 +255,8 @@ class SettingsPage {
             return;
         }
 
-        $is_pf_screen = $screen->id === 'toplevel_page_productforge'
-            || str_starts_with($screen->id, 'productforge_page_');
+        $is_pf_screen = $screen->id === 'toplevel_page_sgpd-templates'
+            || str_starts_with($screen->id, 'sgpd-templates_page_');
         // The settings page already shows full details — no notice needed there.
         if (!$is_pf_screen || str_ends_with($screen->id, self::PAGE_SLUG)) {
             return;

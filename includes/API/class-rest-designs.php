@@ -104,7 +104,7 @@ class RestDesigns {
     }
 
     public function admin_permission(): bool {
-        return current_user_can('edit_pf_templates');
+        return current_user_can('edit_sgpd_templates');
     }
 
     private function owns_design(array $design): bool {
@@ -113,7 +113,7 @@ class RestDesigns {
 
         if ($user_id && (int) $design['customer_id'] === $user_id) return true;
         if (!empty($session_id) && $design['session_id'] === $session_id) return true;
-        if (current_user_can('edit_pf_templates')) return true;
+        if (current_user_can('edit_sgpd_templates')) return true;
         return false;
     }
 

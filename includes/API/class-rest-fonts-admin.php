@@ -39,7 +39,7 @@ class RestFontsAdmin {
     }
 
     public function can_edit(): bool {
-        return current_user_can('edit_pf_templates');
+        return current_user_can('edit_sgpd_templates');
     }
 
     public function upload_font(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {

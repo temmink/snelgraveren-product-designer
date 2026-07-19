@@ -1,5 +1,5 @@
-const base  = () => window.pfTemplateBuilder?.restUrl || '/wp-json/';
-const nonce = () => window.pfTemplateBuilder?.nonce   || '';
+const base  = () => window.sgpdTemplateBuilder?.restUrl || '/wp-json/';
+const nonce = () => window.sgpdTemplateBuilder?.nonce   || '';
 
 async function request(method, path, body) {
   const res = await fetch(`${base()}pf/v1/${path}`, {

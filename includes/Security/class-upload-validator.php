@@ -33,7 +33,7 @@ class UploadValidator {
     }
 
     private static function check_rate_limit(string $session_id): void {
-        $key   = 'pf_upload_count_' . md5($session_id);
+        $key   = 'sgpd_upload_count_' . md5($session_id);
         $count = (int) get_transient($key);
         if ($count >= self::RATE_LIMIT) {
             throw new \RuntimeException('Upload rate limit exceeded. Please wait a minute.', 429);

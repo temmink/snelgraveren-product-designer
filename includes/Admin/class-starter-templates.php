@@ -35,7 +35,7 @@ class StarterTemplates {
     }
 
     public function admin_permission(): bool {
-        return current_user_can('edit_pf_templates');
+        return current_user_can('edit_sgpd_templates');
     }
 
     public function list_catalog(\WP_REST_Request $request): \WP_REST_Response {
@@ -237,10 +237,10 @@ class StarterTemplates {
     }
 
     private function manifest_path(): string {
-        return PF_PLUGIN_DIR . 'templates/starter/manifest.json';
+        return SGPD_PLUGIN_DIR . 'templates/starter/manifest.json';
     }
 
     private function assets_dir(): string {
-        return PF_PLUGIN_DIR . 'templates/starter/assets/';
+        return SGPD_PLUGIN_DIR . 'templates/starter/assets/';
     }
 }

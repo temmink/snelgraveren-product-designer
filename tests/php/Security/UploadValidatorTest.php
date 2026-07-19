@@ -48,7 +48,7 @@ class UploadValidatorTest extends TestCase {
 
     public function test_rate_limit_blocks_after_threshold(): void {
         $session = 'rate-limit-test-' . uniqid();
-        set_transient('pf_upload_count_' . md5($session), 10, MINUTE_IN_SECONDS);
+        set_transient('sgpd_upload_count_' . md5($session), 10, MINUTE_IN_SECONDS);
 
         $tmp = tempnam(sys_get_temp_dir(), 'test') . '.png';
         $img = imagecreatetruecolor(1, 1);

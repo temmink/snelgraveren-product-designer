@@ -29,46 +29,46 @@ class Admin {
         add_menu_page(
             __('ProductForge', 'snelgraveren-product-designer'),
             __('ProductForge', 'snelgraveren-product-designer'),
-            'edit_pf_templates',
-            'productforge',
+            'edit_sgpd_templates',
+            'sgpd-templates',
             [$this, 'render_list_page'],
             'dashicons-edit',
             56
         );
 
         add_submenu_page(
-            'productforge',
+            'sgpd-templates',
             __('Templates', 'snelgraveren-product-designer'),
             __('Templates', 'snelgraveren-product-designer'),
-            'edit_pf_templates',
-            'productforge',
+            'edit_sgpd_templates',
+            'sgpd-templates',
             [$this, 'render_list_page']
         );
 
         add_submenu_page(
-            'productforge',
+            'sgpd-templates',
             __('Template Builder', 'snelgraveren-product-designer'),
             __('Add New', 'snelgraveren-product-designer'),
-            'edit_pf_templates',
-            'pf-template-builder',
+            'edit_sgpd_templates',
+            'sgpd-template-builder',
             [$this, 'render_builder_page']
         );
 
         add_submenu_page(
-            'productforge',
+            'sgpd-templates',
             __('Design Templates', 'snelgraveren-product-designer'),
             __('Design Templates', 'snelgraveren-product-designer'),
-            'edit_pf_templates',
-            'pf-design-templates',
+            'edit_sgpd_templates',
+            'sgpd-design-templates',
             [$this, 'render_design_templates_page']
         );
 
         add_submenu_page(
-            'productforge',
+            'sgpd-templates',
             __('Clipart', 'snelgraveren-product-designer'),
             __('Clipart', 'snelgraveren-product-designer'),
-            'edit_pf_templates',
-            'pf-clipart',
+            'edit_sgpd_templates',
+            'sgpd-clipart',
             [$this, 'render_clipart_page']
         );
 
@@ -80,15 +80,15 @@ class Admin {
     public function render_list_page(): void {
         $list_table = new TemplateListTable();
         $list_table->prepare_items();
-        include PF_PLUGIN_DIR . 'includes/Admin/views/template-list.php';
+        include SGPD_PLUGIN_DIR . 'includes/Admin/views/template-list.php';
     }
 
     public function render_design_templates_page(): void {
-        include PF_PLUGIN_DIR . 'includes/Admin/views/design-templates.php';
+        include SGPD_PLUGIN_DIR . 'includes/Admin/views/design-templates.php';
     }
 
     public function render_clipart_page(): void {
-        include PF_PLUGIN_DIR . 'includes/Admin/views/clipart.php';
+        include SGPD_PLUGIN_DIR . 'includes/Admin/views/clipart.php';
     }
 
     public function render_builder_page(): void {
@@ -97,23 +97,23 @@ class Admin {
     }
 
     public function enqueue_scripts(string $hook): void {
-        if ($hook === 'productforge_page_pf-design-templates') {
+        if ($hook === 'sgpd-templates_page_sgpd-design-templates') {
             $this->enqueue_design_templates_scripts();
             return;
         }
 
-        if ($hook === 'productforge_page_pf-clipart') {
+        if ($hook === 'sgpd-templates_page_sgpd-clipart') {
             $this->enqueue_clipart_scripts();
             return;
         }
 
-        if (!in_array($hook, ['toplevel_page_productforge', 'productforge_page_pf-template-builder'], true)) {
+        if (!in_array($hook, ['toplevel_page_sgpd-templates', 'sgpd-templates_page_sgpd-template-builder'], true)) {
             return;
         }
 
-        $js_file    = PF_PLUGIN_DIR . 'dist/admin-template-builder.js';
-        $asset_file = PF_PLUGIN_DIR . 'dist/admin-template-builder.asset.php';
-        $version    = file_exists($js_file) ? substr(md5_file($js_file), 0, 8) : PF_VERSION;
+        $js_file    = SGPD_PLUGIN_DIR . 'dist/admin-template-builder.js';
+        $asset_file = SGPD_PLUGIN_DIR . 'dist/admin-template-builder.asset.php';
+        $version    = file_exists($js_file) ? substr(md5_file($js_file), 0, 8) : SGPD_VERSION;
         $deps       = ['react', 'react-dom', 'wp-i18n'];
 
         if (file_exists($asset_file)) {
@@ -125,21 +125,21 @@ class Admin {
         wp_enqueue_media();
 
         wp_enqueue_script(
-            'pf-template-builder',
-            PF_PLUGIN_URL . 'dist/admin-template-builder.js',
+            'sgpd-template-builder',
+            SGPD_PLUGIN_URL . 'dist/admin-template-builder.js',
             $deps,
             $version,
             true
         );
 
         // Inline translations to work with JS-combining caches.
-        $this->inline_script_translations('pf-template-builder', 'snelgraveren-product-designer', 'dist/admin-template-builder.js');
+        $this->inline_script_translations('sgpd-template-builder', 'snelgraveren-product-designer', 'dist/admin-template-builder.js');
 
-        $css_file = PF_PLUGIN_DIR . 'dist/admin-template-builder.css';
+        $css_file = SGPD_PLUGIN_DIR . 'dist/admin-template-builder.css';
         if (file_exists($css_file)) {
             wp_enqueue_style(
-                'pf-template-builder',
-                PF_PLUGIN_URL . 'dist/admin-template-builder.css',
+                'sgpd-template-builder',
+                SGPD_PLUGIN_URL . 'dist/admin-template-builder.css',
                 [],
                 $version
             );
@@ -147,17 +147,17 @@ class Admin {
 
         $template_id = (int) ($_GET['template_id'] ?? 0);
 
-        wp_localize_script('pf-template-builder', 'pfTemplateBuilder', [
+        wp_localize_script('sgpd-template-builder', 'sgpdTemplateBuilder', [
             'restUrl'         => esc_url_raw(rest_url()),
             'nonce'           => wp_create_nonce('wp_rest'),
             'templateId'      => $template_id,
-            'pluginUrl'       => PF_PLUGIN_URL,
+            'pluginUrl'       => SGPD_PLUGIN_URL,
             'currency_symbol' => get_woocommerce_currency_symbol(),
             'isPremium'       => \ProductForge\ProductForge::is_premium(),
-            'upgradeUrl'      => function_exists( 'pf_fs' ) ? pf_fs()->get_upgrade_url() : '',
+            'upgradeUrl'      => function_exists( 'sgpd_fs' ) ? sgpd_fs()->get_upgrade_url() : '',
         ]);
 
-        if ($hook === 'toplevel_page_productforge') {
+        if ($hook === 'toplevel_page_sgpd-templates') {
             $this->enqueue_starter_gallery_script();
             $this->enqueue_starter_gallery_style();
         }
@@ -169,9 +169,9 @@ class Admin {
      * carrier — wp.org guidelines disallow inline <style> tags in admin-rendered HTML.
      */
     private function enqueue_starter_gallery_style(): void {
-        wp_register_style('pf-starter-gallery', false, [], PF_VERSION);
-        wp_enqueue_style('pf-starter-gallery');
-        wp_add_inline_style('pf-starter-gallery', '
+        wp_register_style('sgpd-starter-gallery', false, [], SGPD_VERSION);
+        wp_enqueue_style('sgpd-starter-gallery');
+        wp_add_inline_style('sgpd-starter-gallery', '
             .pf-starter-panel { margin: 16px 0 24px; }
             .pf-starter-panel__intro {
                 background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #2271b1;
@@ -217,8 +217,8 @@ class Admin {
     /**
      * Small vanilla-JS wiring for the starter-template gallery cards rendered by
      * views/template-list.php. No build step: attached as an inline script on the
-     * already-enqueued 'pf-template-builder' handle so it can reuse the restUrl/nonce
-     * exposed via the pfTemplateBuilder global.
+     * already-enqueued 'sgpd-template-builder' handle so it can reuse the restUrl/nonce
+     * exposed via the sgpdTemplateBuilder global.
      */
     private function enqueue_starter_gallery_script(): void {
         $importing_label = esc_js(__('Importing…', 'snelgraveren-product-designer'));
@@ -230,7 +230,7 @@ class Admin {
             . "if (!button) {"
             . "return;"
             . "}"
-            . "var config = window.pfTemplateBuilder;"
+            . "var config = window.sgpdTemplateBuilder;"
             . "if (!config || !config.restUrl) {"
             . "return;"
             . "}"
@@ -264,22 +264,22 @@ class Admin {
             . "});"
             . "})();";
 
-        wp_add_inline_script('pf-template-builder', $script, 'after');
+        wp_add_inline_script('sgpd-template-builder', $script, 'after');
     }
 
     private function enqueue_design_templates_scripts(): void {
-        $js_file = PF_PLUGIN_DIR . 'dist/admin-design-templates.js';
-        $version = file_exists($js_file) ? substr(md5_file($js_file), 0, 8) : PF_VERSION;
+        $js_file = SGPD_PLUGIN_DIR . 'dist/admin-design-templates.js';
+        $version = file_exists($js_file) ? substr(md5_file($js_file), 0, 8) : SGPD_VERSION;
 
         wp_enqueue_script(
-            'pf-design-templates',
-            PF_PLUGIN_URL . 'dist/admin-design-templates.js',
+            'sgpd-design-templates',
+            SGPD_PLUGIN_URL . 'dist/admin-design-templates.js',
             ['react', 'react-dom', 'wp-i18n'],
             $version,
             true
         );
 
-        $this->inline_script_translations('pf-design-templates', 'snelgraveren-product-designer', 'dist/admin-design-templates.js');
+        $this->inline_script_translations('sgpd-design-templates', 'snelgraveren-product-designer', 'dist/admin-design-templates.js');
 
         // Pass all product templates so the form can link design templates to them.
         $repo = new \ProductForge\Database\TemplateRepository();
@@ -287,7 +287,7 @@ class Admin {
             return ['id' => (int) $t['id'], 'title' => $t['title']];
         }, $repo->list(100, 1, 'published'));
 
-        wp_localize_script('pf-design-templates', 'pfDesignTemplates', [
+        wp_localize_script('sgpd-design-templates', 'sgpdDesignTemplates', [
             'restUrl'   => esc_url_raw(rest_url()),
             'nonce'     => wp_create_nonce('wp_rest'),
             'templates' => $all_templates,
@@ -295,29 +295,29 @@ class Admin {
     }
 
     private function enqueue_clipart_scripts(): void {
-        $js_file = PF_PLUGIN_DIR . 'dist/admin-clipart.js';
-        $version = file_exists($js_file) ? substr(md5_file($js_file), 0, 8) : PF_VERSION;
+        $js_file = SGPD_PLUGIN_DIR . 'dist/admin-clipart.js';
+        $version = file_exists($js_file) ? substr(md5_file($js_file), 0, 8) : SGPD_VERSION;
 
         wp_enqueue_script(
-            'pf-clipart',
-            PF_PLUGIN_URL . 'dist/admin-clipart.js',
+            'sgpd-clipart',
+            SGPD_PLUGIN_URL . 'dist/admin-clipart.js',
             ['react', 'react-dom', 'wp-i18n'],
             $version,
             true
         );
 
-        $this->inline_script_translations('pf-clipart', 'snelgraveren-product-designer', 'dist/admin-clipart.js');
+        $this->inline_script_translations('sgpd-clipart', 'snelgraveren-product-designer', 'dist/admin-clipart.js');
 
-        $css_file = PF_PLUGIN_DIR . 'dist/admin-clipart.css';
+        $css_file = SGPD_PLUGIN_DIR . 'dist/admin-clipart.css';
         if (file_exists($css_file)) {
-            wp_enqueue_style('pf-clipart', PF_PLUGIN_URL . 'dist/admin-clipart.css', [], $version);
+            wp_enqueue_style('sgpd-clipart', SGPD_PLUGIN_URL . 'dist/admin-clipart.css', [], $version);
         }
 
-        wp_localize_script('pf-clipart', 'pfClipart', [
+        wp_localize_script('sgpd-clipart', 'sgpdClipart', [
             'restUrl'    => esc_url_raw(rest_url()),
             'nonce'      => wp_create_nonce('wp_rest'),
             'isPremium'  => \ProductForge\ProductForge::is_premium(),
-            'upgradeUrl' => function_exists('pf_fs') ? pf_fs()->get_upgrade_url() : '',
+            'upgradeUrl' => function_exists('sgpd_fs') ? sgpd_fs()->get_upgrade_url() : '',
         ]);
     }
 
@@ -375,11 +375,11 @@ class Admin {
     private function inline_script_translations(string $handle, string $domain, string $relative_path): void {
         $lang = determine_locale();
         $hash = md5($domain . $relative_path);
-        $json_file = PF_PLUGIN_DIR . "languages/{$domain}-{$lang}-{$hash}.json";
+        $json_file = SGPD_PLUGIN_DIR . "languages/{$domain}-{$lang}-{$hash}.json";
 
         if (!file_exists($json_file)) {
             $base_lang = substr($lang, 0, 5);
-            $json_file = PF_PLUGIN_DIR . "languages/{$domain}-{$base_lang}-{$hash}.json";
+            $json_file = SGPD_PLUGIN_DIR . "languages/{$domain}-{$base_lang}-{$hash}.json";
         }
 
         if (!file_exists($json_file)) {

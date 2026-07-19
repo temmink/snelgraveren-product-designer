@@ -26,12 +26,12 @@ class DesignerBlock {
             return;
         }
 
-        register_block_type(PF_PLUGIN_DIR . 'blocks/designer', [
+        register_block_type(SGPD_PLUGIN_DIR . 'blocks/designer', [
             'render_callback' => [$this, 'render'],
         ]);
 
         // Handle is derived by WP from block.json (name + "editor-script").
-        wp_set_script_translations('snelgraveren-product-designer-editor-script', 'snelgraveren-product-designer', PF_PLUGIN_DIR . 'languages');
+        wp_set_script_translations('snelgraveren-product-designer-editor-script', 'snelgraveren-product-designer', SGPD_PLUGIN_DIR . 'languages');
     }
 
     /**

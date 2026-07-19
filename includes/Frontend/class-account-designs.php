@@ -20,8 +20,8 @@ class AccountDesigns {
 
             // Self-heals the rewrite rules on activation AND on plugin
             // updates (ZIP uploads never re-run activation hooks).
-            if (get_option('pf_endpoint_registered') !== PF_VERSION) {
-                update_option('pf_endpoint_registered', PF_VERSION, false);
+            if (get_option('sgpd_endpoint_registered') !== SGPD_VERSION) {
+                update_option('sgpd_endpoint_registered', SGPD_VERSION, false);
                 flush_rewrite_rules();
             }
         });

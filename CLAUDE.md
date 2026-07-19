@@ -103,6 +103,36 @@ These exist because FPD had CVE-2024-51919 (arbitrary file upload → RCE) and C
 
 All tables use InnoDB engine for foreign key and transaction support. Total: 11 tables.
 
+## Prefix Rename (wp.org review round 2)
+
+The reviewer flagged `pf`/`productforge` as too short/generic for globally-namespaced identifiers. Everything **except** the items below was renamed from `pf`/`PF_`/`productforge` to `sgpd`/`SGPD_` in v1.2.0. `Includes\LegacyMigration::maybe_migrate()` (`includes/class-legacy-migration.php`) runs once per install (gated by the `sgpd_migrated_from_pf` flag option, called as the first line of `ProductForge::init()`) and copies every old option/transient value to its new name before anything else boots, then clears the old cron schedule. Old option is deleted after a successful copy either way (even if the new key already existed) to avoid orphaned `pf_*` rows.
+
+**NOT renamed** (breaking to change / no real collision risk): DB tables `wp_pf_*`, REST namespace `pf/v1`, CSS classes `pf-*`, DOM id `pf-designer-root`, the `$_POST` field `pf_design_hash` and order item meta `_pf_design_hash`, the `pf_design` cart/product-permalink query var, the `pf_session_id` guest-session cookie, the WC cart-item key `pf_surcharge`, uploads subdirectories (`pf-thumbnails`, `pf-exports`, `pf-fonts`, `pf-clipart`, `pf-cache` — renaming would orphan files already referenced in the DB on the live site), the WC My Account endpoint slug `pf-designs`, the WC product-data-tab id `pf_productforge_data` / tab key `productforge`, WP_Error codes (`pf_premium_required`, `pf_not_found`, `pf_starter_*`, `pf_svg_sanitizer_missing`), export filename prefixes (`pf-svg-`, `pf-pdf-`), the Freemius product `slug` (`snelgraveren-product-designer` — a Freemius dashboard identifier, unrelated to this rename), and the `[productforge]` shortcode (kept working; `[sgpd_designer]` added as an alias to the same callback).
+
+Constants: `PF_VERSION` → `SGPD_VERSION`, `PF_PLUGIN_DIR` → `SGPD_PLUGIN_DIR`, `PF_PLUGIN_URL` → `SGPD_PLUGIN_URL`, `PF_PLUGIN_FILE` → `SGPD_PLUGIN_FILE`, `PF_LICENSE_KEY` → `SGPD_LICENSE_KEY`.
+
+Options/transients migrated by `LegacyMigration::OPTION_MAP` / `TRANSIENT_MAP`:
+
+| Old | New |
+|-----|-----|
+| `pf_plugin_version` | `sgpd_plugin_version` |
+| `pf_frontend_js_hash` | `sgpd_frontend_js_hash` |
+| `pf_endpoint_registered` | `sgpd_endpoint_registered` |
+| `pf_export_trigger_status` | `sgpd_export_trigger_status` |
+| `pf_export_default_format` | `sgpd_export_default_format` |
+| `pf_delete_data_on_uninstall` | `sgpd_delete_data_on_uninstall` |
+| `pf_guest_design_retention_days` | `sgpd_guest_design_retention_days` |
+| `pf_health_email_alerts` | `sgpd_health_email_alerts` |
+| `pf_health_last_alert_hash` | `sgpd_health_last_alert_hash` |
+| `pf_ordered_backfill_done` | `sgpd_ordered_backfill_done` |
+| `pf_db_version` | `sgpd_db_version` |
+| `pf_color_palettes` | `sgpd_color_palettes` (premium) |
+| transient `pf_system_status_critical` | transient `sgpd_system_status_critical` |
+
+Not migrated (rate-limit transients with a per-session/per-user dynamic suffix, cheap to just start fresh under the new key): `pf_upload_count_{md5(session)}` → `sgpd_upload_count_{md5(session)}`, `pf_clipart_upload_{user_id}` → `sgpd_clipart_upload_{user_id}`.
+
+Other renames: Freemius helper `pf_fs()` → `sgpd_fs()`, global `$pf_fs` → `$sgpd_fs`, action `pf_fs_loaded` → `sgpd_fs_loaded`; cron hook `pf_daily_maintenance` → `sgpd_daily_maintenance` (`Cleanup::HOOK`, old schedule cleared by the migration); capability `edit_pf_templates` → `edit_sgpd_templates` (granted dynamically, never stored — no migration needed); script/style handles `pf-*` → `sgpd-*` (`pf-frontend-designer`, `pf-template-builder`, `pf-design-templates`, `pf-clipart`, `pf-starter-gallery`, `pf-order-export-actions`); JS globals `pfTemplateBuilder`/`pfDesignTemplates`/`pfClipart` → `sgpdTemplateBuilder`/`sgpdDesignTemplates`/`sgpdClipart`; admin menu slugs `productforge` → `sgpd-templates`, `pf-template-builder` → `sgpd-template-builder`, `pf-design-templates` → `sgpd-design-templates`, `pf-clipart` → `sgpd-clipart`, `pf-settings` → `sgpd-settings`, `pf-export-dashboard` → `sgpd-export-dashboard` (hook-name string comparisons in `class-admin.php`/`class-settings-page.php` derive from these and were updated in lockstep); admin-post action `pf_bulk_export` → `sgpd_bulk_export`; settings API option group `pf_settings` → `sgpd_settings`.
+
 ## Admin Pages
 
 | Menu Item | Page Slug | Purpose |

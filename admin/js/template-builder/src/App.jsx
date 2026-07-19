@@ -11,7 +11,7 @@ import GlobalSettings from './components/GlobalSettings';
 import { loadGoogleFonts, loadCustomFonts } from './utils/fonts';
 import { fontApi, paletteApi, clipartApi } from './api/templateApi';
 
-const isPremium = window.pfTemplateBuilder?.isPremium;
+const isPremium = window.sgpdTemplateBuilder?.isPremium;
 
 const TABS = [
   { label: __( 'Structure',   'snelgraveren-product-designer' ), Component: TreePanel },
@@ -76,7 +76,7 @@ export default function App() {
     document.addEventListener('mouseup', onUp);
   }, [sidebarWidth]);
 
-  const templateId = window.pfTemplateBuilder?.templateId || 0;
+  const templateId = window.sgpdTemplateBuilder?.templateId || 0;
 
   // Load existing template on mount.
   useEffect(() => {

@@ -6,7 +6,7 @@ defined( 'ABSPATH' ) || exit;
 class CapabilityChecker {
 
     public static function can_manage_templates(): bool {
-        return current_user_can( 'edit_pf_templates' ) || current_user_can( 'manage_woocommerce' );
+        return current_user_can( 'edit_sgpd_templates' ) || current_user_can( 'manage_woocommerce' );
     }
 
     /**

@@ -16,11 +16,18 @@ class ProductForge {
     }
 
     private function init(): void {
+        // One-time pf_* -> sgpd_* option/transient/cron migration (wp.org
+        // review round 2 prefix rename). Must run before anything below
+        // reads a migrated option — including in non-admin contexts, since
+        // Cleanup's cron handler and Frontend::enqueue_assets() both read
+        // migrated options and can run before any admin page loads again.
+        LegacyMigration::maybe_migrate();
+
         // Run pending migrations only when the plugin version changes,
         // not on every admin page load.
-        if (is_admin() && get_option('pf_plugin_version') !== PF_VERSION) {
+        if (is_admin() && get_option('sgpd_plugin_version') !== SGPD_VERSION) {
             Database\DbManager::run_migrations();
-            update_option('pf_plugin_version', PF_VERSION);
+            update_option('sgpd_plugin_version', SGPD_VERSION);
         }
 
         add_filter('user_has_cap', [$this, 'grant_template_cap'], 10, 4);
@@ -42,13 +49,13 @@ class ProductForge {
     }
 
     /**
-     * Dynamically grant edit_pf_templates to users who can manage_woocommerce or manage_options.
+     * Dynamically grant edit_sgpd_templates to users who can manage_woocommerce or manage_options.
      * Registered here (not in Admin) so it applies in REST API context too.
      */
     public function grant_template_cap(array $allcaps, array $caps, array $args, \WP_User $user): array {
-        if (in_array('edit_pf_templates', $caps, true)) {
+        if (in_array('edit_sgpd_templates', $caps, true)) {
             if (!empty($allcaps['manage_woocommerce']) || !empty($allcaps['manage_options'])) {
-                $allcaps['edit_pf_templates'] = true;
+                $allcaps['edit_sgpd_templates'] = true;
             }
         }
         return $allcaps;
@@ -58,11 +65,11 @@ class ProductForge {
      * Check if the Pro license is active.
      */
     public static function is_premium(): bool {
-        if ( defined( 'PF_LICENSE_KEY' ) && PF_LICENSE_KEY === self::dev_hash() ) {
+        if ( defined( 'SGPD_LICENSE_KEY' ) && SGPD_LICENSE_KEY === self::dev_hash() ) {
             return true;
         }
 
-        return function_exists( 'pf_fs' ) && pf_fs()->is_paying();
+        return function_exists( 'sgpd_fs' ) && sgpd_fs()->is_paying();
     }
 
     /**

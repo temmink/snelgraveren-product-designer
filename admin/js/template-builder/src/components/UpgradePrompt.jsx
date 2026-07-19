@@ -2,7 +2,7 @@ import React from 'react';
 import { __ } from '@wordpress/i18n';
 
 export default function UpgradePrompt({ feature, description }) {
-  const upgradeUrl = window.pfTemplateBuilder?.upgradeUrl || '#';
+  const upgradeUrl = window.sgpdTemplateBuilder?.upgradeUrl || '#';
 
   return (
     <div className="pf-upgrade-prompt">

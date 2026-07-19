@@ -47,7 +47,7 @@ class RestTemplates {
     }
 
     public function admin_permission(): bool {
-        return current_user_can('edit_pf_templates');
+        return current_user_can('edit_sgpd_templates');
     }
 
     public function list_templates(\WP_REST_Request $request): \WP_REST_Response {
@@ -172,7 +172,7 @@ class RestTemplates {
         }
 
         // Resolve both color pickers to flat arrays for the frontend
-        $palettes = get_option('pf_color_palettes', []);
+        $palettes = get_option('sgpd_color_palettes', []);
 
         foreach (['product', 'element'] as $prefix) {
             $mode       = $global_config["{$prefix}_color_mode"] ?? 'individual';

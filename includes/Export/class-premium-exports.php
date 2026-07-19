@@ -38,12 +38,12 @@ class PremiumExports {
             return;
         }
 
-        $trigger_status = get_option('pf_export_trigger_status', 'completed');
+        $trigger_status = get_option('sgpd_export_trigger_status', 'completed');
         if ($to !== $trigger_status) {
             return;
         }
 
-        $default_format = get_option('pf_export_default_format', 'pdf');
+        $default_format = get_option('sgpd_export_default_format', 'pdf');
 
         foreach ($order->get_items() as $item) {
             $hash = $item->get_meta('_pf_design_hash');

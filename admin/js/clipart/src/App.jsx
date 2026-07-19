@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { __ } from '@wordpress/i18n';
 
-const { restUrl, nonce, isPremium, upgradeUrl } = window.pfClipart || {};
+const { restUrl, nonce, isPremium, upgradeUrl } = window.sgpdClipart || {};
 
 function api(path, opts = {}) {
   return fetch(`${restUrl}pf/v1${path}`, {

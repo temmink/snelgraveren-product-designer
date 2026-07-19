@@ -12,7 +12,7 @@ class SystemStatus {
 
     /** Cached critical-failure summary so the admin notice doesn't hit the
      *  filesystem on every admin pageview. */
-    private const TRANSIENT = 'pf_system_status_critical';
+    private const TRANSIENT = 'sgpd_system_status_critical';
     private const CACHE_TTL = 5 * MINUTE_IN_SECONDS;
 
     /** All wp_pf_* tables the migrations create. */

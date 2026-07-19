@@ -14,7 +14,7 @@ use ProductForge\ProductForge;
  */
 class RestPalettes {
 
-    private const OPTION_KEY = 'pf_color_palettes';
+    private const OPTION_KEY = 'sgpd_color_palettes';
 
     public function register_routes(): void {
         $ns = 'pf/v1';
@@ -31,7 +31,7 @@ class RestPalettes {
     }
 
     public function admin_permission(): bool {
-        return current_user_can('edit_pf_templates');
+        return current_user_can('edit_sgpd_templates');
     }
 
     private function get_palettes(): array {

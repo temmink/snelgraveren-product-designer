@@ -112,7 +112,7 @@ class DesignEndpointTest extends TestCase {
         $hash = $create_response->get_data()['design_hash'];
         $this->design_hashes[] = $hash;
 
-        // Admin can always read any design (has edit_pf_templates)
+        // Admin can always read any design (has edit_sgpd_templates)
         $request  = new \WP_REST_Request('GET', '/pf/v1/designs/' . $hash);
         $response = $this->server->dispatch($request);
         $this->assertEquals(200, $response->get_status());

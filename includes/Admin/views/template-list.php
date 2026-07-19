@@ -22,7 +22,7 @@ $set_labels = [
 ?>
 <div class="wrap">
     <h1 class="wp-heading-inline"><?php esc_html_e('Templates', 'snelgraveren-product-designer'); ?></h1>
-    <a href="<?php echo esc_url(admin_url('admin.php?page=pf-template-builder')); ?>" class="page-title-action">
+    <a href="<?php echo esc_url(admin_url('admin.php?page=sgpd-template-builder')); ?>" class="page-title-action">
         <?php esc_html_e('Add New', 'snelgraveren-product-designer'); ?>
     </a>
     <hr class="wp-header-end">
@@ -67,7 +67,7 @@ $set_labels = [
                 $preview_url = '';
                 if ($preview_ref !== '') {
                     $filename    = basename(substr($preview_ref, strlen('asset:')));
-                    $preview_url = PF_PLUGIN_URL . 'templates/starter/assets/' . $filename;
+                    $preview_url = SGPD_PLUGIN_URL . 'templates/starter/assets/' . $filename;
                 }
                 ?>
                 <div class="pf-starter-card">

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { __ } from '@wordpress/i18n';
 
-const { restUrl, nonce, templates: templatesList } = window.pfDesignTemplates || {};
+const { restUrl, nonce, templates: templatesList } = window.sgpdDesignTemplates || {};
 
 function api(path, opts = {}) {
   return fetch(`${restUrl}pf/v1${path}`, {
