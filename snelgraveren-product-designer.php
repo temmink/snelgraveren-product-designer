@@ -3,7 +3,7 @@
  * Plugin Name: Snelgraveren Product Designer for WooCommerce
  * Plugin URI:  https://www.snelgraveren.nl/productforge/
  * Description: Let customers personalise products with text, images, and SVGs using a drag-and-drop editor.
- * Version:     1.1.0
+ * Version:     1.2.0
  * Author:      Martin Temmink
  * License:     GPL-2.0-or-later
  * Text Domain: snelgraveren-product-designer
@@ -21,23 +21,23 @@ namespace ProductForge;
 
 defined('ABSPATH') || exit;
 
-define('PF_VERSION',    '1.1.0');
-define('PF_PLUGIN_DIR', plugin_dir_path(__FILE__));
-define('PF_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('PF_PLUGIN_FILE', __FILE__);
+define('SGPD_VERSION',    '1.2.0');
+define('SGPD_PLUGIN_DIR', plugin_dir_path(__FILE__));
+define('SGPD_PLUGIN_URL', plugin_dir_url(__FILE__));
+define('SGPD_PLUGIN_FILE', __FILE__);
 
 // PSR-4 autoloader
-require_once PF_PLUGIN_DIR . 'includes/class-autoloader.php';
+require_once SGPD_PLUGIN_DIR . 'includes/class-autoloader.php';
 Autoloader::register();
 
 // Composer autoloader (vendor/)
-if (file_exists(PF_PLUGIN_DIR . 'vendor/autoload.php')) {
-    require_once PF_PLUGIN_DIR . 'vendor/autoload.php';
+if (file_exists(SGPD_PLUGIN_DIR . 'vendor/autoload.php')) {
+    require_once SGPD_PLUGIN_DIR . 'vendor/autoload.php';
 }
 
-// Freemius SDK (non-namespaced file so pf_fs() is global)
-if (file_exists(PF_PLUGIN_DIR . 'freemius-init.php')) {
-    require_once PF_PLUGIN_DIR . 'freemius-init.php';
+// Freemius SDK (non-namespaced file so sgpd_fs() is global)
+if (file_exists(SGPD_PLUGIN_DIR . 'freemius-init.php')) {
+    require_once SGPD_PLUGIN_DIR . 'freemius-init.php';
 }
 
 // HPOS compatibility declaration
@@ -70,6 +70,6 @@ register_deactivation_hook(__FILE__, [Deactivator::class, 'deactivate']);
 // Uninstall cleanup. With the Freemius SDK present, its after_uninstall hook
 // (wired in freemius-init.php) handles this; the WP-native hook is only the
 // fallback for installs without Freemius.
-if (!function_exists('pf_fs')) {
+if (!function_exists('sgpd_fs')) {
     register_uninstall_hook(__FILE__, [Uninstaller::class, 'uninstall']);
 }
