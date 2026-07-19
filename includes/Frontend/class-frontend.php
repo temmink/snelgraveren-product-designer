@@ -28,6 +28,10 @@ class Frontend {
             return $excludes;
         });
         add_shortcode('productforge', [$this, 'shortcode']);
+        // Alias registered under the renamed "sgpd" prefix (wp.org review round
+        // 2). [productforge] stays registered too — the live site already has
+        // it embedded in product content and we don't want to break that.
+        add_shortcode('sgpd_designer', [$this, 'shortcode']);
         add_filter('woocommerce_add_cart_item_data', [$this, 'add_cart_item_data'], 10, 2);
         add_filter('woocommerce_cart_item_thumbnail', [$this, 'cart_item_thumbnail'], 10, 3);
         add_filter('woocommerce_get_item_data', [$this, 'display_cart_item_data'], 10, 2);
@@ -41,17 +45,63 @@ class Frontend {
 
     /**
      * Attach design_hash to cart item data when adding to cart.
+     *
+     * Ownership validation (ProductForge\Database\DesignRepository::get_by_hash
+     * + a customer_id/session_id match, mirroring RestDesigns::owns_design) is
+     * the PRIMARY defense here: without it, any visitor could paste any 32-hex
+     * design hash into the pf_design_hash field and attach someone else's
+     * design (and its saved price) to their own cart.
+     *
+     * The nonce is defense-in-depth only, not authoritative: WordPress.org
+     * flags unchecked $_POST access, so we verify it when present — but
+     * LiteSpeed page-caches product pages, so a logged-out customer can be
+     * served a cached page with a stale nonce from a previous page-cache
+     * generation. A missing or failed nonce must NOT block a legitimately
+     * owned design; only the ownership check gates attachment.
      */
     public function add_cart_item_data(array $cart_item_data, int $product_id): array {
-        // phpcs:disable WordPress.Security.NonceVerification
-        if (!empty($_POST['pf_design_hash'])) {
-            $hash = sanitize_text_field(wp_unslash($_POST['pf_design_hash']));
-            if (preg_match('/^[0-9a-f]{32}$/', $hash)) {
-                $cart_item_data['pf_design_hash'] = $hash;
-            }
+        if (empty($_POST['pf_design_hash'])) {
+            return $cart_item_data;
         }
-        // phpcs:enable
+
+        $hash = sanitize_text_field(wp_unslash($_POST['pf_design_hash']));
+        if (!preg_match('/^[0-9a-f]{32}$/', $hash)) {
+            return $cart_item_data;
+        }
+
+        // Verified for WPCS/wp.org nonce-hygiene compliance, but intentionally
+        // NOT used to gate below — see method docblock (LiteSpeed caching).
+        if (isset($_POST['sgpd_design_nonce'])) {
+            wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['sgpd_design_nonce'])), 'sgpd_add_design');
+        }
+
+        $design = $this->design_repo()->get_by_hash($hash);
+        if (!$design || !$this->owns_design($design)) {
+            return $cart_item_data;
+        }
+
+        $cart_item_data['pf_design_hash'] = $hash;
         return $cart_item_data;
+    }
+
+    /**
+     * Mirrors ProductForge\API\RestDesigns::owns_design(): the current
+     * requester must be the design's logged-in customer, or hold the same
+     * guest session id the design was saved under, or be able to manage
+     * templates (admins/shop managers legitimately reassigning designs).
+     */
+    private function owns_design(array $design): bool {
+        $user_id = get_current_user_id();
+        if ($user_id && (int) $design['customer_id'] === $user_id) {
+            return true;
+        }
+
+        $session_id = \ProductForge\Security\CapabilityChecker::current_session_id();
+        if (!empty($session_id) && $design['session_id'] === $session_id) {
+            return true;
+        }
+
+        return current_user_can('edit_sgpd_templates');
     }
 
     /**
@@ -203,8 +253,8 @@ class Frontend {
             return;
         }
 
-        $dist_path = PF_PLUGIN_DIR . 'dist/';
-        $dist_url  = PF_PLUGIN_URL . 'dist/';
+        $dist_path = SGPD_PLUGIN_DIR . 'dist/';
+        $dist_url  = SGPD_PLUGIN_URL . 'dist/';
 
         $upload_dir = wp_upload_dir();
         $cache_path = trailingslashit($upload_dir['basedir']) . 'pf-cache/';
@@ -216,12 +266,12 @@ class Frontend {
             // Hashing the full bundle on every pageview is wasteful — cache
             // the hash keyed on the file's mtime, recompute only after a build.
             $js_mtime   = (int) filemtime($dist_path . $js_file);
-            $hash_cache = get_option('pf_frontend_js_hash');
+            $hash_cache = get_option('sgpd_frontend_js_hash');
             if (is_array($hash_cache) && ($hash_cache['mtime'] ?? 0) === $js_mtime && !empty($hash_cache['hash'])) {
                 $js_version = $hash_cache['hash'];
             } else {
                 $js_version = substr(md5_file($dist_path . $js_file), 0, 8);
-                update_option('pf_frontend_js_hash', ['mtime' => $js_mtime, 'hash' => $js_version], true);
+                update_option('sgpd_frontend_js_hash', ['mtime' => $js_mtime, 'hash' => $js_version], true);
             }
 
             // Safari caches JS with max-age=31557600 (1 year) keyed on the
@@ -282,7 +332,7 @@ class Frontend {
             $enqueue_url        = $enqueue_from_cache ? ($cache_url . $hashed_file) : ($dist_url . $js_file);
 
             wp_enqueue_script(
-                'pf-frontend-designer',
+                'sgpd-frontend-designer',
                 $enqueue_url,
                 ['wp-i18n'],
                 $js_version,
@@ -292,18 +342,18 @@ class Frontend {
             // Exclude from JS combining/minification by caching plugins.
             // Our IIFE bundle includes React internally and breaks when concatenated.
             // data-no-optimize: Autoptimize, data-no-minify: general, excluded by LiteSpeed filter below.
-            wp_script_add_data('pf-frontend-designer', 'data-no-optimize', '1');
-            wp_script_add_data('pf-frontend-designer', 'data-no-minify', '1');
+            wp_script_add_data('sgpd-frontend-designer', 'data-no-optimize', '1');
+            wp_script_add_data('sgpd-frontend-designer', 'data-no-minify', '1');
 
             // Load translations inline to work with JS-combining caches (LiteSpeed, etc.)
             // wp_set_script_translations breaks when caching plugins rewrite the JS URL,
             // because WordPress can't match the hash to find the JSON file.
-            $this->inline_script_translations('pf-frontend-designer', 'snelgraveren-product-designer', 'dist/frontend-designer.js');
+            $this->inline_script_translations('sgpd-frontend-designer', 'snelgraveren-product-designer', 'dist/frontend-designer.js');
 
             $this->js_config = $this->build_js_config($product_id, $template_id);
 
             // Prevent pinch-to-zoom interference when designer is open on mobile
-            wp_add_inline_script('pf-frontend-designer', '
+            wp_add_inline_script('sgpd-frontend-designer', '
   document.addEventListener("pf:designer-open", function() {
     var meta = document.querySelector("meta[name=viewport]");
     if (meta) {
@@ -324,10 +374,10 @@ class Frontend {
         $css_file = 'frontend-designer.css';
         if (file_exists($dist_path . $css_file)) {
             wp_enqueue_style(
-                'pf-frontend-designer',
+                'sgpd-frontend-designer',
                 $dist_url . $css_file,
                 [],
-                file_exists($dist_path . $css_file) ? substr(md5_file($dist_path . $css_file), 0, 8) : PF_VERSION
+                file_exists($dist_path . $css_file) ? substr(md5_file($dist_path . $css_file), 0, 8) : SGPD_VERSION
             );
         }
     }
@@ -391,10 +441,10 @@ class Frontend {
 
     /**
      * Check if the current product's content contains the [productforge]
-     * shortcode or the snelgraveren/product-designer block. Both mean "the merchant
-     * placed the designer explicitly" — the before-add-to-cart auto-render
-     * must then stay out of the way (no duplicate #pf-designer-root) and the
-     * display mode is forced to embedded.
+     * shortcode (or its [sgpd_designer] alias) or the snelgraveren/product-designer
+     * block. Any of these mean "the merchant placed the designer explicitly" —
+     * the before-add-to-cart auto-render must then stay out of the way (no
+     * duplicate #pf-designer-root) and the display mode is forced to embedded.
      */
     private function has_shortcode_in_content(): bool {
         global $post;
@@ -402,6 +452,7 @@ class Frontend {
             return false;
         }
         return has_shortcode($post->post_content, 'productforge')
+            || has_shortcode($post->post_content, 'sgpd_designer')
             || has_block('snelgraveren/product-designer', $post)
             || $this->template_has_designer_block();
     }
@@ -438,6 +489,10 @@ class Frontend {
         $mode = get_post_meta($post->ID, '_pf_display_mode', true) ?: 'embedded';
         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- data_config_attr() already wraps its value in esc_attr(wp_json_encode())
         echo '<div id="pf-designer-root" data-mode="' . esc_attr($mode) . '"' . $this->data_config_attr() . '></div>';
+        // Hooked to woocommerce_before_add_to_cart_button, i.e. inside the WC
+        // <form class="cart">, so this field is POSTed with add-to-cart. See
+        // add_cart_item_data() for why it's checked but never authoritative.
+        wp_nonce_field('sgpd_add_design', 'sgpd_design_nonce');
 
         if ($mode === 'modal') {
             echo '<button type="button" class="pf-open-designer button">' . esc_html__('Customize Product', 'snelgraveren-product-designer') . '</button>';
@@ -468,7 +523,13 @@ class Frontend {
         // discarded or stripped. Only the tab render produces visible HTML.
         $this->designer_rendered = true;
 
-        return '<div id="pf-designer-root" data-mode="embedded"' . $this->data_config_attr() . '></div>';
+        // Best-effort here: the shortcode can be placed outside the WC
+        // add-to-cart <form> by the merchant, in which case this hidden
+        // field never gets POSTed with the cart submission — that's fine,
+        // add_cart_item_data() treats a missing nonce as "not present",
+        // never as a block (see its docblock).
+        return '<div id="pf-designer-root" data-mode="embedded"' . $this->data_config_attr() . '></div>'
+            . wp_nonce_field('sgpd_add_design', 'sgpd_design_nonce', true, false);
     }
 
     /**
@@ -481,12 +542,12 @@ class Frontend {
     private function inline_script_translations(string $handle, string $domain, string $relative_path): void {
         $lang = determine_locale();
         $hash = md5($domain . $relative_path);
-        $json_file = PF_PLUGIN_DIR . "languages/{$domain}-{$lang}-{$hash}.json";
+        $json_file = SGPD_PLUGIN_DIR . "languages/{$domain}-{$lang}-{$hash}.json";
 
         if (!file_exists($json_file)) {
             // Fall back to base language (nl_NL from nl_NL_formal, etc.)
             $base_lang = substr($lang, 0, 5);
-            $json_file = PF_PLUGIN_DIR . "languages/{$domain}-{$base_lang}-{$hash}.json";
+            $json_file = SGPD_PLUGIN_DIR . "languages/{$domain}-{$base_lang}-{$hash}.json";
         }
 
         if (!file_exists($json_file)) {
