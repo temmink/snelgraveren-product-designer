@@ -1,9 +1,9 @@
 <?php
 /**
  * Plugin Name: Snelgraveren Product Designer for WooCommerce
- * Plugin URI:  https://www.snelgraveren.nl/productforge/
+ * Plugin URI:  https://github.com/temmink/snelgraveren-product-designer
  * Description: Let customers personalise products with text, images, and SVGs using a drag-and-drop editor.
- * Version:     1.2.0
+ * Version:     1.2.1
  * Author:      Martin Temmink
  * License:     GPL-2.0-or-later
  * Text Domain: snelgraveren-product-designer
@@ -20,7 +20,7 @@ namespace ProductForge;
 
 defined('ABSPATH') || exit;
 
-define('SGPD_VERSION',    '1.2.0');
+define('SGPD_VERSION',    '1.2.1');
 define('SGPD_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SGPD_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('SGPD_PLUGIN_FILE', __FILE__);

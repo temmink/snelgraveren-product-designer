@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -93,6 +93,9 @@ Freemius Terms of Service: https://freemius.com/terms/
 No other external services are used. Design exports (PDF/PNG/SVG) are rendered entirely on your own server — nothing about your customers' designs, uploads, or orders is ever sent off-site.
 
 == Changelog ==
+
+= 1.2.1 =
+* Change: the Plugin URI now points to the public source repository (https://github.com/temmink/snelgraveren-product-designer) instead of a placeholder URL.
 
 = 1.2.0 =
 * Change: renamed all globally-namespaced identifiers (constants, options, transients, the Freemius helper function/global, the cron hook, the `edit_pf_templates` capability, script/style handles, JS globals, and admin menu slugs) from the `pf`/`PF_`/`productforge` prefix to `sgpd`/`SGPD_`, per wp.org review feedback that `pf` is too short/generic. A one-time migration copies every existing `pf_*` option/transient to its `sgpd_*` name and clears the old cron schedule on upgrade — no settings are lost. DB tables, the `pf/v1` REST namespace, `pf-` CSS classes, the `pf-designer-root` DOM id, and the `pf_design_hash` cart/order-meta keys are intentionally unchanged (breaking to rename, not a real collision risk). The `[productforge]` shortcode keeps working; `[sgpd_designer]` is now available as an alias. See CLAUDE.md "Prefix Rename" for the full old → new mapping.
