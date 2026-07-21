@@ -267,31 +267,42 @@ class RestTemplates {
      * @return array
      */
     private function sanitize_zone_layers(array $zones): array {
-        if (!class_exists(\enshrined\svgSanitize\Sanitizer::class)) {
-            // No sanitiser available — drop markup rather than store it raw.
-            foreach ($zones as &$zone) {
-                if (empty($zone['layers']) || !is_array($zone['layers'])) {
-                    continue;
-                }
-                foreach ($zone['layers'] as &$layer) {
-                    if (is_array($layer) && isset($layer['svg_markup'])) {
-                        unset($layer['svg_markup']);
-                    }
-                }
-                unset($layer);
+        $have_sanitizer = class_exists(\enshrined\svgSanitize\Sanitizer::class);
+        $sanitizer = $have_sanitizer ? new \enshrined\svgSanitize\Sanitizer() : null;
+
+        $clean_markup = static function ($markup) use ($sanitizer) {
+            if (!is_string($markup) || $markup === '') {
+                return '';
             }
-            unset($zone);
-            return $zones;
-        }
-        $sanitizer = new \enshrined\svgSanitize\Sanitizer();
+            if (!$sanitizer) {
+                return null; // signal: drop it
+            }
+            $clean = $sanitizer->sanitize($markup);
+            return is_string($clean) ? $clean : '';
+        };
+
         foreach ($zones as &$zone) {
+            // Zone-level boundary markup (a zone may have no layers).
+            if (is_array($zone) && isset($zone['svg_markup'])) {
+                $clean = $clean_markup($zone['svg_markup']);
+                if ($clean === null) {
+                    unset($zone['svg_markup']);
+                } else {
+                    $zone['svg_markup'] = $clean;
+                }
+            }
+
             if (empty($zone['layers']) || !is_array($zone['layers'])) {
                 continue;
             }
             foreach ($zone['layers'] as &$layer) {
-                if (is_array($layer) && !empty($layer['svg_markup']) && is_string($layer['svg_markup'])) {
-                    $clean = $sanitizer->sanitize($layer['svg_markup']);
-                    $layer['svg_markup'] = is_string($clean) ? $clean : '';
+                if (is_array($layer) && isset($layer['svg_markup'])) {
+                    $clean = $clean_markup($layer['svg_markup']);
+                    if ($clean === null) {
+                        unset($layer['svg_markup']);
+                    } else {
+                        $layer['svg_markup'] = $clean;
+                    }
                 }
             }
             unset($layer);
