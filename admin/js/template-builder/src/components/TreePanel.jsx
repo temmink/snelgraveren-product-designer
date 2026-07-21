@@ -379,7 +379,7 @@ function AddLayerPanel({ zone, onAdd, onCancel }) {
         ) : collections.length === 0 ? (
           <p className="pf-add-layer__status">
             {__('No collections yet.', 'snelgraveren-product-designer')}{' '}
-            <a href="?page=pf-clipart">{__('Create one', 'snelgraveren-product-designer')}</a>
+            <a href="?page=sgpd-clipart">{__('Create one', 'snelgraveren-product-designer')}</a>
           </p>
         ) : (
           <>

@@ -34,6 +34,13 @@ class RestExports {
                     'type'    => 'integer',
                     'default' => 0,
                 ],
+                // SVG only: 'outline' (default, text as vector paths) or 'embed'
+                // (text kept editable with fonts inlined).
+                'variant' => [
+                    'type'    => 'string',
+                    'enum'    => ['outline', 'embed'],
+                    'default' => 'outline',
+                ],
             ],
         ]);
 
@@ -67,6 +74,7 @@ class RestExports {
         $hash     = $request->get_param('hash');
         $format   = $request->get_param('format') ?: 'pdf';
         $order_id = (int) ($request->get_param('order_id') ?: 0);
+        $variant  = $request->get_param('variant') === 'embed' ? 'embed' : 'outline';
 
         if ( $format === 'pdf' && ! ProductForge::has_feature( 'pdf_export' ) ) {
             return new \WP_REST_Response( ['error' => __( 'PDF export requires Snelgraveren Product Designer Pro.', 'snelgraveren-product-designer' )], 403 );
@@ -75,7 +83,7 @@ class RestExports {
             return new \WP_REST_Response( ['error' => __( 'SVG export requires Snelgraveren Product Designer Pro.', 'snelgraveren-product-designer' )], 403 );
         }
 
-        $result = $this->manager()->generate_export($hash, $format, $order_id);
+        $result = $this->manager()->generate_export($hash, $format, $order_id, $variant);
 
         if (isset($result['error'])) {
             return new \WP_REST_Response(['error' => $result['error']], 400);

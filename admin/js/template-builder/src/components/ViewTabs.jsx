@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { __ } from '@wordpress/i18n';
 import useTemplateStore from '../store/useTemplateStore';
+import ImportLightBurn from './ImportLightBurn';
 
 const isPremium = window.sgpdTemplateBuilder?.isPremium;
 
@@ -48,7 +49,20 @@ export default function ViewTabs() {
     setEditingIndex(null);
   };
 
+  // Real-world physical width of the current view, in mm. Used to export at true
+  // scale (SVG mm units / PDF page size). The height is derived from the canvas
+  // aspect ratio, shown as a hint, so the export is never distorted. 0 = unset
+  // (export falls back to the 96-DPI pixel assumption).
+  const currentView = views[currentViewIndex];
+  const widthMm = Number(currentView?.width_mm) || 0;
+  const canvasW = currentView?.canvas_width || 800;
+  const canvasH = currentView?.canvas_height || 600;
+  const derivedHeightMm = widthMm > 0
+    ? Math.round((widthMm * canvasH / canvasW) * 100) / 100
+    : 0;
+
   return (
+    <>
     <div className="pf-builder__view-tabs" role="tablist" aria-label="Product views">
       {views.map((view, index) => (
         <div
@@ -114,5 +128,34 @@ export default function ViewTabs() {
         {!isPremium && views.length >= 1 && <span style={{ marginLeft: 4, fontSize: 10, opacity: 0.7 }}>Pro</span>}
       </button>
     </div>
+
+    {currentView && (
+      <div
+        className="pf-builder__view-size"
+        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 4px', flexWrap: 'wrap' }}
+      >
+        <label style={{ fontSize: 12, fontWeight: 600, color: '#1e1e1e' }}>
+          { __( 'Real width (mm)', 'snelgraveren-product-designer' ) }
+        </label>
+        <input
+          type="number"
+          min="0"
+          step="0.1"
+          value={widthMm || ''}
+          placeholder="0"
+          disabled={isSaving}
+          onChange={(e) => updateView(currentViewIndex, { width_mm: parseFloat(e.target.value) || 0 })}
+          style={{ width: 90, color: '#1e1e1e' }}
+        />
+        <span style={{ fontSize: 12, color: '#757575' }}>
+          {widthMm > 0
+            /* translators: %s is the derived height in millimetres */
+            ? `${ __( 'Height follows canvas:', 'snelgraveren-product-designer' ) } ${derivedHeightMm} mm`
+            : __( 'Empty = export uses the 96-DPI pixel size', 'snelgraveren-product-designer' )}
+        </span>
+        <ImportLightBurn />
+      </div>
+    )}
+    </>
   );
 }

@@ -163,6 +163,7 @@ export default function App() {
           sort_order:           index,
           canvas_width:         view.canvas_width  || 800,
           canvas_height:        view.canvas_height || 600,
+          width_mm:             view.width_mm || 0,
           background_url:       view.background_url || '',
           background_transform: view.background_transform || {},
           zones_config:         view.zones_config  || [],
@@ -202,7 +203,7 @@ export default function App() {
 
       {/* ── Header bar ─────────────────────────────────────────────────── */}
       <div className="pf-builder__header">
-        <a href="?page=productforge" className="pf-builder__back button">
+        <a href="?page=sgpd-templates" className="pf-builder__back button">
           { __( '← Templates', 'snelgraveren-product-designer' ) }
         </a>
         <input

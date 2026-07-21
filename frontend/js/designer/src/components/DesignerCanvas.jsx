@@ -428,13 +428,28 @@ export default function DesignerCanvas() {
         .catch(() => {});
     }
 
+    // Whether a saved snapshot exists for this view. If it does, the loadFromJSON
+    // call below will restore it — including any template svg layer, with whatever
+    // position/scale/rotation the customer left it in. The svg branch below loads
+    // its markup asynchronously (fetch + loadSVGFromString), and that promise can
+    // resolve AFTER loadFromJSON finishes restoring the snapshot, stacking a second
+    // copy of the svg on top of the one the snapshot already contains — the same
+    // race documented above for the zone-overlay svg dedup. Unlike that overlay
+    // (which is regenerated fresh every time, non-selectable boundary art), a
+    // template svg layer is customer-editable content, so we can't just delete the
+    // snapshot's copy and replace it — that would discard any edits the customer
+    // made to it. Skipping the reseed entirely when a snapshot exists is safe: the
+    // text branch stays unguarded because it runs synchronously, before
+    // loadFromJSON's own clear() wipes the canvas, so it never survives to double up.
+    const hasSnapshotForView = !!useDesignerStore.getState().canvasSnapshots[currentViewIndex];
+
     // Render pre-placed template layers from zones.
     zones.forEach((zone, zoneIdx) => {
       (zone.layers || []).forEach((layer) => {
         if (layer.type === 'text' && layer.text) {
           const text = new Textbox(layer.text, {
-            left:       layer.left       || zone.x + 20,
-            top:        layer.top        || zone.y + 20,
+            left:       layer.left       ?? (zone.x + 20),
+            top:        layer.top        ?? (zone.y + 20),
             width:      layer.width      || zone.width - 20,
             fontSize:   layer.fontSize   || 24,
             fontFamily: layer.fontFamily || 'Arial',
@@ -446,6 +461,37 @@ export default function DesignerCanvas() {
           if (zone.behavior === 'restrict') applyZoneClip(text, zoneIdx);
           canvas.add(text);
           if (zone.behavior === 'restrict') clampToZone(text);
+        }
+
+        if (!hasSnapshotForView && layer.type === 'svg' && (layer.svg_markup || layer.src)) {
+          const markupPromise = layer.svg_markup
+            ? Promise.resolve(layer.svg_markup)
+            : fetch(layer.src).then((r) => r.text());
+          markupPromise
+            .then((svgString) => loadSVGFromString(svgString))
+            .then(({ objects, options }) => {
+              if (disposed) return;
+              const filtered = (objects || []).filter(Boolean);
+              if (!filtered.length) return;
+              filtered.forEach((o) => o.set({ strokeUniform: true }));
+              const group = util.groupSVGElements(filtered, options);
+              group.set({
+                left:          layer.left   ?? (zone.x),
+                top:           layer.top    ?? (zone.y),
+                scaleX:        layer.scaleX || 1,
+                scaleY:        layer.scaleY || 1,
+                angle:         layer.angle  || 0,
+                strokeUniform: true,
+                data:          { elementType: 'svg', zoneIndex: zoneIdx },
+              });
+              applyPermissions(group, 'svg');
+              if (zone.behavior === 'restrict') applyZoneClip(group, zoneIdx);
+              canvas.add(group);
+              group.setCoords();
+              if (zone.behavior === 'restrict') clampToZone(group);
+              canvas.renderAll();
+            })
+            .catch((err) => console.warn('[PF] template svg layer load failed:', err));
         }
       });
     });
@@ -606,9 +652,11 @@ export default function DesignerCanvas() {
     canvas.renderAll();
 
     return () => {
-      // Only snapshot if canvas finished loading — prevents overwriting
-      // good snapshots with incomplete state during fast view switching
-      if (!disposed && canvasReady && fabricRef.current) {
+      // Only snapshot if canvas finished loading AND actually has objects —
+      // prevents overwriting a good snapshot with an incomplete/empty canvas
+      // during fast view switching or a load race (which would wipe the design).
+      if (!disposed && canvasReady && fabricRef.current
+          && fabricRef.current.getObjects().length > 0) {
         snapshotView(currentViewIndex, fabricRef.current.toJSON(['data']));
       }
       disposed = true;

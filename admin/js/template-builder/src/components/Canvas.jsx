@@ -510,8 +510,8 @@ export default function Canvas() {
           const parentZone = zones[layer._zoneIndex];
           existing.set({
             text:       layer.text,
-            left:       layer.left       || 100,
-            top:        layer.top        || 100,
+            left:       layer.left       ?? 100,
+            top:        layer.top        ?? 100,
             width:      layer.width || (parentZone ? parentZone.width - 20 : existing.width),
             fontSize:   layer.fontSize   || 24,
             fontFamily,
@@ -531,8 +531,8 @@ export default function Canvas() {
           const parentZone = zones[layer._zoneIndex];
           const textWidth = layer.width || (parentZone ? parentZone.width - 20 : 200);
           const text = new Textbox(layer.text, {
-            left:       layer.left       || 100,
-            top:        layer.top        || 100,
+            left:       layer.left       ?? 100,
+            top:        layer.top        ?? 100,
             width:      textWidth,
             fontSize:   layer.fontSize   || 24,
             fontFamily,
@@ -549,8 +549,8 @@ export default function Canvas() {
       } else if (layer.type === 'image') {
         if (existing) {
           existing.set({
-            left:       layer.left   || 100,
-            top:        layer.top    || 100,
+            left:       layer.left   ?? 100,
+            top:        layer.top    ?? 100,
             scaleX:     layer.scaleX || 1,
             scaleY:     layer.scaleY || 1,
             angle:      layer.angle  || 0,
@@ -567,8 +567,8 @@ export default function Canvas() {
               pendingLoads.current.delete(layer._key);
               if (!fabricRef.current) return;
               img.set({
-                left:       layer.left   || 100,
-                top:        layer.top    || 100,
+                left:       layer.left   ?? 100,
+                top:        layer.top    ?? 100,
                 scaleX:     layer.scaleX || 1,
                 scaleY:     layer.scaleY || 1,
                 angle:      layer.angle  || 0,
@@ -589,8 +589,8 @@ export default function Canvas() {
       } else if (layer.type === 'svg') {
         if (existing) {
           existing.set({
-            left:       layer.left   || 100,
-            top:        layer.top    || 100,
+            left:       layer.left   ?? 100,
+            top:        layer.top    ?? 100,
             scaleX:     layer.scaleX || 1,
             scaleY:     layer.scaleY || 1,
             angle:      layer.angle  || 0,
@@ -600,6 +600,38 @@ export default function Canvas() {
           existing.data = { ...existing.data, layerIndex: layer._layerIndex, zoneIndex: layer._zoneIndex };
           existing.setCoords();
           applyClipAndClamp(existing, layer);
+        } else if (layer.svg_markup && !layer.src && !pendingLoads.current.has(layer._key)) {
+          pendingLoads.current.add(layer._key);
+          loadSVGFromString(layer.svg_markup)
+            .then(({ objects, options }) => {
+              pendingLoads.current.delete(layer._key);
+              if (!fabricRef.current) return;
+              const filtered = objects.filter(Boolean);
+              filtered.forEach((o) => o.set({ strokeUniform: true }));
+              const group = util.groupSVGElements(filtered, options);
+              group.set({
+                left:           layer.left   ?? 100,
+                top:            layer.top    ?? 100,
+                scaleX:         layer.scaleX || 1,
+                scaleY:         layer.scaleY || 1,
+                angle:          layer.angle  || 0,
+                selectable:     !layer.locked,
+                evented:        !layer.locked,
+                strokeUniform:  true,
+                subTargetCheck: false,
+                interactive:    false,
+                data:           layerData(layer),
+              });
+              canvas.add(group);
+              group.setCoords();
+              applyPermissions(group, layer.type);
+              applyClipAndClamp(group, layer);
+              canvas.renderAll();
+            })
+            .catch((err) => {
+              pendingLoads.current.delete(layer._key);
+              console.warn('[PF] inline SVG layer load failed:', err);
+            });
         } else if (layer.src && !pendingLoads.current.has(layer._key)) {
           pendingLoads.current.add(layer._key);
           // Fetch SVG text, normalize mm/cm/in units to px, then parse with Fabric.
@@ -625,8 +657,8 @@ export default function Canvas() {
               filtered.forEach((o) => o.set({ strokeUniform: true }));
               const group = util.groupSVGElements(filtered, options);
               group.set({
-                left:          layer.left   || 100,
-                top:           layer.top    || 100,
+                left:          layer.left   ?? 100,
+                top:           layer.top    ?? 100,
                 scaleX:        layer.scaleX || 1,
                 scaleY:        layer.scaleY || 1,
                 angle:         layer.angle  || 0,

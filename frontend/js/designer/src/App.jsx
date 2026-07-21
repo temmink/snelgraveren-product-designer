@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { __ } from '@wordpress/i18n';
-import { Canvas as FabricCanvas } from 'fabric';
+import { Canvas as FabricCanvas, cache as fabricCache } from 'fabric';
 import useDesignerStore from './store/useDesignerStore';
 import { loadTemplate, loadDesign, createDesign, saveDesignView, fetchCustomFonts, fetchClipartCollections, previewPrice } from './api/designerApi';
 import DesignerCanvas from './components/DesignerCanvas';
@@ -8,8 +8,35 @@ import Sidebar from './components/Sidebar';
 import Toolbar from './components/Toolbar';
 import { loadGoogleFonts, loadCustomFonts } from './utils/fonts';
 import { getDesignerConfig } from './utils/config';
+import { outlineSvgText, embedFontsInSvg } from './utils/textOutline';
 import { countPriceableElements } from './utils/priceCounts';
 import useIsMobile from './hooks/useIsMobile';
+
+/**
+ * Ensure every text object's font is loaded and re-measured before an offscreen
+ * canvas is serialized. Without this, Fabric lays out (especially centered) text
+ * using a fallback-font width — so the text ends up off-centre / mis-positioned
+ * in the PNG and SVG exports even though the design looks right in the live
+ * editor (where the font is already loaded).
+ */
+async function ensureFontsAndRemeasure(canvas) {
+  const texts = canvas.getObjects().filter((o) => /text/i.test(o.type || ''));
+  await Promise.all(texts.map((o) => {
+    const fam  = o.fontFamily || 'sans-serif';
+    const size = o.fontSize || 16;
+    try { return document.fonts.load(`${size}px "${fam}"`).catch(() => {}); }
+    catch (_) { return Promise.resolve(); }
+  }));
+  // Drop Fabric's global char-width cache: if a font finished loading only
+  // AFTER the design first rendered (e.g. Google fonts fetched async via the
+  // proxy), the cache holds fallback-font widths for these glyphs. initDimensions
+  // would reuse them, so centred text lays out against the wrong width and drifts
+  // in the export even though the glyphs themselves are outlined at the real
+  // width. Clearing forces a fresh measurement with the now-loaded font.
+  try { fabricCache.clearFontCache(); } catch (_) { /* ignore */ }
+  texts.forEach((o) => { try { o.initDimensions(); o.setCoords(); } catch (_) { /* ignore */ } });
+  canvas.renderAll();
+}
 
 /**
  * Render a thumbnail from canvas JSON using an offscreen Fabric canvas.
@@ -22,6 +49,7 @@ async function renderOffscreenThumbnail(canvasJson, width, height) {
     el.height = height;
     const offscreen = new FabricCanvas(el, { width, height });
     await offscreen.loadFromJSON(canvasJson);
+    await ensureFontsAndRemeasure(offscreen);
     offscreen.renderAll();
     const dataUrl = offscreen.toDataURL({ format: 'png', multiplier: 0.5 });
     offscreen.dispose();
@@ -47,6 +75,7 @@ async function renderOffscreenExportPng(canvasJson, width, height) {
     el.height = height;
     const offscreen = new FabricCanvas(el, { width, height });
     await offscreen.loadFromJSON(canvasJson);
+    await ensureFontsAndRemeasure(offscreen);
     offscreen.renderAll();
     const dataUrl = offscreen.toDataURL({ format: 'png', multiplier: 3 });
     offscreen.dispose();
@@ -57,6 +86,54 @@ async function renderOffscreenExportPng(canvasJson, width, height) {
     }
     return '';
   }
+}
+
+/**
+ * Generate a real vector SVG from canvas JSON using an offscreen Fabric canvas.
+ * Returns SVG markup or empty string on failure.
+ *
+ * Rendered offscreen at the view's NATIVE dimensions (zoom = 1), so the
+ * resulting <svg> carries the correct width/height/viewBox regardless of the
+ * responsive zoom applied to the live on-screen canvas. This is stored as
+ * `export_vector` and used by the SVG export — vector shapes/paths stay vector.
+ * Text is emitted as <text> referencing its font family, so the production
+ * machine needs that font installed (or the operator outlines it).
+ */
+async function renderOffscreenExportSvg(canvasJson, width, height) {
+  try {
+    const el = document.createElement('canvas');
+    el.width = width;
+    el.height = height;
+    const offscreen = new FabricCanvas(el, { width, height });
+    await offscreen.loadFromJSON(canvasJson);
+    await ensureFontsAndRemeasure(offscreen);
+    offscreen.renderAll();
+    const svg = offscreen.toSVG();
+    offscreen.dispose();
+    return svg;
+  } catch (err) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('Offscreen export SVG render failed:', err);
+    }
+    return '';
+  }
+}
+
+/**
+ * Build the two production SVG variants from a view's canvas JSON:
+ *   outline — text converted to vector <path> (default export; font-independent)
+ *   embed   — text kept editable with the fonts embedded as base64 @font-face
+ * Both fall back to the raw SVG if outlining/embedding fails, so a save never
+ * breaks on a font that can't be resolved.
+ */
+async function buildExportVectors(canvasJson, width, height, opts) {
+  const raw = await renderOffscreenExportSvg(canvasJson, width, height);
+  if (!raw) return { outline: '', embed: '' };
+  const [outline, embed] = await Promise.all([
+    outlineSvgText(raw, opts).catch(() => raw),
+    embedFontsInSvg(raw, opts).catch(() => raw),
+  ]);
+  return { outline: outline || raw, embed: embed || raw };
 }
 
 export default function App() {
@@ -132,6 +209,9 @@ export default function App() {
   const modalRef = useRef(null);
   const returnFocusRef = useRef(null);
   const savingForCartRef = useRef(false);
+  // Custom fonts (family + file URLs), used at save time to outline/embed text
+  // in the SVG export. Kept in a ref so the save handlers read the latest set.
+  const customFontsRef = useRef([]);
 
   const [pricePreview, setPricePreview] = useState(null); // {surcharge, currency_symbol}
 
@@ -174,12 +254,13 @@ export default function App() {
         const allowedFonts = data.global_config?.allowed_fonts || [];
         fetchCustomFonts()
           .then((customFonts) => {
+            customFontsRef.current = customFonts || [];
             loadCustomFonts(customFonts);
-            loadGoogleFonts(allowedFonts);
+            loadGoogleFonts(allowedFonts, config.rest_url);
           })
           .catch(() => {
             // If custom fonts fail, still load Google Fonts
-            loadGoogleFonts(allowedFonts);
+            loadGoogleFonts(allowedFonts, config.rest_url);
           });
 
         // If returning from cart with an existing design, load it BEFORE
@@ -447,28 +528,41 @@ export default function App() {
 
           // Save each view that has a snapshot
           const views = store.template?.views || [];
-          for (const [viewIndex, json] of Object.entries(store.canvasSnapshots)) {
+          for (const [viewIndex, snapJson] of Object.entries(store.canvasSnapshots)) {
             const idx = parseInt(viewIndex, 10);
             const view = views[idx];
-            if (view?.id) {
-              let thumbnail = '';
-              let exportSvg = '';
-              const w = view.canvas_width || 600;
-              const h = view.canvas_height || 600;
+            if (!view?.id) continue;
 
-              if (idx === store.currentViewIndex && store.fabricCanvasRef) {
-                try {
-                  thumbnail = store.fabricCanvasRef.toDataURL({ format: 'png', multiplier: 0.5 });
-                } catch (_) { /* ignore */ }
-                try {
-                  exportSvg = store.fabricCanvasRef.toDataURL({ format: 'png', multiplier: 3 });
-                } catch (_) { /* ignore */ }
-              } else {
-                thumbnail = await renderOffscreenThumbnail(json, w, h);
-                exportSvg = await renderOffscreenExportPng(json, w, h);
-              }
-              await saveDesignView(hash, view.id, json, thumbnail, exportSvg);
+            // Active view: use the live canvas (the snapshot can be stale/empty
+            // from a load race); other views use their stored snapshot.
+            let json = snapJson;
+            if (idx === store.currentViewIndex && store.fabricCanvasRef) {
+              try { json = store.fabricCanvasRef.toJSON(['data']); } catch (_) { json = snapJson; }
             }
+            // Never overwrite a saved view with an empty (0-object) canvas.
+            if (!json || !Array.isArray(json.objects) || json.objects.length === 0) continue;
+
+            let thumbnail = '';
+            let exportSvg = '';
+            const w = view.canvas_width || 600;
+            const h = view.canvas_height || 600;
+
+            if (idx === store.currentViewIndex && store.fabricCanvasRef) {
+              try {
+                thumbnail = store.fabricCanvasRef.toDataURL({ format: 'png', multiplier: 0.5 });
+              } catch (_) { /* ignore */ }
+              try {
+                exportSvg = store.fabricCanvasRef.toDataURL({ format: 'png', multiplier: 3 });
+              } catch (_) { /* ignore */ }
+            } else {
+              thumbnail = await renderOffscreenThumbnail(json, w, h);
+              exportSvg = await renderOffscreenExportPng(json, w, h);
+            }
+            // Real vector SVG (outline default + font-embedded variant), rendered
+            // offscreen at native size so it is zoom-independent and correctly scaled.
+            const { outline: exportVector, embed: exportVectorEmbed } =
+              await buildExportVectors(json, w, h, { customFonts: customFontsRef.current, restUrl: config.rest_url });
+            await saveDesignView(hash, view.id, json, thumbnail, exportSvg, exportVector, exportVectorEmbed);
           }
 
           // Sync hash to hidden input
@@ -523,30 +617,46 @@ export default function App() {
       const views = template?.views || [];
       const activeViewIndex = useDesignerStore.getState().currentViewIndex;
       let savedDesign = null;
-      for (const [viewIndex, json] of Object.entries(freshSnapshots)) {
+      for (const [viewIndex, snapJson] of Object.entries(freshSnapshots)) {
         const idx = parseInt(viewIndex, 10);
         const view = views[idx];
-        if (view?.id) {
-          let thumbnail = '';
-          let exportSvg = '';
-          const w = view.canvas_width || 600;
-          const h = view.canvas_height || 600;
+        if (!view?.id) continue;
 
-          if (idx === activeViewIndex && fabricCanvasRef) {
-            // Active view: capture directly from the live canvas
-            try {
-              thumbnail = fabricCanvasRef.toDataURL({ format: 'png', multiplier: 0.5 });
-            } catch (_) { /* ignore */ }
-            try {
-              exportSvg = fabricCanvasRef.toDataURL({ format: 'png', multiplier: 3 });
-            } catch (_) { /* ignore */ }
-          } else {
-            // Non-active view: render offscreen
-            thumbnail = await renderOffscreenThumbnail(json, w, h);
-            exportSvg = await renderOffscreenExportPng(json, w, h);
-          }
-          savedDesign = await saveDesignView(hash, view.id, json, thumbnail, exportSvg);
+        // Source of truth for the ACTIVE view is the live canvas — the stored
+        // snapshot can be stale/empty due to a load race, and writing that would
+        // wipe the design. Other views use their stored snapshot.
+        let json = snapJson;
+        if (idx === activeViewIndex && fabricCanvasRef) {
+          try { json = fabricCanvasRef.toJSON(['data']); } catch (_) { json = snapJson; }
         }
+        // Never overwrite a saved view with an empty canvas (0 objects). A real
+        // design always has at least a zone overlay; 0 objects means the canvas
+        // hadn't loaded yet — skip so the previously saved design is preserved.
+        if (!json || !Array.isArray(json.objects) || json.objects.length === 0) continue;
+
+        let thumbnail = '';
+        let exportSvg = '';
+        const w = view.canvas_width || 600;
+        const h = view.canvas_height || 600;
+
+        if (idx === activeViewIndex && fabricCanvasRef) {
+          // Active view: capture directly from the live canvas
+          try {
+            thumbnail = fabricCanvasRef.toDataURL({ format: 'png', multiplier: 0.5 });
+          } catch (_) { /* ignore */ }
+          try {
+            exportSvg = fabricCanvasRef.toDataURL({ format: 'png', multiplier: 3 });
+          } catch (_) { /* ignore */ }
+        } else {
+          // Non-active view: render offscreen
+          thumbnail = await renderOffscreenThumbnail(json, w, h);
+          exportSvg = await renderOffscreenExportPng(json, w, h);
+        }
+        // Real vector SVG (outline default + font-embedded variant), rendered
+        // offscreen at native size so it is zoom-independent and correctly scaled.
+        const { outline: exportVector, embed: exportVectorEmbed } =
+          await buildExportVectors(json, w, h, { customFonts: customFontsRef.current, restUrl: config.rest_url });
+        savedDesign = await saveDesignView(hash, view.id, json, thumbnail, exportSvg, exportVector, exportVectorEmbed);
       }
 
       // Update the product image on the page with the design thumbnail

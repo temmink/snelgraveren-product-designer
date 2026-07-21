@@ -39,7 +39,7 @@ class ExportManager {
      *
      * @return array{export_id: int, status: string, file_path: string}|array{error: string}
      */
-    public function generate_export(string $design_hash, string $format = 'pdf', int $order_id = 0): array {
+    public function generate_export(string $design_hash, string $format = 'pdf', int $order_id = 0, string $variant = 'outline'): array {
         if ( $format === 'pdf' && ! ProductForge::has_feature( 'pdf_export' ) ) {
             return [ 'error' => __( 'PDF export requires Snelgraveren Product Designer Pro.', 'snelgraveren-product-designer' ) ];
         }
@@ -94,10 +94,10 @@ class ExportManager {
             return ['error' => 'Design has no views'];
         }
 
-        // Check that views have export_svg data
+        // Check that views have renderable export data (raster PNG or real vector)
         $has_svg = false;
         foreach ($views as $view) {
-            if (!empty($view['export_svg'])) {
+            if (!empty($view['export_svg']) || !empty($view['export_vector']) || !empty($view['export_vector_embed'])) {
                 $has_svg = true;
                 break;
             }
@@ -114,7 +114,7 @@ class ExportManager {
             $file_path = match ($format) {
                 'pdf' => (new PremiumExports($this))->export_pdf($views, $template, $export_dir, $file_name),
                 'png' => $this->export_png($views, $template, $export_dir, $file_name),
-                'svg' => (new PremiumExports($this))->export_svg($views, $export_dir, $file_name),
+                'svg' => (new PremiumExports($this))->export_svg($views, $template, $export_dir, $file_name, $variant),
                 default => throw new \InvalidArgumentException(esc_html(sprintf('Unsupported format: %s', $format))),
             };
 
@@ -342,16 +342,18 @@ class ExportManager {
         foreach ($template_views as $tv) {
             if ((int) ($tv['id'] ?? 0) === $view_id) {
                 return [
-                    'width'  => (int) ($tv['canvas_width'] ?? 800),
-                    'height' => (int) ($tv['canvas_height'] ?? 600),
+                    'width'    => (int) ($tv['canvas_width'] ?? 800),
+                    'height'   => (int) ($tv['canvas_height'] ?? 600),
+                    'width_mm' => (float) ($tv['width_mm'] ?? 0),
                 ];
             }
         }
 
         $canvas = $design_view['canvas_json'] ?? [];
         return [
-            'width'  => (int) ($canvas['width'] ?? 800),
-            'height' => (int) ($canvas['height'] ?? 600),
+            'width'    => (int) ($canvas['width'] ?? 800),
+            'height'   => (int) ($canvas['height'] ?? 600),
+            'width_mm' => 0.0,
         ];
     }
 
