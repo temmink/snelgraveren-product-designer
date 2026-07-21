@@ -122,6 +122,28 @@ function applyXform(m, x, y) {
   return [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]];
 }
 
+const IDENTITY_XFORM = [1, 0, 0, 1, 0, 0];
+
+/** Compose two affines: apply `b` (inner/child) then `a` (outer/parent) → a·b. */
+function multiplyXform(a, b) {
+  return [
+    a[0] * b[0] + a[2] * b[1],
+    a[1] * b[0] + a[3] * b[1],
+    a[0] * b[2] + a[2] * b[3],
+    a[1] * b[2] + a[3] * b[3],
+    a[0] * b[4] + a[2] * b[5] + a[4],
+    a[1] * b[4] + a[3] * b[5] + a[5],
+  ];
+}
+
+/** First direct-child element of `el` with the given tag (`:scope >`, with a
+ *  fallback for engines lacking `:scope` in querySelector). */
+function directChild(el, tag) {
+  let c = el.querySelector(`:scope > ${tag}`);
+  if (!c) c = Array.from(el.children).find((x) => x.tagName === tag) || null;
+  return c;
+}
+
 /** Read a shape's VertList/PrimList text (empty strings if absent). For a Text
  *  shape's outline fallback these intentionally read the nested BackupPath's
  *  VertList/PrimList (that IS the backup outline), so this stays unscoped. */
@@ -145,12 +167,58 @@ function readOwnXform(shapeEl) {
   return el ? el.textContent : null;
 }
 
-/** Flatten shapes, descending into groups. */
+/** Build VertID→VertList and PrimID→PrimList text maps. LightBurn stores a
+ *  shared VertList/PrimList inline on the first shape that uses it; other
+ *  shapes carry only the matching VertID/PrimID and no nested list. This pool
+ *  lets those referencing shapes resolve their geometry. */
+function buildGeometryPools(root) {
+  const vertPool = new Map();
+  const primPool = new Map();
+  root.querySelectorAll('Shape').forEach((el) => {
+    const vid = el.getAttribute('VertID');
+    const pid = el.getAttribute('PrimID');
+    const v = directChild(el, 'VertList');
+    const p = directChild(el, 'PrimList');
+    if (vid && v && !vertPool.has(vid)) vertPool.set(vid, v.textContent || '');
+    if (pid && p && !primPool.has(pid)) primPool.set(pid, p.textContent || '');
+  });
+  return { vertPool, primPool };
+}
+
+/** Resolve a Path shape's VertList/PrimList: prefer its own nested lists, else
+ *  fall back to the shared pool by VertID/PrimID. */
+function resolvePathGeom(el, vertPool, primPool) {
+  const v = directChild(el, 'VertList');
+  const p = directChild(el, 'PrimList');
+  const vid = el.getAttribute('VertID');
+  const pid = el.getAttribute('PrimID');
+  return {
+    vert: (v && v.textContent) || (vid && vertPool.get(vid)) || '',
+    prim: (p && p.textContent) || (pid && primPool.get(pid)) || '',
+  };
+}
+
+/** Flatten shapes depth-first, composing each ancestor Group's XForm into its
+ *  descendants so grouped geometry lands where LightBurn draws it. Returns leaf
+ *  (non-Group) shapes as { el, xform (composed, mm), type }. */
 function collectShapes(root) {
   const out = [];
-  root.querySelectorAll('Shape').forEach((el) => {
-    if (el.getAttribute('Type') === 'Group') return; // its child <Shape>s are matched separately
-    out.push(el);
+  const walk = (el, acc) => {
+    const eff = multiplyXform(acc, parseXform(readOwnXform(el)));
+    const type = el.getAttribute('Type');
+    if (type === 'Group') {
+      // Real files wrap children in <Children>; fall back to direct child
+      // <Shape>s if that wrapper is absent.
+      const container = directChild(el, 'Children') || el;
+      Array.from(container.children).forEach((ch) => {
+        if (ch.tagName === 'Shape') walk(ch, eff);
+      });
+      return;
+    }
+    out.push({ el, xform: eff, type });
+  };
+  Array.from(root.children).forEach((ch) => {
+    if (ch.tagName === 'Shape') walk(ch, IDENTITY_XFORM);
   });
   return out;
 }
@@ -182,13 +250,14 @@ export function parseLbrn(xmlString, opts = {}) {
     return true;
   };
 
-  collectShapes(doc).forEach((el) => {
-    const type = el.getAttribute('Type');
+  const root = doc.querySelector('LightBurnProject');
+  const { vertPool, primPool } = buildGeometryPools(root);
+
+  collectShapes(root).forEach(({ el, xform, type }) => {
     const cutIndex = parseInt(el.getAttribute('CutIndex') || '0', 10);
-    const xform = parseXform(readOwnXform(el));
 
     if (type === 'Path' || type === 'Rect' || type === 'Ellipse') {
-      const { vert, prim } = readVertPrim(el);
+      const { vert, prim } = resolvePathGeom(el, vertPool, primPool);
       if (!pushPath(vert, prim, xform, cutIndex)) warnings.push('Skipped an unreadable shape.');
     } else if (type === 'Text') {
       const str = el.getAttribute('Str') || '';

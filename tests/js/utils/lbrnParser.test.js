@@ -218,3 +218,39 @@ describe('parseLbrn (bitmap warning)', () => {
     expect(warnings.join(' ')).toMatch(/bitmap/i);
   });
 });
+
+describe('parseLbrn (grouped + shared geometry)', () => {
+  it('composes group XForms and resolves shared PrimID geometry from the pool', () => {
+    // Two groups at different offsets; the second shape carries only its VertID/
+    // PrimID and shares the PrimList of the first via the pool.
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<LightBurnProject AppVersion="2.1.03">
+  <Shape Type="Group" CutIndex="0">
+    <XForm>1 0 0 1 0 0</XForm>
+    <Children>
+      <Shape Type="Path" CutIndex="0" VertID="1" PrimID="7">
+        <XForm>1 0 0 1 0 0</XForm>
+        <VertList>V0 0V10 0V10 10</VertList>
+        <PrimList>L0 1L1 2L2 0</PrimList>
+      </Shape>
+    </Children>
+  </Shape>
+  <Shape Type="Group" CutIndex="0">
+    <XForm>1 0 0 1 100 0</XForm>
+    <Children>
+      <Shape Type="Path" CutIndex="0" VertID="2" PrimID="7">
+        <XForm>1 0 0 1 0 0</XForm>
+        <VertList>V0 0V10 0V10 10</VertList>
+      </Shape>
+    </Children>
+  </Shape>
+</LightBurnProject>`;
+    const { layers, widthMm, warnings } = parseLbrn(xml, { availableFonts: [] });
+    const svgs = layers.filter((l) => l.type === 'svg');
+    // Both shapes import (2nd resolved its PrimList from the pool → not skipped).
+    expect(svgs.length).toBe(2);
+    // Group (100,0) composed onto the 2nd shape → design spans x 0..110, not 0..10.
+    expect(widthMm).toBe(110);
+    expect(warnings.length).toBe(0);
+  });
+});
