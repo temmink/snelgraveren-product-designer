@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.3.5
+Stable tag: 1.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -93,6 +93,9 @@ Freemius Terms of Service: https://freemius.com/terms/
 No other external services are used. Design exports (PDF/PNG/SVG) are rendered entirely on your own server — nothing about your customers' designs, uploads, or orders is ever sent off-site.
 
 == Changelog ==
+
+= 1.4.0 =
+* New (Pro): Import LightBurn projects (.lbrn2) directly in the Template Builder. Every shape and text becomes an individual, editable object on the canvas; cut-layer colours are preserved so exported SVGs round-trip back into LightBurn, and the physical size (mm) is kept for true-scale exports. Supports grouped shapes, shared geometry, bezier and closed-polygon paths, and maps text to the nearest available web font (with a vector fallback when no font matches).
 
 = 1.3.5 =
 * Fix: a design whose font family is stored without Google Fonts' canonical spacing (e.g. "BebasNeue" instead of "Bebas Neue") never loaded on the product page, so the canvas — and therefore the export — fell back to a different-width font and centred text drifted out of the middle. The designer now loads Google fonts under the exact family name the design uses via the built-in font proxy (which normalises the name server-side), so the on-screen text and the export both use the real font and sit correctly. This is the real fix for off-centre exports that 1.3.4 could not address (the font never loaded at all, so there was nothing to wait for). Re-open and save an affected design once to regenerate its export.
