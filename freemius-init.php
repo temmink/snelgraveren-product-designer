@@ -57,4 +57,33 @@ if ( ! function_exists( 'sgpd_fs' ) ) {
     sgpd_fs()->add_action( 'after_uninstall', [ \ProductForge\Uninstaller::class, 'uninstall' ] );
 
     do_action( 'sgpd_fs_loaded' );
+
+    // On the plugin author's own installs the ProductForge dev-license constant
+    // (SGPD_LICENSE_KEY) already grants premium, so Freemius has nothing to
+    // license and would only nag for an opt-in / license key it will never
+    // receive. Put it into anonymous (skipped) mode once so those prompts never
+    // appear on the author's dev/live sites. Real customers — who do not have
+    // this per-install secret constant — get the normal Freemius opt-in flow.
+    //
+    // The constant may be defined late (e.g. via a Code Snippet that runs after
+    // this file loads), so the check lives INSIDE the admin_init callback —
+    // which fires well after all such definitions — rather than gating the
+    // hook registration itself.
+    add_action( 'admin_init', function () {
+        if (
+            ! defined( 'SGPD_LICENSE_KEY' )
+            || ! defined( 'AUTH_SALT' )
+            || SGPD_LICENSE_KEY !== hash( 'sha256', 'productforge-dev-' . AUTH_SALT )
+        ) {
+            return; // real customer / no dev constant → normal Freemius flow
+        }
+        $fs = sgpd_fs();
+        if (
+            method_exists( $fs, 'is_registered' )
+            && ! $fs->is_registered()   // never override a real paying customer
+            && ! $fs->is_anonymous()    // already skipped → nothing to do
+        ) {
+            $fs->skip_connection();
+        }
+    } );
 }
