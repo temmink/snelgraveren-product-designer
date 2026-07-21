@@ -47,3 +47,48 @@ describe('layerColor', () => {
     expect(layerColor(30)).toBe(layerColor(0));
   });
 });
+
+import fs from 'fs';
+import path from 'path';
+import { parseLbrn } from '../../../admin/js/template-builder/src/utils/lbrnParser';
+
+const FIXTURE = fs.readFileSync(
+  path.join(__dirname, '../fixtures/test_svg_import.lbrn2'), 'utf8'
+);
+
+describe('parseLbrn (sample file)', () => {
+  it('imports the editable "Bobbie" text when Arial is available', () => {
+    const { layers } = parseLbrn(FIXTURE, { availableFonts: ['Arial'] });
+    const text = layers.find((l) => l.type === 'text');
+    expect(text).toBeTruthy();
+    expect(text.text).toBe('Bobbie');
+    expect(text.fontFamily).toBe('Arial');
+    expect(text.fontSize).toBeGreaterThan(0);
+    expect(Number.isFinite(text.left)).toBe(true);
+    expect(Number.isFinite(text.top)).toBe(true);
+  });
+
+  it('imports the two paths as inline svg layers with markup', () => {
+    const { layers } = parseLbrn(FIXTURE, { availableFonts: ['Arial'] });
+    const svgs = layers.filter((l) => l.type === 'svg');
+    expect(svgs.length).toBe(2);
+    svgs.forEach((s) => {
+      expect(s.svg_markup).toMatch(/<svg[\s\S]*<path[\s\S]*<\/svg>/);
+      expect(s.svg_markup).toMatch(/stroke="#/);
+    });
+  });
+
+  it('reports a positive physical width and origin-normalised layers', () => {
+    const { widthMm, heightMm, layers } = parseLbrn(FIXTURE, { availableFonts: ['Arial'] });
+    expect(widthMm).toBeGreaterThan(0);
+    expect(heightMm).toBeGreaterThan(0);
+    layers.forEach((l) => { expect(l.left).toBeGreaterThanOrEqual(0); expect(l.top).toBeGreaterThanOrEqual(0); });
+  });
+
+  it('falls back to an outline svg layer + warning when the font is unavailable', () => {
+    const { layers, warnings } = parseLbrn(FIXTURE, { availableFonts: [] });
+    expect(layers.some((l) => l.type === 'text')).toBe(false);
+    expect(layers.filter((l) => l.type === 'svg').length).toBe(3); // 2 paths + text outline
+    expect(warnings.join(' ')).toMatch(/Arial/);
+  });
+});

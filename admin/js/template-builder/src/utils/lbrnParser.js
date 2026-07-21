@@ -99,3 +99,144 @@ export function qtFontToFamily(fontString) {
   const weight = parseInt(parts[4], 10) >= 600 ? 700 : 400;
   return { family, weight };
 }
+
+/** Parse an `<XForm>` text node "a b c d e f" → 6-number affine (identity default). */
+function parseXform(text) {
+  const p = String(text || '').trim().split(/\s+/).map(Number);
+  return p.length === 6 && p.every(Number.isFinite) ? p : [1, 0, 0, 1, 0, 0];
+}
+
+/** Apply an affine [a,b,c,d,e,f] to a point → [x,y]. */
+function applyXform(m, x, y) {
+  return [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]];
+}
+
+/** Read a shape's VertList/PrimList text (empty strings if absent). */
+function readVertPrim(shapeEl) {
+  const v = shapeEl.querySelector('VertList');
+  const p = shapeEl.querySelector('PrimList');
+  return { vert: (v && v.textContent) || '', prim: (p && p.textContent) || '' };
+}
+
+/** Flatten shapes, descending into groups. */
+function collectShapes(root) {
+  const out = [];
+  root.querySelectorAll('Shape').forEach((el) => {
+    if (el.getAttribute('Type') === 'Group') return; // its child <Shape>s are matched separately
+    out.push(el);
+  });
+  return out;
+}
+
+/**
+ * Parse a LightBurn project into store-ready layer descriptors.
+ * Coordinates: shape XForm (mm) → union bbox → Y-flip → ×PX_PER_MM.
+ * Paths become inline `svg` layers; text becomes a `text` layer (or an outline
+ * `svg` layer when its font is unavailable).
+ */
+export function parseLbrn(xmlString, opts = {}) {
+  const available = new Set((opts.availableFonts || []).map(String));
+  const warnings = [];
+  const doc = new DOMParser().parseFromString(xmlString, 'application/xml');
+  if (doc.querySelector('parsererror') || !doc.querySelector('LightBurnProject')) {
+    throw new Error('Not a valid LightBurn (.lbrn2) file');
+  }
+
+  // 1) Collect raw shapes with machine-space geometry.
+  const paths = []; // { d(local), xform, cutIndex, pts:[[mx,my]...] }
+  const texts = []; // { text, family, fontSize, xform, cutIndex, originMx, originMy }
+
+  const pushPath = (vert, prim, xform, cutIndex) => {
+    const localD = vertPrimToPathData(vert, prim);
+    if (!localD) return false;
+    // machine-space points (for bbox + later per-shape transform)
+    const mpts = parseVertList(vert).map((v) => applyXform(xform, v.x, v.y));
+    paths.push({ vert, prim, xform, cutIndex, mpts });
+    return true;
+  };
+
+  collectShapes(doc).forEach((el) => {
+    const type = el.getAttribute('Type');
+    const cutIndex = parseInt(el.getAttribute('CutIndex') || '0', 10);
+    const xform = parseXform((el.querySelector('XForm') || {}).textContent);
+
+    if (type === 'Path' || type === 'Rect' || type === 'Ellipse') {
+      const { vert, prim } = readVertPrim(el);
+      if (!pushPath(vert, prim, xform, cutIndex)) warnings.push('Skipped an unreadable shape.');
+    } else if (type === 'Text') {
+      const str = el.getAttribute('Str') || '';
+      const { family } = qtFontToFamily(el.getAttribute('Font'));
+      const heightMm = parseFloat(el.getAttribute('H') || '0') || 0;
+      if (str && available.has(family)) {
+        const [ox, oy] = applyXform(xform, 0, 0);
+        texts.push({ text: str, family, fontSize: heightMm * PX_PER_MM, cutIndex, originMx: ox, originMy: oy });
+      } else {
+        const { vert, prim } = readVertPrim(el);
+        if (pushPath(vert, prim, xform, cutIndex)) {
+          if (str) warnings.push(`Font "${family}" is not available; imported "${str}" as an outline.`);
+        } else if (str) {
+          warnings.push(`Font "${family}" is not available and "${str}" has no outline; skipped.`);
+        }
+      }
+    } else if (type === 'Bitmap') {
+      warnings.push('Skipped a bitmap image (not supported).');
+    } else if (type && type !== 'Group') {
+      warnings.push(`Skipped unsupported shape type "${type}".`);
+    }
+  });
+
+  // 2) Union machine-space bbox across all geometry + text origins.
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  const acc = (x, y) => { if (x < minX) minX = x; if (y < minY) minY = y; if (x > maxX) maxX = x; if (y > maxY) maxY = y; };
+  paths.forEach((p) => p.mpts.forEach(([x, y]) => acc(x, y)));
+  texts.forEach((t) => acc(t.originMx, t.originMy));
+  if (!Number.isFinite(minX)) { return { layers: [], widthMm: 0, heightMm: 0, warnings }; }
+
+  const widthMm = maxX - minX;
+  const heightMm = maxY - minY;
+  const layers = [];
+
+  // 3) Path → inline svg layer. Bake a shape-local, Y-flipped px path; position
+  //    the layer at the shape's design-canvas top-left (also Y-flipped).
+  paths.forEach((p) => {
+    let sMinX = Infinity, sMinY = Infinity, sMaxX = -Infinity, sMaxY = -Infinity;
+    p.mpts.forEach(([x, y]) => { if (x < sMinX) sMinX = x; if (y < sMinY) sMinY = y; if (x > sMaxX) sMaxX = x; if (y > sMaxY) sMaxY = y; });
+    const wPx = Math.max(1, (sMaxX - sMinX) * PX_PER_MM);
+    const hPx = Math.max(1, (sMaxY - sMinY) * PX_PER_MM);
+    // per-vertex transform: machine → shape-local px, Y flipped
+    const toLocalPx = (lx, ly) => {
+      const [mx, my] = applyXform(p.xform, lx, ly);
+      return [(mx - sMinX) * PX_PER_MM, (sMaxY - my) * PX_PER_MM];
+    };
+    const d = vertPrimToPathData(p.vert, p.prim, toLocalPx);
+    const color = layerColor(p.cutIndex);
+    const svg_markup =
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${n(wPx)}" height="${n(hPx)}" `
+      + `viewBox="0 0 ${n(wPx)} ${n(hPx)}">`
+      + `<path d="${d}" fill="none" stroke="${color}" stroke-width="1"/></svg>`;
+    layers.push({
+      type: 'svg',
+      svg_markup,
+      left: n((sMinX - minX) * PX_PER_MM),
+      top: n((maxY - sMaxY) * PX_PER_MM),
+      scaleX: 1,
+      scaleY: 1,
+    });
+  });
+
+  // 4) Text → text layer (fill = cut-layer colour; positioned by its origin).
+  texts.forEach((t) => {
+    layers.push({
+      type: 'text',
+      text: t.text,
+      fontFamily: t.family,
+      fontSize: n(t.fontSize),
+      fill: layerColor(t.cutIndex),
+      textAlign: 'left',
+      left: n((t.originMx - minX) * PX_PER_MM),
+      top: n((maxY - t.originMy) * PX_PER_MM),
+    });
+  });
+
+  return { layers, widthMm: n(widthMm), heightMm: n(heightMm), warnings };
+}
