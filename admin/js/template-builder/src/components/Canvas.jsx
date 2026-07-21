@@ -339,7 +339,7 @@ export default function Canvas() {
       handledKeys.add(key);
       const existing = existingByKey[key];
 
-      if (zone.boundary_type === 'svg' && zone.svg_url) {
+      if (zone.boundary_type === 'svg' && (zone.svg_url || zone.svg_markup)) {
         if (existing) {
           // Update SVG zone in-place (position/scale/rotation only).
           // For SVG groups, stroke/fill lives on child paths, not the group.
@@ -366,8 +366,9 @@ export default function Canvas() {
           existing.setCoords();
         } else {
           // Load SVG boundary asynchronously.
-          fetch(zone.svg_url)
-            .then((r) => r.text())
+          (zone.svg_url
+            ? fetch(zone.svg_url).then((r) => r.text())
+            : Promise.resolve(zone.svg_markup))
             .then((svgText) => parseSvgToFabric(svgText))
             .then((result) => {
               if (cancelled || !result || !fabricRef.current) return;
