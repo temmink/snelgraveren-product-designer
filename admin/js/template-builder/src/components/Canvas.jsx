@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { Canvas as FabricCanvas, Rect, FabricImage, Textbox, FabricText, loadSVGFromString, util, cache as fabricCache } from 'fabric';
 import useTemplateStore from '../store/useTemplateStore';
 import { parseSvgToFabric } from '../utils/svgPathUtils';
@@ -1048,14 +1048,15 @@ export default function Canvas() {
       const d = obj.data || {};
       const layer = view?.zones_config?.[d.zoneIndex]?.layers?.[d.layerIndex];
       if (d.elementType === 'svg' && layer && layer.svg_markup) {
+        const b = obj.getBoundingRect();
         items.push({
           svgMarkup: layer.svg_markup,
-          left: obj.left,
-          top: obj.top,
-          width: obj.width * (obj.scaleX || 1),
-          height: obj.height * (obj.scaleY || 1),
-          scaleX: obj.scaleX || 1,
-          scaleY: obj.scaleY || 1,
+          left: b.left,
+          top: b.top,
+          width: b.width,
+          height: b.height,
+          scaleX: obj.width ? b.width / obj.width : 1,
+          scaleY: obj.height ? b.height / obj.height : 1,
         });
       } else {
         ignored += 1;
@@ -1086,7 +1087,7 @@ export default function Canvas() {
 
     if (ignored > 0) {
       window.alert(
-        __( 'Boundary created. Ignored non-vector layers: ', 'snelgraveren-product-designer' ) + ignored
+        sprintf( __( 'Boundary created. Ignored non-vector layers: %d', 'snelgraveren-product-designer' ), ignored )
       );
     }
   }, [currentViewIndex, addZone]);
