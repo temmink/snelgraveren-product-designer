@@ -6,23 +6,25 @@ describe('vertPrimToPathData', () => {
       .toBe('M0 0L10 0L10 10Z');
   });
 
-  it('builds a cubic bezier using a.c1 (outgoing) and b.c0 (incoming) handles', () => {
-    expect(vertPrimToPathData('V0 0c1x2c1y3V10 0c0x8c0y-3', 'B0 1'))
+  it('builds a cubic bezier using a.c0 (outgoing) and b.c1 (incoming) handles', () => {
+    // For `B a b`: first control = vertex a's OUTGOING handle (c0), second
+    // control = vertex b's INCOMING handle (c1).
+    expect(vertPrimToPathData('V0 0c0x2c0y3V10 0c1x8c1y-3', 'B0 1'))
       .toBe('M0 0C2 3 8 -3 10 0');
   });
 
   it('treats a lone control-x (LightBurn straight-segment marker) as vertex-coincident', () => {
-    // `c1x5` / `c0x5` have no paired y → they are LightBurn's "this side is
-    // straight" markers, so the controls stay at their vertices (0,0)/(10,0),
-    // not at the literal x=5. The bezier degenerates to a straight line.
-    expect(vertPrimToPathData('V0 0c1x5V10 0c0x5', 'B0 1'))
+    // `c0x5` / `c1x5` have no paired y → they are LightBurn's "this side is
+    // straight" markers, so the used controls (a.c0, b.c1) stay at their
+    // vertices (0,0)/(10,0), not at the literal x=5 → the bezier is straight.
+    expect(vertPrimToPathData('V0 0c0x5V10 0c1x5', 'B0 1'))
       .toBe('M0 0C0 0 10 0 10 0');
   });
 
   it('uses a control point only when both its x and y are given', () => {
-    // c1 of vertex 0 has x AND y → real control (2,3); c0 of vertex 1 has x AND
-    // y → real control (8,-3). (Same as the bezier test but asserts the pairing rule.)
-    expect(vertPrimToPathData('V0 0c1x2c1y3V10 0c0x8c0y-3', 'B0 1'))
+    // a.c0 has x AND y → real outgoing control (2,3); b.c1 has x AND y → real
+    // incoming control (8,-3). (Asserts the x/y pairing rule.)
+    expect(vertPrimToPathData('V0 0c0x2c0y3V10 0c1x8c1y-3', 'B0 1'))
       .toBe('M0 0C2 3 8 -3 10 0');
   });
 

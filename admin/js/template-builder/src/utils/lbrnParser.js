@@ -6,7 +6,8 @@ function n(v) {
 /**
  * Parse a LightBurn VertList: `V{x} {y}` optionally followed by control-handle
  * tokens `c0x{v}` `c0y{v}` `c1x{v}` `c1y{v}`. A missing handle component
- * defaults to the vertex coordinate. c0 = incoming handle, c1 = outgoing.
+ * defaults to the vertex coordinate. c0 = outgoing handle (toward the next
+ * point), c1 = incoming handle (from the previous point).
  */
 export function parseVertList(vertList) {
   const verts = [];
@@ -72,7 +73,8 @@ export function vertPrimToPathData(vertList, primList, transform) {
       if (p.cmd === 'L') {
         if (!closing) d += `L${px(b.x, b.y)}`;
       } else {
-        d += `C${px(a.c1x, a.c1y)} ${px(b.c0x, b.c0y)} ${px(b.x, b.y)}`;
+        // Cubic: vertex a's OUTGOING handle (c0) and vertex b's INCOMING (c1).
+        d += `C${px(a.c0x, a.c0y)} ${px(b.c1x, b.c1y)} ${px(b.x, b.y)}`;
       }
       cursor = p.b;
       i++;
