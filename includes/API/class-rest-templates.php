@@ -236,6 +236,9 @@ class RestTemplates {
             return new \WP_Error('not_found', 'Template not found.', ['status' => 404]);
         }
         $body = $request->get_json_params();
+        if (!empty($body['zones_config']) && is_array($body['zones_config'])) {
+            $body['zones_config'] = $this->sanitize_zone_layers($body['zones_config']);
+        }
         $id   = $this->repo->create_view($template_id, $body);
         return new \WP_REST_Response($this->repo->get_view($template_id, $id), 201);
     }
@@ -247,8 +250,49 @@ class RestTemplates {
         if (!$view) {
             return new \WP_Error('not_found', 'View not found.', ['status' => 404]);
         }
-        $this->repo->update_view($template_id, $view_id, $request->get_json_params());
+        $body = $request->get_json_params();
+        if (!empty($body['zones_config']) && is_array($body['zones_config'])) {
+            $body['zones_config'] = $this->sanitize_zone_layers($body['zones_config']);
+        }
+        $this->repo->update_view($template_id, $view_id, $body);
         return rest_ensure_response($this->repo->get_view($template_id, $view_id));
+    }
+
+    /**
+     * Sanitise inline SVG markup on every layer of a zones_config array.
+     * svg_markup is admin-authored but served to all customers, so it must be
+     * stripped of scripts/handlers/external refs before storage.
+     *
+     * @param array $zones
+     * @return array
+     */
+    private function sanitize_zone_layers(array $zones): array {
+        if (!class_exists(\enshrined\svgSanitize\Sanitizer::class)) {
+            // No sanitiser available — drop markup rather than store it raw.
+            foreach ($zones as &$zone) {
+                foreach (($zone['layers'] ?? []) as &$layer) {
+                    if (isset($layer['svg_markup'])) {
+                        unset($layer['svg_markup']);
+                    }
+                }
+            }
+            return $zones;
+        }
+        $sanitizer = new \enshrined\svgSanitize\Sanitizer();
+        foreach ($zones as &$zone) {
+            if (empty($zone['layers']) || !is_array($zone['layers'])) {
+                continue;
+            }
+            foreach ($zone['layers'] as &$layer) {
+                if (!empty($layer['svg_markup']) && is_string($layer['svg_markup'])) {
+                    $clean = $sanitizer->sanitize($layer['svg_markup']);
+                    $layer['svg_markup'] = is_string($clean) ? $clean : '';
+                }
+            }
+            unset($layer);
+        }
+        unset($zone);
+        return $zones;
     }
 
     public function delete_view(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
