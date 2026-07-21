@@ -72,3 +72,30 @@ export function vertPrimToPathData(vertList, primList, transform) {
   }
   return d;
 }
+
+export const PX_PER_MM = 3.7795; // ≈ 96 dpi; matches svgPathUtils.js unit conversion
+
+/** LightBurn's default 30-colour layer palette (index → hex). Verify against
+ *  the running LightBurn build if exact round-trip layer indices matter. */
+const LBRN_PALETTE = [
+  '#000000', '#0000ff', '#ff0000', '#00e000', '#d0d000', '#ff8000',
+  '#00e0e0', '#ff00ff', '#b4b4b4', '#0000a0', '#a00000', '#00a000',
+  '#a0a000', '#c08000', '#00a0a0', '#a000a0', '#808080', '#7d87b9',
+  '#bb7784', '#4a6fe3', '#d33f6a', '#8cd78c', '#f0b98d', '#f6c4e1',
+  '#fa9ed4', '#500a78', '#b45a00', '#004754', '#86fa88', '#ffdb66',
+];
+
+/** Stroke colour for a LightBurn cut-layer index (wraps at palette length). */
+export function layerColor(index) {
+  const L = LBRN_PALETTE.length;
+  const i = ((Number(index) % L) + L) % L;
+  return LBRN_PALETTE[i];
+}
+
+/** Qt QFont string `family,pointSize,pixelSize,styleHint,weight,…` → family + weight. */
+export function qtFontToFamily(fontString) {
+  const parts = String(fontString || '').split(',');
+  const family = (parts[0] || '').trim() || 'Arial';
+  const weight = parseInt(parts[4], 10) >= 600 ? 700 : 400;
+  return { family, weight };
+}

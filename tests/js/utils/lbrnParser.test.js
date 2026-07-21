@@ -1,4 +1,4 @@
-import { vertPrimToPathData } from '../../../admin/js/template-builder/src/utils/lbrnParser';
+import { vertPrimToPathData, qtFontToFamily, layerColor } from '../../../admin/js/template-builder/src/utils/lbrnParser';
 
 describe('vertPrimToPathData', () => {
   it('builds a closed triangle from line primitives (Z instead of the closing line)', () => {
@@ -21,5 +21,29 @@ describe('vertPrimToPathData', () => {
     const shift = (x, y) => [x + 100, y + 1];
     expect(vertPrimToPathData('V0 0V10 0V10 10', 'L0 1L1 2L2 0', shift))
       .toBe('M100 1L110 1L110 11Z');
+  });
+});
+
+describe('qtFontToFamily', () => {
+  it('reads family and normal weight from a Qt font string', () => {
+    expect(qtFontToFamily('Arial,-1,4096,5,400,0,0,0,0,0'))
+      .toEqual({ family: 'Arial', weight: 400 });
+  });
+  it('maps Qt weight >= 600 to bold (700)', () => {
+    expect(qtFontToFamily('Arial,-1,4096,5,700,0,0,0,0,0'))
+      .toEqual({ family: 'Arial', weight: 700 });
+  });
+  it('falls back to Arial/400 for empty input', () => {
+    expect(qtFontToFamily('')).toEqual({ family: 'Arial', weight: 400 });
+  });
+});
+
+describe('layerColor', () => {
+  it('returns a hex colour and differs between indices', () => {
+    expect(layerColor(0)).toMatch(/^#[0-9a-fA-F]{6}$/);
+    expect(layerColor(0)).not.toBe(layerColor(2));
+  });
+  it('wraps indices beyond the palette', () => {
+    expect(layerColor(30)).toBe(layerColor(0));
   });
 });
