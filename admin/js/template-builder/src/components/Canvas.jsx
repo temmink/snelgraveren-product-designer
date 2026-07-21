@@ -1,9 +1,10 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { Canvas as FabricCanvas, Rect, FabricImage, Textbox, FabricText, loadSVGFromString, util, cache as fabricCache } from 'fabric';
 import useTemplateStore from '../store/useTemplateStore';
 import { parseSvgToFabric } from '../utils/svgPathUtils';
 import { alignElement } from '../../../../../shared/js/alignElement';
+import { mergeLayersToBoundary } from '../utils/mergeLayersToBoundary';
 
 const ALLOWED_FABRIC_TYPES = new Set([
   'IText', 'Textbox', 'Image', 'Rect', 'Path', 'Group', 'FabricText',
@@ -42,7 +43,7 @@ export default function Canvas() {
 
   const {
     views, currentViewIndex,
-    updateView, updateZone, updateLayer, pushHistory, undo, redo, canUndo, canRedo,
+    updateView, updateZone, updateLayer, addZone, pushHistory, undo, redo, canUndo, canRedo,
     isFreeMove, setFreeMove, setCanvasSelectedKey,
   } = useTemplateStore();
 
@@ -338,7 +339,7 @@ export default function Canvas() {
       handledKeys.add(key);
       const existing = existingByKey[key];
 
-      if (zone.boundary_type === 'svg' && zone.svg_url) {
+      if (zone.boundary_type === 'svg' && (zone.svg_url || zone.svg_markup)) {
         if (existing) {
           // Update SVG zone in-place (position/scale/rotation only).
           // For SVG groups, stroke/fill lives on child paths, not the group.
@@ -365,8 +366,9 @@ export default function Canvas() {
           existing.setCoords();
         } else {
           // Load SVG boundary asynchronously.
-          fetch(zone.svg_url)
-            .then((r) => r.text())
+          (zone.svg_url
+            ? fetch(zone.svg_url).then((r) => r.text())
+            : Promise.resolve(zone.svg_markup))
             .then((svgText) => parseSvgToFabric(svgText))
             .then((result) => {
               if (cancelled || !result || !fabricRef.current) return;
@@ -1032,6 +1034,65 @@ export default function Canvas() {
     pushHistory(viewKey, canvas.toJSON(['data']));
   }, [views, currentViewIndex, currentView, updateLayer, pushHistory, viewKey]);
 
+  const isPremium = window.sgpdTemplateBuilder?.isPremium;
+
+  const handleUseAsBoundary = useCallback(() => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    const active = canvas.getActiveObjects() || [];
+    const views = useTemplateStore.getState().views;   // read fresh (avoid stale closure)
+    const view = views[currentViewIndex];
+
+    const items = [];
+    let ignored = 0;
+    active.forEach((obj) => {
+      const d = obj.data || {};
+      const layer = view?.zones_config?.[d.zoneIndex]?.layers?.[d.layerIndex];
+      if (d.elementType === 'svg' && layer && layer.svg_markup) {
+        const b = obj.getBoundingRect();
+        items.push({
+          svgMarkup: layer.svg_markup,
+          left: b.left,
+          top: b.top,
+          width: b.width,
+          height: b.height,
+          scaleX: obj.width ? b.width / obj.width : 1,
+          scaleY: obj.height ? b.height / obj.height : 1,
+        });
+      } else {
+        ignored += 1;
+      }
+    });
+
+    const merged = items.length ? mergeLayersToBoundary(items) : null;
+    if (!merged) {
+      window.alert(__( 'Select at least one vector layer to use as a boundary.', 'snelgraveren-product-designer' ));
+      return;
+    }
+
+    addZone(currentViewIndex, {
+      name: __( 'Boundary', 'snelgraveren-product-designer' ),
+      type: 'safe_area',
+      behavior: 'restrict',
+      boundary_type: 'svg',
+      svg_markup: merged.svg_markup,
+      svg_intrinsic_width: merged.width,
+      svg_intrinsic_height: merged.height,
+      x: merged.x,
+      y: merged.y,
+      width: merged.width,
+      height: merged.height,
+      svg_scale: 1,
+      allowed_types: ['text', 'image', 'svg'],
+    });
+
+    if (ignored > 0) {
+      window.alert(
+        sprintf( __( 'Boundary created. Ignored non-vector layers: %d', 'snelgraveren-product-designer' ), ignored )
+      );
+    }
+  }, [currentViewIndex, addZone]);
+
   return (
     <div className="pf-canvas-wrap">
       <div className="pf-canvas-toolbar">
@@ -1042,6 +1103,15 @@ export default function Canvas() {
         >
           { isFreeMove ? __( 'Enforce Zones', 'snelgraveren-product-designer' ) : __( 'Free Move', 'snelgraveren-product-designer' ) }
         </button>
+        {isPremium && hasSelection && (
+          <button
+            className="pf-canvas-toolbar__btn"
+            onClick={handleUseAsBoundary}
+            title={ __( 'Turn the selected vector layer(s) into a boundary', 'snelgraveren-product-designer' ) }
+          >
+            { __( 'Use as Boundary', 'snelgraveren-product-designer' ) }
+          </button>
+        )}
         <button
           className="pf-canvas-toolbar__btn"
           onClick={openMediaPicker}
