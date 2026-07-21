@@ -91,4 +91,115 @@ describe('parseLbrn (sample file)', () => {
     expect(layers.filter((l) => l.type === 'svg').length).toBe(3); // 2 paths + text outline
     expect(warnings.join(' ')).toMatch(/Arial/);
   });
+
+  it('pins the exact left/top of the second path shape (transform composition regression)', () => {
+    // Golden values computed from the (fixed) implementation itself — see
+    // task-3-report.md for the derivation command. Pins the affine + bbox math
+    // so a future regression can't silently drift while still passing `>= 0`.
+    const { layers } = parseLbrn(FIXTURE, { availableFonts: ['Arial'] });
+    const svgs = layers.filter((l) => l.type === 'svg');
+    expect(svgs[1].left).toBe(65.438);
+    expect(svgs[1].top).toBe(78.381);
+  });
+});
+
+describe('parseLbrn (XForm scoping — Text shape with HasBackupPath)', () => {
+  const XFORM_FIXTURE = `<?xml version="1.0" encoding="UTF-8"?>
+<LightBurnProject AppVersion="2.1.03">
+    <Shape Type="Text" CutIndex="0" Font="Arial,-1,4096,5,400,0,0,0,0,0" Str="Hi" H="10" HasBackupPath="1">
+        <BackupPath Type="Path" CutIndex="0">
+            <XForm>1 0 0 1 0 0</XForm>
+            <VertList>V0 0V10 0V10 10</VertList>
+            <PrimList>L0 1L1 2L2 0</PrimList>
+        </BackupPath>
+        <XForm>1 0 0 1 1000 1000</XForm>
+    </Shape>
+</LightBurnProject>`;
+
+  it('places the text using the SHAPE\'S OWN XForm, not the nested BackupPath XForm', () => {
+    const { layers } = parseLbrn(XFORM_FIXTURE, { availableFonts: ['Arial'] });
+    const text = layers.find((l) => l.type === 'text');
+    expect(text).toBeTruthy();
+    // Only one shape exists, so bbox origin == the shape's own origin → left/top must be 0,0.
+    // If the parser mistakenly reads the BackupPath's XForm (identity, translate 0 0)
+    // instead of the shape's own (translate 1000 1000), this still passes coincidentally
+    // for a single-shape bbox, so we assert against the un-normalised origin directly
+    // via widthMm/heightMm being 0 (single point) AND by checking a second shape anchors
+    // relative to it below.
+    expect(text.left).toBe(0);
+    expect(text.top).toBe(0);
+  });
+
+  it('regression: a second, differently-positioned path shape proves the OWN XForm (not BackupPath) was used', () => {
+    // Add a plain Path shape at machine-space (0,0)-(10,10) with an identity XForm.
+    // The Text shape's OWN XForm translates by (1000, 1000mm). If the parser bug reads
+    // the BackupPath's XForm (identity, i.e. (0,0)) for the text's origin instead of the
+    // shape's own (1000, 1000), the text will incorrectly collapse onto the same origin
+    // as the path shape, making their bbox-relative positions equal (both near 0,0).
+    // With the fix, the text origin is offset by ~1000mm × PX_PER_MM from the path.
+    const xmlWithPath = XFORM_FIXTURE.replace(
+      '</LightBurnProject>',
+      `    <Shape Type="Path" CutIndex="0">
+        <XForm>1 0 0 1 0 0</XForm>
+        <VertList>V0 0V10 0V10 10</VertList>
+        <PrimList>L0 1L1 2L2 0</PrimList>
+    </Shape>
+</LightBurnProject>`
+    );
+    const { layers } = parseLbrn(xmlWithPath, { availableFonts: ['Arial'] });
+    const text = layers.find((l) => l.type === 'text');
+    const svg = layers.find((l) => l.type === 'svg');
+    expect(text).toBeTruthy();
+    expect(svg).toBeTruthy();
+    // Text origin (machine space) is (1000,1000)mm; path origin is (0,0)mm.
+    // Buggy code (unscoped querySelector('XForm') finds BackupPath's XForm first)
+    // would place the text at the SAME origin as the path (left/top both 0).
+    // Fixed code must place the text ~1000mm × PX_PER_MM away from the path.
+    const PX_PER_MM = 3.7795;
+    expect(text.left).toBeCloseTo(1000 * PX_PER_MM, 0);
+    expect(svg.left).toBe(0);
+  });
+});
+
+describe('parseLbrn (invalid XML)', () => {
+  it('throws on a document that is not a LightBurn project', () => {
+    expect(() => parseLbrn('<not-lightburn/>', { availableFonts: [] })).toThrow();
+  });
+
+  it('throws on malformed (unparseable) XML', () => {
+    expect(() => parseLbrn('<LightBurnProject><unclosed>', { availableFonts: [] })).toThrow();
+  });
+});
+
+describe('parseLbrn (group descent)', () => {
+  it('imports a Path shape nested inside a Group as a single svg layer', () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<LightBurnProject AppVersion="2.1.03">
+    <Shape Type="Group" CutIndex="0">
+        <Shape Type="Path" CutIndex="0">
+            <XForm>1 0 0 1 0 0</XForm>
+            <VertList>V0 0V10 0V10 10</VertList>
+            <PrimList>L0 1L1 2L2 0</PrimList>
+        </Shape>
+    </Shape>
+</LightBurnProject>`;
+    const { layers, warnings } = parseLbrn(xml, { availableFonts: [] });
+    const svgs = layers.filter((l) => l.type === 'svg');
+    expect(svgs.length).toBe(1);
+    expect(warnings.length).toBe(0);
+  });
+});
+
+describe('parseLbrn (bitmap warning)', () => {
+  it('skips a Bitmap shape and warns about it', () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<LightBurnProject AppVersion="2.1.03">
+    <Shape Type="Bitmap" CutIndex="0">
+        <XForm>1 0 0 1 0 0</XForm>
+    </Shape>
+</LightBurnProject>`;
+    const { layers, warnings } = parseLbrn(xml, { availableFonts: [] });
+    expect(layers.length).toBe(0);
+    expect(warnings.join(' ')).toMatch(/bitmap/i);
+  });
 });

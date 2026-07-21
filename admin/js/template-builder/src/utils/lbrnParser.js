@@ -111,11 +111,27 @@ function applyXform(m, x, y) {
   return [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]];
 }
 
-/** Read a shape's VertList/PrimList text (empty strings if absent). */
+/** Read a shape's VertList/PrimList text (empty strings if absent). For a Text
+ *  shape's outline fallback these intentionally read the nested BackupPath's
+ *  VertList/PrimList (that IS the backup outline), so this stays unscoped. */
 function readVertPrim(shapeEl) {
   const v = shapeEl.querySelector('VertList');
   const p = shapeEl.querySelector('PrimList');
   return { vert: (v && v.textContent) || '', prim: (p && p.textContent) || '' };
+}
+
+/** Read a shape's OWN direct-child `<XForm>` text, ignoring any `<XForm>`
+ *  nested deeper (e.g. inside a Text shape's `<BackupPath>`). `querySelector`
+ *  alone returns the first match in document order, which for a
+ *  `HasBackupPath="1"` Text shape is the BackupPath's XForm, not the shape's
+ *  own trailing one — this scoping is what fixes that mis-placement. */
+function readOwnXform(shapeEl) {
+  let el = shapeEl.querySelector(':scope > XForm');
+  if (!el) {
+    // Fallback for engines without :scope support in querySelector.
+    el = Array.from(shapeEl.children).find((c) => c.tagName === 'XForm') || null;
+  }
+  return el ? el.textContent : null;
 }
 
 /** Flatten shapes, descending into groups. */
@@ -143,7 +159,7 @@ export function parseLbrn(xmlString, opts = {}) {
   }
 
   // 1) Collect raw shapes with machine-space geometry.
-  const paths = []; // { d(local), xform, cutIndex, pts:[[mx,my]...] }
+  const paths = []; // { d(local), xform, cutIndex, mpts:[[mx,my]...] }
   const texts = []; // { text, family, fontSize, xform, cutIndex, originMx, originMy }
 
   const pushPath = (vert, prim, xform, cutIndex) => {
@@ -158,7 +174,7 @@ export function parseLbrn(xmlString, opts = {}) {
   collectShapes(doc).forEach((el) => {
     const type = el.getAttribute('Type');
     const cutIndex = parseInt(el.getAttribute('CutIndex') || '0', 10);
-    const xform = parseXform((el.querySelector('XForm') || {}).textContent);
+    const xform = parseXform(readOwnXform(el));
 
     if (type === 'Path' || type === 'Rect' || type === 'Ellipse') {
       const { vert, prim } = readVertPrim(el);
