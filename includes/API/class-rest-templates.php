@@ -270,12 +270,17 @@ class RestTemplates {
         if (!class_exists(\enshrined\svgSanitize\Sanitizer::class)) {
             // No sanitiser available — drop markup rather than store it raw.
             foreach ($zones as &$zone) {
-                foreach (($zone['layers'] ?? []) as &$layer) {
-                    if (isset($layer['svg_markup'])) {
+                if (empty($zone['layers']) || !is_array($zone['layers'])) {
+                    continue;
+                }
+                foreach ($zone['layers'] as &$layer) {
+                    if (is_array($layer) && isset($layer['svg_markup'])) {
                         unset($layer['svg_markup']);
                     }
                 }
+                unset($layer);
             }
+            unset($zone);
             return $zones;
         }
         $sanitizer = new \enshrined\svgSanitize\Sanitizer();
