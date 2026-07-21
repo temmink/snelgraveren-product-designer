@@ -43,12 +43,29 @@ export default function ImportLightBurn() {
         return;
       }
 
-      // Size the canvas to the imported design (its own px extent = mm × the
-      // parser's working resolution) so the artwork fills the view at the same
-      // framing LightBurn shows, instead of sitting in a corner of the default
-      // 800×600 canvas. The builder scales the canvas to fit the viewport.
-      const canvasW = Math.max(1, Math.round(widthMm * PX_PER_MM));
-      const canvasH = Math.max(1, Math.round(heightMm * PX_PER_MM));
+      // The parser lays the design out at its physical extent (mm × working
+      // resolution) — a 37 mm tag is only ~141 px, tiny on screen. Scale the
+      // on-screen pixels so the design's larger side hits a comfortable working
+      // size (fit-to-target: enlarges small designs, shrinks oversized ones).
+      // width_mm keeps the TRUE physical size, so the export stays true-scale —
+      // only the editor/preview pixels change.
+      const DISPLAY_TARGET_PX = 600;
+      const natW = Math.max(1, widthMm * PX_PER_MM);
+      const natH = Math.max(1, heightMm * PX_PER_MM);
+      const fit = DISPLAY_TARGET_PX / Math.max(natW, natH);
+      const r = (v) => Math.round(v * 100) / 100;
+
+      const canvasW = Math.max(1, Math.round(natW * fit));
+      const canvasH = Math.max(1, Math.round(natH * fit));
+
+      // Apply the display scale uniformly to every layer (position + size), so
+      // relative positions are preserved exactly.
+      const scaledLayers = layers.map((l) => (
+        l.type === 'text'
+          ? { ...l, left: r(l.left * fit), top: r(l.top * fit), fontSize: r(l.fontSize * fit) }
+          : { ...l, left: r(l.left * fit), top: r(l.top * fit),
+              scaleX: r((l.scaleX || 1) * fit), scaleY: r((l.scaleY || 1) * fit) }
+      ));
 
       // Target the current view's first zone. Create a design-sized zone only if
       // the view has none yet — existing zones (with their own allowed_types /
@@ -69,7 +86,7 @@ export default function ImportLightBurn() {
         });
       }
 
-      layers.forEach((layer) => addLayer(currentViewIndex, zoneIndex, layer));
+      scaledLayers.forEach((layer) => addLayer(currentViewIndex, zoneIndex, layer));
       updateView(currentViewIndex, {
         canvas_width: canvasW,
         canvas_height: canvasH,
