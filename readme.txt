@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.4.0
+Stable tag: 1.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -93,6 +93,9 @@ Freemius Terms of Service: https://freemius.com/terms/
 No other external services are used. Design exports (PDF/PNG/SVG) are rendered entirely on your own server — nothing about your customers' designs, uploads, or orders is ever sent off-site.
 
 == Changelog ==
+
+= 1.5.0 =
+* New (Pro): "Use as Boundary" in the Template Builder. Select one or more vector (SVG) layers on the canvas — such as an imported LightBurn outline — and turn them into a single design boundary (safe area / clip zone) in one click. The merged shape is stored inline and rendered in both the builder and the customer designer; the original layers are kept (non-destructive). Editable afterwards via the Boundary form.
 
 = 1.4.0 =
 * New (Pro): Import LightBurn projects (.lbrn2) directly in the Template Builder. Every shape and text becomes an individual, editable object on the canvas; cut-layer colours are preserved so exported SVGs round-trip back into LightBurn, and the physical size (mm) is kept for true-scale exports. Supports grouped shapes, shared geometry, bezier and closed-polygon paths, and maps text to the nearest available web font (with a vector fallback when no font matches).
