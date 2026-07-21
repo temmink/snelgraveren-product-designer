@@ -600,6 +600,38 @@ export default function Canvas() {
           existing.data = { ...existing.data, layerIndex: layer._layerIndex, zoneIndex: layer._zoneIndex };
           existing.setCoords();
           applyClipAndClamp(existing, layer);
+        } else if (layer.svg_markup && !layer.src && !pendingLoads.current.has(layer._key)) {
+          pendingLoads.current.add(layer._key);
+          loadSVGFromString(layer.svg_markup)
+            .then(({ objects, options }) => {
+              pendingLoads.current.delete(layer._key);
+              if (!fabricRef.current) return;
+              const filtered = objects.filter(Boolean);
+              filtered.forEach((o) => o.set({ strokeUniform: true }));
+              const group = util.groupSVGElements(filtered, options);
+              group.set({
+                left:           layer.left   || 100,
+                top:            layer.top    || 100,
+                scaleX:         layer.scaleX || 1,
+                scaleY:         layer.scaleY || 1,
+                angle:          layer.angle  || 0,
+                selectable:     !layer.locked,
+                evented:        !layer.locked,
+                strokeUniform:  true,
+                subTargetCheck: false,
+                interactive:    false,
+                data:           layerData(layer),
+              });
+              canvas.add(group);
+              group.setCoords();
+              applyPermissions(group, layer.type);
+              applyClipAndClamp(group, layer);
+              canvas.renderAll();
+            })
+            .catch((err) => {
+              pendingLoads.current.delete(layer._key);
+              console.warn('[PF] inline SVG layer load failed:', err);
+            });
         } else if (layer.src && !pendingLoads.current.has(layer._key)) {
           pendingLoads.current.add(layer._key);
           // Fetch SVG text, normalize mm/cm/in units to px, then parse with Fabric.
