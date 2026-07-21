@@ -448,8 +448,8 @@ export default function DesignerCanvas() {
       (zone.layers || []).forEach((layer) => {
         if (layer.type === 'text' && layer.text) {
           const text = new Textbox(layer.text, {
-            left:       layer.left       || zone.x + 20,
-            top:        layer.top        || zone.y + 20,
+            left:       layer.left       ?? (zone.x + 20),
+            top:        layer.top        ?? (zone.y + 20),
             width:      layer.width      || zone.width - 20,
             fontSize:   layer.fontSize   || 24,
             fontFamily: layer.fontFamily || 'Arial',
@@ -476,8 +476,8 @@ export default function DesignerCanvas() {
               filtered.forEach((o) => o.set({ strokeUniform: true }));
               const group = util.groupSVGElements(filtered, options);
               group.set({
-                left:          layer.left   || zone.x,
-                top:           layer.top    || zone.y,
+                left:          layer.left   ?? (zone.x),
+                top:           layer.top    ?? (zone.y),
                 scaleX:        layer.scaleX || 1,
                 scaleY:        layer.scaleY || 1,
                 angle:         layer.angle  || 0,

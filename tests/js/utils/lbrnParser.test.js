@@ -11,10 +11,19 @@ describe('vertPrimToPathData', () => {
       .toBe('M0 0C2 3 8 -3 10 0');
   });
 
-  it('defaults a missing handle component to the vertex coordinate', () => {
-    // vertex 0 has only c1x=5 → c1y defaults to y (0)
+  it('treats a lone control-x (LightBurn straight-segment marker) as vertex-coincident', () => {
+    // `c1x5` / `c0x5` have no paired y → they are LightBurn's "this side is
+    // straight" markers, so the controls stay at their vertices (0,0)/(10,0),
+    // not at the literal x=5. The bezier degenerates to a straight line.
     expect(vertPrimToPathData('V0 0c1x5V10 0c0x5', 'B0 1'))
-      .toBe('M0 0C5 0 5 0 10 0');
+      .toBe('M0 0C0 0 10 0 10 0');
+  });
+
+  it('uses a control point only when both its x and y are given', () => {
+    // c1 of vertex 0 has x AND y → real control (2,3); c0 of vertex 1 has x AND
+    // y → real control (8,-3). (Same as the bezier test but asserts the pairing rule.)
+    expect(vertPrimToPathData('V0 0c1x2c1y3V10 0c0x8c0y-3', 'B0 1'))
+      .toBe('M0 0C2 3 8 -3 10 0');
   });
 
   it('applies the optional transform to every point', () => {
@@ -99,7 +108,7 @@ describe('parseLbrn (sample file)', () => {
     const { layers } = parseLbrn(FIXTURE, { availableFonts: ['Arial'] });
     const svgs = layers.filter((l) => l.type === 'svg');
     expect(svgs[1].left).toBe(65.438);
-    expect(svgs[1].top).toBe(78.381);
+    expect(svgs[1].top).toBe(9.561);
   });
 });
 
@@ -126,8 +135,12 @@ describe('parseLbrn (XForm scoping — Text shape with HasBackupPath)', () => {
     // for a single-shape bbox, so we assert against the un-normalised origin directly
     // via widthMm/heightMm being 0 (single point) AND by checking a second shape anchors
     // relative to it below.
+    // Horizontal origin (Ah=0) is the left edge → 0 for a single-shape design.
     expect(text.left).toBe(0);
-    expect(text.top).toBe(0);
+    // Vertical anchor centres the text box on its origin, so top = -fontSize/2
+    // (fontSize = H(10mm) * PX_PER_MM = 37.795 → -18.898). The value being 0-based
+    // (not offset by the BackupPath's identity XForm) is what proves the own XForm was used.
+    expect(text.top).toBe(-18.898);
   });
 
   it('regression: a second, differently-positioned path shape proves the OWN XForm (not BackupPath) was used', () => {

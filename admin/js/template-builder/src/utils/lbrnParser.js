@@ -15,10 +15,19 @@ export function parseVertList(vertList) {
   while ((m = re.exec(vertList)) !== null) {
     const x = parseFloat(m[1]);
     const y = parseFloat(m[2]);
+    // Controls default to the vertex itself (straight segment).
     const v = { x, y, c0x: x, c0y: y, c1x: x, c1y: y };
+    // Collect the raw control tokens for this vertex.
+    const raw = { c0x: null, c0y: null, c1x: null, c1y: null };
     const hre = /c([01])([xy])(-?[\d.]+)/g;
     let h;
-    while ((h = hre.exec(m[3])) !== null) v[`c${h[1]}${h[2]}`] = parseFloat(h[3]);
+    while ((h = hre.exec(m[3])) !== null) raw[`c${h[1]}${h[2]}`] = parseFloat(h[3]);
+    // A control point is a real off-vertex coordinate only when BOTH its x and
+    // y are given (e.g. `c0x36.9c0y19.6`). A lone `c0x1` is LightBurn's marker
+    // for "this side is straight" — the control coincides with the vertex, so
+    // it is left at the vertex position, NOT set to the literal 1.
+    if (raw.c0x !== null && raw.c0y !== null) { v.c0x = raw.c0x; v.c0y = raw.c0y; }
+    if (raw.c1x !== null && raw.c1y !== null) { v.c1x = raw.c1x; v.c1y = raw.c1y; }
     verts.push(v);
   }
   return verts;
@@ -212,17 +221,19 @@ export function parseLbrn(xmlString, opts = {}) {
   const heightMm = maxY - minY;
   const layers = [];
 
-  // 3) Path → inline svg layer. Bake a shape-local, Y-flipped px path; position
-  //    the layer at the shape's design-canvas top-left (also Y-flipped).
+  // 3) Path → inline svg layer. Bake a shape-local px path; position the layer
+  //    at the shape's design-canvas top-left. LightBurn stores Y downward for
+  //    this device orientation (MirrorY), so machine Y maps directly to canvas
+  //    Y (no flip) — the ring hole at low machine-Y lands at the canvas top.
   paths.forEach((p) => {
     let sMinX = Infinity, sMinY = Infinity, sMaxX = -Infinity, sMaxY = -Infinity;
     p.mpts.forEach(([x, y]) => { if (x < sMinX) sMinX = x; if (y < sMinY) sMinY = y; if (x > sMaxX) sMaxX = x; if (y > sMaxY) sMaxY = y; });
     const wPx = Math.max(1, (sMaxX - sMinX) * PX_PER_MM);
     const hPx = Math.max(1, (sMaxY - sMinY) * PX_PER_MM);
-    // per-vertex transform: machine → shape-local px, Y flipped
+    // per-vertex transform: machine → shape-local px (Y direct, no flip)
     const toLocalPx = (lx, ly) => {
       const [mx, my] = applyXform(p.xform, lx, ly);
-      return [(mx - sMinX) * PX_PER_MM, (sMaxY - my) * PX_PER_MM];
+      return [(mx - sMinX) * PX_PER_MM, (my - sMinY) * PX_PER_MM];
     };
     const d = vertPrimToPathData(p.vert, p.prim, toLocalPx);
     const color = layerColor(p.cutIndex);
@@ -234,13 +245,16 @@ export function parseLbrn(xmlString, opts = {}) {
       type: 'svg',
       svg_markup,
       left: n((sMinX - minX) * PX_PER_MM),
-      top: n((maxY - sMaxY) * PX_PER_MM),
+      top: n((sMinY - minY) * PX_PER_MM),
       scaleX: 1,
       scaleY: 1,
     });
   });
 
-  // 4) Text → text layer (fill = cut-layer colour; positioned by its origin).
+  // 4) Text → text layer (fill = cut-layer colour). LightBurn anchors the text
+  //    vertically at its XForm origin (Av); position the text box so its middle
+  //    sits on that origin (no Y-flip), which centres it in the surrounding art
+  //    the way LightBurn shows it. Horizontal origin is the left edge (Ah=0).
   texts.forEach((t) => {
     layers.push({
       type: 'text',
@@ -250,7 +264,7 @@ export function parseLbrn(xmlString, opts = {}) {
       fill: layerColor(t.cutIndex),
       textAlign: 'left',
       left: n((t.originMx - minX) * PX_PER_MM),
-      top: n((maxY - t.originMy) * PX_PER_MM),
+      top: n((t.originMy - minY) * PX_PER_MM - t.fontSize / 2),
     });
   });
 
