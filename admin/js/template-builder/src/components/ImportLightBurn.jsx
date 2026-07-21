@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { __ } from '@wordpress/i18n';
 import useTemplateStore from '../store/useTemplateStore';
-import { parseLbrn } from '../utils/lbrnParser';
+import { parseLbrn, PX_PER_MM } from '../utils/lbrnParser';
 import { AVAILABLE_FONTS } from '../utils/fonts';
 
 const isPremium = window.sgpdTemplateBuilder?.isPremium;
@@ -34,7 +34,7 @@ export default function ImportLightBurn() {
     setStatus( __( 'Importing…', 'snelgraveren-product-designer' ) );
     try {
       const xml = await file.text();
-      const { layers, widthMm, warnings } = parseLbrn(xml, {
+      const { layers, widthMm, heightMm, warnings } = parseLbrn(xml, {
         availableFonts: AVAILABLE_FONTS.map((f) => f.family),
       });
 
@@ -43,7 +43,14 @@ export default function ImportLightBurn() {
         return;
       }
 
-      // Target the current view's first zone. Create a full-canvas zone only if
+      // Size the canvas to the imported design (its own px extent = mm × the
+      // parser's working resolution) so the artwork fills the view at the same
+      // framing LightBurn shows, instead of sitting in a corner of the default
+      // 800×600 canvas. The builder scales the canvas to fit the viewport.
+      const canvasW = Math.max(1, Math.round(widthMm * PX_PER_MM));
+      const canvasH = Math.max(1, Math.round(heightMm * PX_PER_MM));
+
+      // Target the current view's first zone. Create a design-sized zone only if
       // the view has none yet — existing zones (with their own allowed_types /
       // permissions) are left as the admin configured them.
       const view = views[currentViewIndex];
@@ -56,14 +63,18 @@ export default function ImportLightBurn() {
           boundary_type: 'rect',
           x: 0,
           y: 0,
-          width: view.canvas_width || 800,
-          height: view.canvas_height || 600,
+          width: canvasW,
+          height: canvasH,
           allowed_types: ['text', 'image', 'svg'],
         });
       }
 
       layers.forEach((layer) => addLayer(currentViewIndex, zoneIndex, layer));
-      if (widthMm > 0) updateView(currentViewIndex, { width_mm: widthMm });
+      updateView(currentViewIndex, {
+        canvas_width: canvasW,
+        canvas_height: canvasH,
+        ...(widthMm > 0 ? { width_mm: widthMm } : {}),
+      });
 
       const msg = warnings.length
         ? __( 'Imported with warnings: ', 'snelgraveren-product-designer' ) + warnings.join(' ')
