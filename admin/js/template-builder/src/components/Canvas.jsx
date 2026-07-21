@@ -4,6 +4,7 @@ import { Canvas as FabricCanvas, Rect, FabricImage, Textbox, FabricText, loadSVG
 import useTemplateStore from '../store/useTemplateStore';
 import { parseSvgToFabric } from '../utils/svgPathUtils';
 import { alignElement } from '../../../../../shared/js/alignElement';
+import { mergeLayersToBoundary } from '../utils/mergeLayersToBoundary';
 
 const ALLOWED_FABRIC_TYPES = new Set([
   'IText', 'Textbox', 'Image', 'Rect', 'Path', 'Group', 'FabricText',
@@ -42,7 +43,7 @@ export default function Canvas() {
 
   const {
     views, currentViewIndex,
-    updateView, updateZone, updateLayer, pushHistory, undo, redo, canUndo, canRedo,
+    updateView, updateZone, updateLayer, addZone, pushHistory, undo, redo, canUndo, canRedo,
     isFreeMove, setFreeMove, setCanvasSelectedKey,
   } = useTemplateStore();
 
@@ -1032,6 +1033,64 @@ export default function Canvas() {
     pushHistory(viewKey, canvas.toJSON(['data']));
   }, [views, currentViewIndex, currentView, updateLayer, pushHistory, viewKey]);
 
+  const isPremium = window.sgpdTemplateBuilder?.isPremium;
+
+  const handleUseAsBoundary = useCallback(() => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    const active = canvas.getActiveObjects() || [];
+    const views = useTemplateStore.getState().views;   // read fresh (avoid stale closure)
+    const view = views[currentViewIndex];
+
+    const items = [];
+    let ignored = 0;
+    active.forEach((obj) => {
+      const d = obj.data || {};
+      const layer = view?.zones_config?.[d.zoneIndex]?.layers?.[d.layerIndex];
+      if (d.elementType === 'svg' && layer && layer.svg_markup) {
+        items.push({
+          svgMarkup: layer.svg_markup,
+          left: obj.left,
+          top: obj.top,
+          width: obj.width * (obj.scaleX || 1),
+          height: obj.height * (obj.scaleY || 1),
+          scaleX: obj.scaleX || 1,
+          scaleY: obj.scaleY || 1,
+        });
+      } else {
+        ignored += 1;
+      }
+    });
+
+    const merged = items.length ? mergeLayersToBoundary(items) : null;
+    if (!merged) {
+      window.alert(__( 'Select at least one vector layer to use as a boundary.', 'snelgraveren-product-designer' ));
+      return;
+    }
+
+    addZone(currentViewIndex, {
+      name: __( 'Boundary', 'snelgraveren-product-designer' ),
+      type: 'safe_area',
+      behavior: 'restrict',
+      boundary_type: 'svg',
+      svg_markup: merged.svg_markup,
+      svg_intrinsic_width: merged.width,
+      svg_intrinsic_height: merged.height,
+      x: merged.x,
+      y: merged.y,
+      width: merged.width,
+      height: merged.height,
+      svg_scale: 1,
+      allowed_types: ['text', 'image', 'svg'],
+    });
+
+    if (ignored > 0) {
+      window.alert(
+        __( 'Boundary created. Ignored non-vector layers: ', 'snelgraveren-product-designer' ) + ignored
+      );
+    }
+  }, [currentViewIndex, addZone]);
+
   return (
     <div className="pf-canvas-wrap">
       <div className="pf-canvas-toolbar">
@@ -1042,6 +1101,15 @@ export default function Canvas() {
         >
           { isFreeMove ? __( 'Enforce Zones', 'snelgraveren-product-designer' ) : __( 'Free Move', 'snelgraveren-product-designer' ) }
         </button>
+        {isPremium && hasSelection && (
+          <button
+            className="pf-canvas-toolbar__btn"
+            onClick={handleUseAsBoundary}
+            title={ __( 'Turn the selected vector layer(s) into a boundary', 'snelgraveren-product-designer' ) }
+          >
+            { __( 'Use as Boundary', 'snelgraveren-product-designer' ) }
+          </button>
+        )}
         <button
           className="pf-canvas-toolbar__btn"
           onClick={openMediaPicker}
