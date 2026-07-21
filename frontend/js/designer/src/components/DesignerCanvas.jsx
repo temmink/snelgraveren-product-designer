@@ -297,10 +297,11 @@ export default function DesignerCanvas() {
     zones.forEach((zone, index) => {
       const isRestrict = zone.behavior === 'restrict';
 
-      if (zone.boundary_type === 'svg' && zone.svg_url) {
-        // Load SVG from URL asynchronously
-        const promise = fetch(zone.svg_url)
-          .then((r) => r.text())
+      if (zone.boundary_type === 'svg' && (zone.svg_url || zone.svg_markup)) {
+        // Load SVG from URL asynchronously, or use inline markup directly
+        const promise = (zone.svg_url
+          ? fetch(zone.svg_url).then((r) => r.text())
+          : Promise.resolve(zone.svg_markup))
           .then((svgString) => loadSVGFromString(svgString))
           .then(({ objects, options }) => {
             if (disposed) return;
