@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { __ } from '@wordpress/i18n';
 import useTemplateStore from '../store/useTemplateStore';
+import ImportLightBurn from './ImportLightBurn';
 
 const isPremium = window.sgpdTemplateBuilder?.isPremium;
 
@@ -152,6 +153,7 @@ export default function ViewTabs() {
             ? `${ __( 'Height follows canvas:', 'snelgraveren-product-designer' ) } ${derivedHeightMm} mm`
             : __( 'Empty = export uses the 96-DPI pixel size', 'snelgraveren-product-designer' )}
         </span>
+        <ImportLightBurn />
       </div>
     )}
     </>
