@@ -230,7 +230,7 @@ class DesignRepository {
         }, $rows ?: []);
     }
 
-    public function upsert_view(int $design_id, int $view_id, array $canvas_json, string $thumbnail = '', string $export_svg = ''): bool {
+    public function upsert_view(int $design_id, int $view_id, array $canvas_json, string $thumbnail = '', string $export_svg = '', string $export_vector = '', string $export_vector_embed = ''): bool {
         global $wpdb;
         $existing = $wpdb->get_var(
             $wpdb->prepare(
@@ -252,6 +252,14 @@ class DesignRepository {
                 $data['export_svg'] = $export_svg;
                 $format[]           = '%s';
             }
+            if (!empty($export_vector)) {
+                $data['export_vector'] = $export_vector;
+                $format[]              = '%s';
+            }
+            if (!empty($export_vector_embed)) {
+                $data['export_vector_embed'] = $export_vector_embed;
+                $format[]                    = '%s';
+            }
             return (bool) $wpdb->update(
                 $this->views_table,
                 $data,
@@ -262,12 +270,14 @@ class DesignRepository {
         }
 
         $wpdb->insert($this->views_table, [
-            'design_id'   => $design_id,
-            'view_id'     => $view_id,
-            'canvas_json' => $json_str,
-            'thumbnail'   => $thumbnail,
-            'export_svg'  => $export_svg,
-        ], ['%d', '%d', '%s', '%s', '%s']);
+            'design_id'           => $design_id,
+            'view_id'             => $view_id,
+            'canvas_json'         => $json_str,
+            'thumbnail'           => $thumbnail,
+            'export_svg'          => $export_svg,
+            'export_vector'       => $export_vector,
+            'export_vector_embed' => $export_vector_embed,
+        ], ['%d', '%d', '%s', '%s', '%s', '%s', '%s']);
         return (bool) $wpdb->insert_id;
     }
 }

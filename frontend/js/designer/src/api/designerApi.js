@@ -35,7 +35,7 @@ export async function createDesign(templateId, productId) {
   return res.json();
 }
 
-export async function saveDesignView(designHash, viewId, canvasJson, thumbnail = '', exportSvg = '') {
+export async function saveDesignView(designHash, viewId, canvasJson, thumbnail = '', exportSvg = '', exportVector = '', exportVectorEmbed = '') {
   const res = await fetch(apiUrl(`/designs/${designHash}/views`), {
     method: 'POST',
     headers: headers(),
@@ -44,6 +44,8 @@ export async function saveDesignView(designHash, viewId, canvasJson, thumbnail =
       canvas_json: canvasJson,
       thumbnail,
       export_svg: exportSvg,
+      export_vector: exportVector,
+      export_vector_embed: exportVectorEmbed,
     }),
   });
   if (!res.ok) {

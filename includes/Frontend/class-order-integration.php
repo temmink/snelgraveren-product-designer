@@ -218,6 +218,21 @@ class OrderIntegration {
                 . '</button>';
         }
 
+        // Extra SVG variant: keep text editable with the fonts embedded, instead
+        // of the default outlined (text-as-paths) SVG.
+        if ( ProductForge::has_feature( 'svg_export' ) ) {
+            echo '<button type="button" class="button button-small pf-export-btn" '
+                . 'data-hash="' . esc_attr($hash) . '" '
+                . 'data-format="svg" '
+                . 'data-variant="embed" '
+                . 'data-api="' . esc_url($api_base) . '" '
+                . 'data-nonce="' . esc_attr($nonce) . '" '
+                . 'title="' . esc_attr__('SVG with fonts embedded (editable text)', 'snelgraveren-product-designer') . '" '
+                . 'style="margin-right:4px;">'
+                . esc_html__('SVG + fonts', 'snelgraveren-product-designer')
+                . '</button>';
+        }
+
         if ( ! ProductForge::is_premium() ) {
             echo '<span style="font-size:11px;color:#666;margin-left:4px;">'
                . esc_html__( 'Pro: PDF & SVG export', 'snelgraveren-product-designer' ) . '</span>';
@@ -266,8 +281,10 @@ class OrderIntegration {
                     e.preventDefault();
                     var hash = btn.dataset.hash;
                     var format = btn.dataset.format;
+                    var variant = btn.dataset.variant || 'outline';
                     var api = btn.dataset.api;
                     var nonce = btn.dataset.nonce;
+                    var origLabel = btn.textContent;
                     btn.disabled = true;
                     btn.textContent = format.toUpperCase() + '...';
                     fetch(api + '/exports/' + hash, {
@@ -276,26 +293,26 @@ class OrderIntegration {
                             'Content-Type': 'application/json',
                             'X-WP-Nonce': nonce
                         },
-                        body: JSON.stringify({ format: format })
+                        body: JSON.stringify({ format: format, variant: variant })
                     })
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
                         if (data.export_id) {
-                            btn.textContent = '✓ ' + format.toUpperCase();
+                            btn.textContent = '✓';
                             // Auto-download
                             window.location.href = api + '/exports/' + data.export_id + '/download?_wpnonce=' + nonce;
                         } else {
-                            btn.textContent = '✗ ' + format.toUpperCase();
+                            btn.textContent = '✗';
                             alert('Export failed: ' + (data.error || 'Unknown error'));
                         }
                     })
                     .catch(function() {
-                        btn.textContent = '✗ ' + format.toUpperCase();
+                        btn.textContent = '✗';
                     })
                     .finally(function() {
                         setTimeout(function() {
                             btn.disabled = false;
-                            btn.textContent = format.toUpperCase();
+                            btn.textContent = origLabel;
                         }, 3000);
                     });
                 });

@@ -8,6 +8,18 @@ class Admin {
     private SettingsPage $settings_page;
     private ExportDashboard $export_dashboard;
 
+    /**
+     * Admin page hook suffixes captured from add_menu_page/add_submenu_page.
+     * WordPress derives submenu hooks from the parent menu TITLE
+     * (sanitize_title('Product Designer') => 'product-designer'), not its slug,
+     * so these must be read back from WordPress rather than hardcoded — otherwise
+     * a renamed menu title silently breaks asset enqueueing.
+     */
+    private string $hook_list = '';
+    private string $hook_builder = '';
+    private string $hook_design_templates = '';
+    private string $hook_clipart = '';
+
     public function __construct() {
         add_action('admin_menu',           [$this, 'register_menus']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_scripts']);
@@ -26,7 +38,7 @@ class Admin {
     }
 
     public function register_menus(): void {
-        add_menu_page(
+        $this->hook_list = (string) add_menu_page(
             __('Product Designer', 'snelgraveren-product-designer'),
             __('Product Designer', 'snelgraveren-product-designer'),
             'edit_sgpd_templates',
@@ -45,7 +57,7 @@ class Admin {
             [$this, 'render_list_page']
         );
 
-        add_submenu_page(
+        $this->hook_builder = (string) add_submenu_page(
             'sgpd-templates',
             __('Template Builder', 'snelgraveren-product-designer'),
             __('Add New', 'snelgraveren-product-designer'),
@@ -54,7 +66,7 @@ class Admin {
             [$this, 'render_builder_page']
         );
 
-        add_submenu_page(
+        $this->hook_design_templates = (string) add_submenu_page(
             'sgpd-templates',
             __('Design Templates', 'snelgraveren-product-designer'),
             __('Design Templates', 'snelgraveren-product-designer'),
@@ -63,7 +75,7 @@ class Admin {
             [$this, 'render_design_templates_page']
         );
 
-        add_submenu_page(
+        $this->hook_clipart = (string) add_submenu_page(
             'sgpd-templates',
             __('Clipart', 'snelgraveren-product-designer'),
             __('Clipart', 'snelgraveren-product-designer'),
@@ -97,17 +109,17 @@ class Admin {
     }
 
     public function enqueue_scripts(string $hook): void {
-        if ($hook === 'sgpd-templates_page_sgpd-design-templates') {
+        if ($this->hook_design_templates !== '' && $hook === $this->hook_design_templates) {
             $this->enqueue_design_templates_scripts();
             return;
         }
 
-        if ($hook === 'sgpd-templates_page_sgpd-clipart') {
+        if ($this->hook_clipart !== '' && $hook === $this->hook_clipart) {
             $this->enqueue_clipart_scripts();
             return;
         }
 
-        if (!in_array($hook, ['toplevel_page_sgpd-templates', 'sgpd-templates_page_sgpd-template-builder'], true)) {
+        if ($hook !== $this->hook_list && ($this->hook_builder === '' || $hook !== $this->hook_builder)) {
             return;
         }
 
@@ -157,7 +169,7 @@ class Admin {
             'upgradeUrl'      => function_exists( 'sgpd_fs' ) ? sgpd_fs()->get_upgrade_url() : '',
         ]);
 
-        if ($hook === 'toplevel_page_sgpd-templates') {
+        if ($hook === $this->hook_list) {
             $this->enqueue_starter_gallery_script();
             $this->enqueue_starter_gallery_style();
         }

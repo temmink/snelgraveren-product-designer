@@ -255,8 +255,11 @@ class SettingsPage {
             return;
         }
 
+        // Submenu screen ids are prefixed with the parent menu TITLE
+        // (e.g. 'product-designer_page_sgpd-settings'), not its slug, so match on
+        // the '_page_sgpd-' segment instead of a hardcoded menu-title prefix.
         $is_pf_screen = $screen->id === 'toplevel_page_sgpd-templates'
-            || str_starts_with($screen->id, 'sgpd-templates_page_');
+            || str_contains($screen->id, '_page_sgpd-');
         // The settings page already shows full details — no notice needed there.
         if (!$is_pf_screen || str_ends_with($screen->id, self::PAGE_SLUG)) {
             return;

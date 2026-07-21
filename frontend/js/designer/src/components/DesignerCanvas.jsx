@@ -606,9 +606,11 @@ export default function DesignerCanvas() {
     canvas.renderAll();
 
     return () => {
-      // Only snapshot if canvas finished loading — prevents overwriting
-      // good snapshots with incomplete state during fast view switching
-      if (!disposed && canvasReady && fabricRef.current) {
+      // Only snapshot if canvas finished loading AND actually has objects —
+      // prevents overwriting a good snapshot with an incomplete/empty canvas
+      // during fast view switching or a load race (which would wipe the design).
+      if (!disposed && canvasReady && fabricRef.current
+          && fabricRef.current.getObjects().length > 0) {
         snapshotView(currentViewIndex, fabricRef.current.toJSON(['data']));
       }
       disposed = true;

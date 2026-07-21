@@ -26,7 +26,7 @@ class RestDesigns {
         unset($design['id'], $design['template_id'], $design['customer_id'], $design['session_id']);
         if (!empty($design['views'])) {
             $design['views'] = array_map(function ($view) {
-                unset($view['id'], $view['design_id'], $view['export_svg']);
+                unset($view['id'], $view['design_id'], $view['export_svg'], $view['export_vector'], $view['export_vector_embed']);
                 return $view;
             }, $design['views']);
         }
@@ -176,8 +176,10 @@ class RestDesigns {
         $body       = $request->get_json_params();
         $view_id    = (int) ($body['view_id'] ?? 0);
         $json       = $body['canvas_json'] ?? [];
-        $thumb      = $body['thumbnail'] ?? '';
-        $export_svg = $body['export_svg'] ?? '';
+        $thumb               = $body['thumbnail'] ?? '';
+        $export_svg          = $body['export_svg'] ?? '';
+        $export_vector       = $body['export_vector'] ?? '';
+        $export_vector_embed = $body['export_vector_embed'] ?? '';
 
         // Save base64 thumbnail as a file
         $thumb_url = '';
@@ -189,7 +191,13 @@ class RestDesigns {
         // PNG data URLs are validated for magic bytes. Anything else is dropped.
         $export_svg = !empty($export_svg) ? $this->sanitize_export_blob($export_svg) : '';
 
-        $this->repo->upsert_view((int) $design['id'], $view_id, $json, $thumb_url, $export_svg);
+        // The real vector output (canvas.toSVG()) is always SVG markup — the same
+        // sanitizer strips scripts/handlers/external refs before it is stored.
+        // Both the outlined default and the font-embedded variant run through it.
+        $export_vector       = !empty($export_vector) ? $this->sanitize_export_blob($export_vector) : '';
+        $export_vector_embed = !empty($export_vector_embed) ? $this->sanitize_export_blob($export_vector_embed) : '';
+
+        $this->repo->upsert_view((int) $design['id'], $view_id, $json, $thumb_url, $export_svg, $export_vector, $export_vector_embed);
         $this->repo->invalidate_cache($request['hash']);
         return new \WP_REST_Response($this->sanitize_for_customer($this->repo->get_by_hash($request['hash'])), 200);
     }

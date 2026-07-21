@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.2.1
+Stable tag: 1.3.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -93,6 +93,28 @@ Freemius Terms of Service: https://freemius.com/terms/
 No other external services are used. Design exports (PDF/PNG/SVG) are rendered entirely on your own server — nothing about your customers' designs, uploads, or orders is ever sent off-site.
 
 == Changelog ==
+
+= 1.3.5 =
+* Fix: a design whose font family is stored without Google Fonts' canonical spacing (e.g. "BebasNeue" instead of "Bebas Neue") never loaded on the product page, so the canvas — and therefore the export — fell back to a different-width font and centred text drifted out of the middle. The designer now loads Google fonts under the exact family name the design uses via the built-in font proxy (which normalises the name server-side), so the on-screen text and the export both use the real font and sit correctly. This is the real fix for off-centre exports that 1.3.4 could not address (the font never loaded at all, so there was nothing to wait for). Re-open and save an affected design once to regenerate its export.
+
+= 1.3.4 =
+* Fix: centered text could be off-centre in the PNG/SVG export while looking correct in the editor. The offscreen render used to lay text out before its web font had loaded, measuring it with a fallback font of a different width; it now waits for the font and re-measures each text object before exporting, so text sits exactly where the design shows it. Re-open and save an affected design once to regenerate its export.
+
+= 1.3.3 =
+* Fix: re-opening a saved design and saving it again (e.g. to regenerate the vector export) could, in a load-timing race, store an empty canvas and wipe the design. The save now takes the active view from the live canvas, never overwrites a saved view with an empty (0-object) canvas, and no longer snapshots an incompletely-loaded canvas over a good one.
+
+= 1.3.2 =
+* Add: SVG exports now convert text to vector outlines by default, so the design opens correctly (and stays centred) in any program without needing the original font installed. Shapes and clip art were already vectors; text is the last piece.
+* Add: an extra "SVG + fonts" export button on the order screen produces an SVG that keeps the text editable, with the fonts embedded in the file.
+* Add: a font proxy endpoint that serves the Google fonts used in a design as TTF, so the designer can outline/embed them in the browser.
+
+= 1.3.1 =
+* Fix: the admin React apps (template builder, design templates, clip art manager) did not load their scripts after the menu was renamed to "Product Designer", because the asset-enqueue check compared against a hardcoded page-hook string. The plugin now reads the actual hook names back from WordPress, so the builder loads regardless of the menu title.
+
+= 1.3.0 =
+* Add: SVG export now produces a real, editable vector (text as `<text>`, shapes and clip art as `<path>`) instead of a raster image wrapped in an SVG. The designer stores the browser-rendered `canvas.toSVG()` output alongside the existing high-res PNG. Designs saved before this update keep working: their SVG export uses a correctly-scaled raster fallback until the design is re-opened and re-saved once.
+* Add: optional real-world physical size per view ("Real width (mm)" in the template builder). When set, SVG and PDF exports come out at true physical scale (real mm units) instead of the previous 96-DPI pixel assumption; the height follows the canvas aspect ratio so the export is never distorted. Leaving it empty keeps the previous behaviour.
+* Fix: the raster-fallback SVG export now carries correct width/height/viewBox, so it opens at the design's real dimensions instead of collapsing to the 300×150 default SVG viewport.
 
 = 1.2.1 =
 * Change: the Plugin URI now points to the public source repository (https://github.com/temmink/snelgraveren-product-designer) instead of a placeholder URL.
