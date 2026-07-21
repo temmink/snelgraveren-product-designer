@@ -447,6 +447,37 @@ export default function DesignerCanvas() {
           canvas.add(text);
           if (zone.behavior === 'restrict') clampToZone(text);
         }
+
+        if (layer.type === 'svg' && (layer.svg_markup || layer.src)) {
+          const markupPromise = layer.svg_markup
+            ? Promise.resolve(layer.svg_markup)
+            : fetch(layer.src).then((r) => r.text());
+          markupPromise
+            .then((svgString) => loadSVGFromString(svgString))
+            .then(({ objects, options }) => {
+              if (disposed) return;
+              const filtered = (objects || []).filter(Boolean);
+              if (!filtered.length) return;
+              filtered.forEach((o) => o.set({ strokeUniform: true }));
+              const group = util.groupSVGElements(filtered, options);
+              group.set({
+                left:          layer.left   || zone.x,
+                top:           layer.top    || zone.y,
+                scaleX:        layer.scaleX || 1,
+                scaleY:        layer.scaleY || 1,
+                angle:         layer.angle  || 0,
+                strokeUniform: true,
+                data:          { elementType: 'svg', zoneIndex: zoneIdx },
+              });
+              applyPermissions(group, 'svg');
+              if (zone.behavior === 'restrict') applyZoneClip(group, zoneIdx);
+              canvas.add(group);
+              group.setCoords();
+              if (zone.behavior === 'restrict') clampToZone(group);
+              canvas.renderAll();
+            })
+            .catch((err) => console.warn('[PF] template svg layer load failed:', err));
+        }
       });
     });
 
