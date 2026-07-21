@@ -28,6 +28,16 @@ describe('vertPrimToPathData', () => {
       .toBe('M0 0C2 3 8 -3 10 0');
   });
 
+  it('decodes the LineClosed keyword as a closed straight polygon through all verts', () => {
+    expect(vertPrimToPathData('V0 0V10 0V10 10', 'LineClosed'))
+      .toBe('M0 0L10 0L10 10Z');
+  });
+
+  it('decodes the Line keyword as an open polyline', () => {
+    expect(vertPrimToPathData('V0 0V10 0V10 10', 'Line'))
+      .toBe('M0 0L10 0L10 10');
+  });
+
   it('applies the optional transform to every point', () => {
     const shift = (x, y) => [x + 100, y + 1];
     expect(vertPrimToPathData('V0 0V10 0V10 10', 'L0 1L1 2L2 0', shift))

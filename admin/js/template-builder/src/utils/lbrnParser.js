@@ -54,9 +54,23 @@ export function parsePrimList(primList) {
 export function vertPrimToPathData(vertList, primList, transform) {
   const t = transform || ((x, y) => [x, y]);
   const verts = parseVertList(vertList);
-  const prims = parsePrimList(primList);
-  if (!verts.length || !prims.length) return '';
+  if (!verts.length) return '';
   const px = (x, y) => { const [a, b] = t(x, y); return `${n(a)} ${n(b)}`; };
+
+  // LightBurn shorthand primitives: "LineClosed" / "Line" mean "connect every
+  // vertex in order with straight segments" (closed for LineClosed) instead of
+  // listing explicit L/B primitives. Without this those shapes decode to an
+  // empty path and get dropped.
+  const primKeyword = String(primList || '').trim();
+  if (primKeyword === 'LineClosed' || primKeyword === 'Line') {
+    let poly = `M${px(verts[0].x, verts[0].y)}`;
+    for (let k = 1; k < verts.length; k++) poly += `L${px(verts[k].x, verts[k].y)}`;
+    if (primKeyword === 'LineClosed') poly += 'Z';
+    return poly;
+  }
+
+  const prims = parsePrimList(primList);
+  if (!prims.length) return '';
   let d = '';
   let i = 0;
   while (i < prims.length) {
