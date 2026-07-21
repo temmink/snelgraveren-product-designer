@@ -278,7 +278,7 @@ export default function SettingsAssets({ globalConfig, update, clipartCollection
 
             <p className="pf-settings__note" style={{ marginTop: 8 }}>
               {__('Manage collections and upload SVGs from the', 'snelgraveren-product-designer')}{' '}
-              <a href="?page=pf-clipart">{__('Clipart', 'snelgraveren-product-designer')}</a>{' '}
+              <a href="?page=sgpd-clipart">{__('Clipart', 'snelgraveren-product-designer')}</a>{' '}
               {__('admin page.', 'snelgraveren-product-designer')}
             </p>
           </>

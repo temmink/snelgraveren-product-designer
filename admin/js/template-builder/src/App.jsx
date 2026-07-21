@@ -203,7 +203,7 @@ export default function App() {
 
       {/* ── Header bar ─────────────────────────────────────────────────── */}
       <div className="pf-builder__header">
-        <a href="?page=productforge" className="pf-builder__back button">
+        <a href="?page=sgpd-templates" className="pf-builder__back button">
           { __( '← Templates', 'snelgraveren-product-designer' ) }
         </a>
         <input
