@@ -289,7 +289,7 @@ class RestTemplates {
                 continue;
             }
             foreach ($zone['layers'] as &$layer) {
-                if (!empty($layer['svg_markup']) && is_string($layer['svg_markup'])) {
+                if (is_array($layer) && !empty($layer['svg_markup']) && is_string($layer['svg_markup'])) {
                     $clean = $sanitizer->sanitize($layer['svg_markup']);
                     $layer['svg_markup'] = is_string($clean) ? $clean : '';
                 }

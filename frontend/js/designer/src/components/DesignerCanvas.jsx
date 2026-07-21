@@ -428,6 +428,21 @@ export default function DesignerCanvas() {
         .catch(() => {});
     }
 
+    // Whether a saved snapshot exists for this view. If it does, the loadFromJSON
+    // call below will restore it — including any template svg layer, with whatever
+    // position/scale/rotation the customer left it in. The svg branch below loads
+    // its markup asynchronously (fetch + loadSVGFromString), and that promise can
+    // resolve AFTER loadFromJSON finishes restoring the snapshot, stacking a second
+    // copy of the svg on top of the one the snapshot already contains — the same
+    // race documented above for the zone-overlay svg dedup. Unlike that overlay
+    // (which is regenerated fresh every time, non-selectable boundary art), a
+    // template svg layer is customer-editable content, so we can't just delete the
+    // snapshot's copy and replace it — that would discard any edits the customer
+    // made to it. Skipping the reseed entirely when a snapshot exists is safe: the
+    // text branch stays unguarded because it runs synchronously, before
+    // loadFromJSON's own clear() wipes the canvas, so it never survives to double up.
+    const hasSnapshotForView = !!useDesignerStore.getState().canvasSnapshots[currentViewIndex];
+
     // Render pre-placed template layers from zones.
     zones.forEach((zone, zoneIdx) => {
       (zone.layers || []).forEach((layer) => {
@@ -448,7 +463,7 @@ export default function DesignerCanvas() {
           if (zone.behavior === 'restrict') clampToZone(text);
         }
 
-        if (layer.type === 'svg' && (layer.svg_markup || layer.src)) {
+        if (!hasSnapshotForView && layer.type === 'svg' && (layer.svg_markup || layer.src)) {
           const markupPromise = layer.svg_markup
             ? Promise.resolve(layer.svg_markup)
             : fetch(layer.src).then((r) => r.text());
