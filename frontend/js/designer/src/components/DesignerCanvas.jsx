@@ -9,6 +9,7 @@ import useCanvasScale from '../hooks/useCanvasScale';
 import useIsMobile from '../hooks/useIsMobile';
 import useCanvasHistory from '../hooks/useCanvasHistory';
 import { filterFabricJson } from '../utils/fabricJson';
+import { zoneShapePath, objectSamplePoints, pointsInsideZoneShape } from '../../../../../shared/js/zoneContainment';
 
 // Infer element type from Fabric object type when data.elementType is missing
 // (e.g. designs saved before data serialisation was added).
@@ -190,6 +191,28 @@ export default function DesignerCanvas() {
     if (zi == null || zi < 0 || !zones[zi] || zones[zi].behavior !== 'restrict') return;
 
     const zone = zones[zi];
+
+    // True shape containment for inline svg boundaries — the rect clamp below
+    // only holds the zone's bounding box, which for a non-rectangular contour
+    // is far larger than the visible outline (restrict would feel like clip).
+    // Mirrors the template builder's clampToZone.
+    if (zone.boundary_type === 'svg' && zone.svg_markup && !zone.svg_rotation) {
+      const shape = zoneShapePath(zone);
+      if (shape) {
+        const pts = objectSamplePoints(obj.getCoords());
+        if (pts.length && pointsInsideZoneShape(shape, zone, pts)) {
+          obj._sgpdLastValid = { left: obj.left, top: obj.top };
+          return;
+        }
+        if (obj._sgpdLastValid) {
+          obj.set(obj._sgpdLastValid);
+          obj.setCoords();
+          return;
+        }
+        // No valid anchor yet (object placed outside the shape) → rect clamp.
+      }
+    }
+
     const bound = obj.getBoundingRect();
 
     let left = obj.left;

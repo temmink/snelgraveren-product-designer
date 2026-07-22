@@ -4,6 +4,7 @@ import { Canvas as FabricCanvas, Rect, FabricImage, Textbox, FabricText, loadSVG
 import useTemplateStore from '../store/useTemplateStore';
 import { parseSvgToFabric } from '../utils/svgPathUtils';
 import { alignElement } from '../../../../../shared/js/alignElement';
+import { zoneShapePath, objectSamplePoints, pointsInsideZoneShape } from '../../../../../shared/js/zoneContainment';
 import { mergeLayersToBoundary } from '../utils/mergeLayersToBoundary';
 
 const ALLOWED_FABRIC_TYPES = new Set([
@@ -117,6 +118,30 @@ export default function Canvas() {
     if (zi == null || zi < 0 || !zones[zi] || zones[zi].behavior !== 'restrict') return;
 
     const zone = zones[zi];
+
+    // True shape containment for inline svg boundaries: the rect clamp below
+    // only holds the zone's BOUNDING BOX, which for a moon/cloud contour is
+    // far larger than the visible outline — restrict then feels like clip.
+    // Test the object's sample points against the actual path and snap back
+    // to the last position that fitted. Rotated or url-only boundaries fall
+    // back to the rect clamp.
+    if (zone.boundary_type === 'svg' && zone.svg_markup && !zone.svg_rotation) {
+      const shape = zoneShapePath(zone);
+      if (shape) {
+        const pts = objectSamplePoints(obj.getCoords());
+        if (pts.length && pointsInsideZoneShape(shape, zone, pts)) {
+          obj._sgpdLastValid = { left: obj.left, top: obj.top };
+          return;
+        }
+        if (obj._sgpdLastValid) {
+          obj.set(obj._sgpdLastValid);
+          obj.setCoords();
+          return;
+        }
+        // No valid anchor yet (object starts outside the shape) → rect clamp.
+      }
+    }
+
     const bound = obj.getBoundingRect();
 
     let left = obj.left;
