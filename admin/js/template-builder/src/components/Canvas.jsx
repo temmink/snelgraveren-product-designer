@@ -315,6 +315,7 @@ export default function Canvas() {
     const handledKeys = new Set();
 
     const zoneStyleFor = (zone) => ({
+      visible:        zone.visible !== false,
       fill:           isFreeMove ? 'transparent' : (zone.svg_fill_color || 'rgba(59, 130, 246, 0.08)'),
       stroke:         '#3b82f6',
       strokeWidth:    2,
@@ -521,6 +522,7 @@ export default function Canvas() {
             textAlign:  layer.textAlign  || 'left',
             scaleX:     1,
             scaleY:     1,
+            visible:    layer.visible !== false,
             selectable: !layer.locked,
             evented:    !layer.locked,
           });
@@ -540,6 +542,7 @@ export default function Canvas() {
             fontFamily,
             fill:       layer.fill       || '#000000',
             textAlign:  layer.textAlign  || 'left',
+            visible:    layer.visible !== false,
             selectable: !layer.locked,
             evented:    !layer.locked,
             data:       layerData(layer),
@@ -556,6 +559,7 @@ export default function Canvas() {
             scaleX:     layer.scaleX || 1,
             scaleY:     layer.scaleY || 1,
             angle:      layer.angle  || 0,
+            visible:    layer.visible !== false,
             selectable: !layer.locked,
             evented:    !layer.locked,
           });
@@ -574,6 +578,7 @@ export default function Canvas() {
                 scaleX:     layer.scaleX || 1,
                 scaleY:     layer.scaleY || 1,
                 angle:      layer.angle  || 0,
+                visible:    layer.visible !== false,
                 selectable: !layer.locked,
                 evented:    !layer.locked,
                 data:       layerData(layer),
@@ -596,6 +601,7 @@ export default function Canvas() {
             scaleX:     layer.scaleX || 1,
             scaleY:     layer.scaleY || 1,
             angle:      layer.angle  || 0,
+            visible:    layer.visible !== false,
             selectable: !layer.locked,
             evented:    !layer.locked,
           });
@@ -617,6 +623,7 @@ export default function Canvas() {
                 scaleX:         layer.scaleX || 1,
                 scaleY:         layer.scaleY || 1,
                 angle:          layer.angle  || 0,
+                visible:        layer.visible !== false,
                 selectable:     !layer.locked,
                 evented:        !layer.locked,
                 strokeUniform:  true,
@@ -664,6 +671,7 @@ export default function Canvas() {
                 scaleX:        layer.scaleX || 1,
                 scaleY:        layer.scaleY || 1,
                 angle:         layer.angle  || 0,
+                visible:       layer.visible !== false,
                 selectable:    !layer.locked,
                 evented:       !layer.locked,
                 strokeUniform: true,
