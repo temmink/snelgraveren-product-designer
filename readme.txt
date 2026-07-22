@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.5.0
+Stable tag: 1.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -93,6 +93,11 @@ Freemius Terms of Service: https://freemius.com/terms/
 No other external services are used. Design exports (PDF/PNG/SVG) are rendered entirely on your own server — nothing about your customers' designs, uploads, or orders is ever sent off-site.
 
 == Changelog ==
+
+= 1.6.0 =
+* New (Pro): in the Template Builder's Boundary form, an SVG-shape boundary can now be built from the view's imported SVG layers — pick one or more layers ("From layers") instead of uploading a separate SVG file.
+* Fix: the designer product page is no longer full-page cached. A shared page cache (e.g. LiteSpeed) could freeze one visitor's session nonce for everyone (breaking customer saves) and serve one customer's design to another, or fall back to the default product image. The page now opts out of caching whenever the designer renders.
+* Fix: the plugin's rewrite-rule self-heal now flushes on shutdown instead of mid-init, so a version update can no longer drop WooCommerce's shop category rewrite rules (which 404'd category pages after an update).
 
 = 1.5.0 =
 * New (Pro): "Use as Boundary" in the Template Builder. Select one or more vector (SVG) layers on the canvas — such as an imported LightBurn outline — and turn them into a single design boundary (safe area / clip zone) in one click. The merged shape is stored inline and rendered in both the builder and the customer designer; the original layers are kept (non-destructive). Editable afterwards via the Boundary form.
