@@ -18,3 +18,4 @@ APP-META.INI
 *.bak
 *.png
 !assets/**/*.png
+template-*.json
