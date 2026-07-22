@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.7.0
+Stable tag: 1.7.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -93,6 +93,9 @@ Freemius Terms of Service: https://freemius.com/terms/
 No other external services are used. Design exports (PDF/PNG/SVG) are rendered entirely on your own server — nothing about your customers' designs, uploads, or orders is ever sent off-site.
 
 == Changelog ==
+
+= 1.7.1 =
+* New: templates can be exported as a self-contained JSON file (Templates list → Export) and imported on another site (Import Template button). All views, zones, boundaries and layers travel along; referenced uploads are embedded in the file and every SVG is re-sanitized on import. Custom fonts do not travel — the import warns per missing font.
 
 = 1.7.0 =
 * Fix: LightBurn import — shapes with curved segments could land a few pixels off relative to each other (bounding boxes now include exact bezier extrema), so cut layers that coincide in LightBurn coincide in the builder again.
