@@ -236,6 +236,23 @@ class Frontend {
         return $html;
     }
 
+    /**
+     * Opt the current response out of full-page caching.
+     *
+     * The designer page carries a per-session WordPress nonce and personalized,
+     * session-specific design state, so caching it publicly breaks customer
+     * saves (frozen/expired nonce) and can leak one customer's design to
+     * another. `DONOTCACHEPAGE` is honoured by LiteSpeed, WP Rocket, W3TC, WP
+     * Super Cache and others; the LiteSpeed action is a belt-and-suspenders
+     * signal for that host in particular.
+     */
+    private function prevent_page_cache(): void {
+        if (!defined('DONOTCACHEPAGE')) {
+            define('DONOTCACHEPAGE', true);
+        }
+        do_action('litespeed_control_set_nocache', 'ProductForge designer page (per-session nonce and personalized design)');
+    }
+
     public function enqueue_assets(): void {
         if (!is_product()) {
             return;
@@ -252,6 +269,14 @@ class Frontend {
         if (!$template_id) {
             return;
         }
+
+        // Reaching here means the designer renders on this page. It embeds a
+        // per-session WordPress nonce and loads/saves session-specific customer
+        // designs over REST, so it must never be full-page cached: a cached copy
+        // freezes one visitor's nonce (breaking every later customer's save) and
+        // can serve one customer's design to another. Opt this response out of
+        // every common page cache.
+        $this->prevent_page_cache();
 
         $dist_path = SGPD_PLUGIN_DIR . 'dist/';
         $dist_url  = SGPD_PLUGIN_URL . 'dist/';
