@@ -53,9 +53,19 @@ class CartSurcharge {
                 // Store surcharge in cart item for display
                 $cart->cart_contents[$cart_item_key]['pf_surcharge'] = $surcharge;
 
-                // Add surcharge to the product price
+                // Add surcharge to the product price.
+                //
+                // woocommerce_before_calculate_totals can fire several times per
+                // request against the SAME product object (mini-cart fragment +
+                // page render, other plugins forcing recalculation). The static
+                // $running guard above only stops re-entrant (nested) calls, not
+                // sequential ones — adding to get_price() again on a later pass
+                // would stack the surcharge and overcharge the customer. Flag
+                // the object the first time and skip it on repeats; the flag is
+                // runtime-only (never saved to the product).
                 $product = $cart_item['data'];
-                if ($product instanceof \WC_Product) {
+                if ($product instanceof \WC_Product && !$product->get_meta('_sgpd_surcharge_applied')) {
+                    $product->update_meta_data('_sgpd_surcharge_applied', 1);
                     $base_price = (float) $product->get_price();
                     $product->set_price($base_price + $surcharge);
                 }

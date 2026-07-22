@@ -64,20 +64,15 @@ class ExportManager {
 
         $design_id = (int) $design['id'];
 
-        // Remove previous exports of the same format for this design.
-        // Multi-view exports store paths as a comma-separated list, so split before unlinking.
-        $existing = $this->exports->get_by_design($design_id);
-        foreach ($existing as $old) {
+        // Note the previous exports of this format now, but do NOT delete them
+        // yet: if the regeneration below fails (no views, missing export data,
+        // a render exception), the previously valid production export must
+        // survive as the fallback. They are retired only after the new export
+        // has been generated successfully.
+        $stale = [];
+        foreach ($this->exports->get_by_design($design_id) as $old) {
             if ($old['format'] === $format) {
-                if (!empty($old['file_path'])) {
-                    foreach (explode(',', $old['file_path']) as $old_path) {
-                        $old_path = trim($old_path);
-                        if ($old_path !== '' && file_exists($old_path)) {
-                            wp_delete_file($old_path);
-                        }
-                    }
-                }
-                $this->exports->delete((int) $old['id']);
+                $stale[] = $old;
             }
         }
 
@@ -119,6 +114,21 @@ class ExportManager {
             };
 
             $this->exports->update_status($export_id, 'done', $file_path);
+
+            // The new export is in place — now retire the previous ones.
+            // Filenames are deterministic (hash-id), so new files overwrite old
+            // ones at the same path; only delete old files that are not part of
+            // the new path set. Multi-view exports store comma-separated paths.
+            $new_paths = array_filter(array_map('trim', explode(',', (string) $file_path)));
+            foreach ($stale as $old) {
+                $old_paths = array_filter(array_map('trim', explode(',', (string) ($old['file_path'] ?? ''))));
+                foreach ($old_paths as $old_path) {
+                    if (!in_array($old_path, $new_paths, true) && file_exists($old_path)) {
+                        wp_delete_file($old_path);
+                    }
+                }
+                $this->exports->delete((int) $old['id']);
+            }
 
             return [
                 'export_id' => $export_id,

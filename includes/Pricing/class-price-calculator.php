@@ -74,6 +74,11 @@ class PriceCalculator {
 
         $surcharge = $this->preview_from_counts($counts, $config);
 
+        // Round exactly like the live preview endpoint (RestPricing) does, so
+        // the amount the customer saw while designing matches the cart
+        // surcharge to the cent.
+        $surcharge = round($surcharge, 2);
+
         // Persist the calculated price
         $this->designs->update_price((int) $design['id'], $surcharge);
 
