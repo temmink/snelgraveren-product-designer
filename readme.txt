@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.6.1
+Stable tag: 1.6.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -93,6 +93,14 @@ Freemius Terms of Service: https://freemius.com/terms/
 No other external services are used. Design exports (PDF/PNG/SVG) are rendered entirely on your own server — nothing about your customers' designs, uploads, or orders is ever sent off-site.
 
 == Changelog ==
+
+= 1.6.2 =
+* Fix (critical): the design surcharge could be added to the cart price more than once in the same request (WooCommerce recalculates totals multiple times), overcharging the customer. The surcharge is now applied exactly once per product.
+* Fix (critical): regenerating a production export no longer deletes the previous export before the new one exists — a failed regeneration used to permanently destroy the valid export file.
+* Fix: the surcharge is rounded to 2 decimals exactly like the live price preview, so the shown and charged amounts always match.
+* Fix: the Fabric object-type whitelist now also runs when design templates are created or updated through the regular admin endpoints (previously import-only).
+* Fix: when returning to a product with a saved design, only the main gallery image is replaced by the design thumbnail (galleries with multiple photos no longer show the same thumbnail repeatedly).
+* Fix: hardening in the REST API — invalid pagination values can no longer crash the templates list, an invalid design status is rejected instead of echoed back, and a failed design-template insert reports an error instead of a bogus success.
 
 = 1.6.1 =
 * Fix (Pro): the LightBurn import could add its layers to a previously selected view if you switched views (or added one) after the page rendered but before picking the file. The import now always targets the view that is selected at the moment the file is chosen.
