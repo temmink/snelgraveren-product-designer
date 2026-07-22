@@ -516,6 +516,14 @@ export default function DesignerCanvas() {
               canvas.add(group);
               group.setCoords();
               if (zone.behavior === 'restrict') clampToZone(group);
+              // Template art loads async and lands ON TOP of the synchronously
+              // added text layers; a group's hit-area is its bounding box, so
+              // it swallows every click meant for the text underneath and the
+              // customer cannot select/edit the text. Keep text layers above
+              // template art.
+              canvas.getObjects().forEach((o) => {
+                if (o.data?.elementType === 'text') canvas.bringObjectToFront(o);
+              });
               canvas.renderAll();
             })
             .catch((err) => console.warn('[PF] template svg layer load failed:', err));
