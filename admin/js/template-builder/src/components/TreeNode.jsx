@@ -99,6 +99,14 @@ export default function TreeNode({ node, nodeType, isSelected, isExpanded, onSel
 
   const isZone = nodeType === 'zone';
   const icon = isZone ? Icons.zone : (TYPE_ICON_MAP[node.type] || Icons.text);
+  // Real preview instead of the generic type icon where we can: inline svg
+  // markup (LightBurn imports, merged groups) and uploaded images. With dozens
+  // of identically-typed layers the icon alone is impossible to tell apart.
+  const thumbSrc = !isZone
+    ? (node.svg_markup
+      ? `data:image/svg+xml;utf8,${encodeURIComponent(node.svg_markup)}`
+      : (node.src || null))
+    : null;
   const label = isZone ? (node.name || __( 'Unnamed Zone', 'snelgraveren-product-designer' )) : (node.name || node.text || node.type || __( 'Layer', 'snelgraveren-product-designer' ));
   const hasChildren = isZone && (node.layers || []).length > 0;
 
@@ -151,8 +159,12 @@ export default function TreeNode({ node, nodeType, isSelected, isExpanded, onSel
           <span className="pf-tree-node__expand-spacer" />
         )}
 
-        {/* Type icon */}
-        <span className={`pf-tree-node__icon pf-tree-node__icon--${isZone ? 'zone' : node.type}`}>{icon}</span>
+        {/* Type icon / thumbnail preview */}
+        {thumbSrc ? (
+          <img className="pf-tree-node__thumb" alt="" src={thumbSrc} />
+        ) : (
+          <span className={`pf-tree-node__icon pf-tree-node__icon--${isZone ? 'zone' : node.type}`}>{icon}</span>
+        )}
 
         {/* Label (editable on double-click) */}
         {isEditing ? (

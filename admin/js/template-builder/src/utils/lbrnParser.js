@@ -400,6 +400,7 @@ export function parseLbrn(xmlString, opts = {}) {
     layers.push({
       type: 'svg',
       svg_markup,
+      pathCount: members.length, // >1 = merged LightBurn group (used for layer naming)
       left: n((sMinX - minX) * PX_PER_MM),
       top: n((sMinY - minY) * PX_PER_MM),
       scaleX: 1,

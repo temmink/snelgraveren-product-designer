@@ -677,6 +677,17 @@
   color: #7c3aed;
 }
 
+/* Thumbnail preview (svg-markup / image layers) — replaces the type icon */
+.pf-tree-node__thumb {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 5px;
+  flex-shrink: 0;
+}
+
 /* Label */
 .pf-tree-node__label {
   flex: 1;

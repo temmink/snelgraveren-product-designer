@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import useTemplateStore from '../store/useTemplateStore';
 import { parseLbrn, PX_PER_MM } from '../utils/lbrnParser';
 import { AVAILABLE_FONTS } from '../utils/fonts';
@@ -62,9 +62,25 @@ export default function ImportLightBurn() {
       const canvasW = Math.max(1, Math.round(natW * fit));
       const canvasH = Math.max(1, Math.round(natH * fit));
 
+      // Name svg layers so the tree panel is navigable (a 40-shape import
+      // otherwise reads "svg, svg, svg…"): merged LightBurn groups become
+      // "Group N (x shapes)", loose shapes "Shape N". Text layers keep their
+      // own text as the tree label.
+      let groupNo = 0;
+      let shapeNo = 0;
+      const namedLayers = layers.map((l) => {
+        if (l.type !== 'svg') return l;
+        if ((l.pathCount || 1) > 1) {
+          groupNo += 1;
+          return { ...l, name: sprintf( __( 'Group %1$d (%2$d shapes)', 'snelgraveren-product-designer' ), groupNo, l.pathCount ) };
+        }
+        shapeNo += 1;
+        return { ...l, name: sprintf( __( 'Shape %d', 'snelgraveren-product-designer' ), shapeNo ) };
+      });
+
       // Apply the display scale uniformly to every layer (position + size), so
       // relative positions are preserved exactly.
-      const scaledLayers = layers.map((l) => (
+      const scaledLayers = namedLayers.map((l) => (
         l.type === 'text'
           ? { ...l, left: r(l.left * fit), top: r(l.top * fit), fontSize: r(l.fontSize * fit) }
           : { ...l, left: r(l.left * fit), top: r(l.top * fit),
