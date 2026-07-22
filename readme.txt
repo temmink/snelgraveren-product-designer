@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.6.2
+Stable tag: 1.7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -93,6 +93,17 @@ Freemius Terms of Service: https://freemius.com/terms/
 No other external services are used. Design exports (PDF/PNG/SVG) are rendered entirely on your own server — nothing about your customers' designs, uploads, or orders is ever sent off-site.
 
 == Changelog ==
+
+= 1.7.0 =
+* Fix: LightBurn import — shapes with curved segments could land a few pixels off relative to each other (bounding boxes now include exact bezier extrema), so cut layers that coincide in LightBurn coincide in the builder again.
+* New: shapes grouped in LightBurn now import as a single multi-path layer per group (colours per cut layer preserved; editable text stays a separate layer).
+* New: boundary "From layers" can expand a merged group and select individual shapes inside it, each with its own thumbnail and the parent layer's name.
+* New: imported layers get recognizable names ("Group 1 (12 shapes)", "Shape 3") and the layer tree shows real thumbnails instead of generic type icons.
+* Fix: the visibility (eye) toggle in the layer tree now actually hides layers and zones on the builder canvas.
+* Fix: saving a boundary with decimal coordinates was blocked by browser validation, and the merged-boundary preview rendered blank.
+* Fix: zone behavior "Clip at boundary" now works (elements move freely but are cut off at the outline); it previously did nothing.
+* Improved: zone behavior "Restrict" now keeps elements inside the actual SVG contour instead of its rectangular bounding box.
+* Fix: customers could not select or edit template text in the designer — template artwork loaded on top of the text and swallowed the clicks.
 
 = 1.6.2 =
 * Fix (critical): the design surcharge could be added to the cart price more than once in the same request (WooCommerce recalculates totals multiple times), overcharging the customer. The surcharge is now applied exactly once per product.
