@@ -91,13 +91,18 @@ export default function DesignerCanvas() {
 
   // ── Zone helpers ──────────────────────────────────────────────────────────
 
+  // A zone that visually clips its elements: 'restrict' also clamps movement
+  // inside the boundary, 'clip' lets elements move freely but cuts them off
+  // at the boundary. Every other behavior enforces nothing.
+  const zoneClips = (z) => !!z && (z.behavior === 'restrict' || z.behavior === 'clip');
+
   const findZoneForObject = useCallback((obj) => {
     const bound = obj.getBoundingRect();
     const cx = bound.left + bound.width / 2;
     const cy = bound.top + bound.height / 2;
     for (let i = 0; i < zones.length; i++) {
       const z = zones[i];
-      if (z.behavior !== 'restrict') continue;
+      if (!zoneClips(z)) continue;
       if (cx >= z.x && cx <= z.x + z.width && cy >= z.y && cy <= z.y + z.height) {
         return i;
       }
@@ -108,7 +113,7 @@ export default function DesignerCanvas() {
   const findZoneForPoint = useCallback((x, y, elementType) => {
     for (let i = 0; i < zones.length; i++) {
       const z = zones[i];
-      if (z.behavior !== 'restrict') continue;
+      if (!zoneClips(z)) continue;
       if (!(z.allowed_types || []).includes(elementType)) continue;
       if (x >= z.x && x <= z.x + z.width && y >= z.y && y <= z.y + z.height) {
         return i;
@@ -120,7 +125,7 @@ export default function DesignerCanvas() {
   const findFirstZoneForType = useCallback((elementType) => {
     for (let i = 0; i < zones.length; i++) {
       const z = zones[i];
-      if (z.behavior !== 'restrict') continue;
+      if (!zoneClips(z)) continue;
       if ((z.allowed_types || []).includes(elementType)) return i;
     }
     return -1;
@@ -129,7 +134,7 @@ export default function DesignerCanvas() {
   // ── Clip object to its zone ───────────────────────────────────────────────
 
   const applyZoneClip = useCallback((obj, zoneIdx) => {
-    if (zoneIdx < 0 || !zones[zoneIdx] || zones[zoneIdx].behavior !== 'restrict') return;
+    if (zoneIdx < 0 || !zoneClips(zones[zoneIdx])) return;
     const zone = zones[zoneIdx];
 
     if (zone.boundary_type === 'svg') {
@@ -295,8 +300,6 @@ export default function DesignerCanvas() {
     // Render zone shapes
     const svgZonePromises = [];
     zones.forEach((zone, index) => {
-      const isRestrict = zone.behavior === 'restrict';
-
       if (zone.boundary_type === 'svg' && (zone.svg_url || zone.svg_markup)) {
         // Load SVG from URL asynchronously, or use inline markup directly
         const promise = (zone.svg_url
@@ -380,7 +383,7 @@ export default function DesignerCanvas() {
 
             // Apply clip paths to any template layers already on canvas for this zone
             canvas.getObjects().forEach((obj) => {
-              if (obj.data?.zoneIndex === index && !obj.data?.isZoneOverlay && zone.behavior === 'restrict') {
+              if (obj.data?.zoneIndex === index && !obj.data?.isZoneOverlay && zoneClips(zone)) {
                 group.clone().then((cloned) => {
                   cloned.set({ absolutePositioned: true });
                   if (cloned.getObjects) {
@@ -459,7 +462,7 @@ export default function DesignerCanvas() {
             data:       { elementType: 'text', zoneIndex: zoneIdx },
           });
           applyPermissions(text, 'text');
-          if (zone.behavior === 'restrict') applyZoneClip(text, zoneIdx);
+          if (zoneClips(zone)) applyZoneClip(text, zoneIdx);
           canvas.add(text);
           if (zone.behavior === 'restrict') clampToZone(text);
         }
@@ -486,7 +489,7 @@ export default function DesignerCanvas() {
                 data:          { elementType: 'svg', zoneIndex: zoneIdx },
               });
               applyPermissions(group, 'svg');
-              if (zone.behavior === 'restrict') applyZoneClip(group, zoneIdx);
+              if (zoneClips(zone)) applyZoneClip(group, zoneIdx);
               canvas.add(group);
               group.setCoords();
               if (zone.behavior === 'restrict') clampToZone(group);

@@ -67,10 +67,15 @@ export default function Canvas() {
     return -1;
   }, [views, currentViewIndex]);
 
+  // A zone that visually clips its layers: 'restrict' also clamps movement
+  // inside the boundary, 'clip' lets layers move freely but cuts them off at
+  // the boundary. Mirrors the frontend designer's zoneClips helper.
+  const zoneClips = (z) => !!z && (z.behavior === 'restrict' || z.behavior === 'clip');
+
   const applyZoneClip = useCallback((obj, zoneIdx) => {
     if (isFreeMove) return;
     const zones = views[currentViewIndex]?.zones_config || [];
-    if (zoneIdx < 0 || !zones[zoneIdx] || zones[zoneIdx].behavior !== 'restrict') return;
+    if (zoneIdx < 0 || !zoneClips(zones[zoneIdx])) return;
     const zone = zones[zoneIdx];
 
     if (zone.boundary_type === 'svg') {
@@ -395,7 +400,7 @@ export default function Canvas() {
               // Re-apply SVG clip paths to any layers already in this zone
               // by cloning the newly created boundary group.
               canvas.getObjects().forEach((layerObj) => {
-                if (layerObj.data?.zoneIndex === index && layerObj.data?.layerKey) {
+                if (layerObj.data?.zoneIndex === index && layerObj.data?.layerKey && zoneClips(zone)) {
                   group.clone().then((cloned) => {
                     cloned.set({ absolutePositioned: true });
                     // Clip paths render by filled area — ensure all child shapes have a fill.
