@@ -150,7 +150,12 @@ class DesignTemplateRepository {
             $formats[]             = '%d';
         }
 
-        $wpdb->insert(self::templates_table(), $fields, $formats);
+        // A failed insert leaves $wpdb->insert_id at its PREVIOUS value, so
+        // continuing here would report a bogus id (and could attach the views
+        // below to an unrelated row). Bail out explicitly.
+        if (false === $wpdb->insert(self::templates_table(), $fields, $formats)) {
+            return 0;
+        }
 
         $id = (int) $wpdb->insert_id;
 

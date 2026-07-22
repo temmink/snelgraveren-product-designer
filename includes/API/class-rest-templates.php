@@ -51,8 +51,10 @@ class RestTemplates {
     }
 
     public function list_templates(\WP_REST_Request $request): \WP_REST_Response {
-        $per_page = (int) ($request['per_page'] ?? 20);
-        $page     = (int) ($request['page'] ?? 1);
+        // Clamp: per_page=0 would divide by zero in the TotalPages header
+        // (fatal on PHP 8) and negatives make no sense.
+        $per_page = max(1, min(100, (int) ($request['per_page'] ?? 20)));
+        $page     = max(1, (int) ($request['page'] ?? 1));
         $status   = sanitize_text_field($request['status'] ?? '');
 
         $templates = $this->repo->list($per_page, $page, $status);

@@ -91,7 +91,10 @@ class DesignRepository {
         global $wpdb;
         $allowed = ['draft', 'final', 'ordered', 'archived'];
         if (!in_array($status, $allowed, true)) return false;
-        return (bool) $wpdb->update($this->table, ['status' => $status], ['id' => $id], ['%s'], ['%d']);
+        // wpdb->update() returns the number of affected rows or false on error;
+        // 0 (status already had this value) is a success, so only a hard false
+        // may be reported as failure.
+        return false !== $wpdb->update($this->table, ['status' => $status], ['id' => $id], ['%s'], ['%d']);
     }
 
     /**

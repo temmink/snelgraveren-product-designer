@@ -139,10 +139,15 @@ class RestDesignTemplates {
 
         $views = $request->get_param('views');
         if (is_array($views)) {
-            $data['views'] = $views;
+            // Same Fabric type whitelist the JSON-import path applies — this
+            // canvas JSON is later served to guest customers.
+            $data['views'] = (new DesignTemplateValidator())->sanitize_views($views);
         }
 
         $id = DesignTemplateRepository::create($data);
+        if (!$id) {
+            return new \WP_Error('create_failed', 'Failed to create design template.', ['status' => 500]);
+        }
 
         return new \WP_REST_Response([
             'id'   => $id,
@@ -173,7 +178,9 @@ class RestDesignTemplates {
 
         $views = $request->get_param('views');
         if (is_array($views)) {
-            $data['views'] = $views;
+            // Same Fabric type whitelist the JSON-import path applies — this
+            // canvas JSON is later served to guest customers.
+            $data['views'] = (new DesignTemplateValidator())->sanitize_views($views);
         }
 
         $ok = DesignTemplateRepository::update($id, $data);
@@ -216,6 +223,9 @@ class RestDesignTemplates {
             'status'        => 'active',
             'views'         => $data['views'] ?? [],
         ]);
+        if (!$id) {
+            return new \WP_Error('create_failed', 'Failed to import design template.', ['status' => 500]);
+        }
 
         return new \WP_REST_Response([
             'id'   => $id,

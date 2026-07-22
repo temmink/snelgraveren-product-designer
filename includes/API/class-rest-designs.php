@@ -153,7 +153,11 @@ class RestDesigns {
 
         $body = $request->get_json_params();
         if (!empty($body['status'])) {
-            $this->repo->update_status((int) $design['id'], $body['status']);
+            // Only reflect the new status back when it actually persisted —
+            // update_status() rejects values outside its whitelist.
+            if (!$this->repo->update_status((int) $design['id'], (string) $body['status'])) {
+                return new \WP_Error('invalid_status', 'Invalid status value.', ['status' => 400]);
+            }
             $design['status'] = $body['status'];
         }
         return rest_ensure_response($this->sanitize_for_customer($design));

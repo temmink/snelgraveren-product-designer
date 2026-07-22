@@ -219,15 +219,26 @@ class Frontend {
     /**
      * Replace the product gallery image with the design thumbnail when returning from cart.
      */
+    /** Whether the gallery's main image was already swapped for the design thumbnail. */
+    private bool $gallery_thumb_replaced = false;
+
     public function override_gallery_thumbnail_html(string $html, $attachment_id): string {
         $hash = $this->get_design_hash_from_url();
         if (empty($hash)) {
             return $html;
         }
 
+        // This filter fires once per gallery image. Replace only the FIRST
+        // (main) image with the design thumbnail; replacing every image would
+        // show the same thumbnail multiple times on products with a gallery.
+        if ($this->gallery_thumb_replaced) {
+            return $html;
+        }
+
         $urls = $this->get_design_thumbnail_urls($hash);
         $thumb_url = $urls[0] ?? '';
         if (!empty($thumb_url)) {
+            $this->gallery_thumb_replaced = true;
             return '<div data-thumb="' . esc_url($thumb_url) . '" class="woocommerce-product-gallery__image">'
                 . '<img src="' . esc_url($thumb_url) . '" alt="' . esc_attr__('Your custom design', 'snelgraveren-product-designer') . '" class="wp-post-image" />'
                 . '</div>';
