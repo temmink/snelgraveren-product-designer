@@ -20,9 +20,21 @@ class AccountDesigns {
 
             // Self-heals the rewrite rules on activation AND on plugin
             // updates (ZIP uploads never re-run activation hooks).
+            //
+            // Defer the flush to 'shutdown' rather than flushing here on
+            // 'init': flush_rewrite_rules() regenerates the WHOLE rule set from
+            // whatever is registered at call time, so flushing mid-'init' can
+            // capture an incomplete set and drop rules other plugins add later
+            // on 'init' (e.g. WooCommerce's empty-base product-category rules),
+            // 404-ing shop category pages after a version bump. By 'shutdown'
+            // every rewrite registration is done, so the regenerated set is
+            // complete. The option is written only after a successful flush, so
+            // a request that dies before shutdown simply retries next time.
             if (get_option('sgpd_endpoint_registered') !== SGPD_VERSION) {
-                update_option('sgpd_endpoint_registered', SGPD_VERSION, false);
-                flush_rewrite_rules();
+                add_action('shutdown', static function () {
+                    flush_rewrite_rules(false);
+                    update_option('sgpd_endpoint_registered', SGPD_VERSION, false);
+                });
             }
         });
         add_filter('woocommerce_account_menu_items', [$this, 'menu_item']);
