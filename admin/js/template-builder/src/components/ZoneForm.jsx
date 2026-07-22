@@ -428,7 +428,12 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
                   </ul>
                   {data.svg_markup && (
                     <div className="pf-zone-form__layer-preview">
-                      <img alt="" src={`data:image/svg+xml;utf8,${encodeURIComponent(data.svg_markup)}`} />
+                      {/* Merged boundary paths carry fill="none" and no stroke
+                          (the canvas renderer styles them) — add a stroke here
+                          or the preview renders blank. */}
+                      <img alt="" src={`data:image/svg+xml;utf8,${encodeURIComponent(
+                        data.svg_markup.replace(/<path /g, '<path stroke="#2271b1" stroke-width="2" ')
+                      )}`} />
                     </div>
                   )}
                 </>
@@ -446,6 +451,7 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
               {label}
               <input
                 type="number" value={data[key]} min={key === 'width' || key === 'height' ? 1 : 0}
+                step="any"
                 onChange={(e) => set(key, Number(e.target.value))}
                 readOnly={isSvgSize}
                 className="pf-zone-form__input pf-zone-form__input--number"
