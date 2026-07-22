@@ -187,6 +187,84 @@ describe('parseLbrn (XForm scoping — Text shape with HasBackupPath)', () => {
   });
 });
 
+describe('parseLbrn (group merge — one svg layer per LightBurn group)', () => {
+  const TRI = (own, cut) => `      <Shape Type="Path" CutIndex="${cut}">
+        <XForm>${own}</XForm>
+        <VertList>V0 0V10 0V10 10</VertList>
+        <PrimList>L0 1L1 2L2 0</PrimList>
+      </Shape>`;
+  const wrap = (inner) => `<?xml version="1.0" encoding="UTF-8"?>
+<LightBurnProject AppVersion="2.1.03">
+${inner}
+</LightBurnProject>`;
+
+  it('merges all paths of one group into a single multi-path svg layer with per-cut colours', () => {
+    const xml = wrap(`  <Shape Type="Group" CutIndex="0">
+    <XForm>1 0 0 1 0 0</XForm>
+    <Children>
+${TRI('1 0 0 1 0 0', 0)}
+${TRI('1 0 0 1 20 0', 2)}
+    </Children>
+  </Shape>`);
+    const { layers, widthMm } = parseLbrn(xml, { availableFonts: [] });
+    const svgs = layers.filter((l) => l.type === 'svg');
+    expect(svgs.length).toBe(1);                                   // one layer, not two
+    expect((svgs[0].svg_markup.match(/<path/g) || []).length).toBe(2);
+    expect(svgs[0].svg_markup).toContain('stroke="#000000"');      // cut 0
+    expect(svgs[0].svg_markup).toContain('stroke="#ff0000"');      // cut 2
+    expect(svgs[0].left).toBe(0);
+    expect(widthMm).toBe(30);                                      // union spans both triangles
+  });
+
+  it('keeps ungrouped shapes as individual layers next to a merged group', () => {
+    const xml = wrap(`  <Shape Type="Group" CutIndex="0">
+    <XForm>1 0 0 1 0 0</XForm>
+    <Children>
+${TRI('1 0 0 1 0 0', 0)}
+${TRI('1 0 0 1 20 0', 0)}
+    </Children>
+  </Shape>
+${TRI('1 0 0 1 50 0', 1)}`);
+    const { layers } = parseLbrn(xml, { availableFonts: [] });
+    const svgs = layers.filter((l) => l.type === 'svg');
+    expect(svgs.length).toBe(2); // merged group + the loose shape
+  });
+
+  it('merges nested groups into the top-level group layer', () => {
+    const xml = wrap(`  <Shape Type="Group" CutIndex="0">
+    <XForm>1 0 0 1 0 0</XForm>
+    <Children>
+${TRI('1 0 0 1 0 0', 0)}
+      <Shape Type="Group" CutIndex="0">
+        <XForm>1 0 0 1 20 0</XForm>
+        <Children>
+${TRI('1 0 0 1 0 0', 0)}
+        </Children>
+      </Shape>
+    </Children>
+  </Shape>`);
+    const { layers } = parseLbrn(xml, { availableFonts: [] });
+    const svgs = layers.filter((l) => l.type === 'svg');
+    expect(svgs.length).toBe(1);
+    expect((svgs[0].svg_markup.match(/<path/g) || []).length).toBe(2);
+  });
+
+  it('keeps editable text inside a group as a separate text layer', () => {
+    const xml = wrap(`  <Shape Type="Group" CutIndex="0">
+    <XForm>1 0 0 1 0 0</XForm>
+    <Children>
+${TRI('1 0 0 1 0 0', 0)}
+      <Shape Type="Text" CutIndex="0" Font="Arial,-1,4096,5,400,0,0,0,0,0" Str="Hi" H="10">
+        <XForm>1 0 0 1 5 5</XForm>
+      </Shape>
+    </Children>
+  </Shape>`);
+    const { layers } = parseLbrn(xml, { availableFonts: ['Arial'] });
+    expect(layers.filter((l) => l.type === 'svg').length).toBe(1);
+    expect(layers.filter((l) => l.type === 'text').length).toBe(1);
+  });
+});
+
 describe('parseLbrn (bezier curve extents in bbox)', () => {
   // A bezier bump whose curve peaks 3mm above its two vertices, overlaid on a
   // straight rect that exactly covers the curve's TRUE bounds. In LightBurn

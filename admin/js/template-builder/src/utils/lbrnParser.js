@@ -268,25 +268,30 @@ function resolvePathGeom(el, vertPool, primPool) {
 
 /** Flatten shapes depth-first, composing each ancestor Group's XForm into its
  *  descendants so grouped geometry lands where LightBurn draws it. Returns leaf
- *  (non-Group) shapes as { el, xform (composed, mm), type }. */
+ *  (non-Group) shapes as { el, xform (composed, mm), type, groupKey }.
+ *  groupKey identifies the TOP-LEVEL LightBurn group a shape belongs to (nested
+ *  groups inherit their outermost ancestor's key); ungrouped shapes get null.
+ *  parseLbrn merges all paths sharing a groupKey into one svg layer. */
 function collectShapes(root) {
   const out = [];
-  const walk = (el, acc) => {
+  let nextGroup = 0;
+  const walk = (el, acc, groupKey) => {
     const eff = multiplyXform(acc, parseXform(readOwnXform(el)));
     const type = el.getAttribute('Type');
     if (type === 'Group') {
+      const key = groupKey ?? `g${nextGroup++}`;
       // Real files wrap children in <Children>; fall back to direct child
       // <Shape>s if that wrapper is absent.
       const container = directChild(el, 'Children') || el;
       Array.from(container.children).forEach((ch) => {
-        if (ch.tagName === 'Shape') walk(ch, eff);
+        if (ch.tagName === 'Shape') walk(ch, eff, key);
       });
       return;
     }
-    out.push({ el, xform: eff, type });
+    out.push({ el, xform: eff, type, groupKey: groupKey ?? null });
   };
   Array.from(root.children).forEach((ch) => {
-    if (ch.tagName === 'Shape') walk(ch, IDENTITY_XFORM);
+    if (ch.tagName === 'Shape') walk(ch, IDENTITY_XFORM, null);
   });
   return out;
 }
@@ -309,24 +314,24 @@ export function parseLbrn(xmlString, opts = {}) {
   const paths = []; // { d(local), xform, cutIndex, mpts:[[mx,my]...] }
   const texts = []; // { text, family, fontSize, xform, cutIndex, originMx, originMy }
 
-  const pushPath = (vert, prim, xform, cutIndex) => {
+  const pushPath = (vert, prim, xform, cutIndex, groupKey) => {
     const localD = vertPrimToPathData(vert, prim);
     if (!localD) return false;
     // machine-space bbox points (vertices + exact bezier extrema)
     const mpts = vertPrimBoundsPoints(vert, prim, xform);
-    paths.push({ vert, prim, xform, cutIndex, mpts });
+    paths.push({ vert, prim, xform, cutIndex, mpts, groupKey: groupKey ?? null });
     return true;
   };
 
   const root = doc.querySelector('LightBurnProject');
   const { vertPool, primPool } = buildGeometryPools(root);
 
-  collectShapes(root).forEach(({ el, xform, type }) => {
+  collectShapes(root).forEach(({ el, xform, type, groupKey }) => {
     const cutIndex = parseInt(el.getAttribute('CutIndex') || '0', 10);
 
     if (type === 'Path' || type === 'Rect' || type === 'Ellipse') {
       const { vert, prim } = resolvePathGeom(el, vertPool, primPool);
-      if (!pushPath(vert, prim, xform, cutIndex)) warnings.push('Skipped an unreadable shape.');
+      if (!pushPath(vert, prim, xform, cutIndex, groupKey)) warnings.push('Skipped an unreadable shape.');
     } else if (type === 'Text') {
       const str = el.getAttribute('Str') || '';
       const { family } = qtFontToFamily(el.getAttribute('Font'));
@@ -336,7 +341,7 @@ export function parseLbrn(xmlString, opts = {}) {
         texts.push({ text: str, family, fontSize: heightMm * PX_PER_MM, cutIndex, originMx: ox, originMy: oy });
       } else {
         const { vert, prim } = readVertPrim(el);
-        if (pushPath(vert, prim, xform, cutIndex)) {
+        if (pushPath(vert, prim, xform, cutIndex, groupKey)) {
           if (str) warnings.push(`Font "${family}" is not available; imported "${str}" as an outline.`);
         } else if (str) {
           warnings.push(`Font "${family}" is not available and "${str}" has no outline; skipped.`);
@@ -364,22 +369,34 @@ export function parseLbrn(xmlString, opts = {}) {
   //    at the shape's design-canvas top-left. LightBurn stores Y downward for
   //    this device orientation (MirrorY), so machine Y maps directly to canvas
   //    Y (no flip) — the ring hole at low machine-Y lands at the canvas top.
+  //    All paths of one LightBurn group merge into a single multi-path layer
+  //    (relative positions baked into the path data, per-cut colours kept);
+  //    ungrouped paths stay individual layers. Buckets preserve document order.
+  const buckets = [];
+  const byGroup = new Map();
   paths.forEach((p) => {
+    if (p.groupKey == null) { buckets.push([p]); return; }
+    let arr = byGroup.get(p.groupKey);
+    if (!arr) { arr = []; byGroup.set(p.groupKey, arr); buckets.push(arr); }
+    arr.push(p);
+  });
+  buckets.forEach((members) => {
     let sMinX = Infinity, sMinY = Infinity, sMaxX = -Infinity, sMaxY = -Infinity;
-    p.mpts.forEach(([x, y]) => { if (x < sMinX) sMinX = x; if (y < sMinY) sMinY = y; if (x > sMaxX) sMaxX = x; if (y > sMaxY) sMaxY = y; });
+    members.forEach((p) => p.mpts.forEach(([x, y]) => { if (x < sMinX) sMinX = x; if (y < sMinY) sMinY = y; if (x > sMaxX) sMaxX = x; if (y > sMaxY) sMaxY = y; }));
     const wPx = Math.max(1, (sMaxX - sMinX) * PX_PER_MM);
     const hPx = Math.max(1, (sMaxY - sMinY) * PX_PER_MM);
-    // per-vertex transform: machine → shape-local px (Y direct, no flip)
-    const toLocalPx = (lx, ly) => {
-      const [mx, my] = applyXform(p.xform, lx, ly);
-      return [(mx - sMinX) * PX_PER_MM, (my - sMinY) * PX_PER_MM];
-    };
-    const d = vertPrimToPathData(p.vert, p.prim, toLocalPx);
-    const color = layerColor(p.cutIndex);
+    const pathTags = members.map((p) => {
+      // per-vertex transform: machine → bucket-local px (Y direct, no flip)
+      const toLocalPx = (lx, ly) => {
+        const [mx, my] = applyXform(p.xform, lx, ly);
+        return [(mx - sMinX) * PX_PER_MM, (my - sMinY) * PX_PER_MM];
+      };
+      const d = vertPrimToPathData(p.vert, p.prim, toLocalPx);
+      return `<path d="${d}" fill="none" stroke="${layerColor(p.cutIndex)}" stroke-width="1"/>`;
+    }).join('');
     const svg_markup =
       `<svg xmlns="http://www.w3.org/2000/svg" width="${n(wPx)}" height="${n(hPx)}" `
-      + `viewBox="0 0 ${n(wPx)} ${n(hPx)}">`
-      + `<path d="${d}" fill="none" stroke="${color}" stroke-width="1"/></svg>`;
+      + `viewBox="0 0 ${n(wPx)} ${n(hPx)}">${pathTags}</svg>`;
     layers.push({
       type: 'svg',
       svg_markup,
