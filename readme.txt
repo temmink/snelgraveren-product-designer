@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.6.0
+Stable tag: 1.6.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -93,6 +93,9 @@ Freemius Terms of Service: https://freemius.com/terms/
 No other external services are used. Design exports (PDF/PNG/SVG) are rendered entirely on your own server — nothing about your customers' designs, uploads, or orders is ever sent off-site.
 
 == Changelog ==
+
+= 1.6.1 =
+* Fix (Pro): the LightBurn import could add its layers to a previously selected view if you switched views (or added one) after the page rendered but before picking the file. The import now always targets the view that is selected at the moment the file is chosen.
 
 = 1.6.0 =
 * New (Pro): in the Template Builder's Boundary form, an SVG-shape boundary can now be built from the view's imported SVG layers — pick one or more layers ("From layers") instead of uploading a separate SVG file.
