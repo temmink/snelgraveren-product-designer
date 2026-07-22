@@ -172,6 +172,9 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
     e.preventDefault();
     if (!data.name.trim()) return;
     if (data.width < 1 || data.height < 1) return;
+    // An SVG-shape boundary needs a source (an uploaded file or picked layers);
+    // saving with neither would create an invisible boundary.
+    if (data.boundary_type === 'svg' && !data.svg_url && !data.svg_markup) return;
     onSubmit({ ...data, name: data.name.trim() });
   };
 
