@@ -18,7 +18,7 @@ const isPremium = window.sgpdTemplateBuilder?.isPremium;
 export default function ImportLightBurn() {
   const inputRef = useRef(null);
   const [status, setStatus] = useState('');
-  const { views, currentViewIndex, addZone, addLayer, updateView } = useTemplateStore();
+  const { addZone, addLayer, updateView } = useTemplateStore();
 
   if (!isPremium) {
     return (
@@ -34,6 +34,10 @@ export default function ImportLightBurn() {
     setStatus( __( 'Importing…', 'snelgraveren-product-designer' ) );
     try {
       const xml = await file.text();
+      // Read fresh — this handler is async, so render-time closure values for
+      // views/currentViewIndex can be stale by the time the file is read
+      // (documented Zustand gotcha; see handleUseAsBoundary in Canvas.jsx).
+      const { views, currentViewIndex } = useTemplateStore.getState();
       const { layers, widthMm, heightMm, warnings } = parseLbrn(xml, {
         availableFonts: AVAILABLE_FONTS.map((f) => f.family),
       });
