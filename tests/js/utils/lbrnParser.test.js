@@ -114,13 +114,14 @@ describe('parseLbrn (sample file)', () => {
   });
 
   it('pins the exact left/top of the second path shape (transform composition regression)', () => {
-    // Golden values computed from the (fixed) implementation itself — see
-    // task-3-report.md for the derivation command. Pins the affine + bbox math
-    // so a future regression can't silently drift while still passing `>= 0`.
+    // Golden values computed from the implementation itself. Pins the affine +
+    // bbox math so a future regression can't silently drift while still
+    // passing `>= 0`. Re-derived after the bezier-extents bbox fix (the bbox
+    // now includes exact curve extrema, not just vertices).
     const { layers } = parseLbrn(FIXTURE, { availableFonts: ['Arial'] });
     const svgs = layers.filter((l) => l.type === 'svg');
-    expect(svgs[1].left).toBe(65.438);
-    expect(svgs[1].top).toBe(9.561);
+    expect(svgs[1].left).toBe(65.071);
+    expect(svgs[1].top).toBe(9.723);
   });
 });
 
@@ -183,6 +184,44 @@ describe('parseLbrn (XForm scoping — Text shape with HasBackupPath)', () => {
     const PX_PER_MM = 3.7795;
     expect(text.left).toBeCloseTo(1000 * PX_PER_MM, 0);
     expect(svg.left).toBe(0);
+  });
+});
+
+describe('parseLbrn (bezier curve extents in bbox)', () => {
+  // A bezier bump whose curve peaks 3mm above its two vertices, overlaid on a
+  // straight rect that exactly covers the curve's TRUE bounds. In LightBurn
+  // both shapes coincide. A vertex-only bbox misses the curve overshoot and
+  // shifts the bezier layer down relative to the rect (the "misaligned cut
+  // layers" import bug).
+  const RECT = `  <Shape Type="Path" CutIndex="0">
+    <XForm>1 0 0 1 0 0</XForm>
+    <VertList>V0 -3V10 -3V10 0V0 0</VertList>
+    <PrimList>L0 1L1 2L2 3L3 0</PrimList>
+  </Shape>`;
+  // Cubic (0,0)→(10,0) with handles (0,-4)/(10,-4): peak at y=-3 (t=0.5).
+  const BEZIER = `  <Shape Type="Path" CutIndex="1">
+    <XForm>1 0 0 1 0 0</XForm>
+    <VertList>V0 0c0x0c0y-4V10 0c1x10c1y-4</VertList>
+    <PrimList>B0 1</PrimList>
+  </Shape>`;
+  const wrap = (shapes) => `<?xml version="1.0" encoding="UTF-8"?>
+<LightBurnProject AppVersion="2.1.03">
+${shapes}
+</LightBurnProject>`;
+
+  it('positions a curve-overshooting bezier at the same top/left as a rect covering its true bounds', () => {
+    const { layers } = parseLbrn(wrap(RECT + '\n' + BEZIER), { availableFonts: [] });
+    const [rect, bez] = layers;
+    expect(bez.top).toBeCloseTo(rect.top, 2);   // both 0 — curve peak == rect top
+    expect(bez.left).toBeCloseTo(rect.left, 2);
+    // Declared height must cover the true curve (3mm), not the 1px vertex fallback.
+    const h = parseFloat(bez.svg_markup.match(/height="([\d.]+)"/)[1]);
+    expect(h).toBeCloseTo(3 * 3.7795, 1);
+  });
+
+  it('includes curve extrema in the overall design bounds (single bezier shape)', () => {
+    const { heightMm } = parseLbrn(wrap(BEZIER), { availableFonts: [] });
+    expect(heightMm).toBeCloseTo(3, 2); // vertex-only bbox would report 0
   });
 });
 

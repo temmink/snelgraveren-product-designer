@@ -98,6 +98,60 @@ export function vertPrimToPathData(vertList, primList, transform) {
   return d;
 }
 
+/** Interior extrema (0<t<1) of one axis of a cubic bezier p0-p1-p2-p3. */
+function cubicExtrema(p0, p1, p2, p3) {
+  const out = [];
+  const a = -p0 + 3 * p1 - 3 * p2 + p3;
+  const b = 2 * (p0 - 2 * p1 + p2);
+  const c = p1 - p0;
+  const ts = [];
+  if (Math.abs(a) < 1e-12) {
+    if (Math.abs(b) > 1e-12) ts.push(-c / b);
+  } else {
+    const disc = b * b - 4 * a * c;
+    if (disc >= 0) {
+      const s = Math.sqrt(disc);
+      ts.push((-b + s) / (2 * a), (-b - s) / (2 * a));
+    }
+  }
+  ts.forEach((t) => {
+    if (t > 0 && t < 1) {
+      const mt = 1 - t;
+      out.push(mt * mt * mt * p0 + 3 * mt * mt * t * p1 + 3 * mt * t * t * p2 + t * t * t * p3);
+    }
+  });
+  return out;
+}
+
+/** Machine-space bbox points of a vert/prim pair under an affine xform: every
+ *  vertex plus the exact extrema of each bezier segment. Vertex hulls miss
+ *  curve overshoot; Fabric positions the TRUE geometry bbox at layer.left/top,
+ *  so a vertex-only bbox shifts each shape by its own overshoot — cut layers
+ *  that coincide in LightBurn land misaligned in the builder. An affine map of
+ *  a bezier is the bezier of the mapped controls, so extrema are found
+ *  directly in machine space. */
+export function vertPrimBoundsPoints(vertList, primList, xform) {
+  const verts = parseVertList(vertList);
+  const pts = verts.map((v) => applyXform(xform, v.x, v.y));
+  const keyword = String(primList || '').trim();
+  if (keyword === 'LineClosed' || keyword === 'Line') return pts; // straight only
+  parsePrimList(primList).forEach((p) => {
+    if (p.cmd !== 'B') return;
+    const a = verts[p.a];
+    const b = verts[p.b];
+    if (!a || !b) return;
+    const P0 = applyXform(xform, a.x, a.y);
+    const P1 = applyXform(xform, a.c0x, a.c0y);
+    const P2 = applyXform(xform, b.c1x, b.c1y);
+    const P3 = applyXform(xform, b.x, b.y);
+    // Per-axis extrema paired with an endpoint's other coordinate — endpoints
+    // are genuine path points, so this never widens the other axis.
+    cubicExtrema(P0[0], P1[0], P2[0], P3[0]).forEach((xv) => pts.push([xv, P0[1]]));
+    cubicExtrema(P0[1], P1[1], P2[1], P3[1]).forEach((yv) => pts.push([P0[0], yv]));
+  });
+  return pts;
+}
+
 export const PX_PER_MM = 3.7795; // ≈ 96 dpi; matches svgPathUtils.js unit conversion
 
 /** LightBurn's default 30-colour layer palette (index → hex). Verify against
@@ -258,8 +312,8 @@ export function parseLbrn(xmlString, opts = {}) {
   const pushPath = (vert, prim, xform, cutIndex) => {
     const localD = vertPrimToPathData(vert, prim);
     if (!localD) return false;
-    // machine-space points (for bbox + later per-shape transform)
-    const mpts = parseVertList(vert).map((v) => applyXform(xform, v.x, v.y));
+    // machine-space bbox points (vertices + exact bezier extrema)
+    const mpts = vertPrimBoundsPoints(vert, prim, xform);
     paths.push({ vert, prim, xform, cutIndex, mpts });
     return true;
   };
