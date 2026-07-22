@@ -25,6 +25,10 @@ $set_labels = [
     <a href="<?php echo esc_url(admin_url('admin.php?page=sgpd-template-builder')); ?>" class="page-title-action">
         <?php esc_html_e('Add New', 'snelgraveren-product-designer'); ?>
     </a>
+    <button type="button" class="page-title-action pf-template-import-btn">
+        <?php esc_html_e('Import Template', 'snelgraveren-product-designer'); ?>
+    </button>
+    <input type="file" class="pf-template-import-file" accept=".json,application/json" style="display:none">
     <hr class="wp-header-end">
 
     <?php

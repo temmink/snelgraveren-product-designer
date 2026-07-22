@@ -172,6 +172,7 @@ class Admin {
         if ($hook === $this->hook_list) {
             $this->enqueue_starter_gallery_script();
             $this->enqueue_starter_gallery_style();
+            $this->enqueue_template_transfer_script();
         }
     }
 
@@ -273,6 +274,72 @@ class Admin {
             . "button.disabled = false;"
             . "button.textContent = originalLabel;"
             . "});"
+            . "});"
+            . "})();";
+
+        wp_add_inline_script('sgpd-template-builder', $script, 'after');
+    }
+
+    /**
+     * Export/Import wiring for the Templates list. Export fetches the transfer
+     * endpoint and downloads the JSON as a file; Import posts a chosen JSON
+     * file to the import endpoint. Rides the 'sgpd-template-builder' handle
+     * for restUrl + nonce, same as the starter-gallery script.
+     */
+    private function enqueue_template_transfer_script(): void {
+        $export_error = esc_js(__('Could not export this template.', 'snelgraveren-product-designer'));
+        $import_error = esc_js(__('Could not import this file.', 'snelgraveren-product-designer'));
+        $import_ok    = esc_js(__('Template imported as draft.', 'snelgraveren-product-designer'));
+
+        $script = "(function() {"
+            . "var config = window.sgpdTemplateBuilder || {};"
+            . "if (!config.restUrl) { return; }"
+            . "document.addEventListener('click', function(event) {"
+            .   "var link = event.target.closest('.pf-template-export');"
+            .   "if (link) {"
+            .     "event.preventDefault();"
+            .     "fetch(config.restUrl + 'pf/v1/templates/' + link.getAttribute('data-template-id') + '/export', {"
+            .       "headers: { 'X-WP-Nonce': config.nonce }"
+            .     "})"
+            .     ".then(function(r) { if (!r.ok) { throw new Error(); } return r.blob(); })"
+            .     ".then(function(blob) {"
+            .       "var a = document.createElement('a');"
+            .       "a.href = URL.createObjectURL(blob);"
+            .       "a.download = 'template-' + link.getAttribute('data-template-slug') + '.json';"
+            .       "document.body.appendChild(a); a.click(); a.remove();"
+            .       "URL.revokeObjectURL(a.href);"
+            .     "})"
+            .     '.catch(function() { alert("' . $export_error . '"); });'
+            .     "return;"
+            .   "}"
+            .   "var btn = event.target.closest('.pf-template-import-btn');"
+            .   "if (btn) {"
+            .     "var input = document.querySelector('.pf-template-import-file');"
+            .     "if (input) { input.click(); }"
+            .   "}"
+            . "});"
+            . "document.addEventListener('change', function(event) {"
+            .   "var input = event.target.closest('.pf-template-import-file');"
+            .   "if (!input || !input.files || !input.files[0]) { return; }"
+            .   "var file = input.files[0];"
+            .   "input.value = '';"
+            .   "file.text().then(function(text) {"
+            .     "return fetch(config.restUrl + 'pf/v1/templates/import', {"
+            .       "method: 'POST',"
+            .       "headers: { 'X-WP-Nonce': config.nonce, 'Content-Type': 'application/json' },"
+            .       "body: text"
+            .     "});"
+            .   "})"
+            .   ".then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })"
+            .   ".then(function(result) {"
+            .     'if (!result.ok) { throw new Error((result.data && result.data.message) || "' . $import_error . '"); }'
+            .     "var msg = '" . $import_ok . "';"
+            .     "var warnings = (result.data && result.data.warnings) || [];"
+            .     "if (warnings.length) { msg += '\\n\\n' + warnings.join('\\n'); }"
+            .     "alert(msg);"
+            .     "window.location.reload();"
+            .   "})"
+            .   '.catch(function(error) { alert(error.message || "' . $import_error . '"); });'
             . "});"
             . "})();";
 

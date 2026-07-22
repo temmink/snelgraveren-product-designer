@@ -180,8 +180,10 @@ class TemplateListTable extends \WP_List_Table {
             $title = '<strong><a href="' . esc_url($edit_url) . '">' . esc_html($item['title']) . '</a></strong>';
 
             $actions = [
-                'edit'  => '<a href="' . esc_url($edit_url) . '">' . __('Edit', 'snelgraveren-product-designer') . '</a>',
-                'trash' => '<a href="' . esc_url($trash_url) . '">' . __('Trash', 'snelgraveren-product-designer') . '</a>',
+                'edit'   => '<a href="' . esc_url($edit_url) . '">' . __('Edit', 'snelgraveren-product-designer') . '</a>',
+                'export' => '<a href="#" class="pf-template-export" data-template-id="' . $id . '" data-template-slug="' . esc_attr($item['slug'] ?? 'template-' . $id) . '">'
+                            . __('Export', 'snelgraveren-product-designer') . '</a>',
+                'trash'  => '<a href="' . esc_url($trash_url) . '">' . __('Trash', 'snelgraveren-product-designer') . '</a>',
             ];
         }
 
