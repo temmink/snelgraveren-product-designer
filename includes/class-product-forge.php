@@ -159,6 +159,7 @@ class ProductForge {
     private function init_api(): void {
         add_action('rest_api_init', function () {
             (new API\RestTemplates())->register_routes();
+            (new API\RestTemplateTransfer())->register_routes();
             (new API\RestDesigns())->register_routes();
             (new API\RestUploads())->register_routes();
             (new API\RestFonts())->register_routes();
