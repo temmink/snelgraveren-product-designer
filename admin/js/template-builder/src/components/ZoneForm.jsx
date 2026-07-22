@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { extractSvgBoundingBox } from '../utils/svgPathUtils';
 import useTemplateStore from '../store/useTemplateStore';
 import { AVAILABLE_FONTS, mergeCustomFonts } from '../utils/fonts';
 import { mergeLayersToBoundary } from '../utils/mergeLayersToBoundary';
-import { layerToBoundaryItem } from '../utils/layerBoundaryItems';
+import { layerSubPathItems } from '../utils/layerBoundaryItems';
 
 const isPremium = window.sgpdTemplateBuilder?.isPremium;
 
@@ -92,16 +92,30 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
   const [data, setData] = useState({ ...DEFAULT, ...initialData });
 
   // Imported svg layers on the current view that carry inline geometry.
-  const eligibleLayers = (views[currentViewIndex]?.zones_config || []).flatMap((zone, zi) =>
+  // Each layer is split into its individual <path> shapes so a single shape
+  // inside a merged LightBurn group can be picked as boundary. Selection is
+  // tracked at SHAPE level (`zi:li#p`); the layer checkbox toggles all of its
+  // shapes at once.
+  const layerEntries = (views[currentViewIndex]?.zones_config || []).flatMap((zone, zi) =>
     (zone.layers || [])
       .map((layer, li) => ({ layer, key: `${zi}:${li}` }))
       .filter(({ layer }) => layer.type === 'svg' && layer.svg_markup)
-  );
+  ).map(({ layer, key }, i) => {
+    const subs = layerSubPathItems(layer);
+    return {
+      layer,
+      key,
+      subs,
+      shapeKeys: subs.map((_, p) => `${key}#${p}`),
+      label: layer.name || sprintf( __( 'Layer %d', 'snelgraveren-product-designer' ), i + 1 ),
+    };
+  }).filter((e) => e.subs.length > 0);
 
   const [svgSource, setSvgSource] = useState(
     (initialData.svg_markup && !initialData.svg_url) ? 'layers' : 'upload'
   );
-  const [selectedKeys, setSelectedKeys] = useState(() => new Set());
+  const [selectedKeys, setSelectedKeys] = useState(() => new Set()); // shape-level keys
+  const [expandedKeys, setExpandedKeys] = useState(() => new Set()); // layer-level keys
 
   // Re-sync local state when store data changes externally (e.g. canvas drag/resize).
   useEffect(() => {
@@ -124,10 +138,10 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
   };
 
   const applyLayerSelection = (keys) => {
-    const items = eligibleLayers
-      .filter(({ key }) => keys.has(key))
-      .map(({ layer }) => layerToBoundaryItem(layer))
-      .filter(Boolean);
+    const items = [];
+    layerEntries.forEach((e) => e.subs.forEach((s, p) => {
+      if (keys.has(`${e.key}#${p}`)) items.push(s.item);
+    }));
     const merged = items.length ? mergeLayersToBoundary(items) : null;
     setData((d) => {
       const next = merged
@@ -142,11 +156,30 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
     });
   };
 
-  const toggleLayer = (key) => {
+  // Layer checkbox: all shapes selected → deselect all; otherwise select all.
+  const toggleLayer = (entry) => {
     setSelectedKeys((prev) => {
       const nextSet = new Set(prev);
-      if (nextSet.has(key)) nextSet.delete(key); else nextSet.add(key);
+      const allSelected = entry.shapeKeys.every((k) => nextSet.has(k));
+      entry.shapeKeys.forEach((k) => { if (allSelected) nextSet.delete(k); else nextSet.add(k); });
       applyLayerSelection(nextSet);
+      return nextSet;
+    });
+  };
+
+  const toggleShape = (shapeKey) => {
+    setSelectedKeys((prev) => {
+      const nextSet = new Set(prev);
+      if (nextSet.has(shapeKey)) nextSet.delete(shapeKey); else nextSet.add(shapeKey);
+      applyLayerSelection(nextSet);
+      return nextSet;
+    });
+  };
+
+  const toggleExpanded = (key) => {
+    setExpandedKeys((prev) => {
+      const nextSet = new Set(prev);
+      if (nextSet.has(key)) nextSet.delete(key); else nextSet.add(key);
       return nextSet;
     });
   };
@@ -338,23 +371,60 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
 
           {svgSource === 'layers' && (
             <div className="pf-zone-form__layer-picker">
-              {eligibleLayers.length === 0 ? (
+              {layerEntries.length === 0 ? (
                 <p className="pf-zone-form__hint">
                   { __( 'No vector layers with editable geometry on this view. Import a LightBurn file first, then reopen this form.', 'snelgraveren-product-designer' ) }
                 </p>
               ) : (
                 <>
                   <ul className="pf-zone-form__layer-list">
-                    {eligibleLayers.map(({ layer, key }, i) => (
-                      <li key={key} className="pf-zone-form__layer-item">
-                        <label>
-                          <input type="checkbox" checked={selectedKeys.has(key)} onChange={() => toggleLayer(key)} />
-                          <img className="pf-zone-form__layer-thumb" alt=""
-                            src={`data:image/svg+xml;utf8,${encodeURIComponent(layer.svg_markup)}`} />
-                          <span>{ __( 'Layer', 'snelgraveren-product-designer' ) } {i + 1}</span>
-                        </label>
-                      </li>
-                    ))}
+                    {layerEntries.map((entry) => {
+                      const selCount = entry.shapeKeys.filter((k) => selectedKeys.has(k)).length;
+                      const allSel = selCount === entry.shapeKeys.length;
+                      const isExpanded = expandedKeys.has(entry.key);
+                      return (
+                        <React.Fragment key={entry.key}>
+                          <li className="pf-zone-form__layer-item">
+                            <label>
+                              <input type="checkbox" checked={allSel && selCount > 0}
+                                ref={(el) => { if (el) el.indeterminate = selCount > 0 && !allSel; }}
+                                onChange={() => toggleLayer(entry)} />
+                              <img className="pf-zone-form__layer-thumb" alt=""
+                                src={`data:image/svg+xml;utf8,${encodeURIComponent(entry.layer.svg_markup)}`} />
+                              <span>
+                                {entry.label}
+                                {selCount > 0 && !allSel && ` (${selCount}/${entry.shapeKeys.length})`}
+                              </span>
+                            </label>
+                            {entry.subs.length > 1 && (
+                              <button type="button" className="pf-zone-form__layer-expand"
+                                onClick={() => toggleExpanded(entry.key)}
+                                aria-expanded={isExpanded}
+                                title={ isExpanded ? __( 'Hide shapes', 'snelgraveren-product-designer' ) : __( 'Choose individual shapes', 'snelgraveren-product-designer' ) }>
+                                {isExpanded ? '▾' : '▸'} {sprintf( __( '%d shapes', 'snelgraveren-product-designer' ), entry.subs.length )}
+                              </button>
+                            )}
+                          </li>
+                          {isExpanded && entry.subs.map((sub, p) => {
+                            const shapeKey = `${entry.key}#${p}`;
+                            return (
+                              <li key={shapeKey} className="pf-zone-form__layer-item pf-zone-form__layer-item--sub">
+                                <label>
+                                  <input type="checkbox" checked={selectedKeys.has(shapeKey)}
+                                    onChange={() => toggleShape(shapeKey)} />
+                                  <img className="pf-zone-form__layer-thumb" alt=""
+                                    src={`data:image/svg+xml;utf8,${encodeURIComponent(sub.thumbMarkup)}`} />
+                                  <span>
+                                    {sprintf( __( 'Shape %d', 'snelgraveren-product-designer' ), p + 1 )}
+                                    <span className="pf-zone-form__layer-origin"> — {entry.label}</span>
+                                  </span>
+                                </label>
+                              </li>
+                            );
+                          })}
+                        </React.Fragment>
+                      );
+                    })}
                   </ul>
                   {data.svg_markup && (
                     <div className="pf-zone-form__layer-preview">

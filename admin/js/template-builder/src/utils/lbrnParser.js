@@ -99,7 +99,7 @@ export function vertPrimToPathData(vertList, primList, transform) {
 }
 
 /** Interior extrema (0<t<1) of one axis of a cubic bezier p0-p1-p2-p3. */
-function cubicExtrema(p0, p1, p2, p3) {
+export function cubicExtrema(p0, p1, p2, p3) {
   const out = [];
   const a = -p0 + 3 * p1 - 3 * p2 + p3;
   const b = 2 * (p0 - 2 * p1 + p2);

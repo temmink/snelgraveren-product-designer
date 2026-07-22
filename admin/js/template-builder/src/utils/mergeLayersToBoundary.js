@@ -33,7 +33,7 @@ function extractPathData(svgMarkup) {
  * @param {number} sy
  * @returns {string}
  */
-function transformPathData(d, dx, dy, sx, sy) {
+export function transformPathData(d, dx, dy, sx, sy) {
   const cmdRe = /([A-Za-z])([^A-Za-z]*)/g;
   let out = '';
   let match;

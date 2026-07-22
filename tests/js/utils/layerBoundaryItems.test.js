@@ -50,3 +50,58 @@ describe('layerToBoundaryItem', () => {
     expect(merged.width).toBe(100); expect(merged.height).toBe(50);
   });
 });
+
+import { layerSubPathItems } from '../../../admin/js/template-builder/src/utils/layerBoundaryItems';
+
+describe('layerSubPathItems', () => {
+  const multi = {
+    type: 'svg', left: 100, top: 50, scaleX: 2, scaleY: 2,
+    svg_markup: '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="30" viewBox="0 0 40 30">'
+      + '<path d="M0 0L10 0L10 10Z" fill="none" stroke="#000000" stroke-width="1"/>'
+      + '<path d="M20 10L40 10L40 30Z" fill="none" stroke="#ff0000" stroke-width="1"/></svg>',
+  };
+
+  it('splits a multi-path layer into one entry per path with exact local bboxes', () => {
+    const subs = layerSubPathItems(multi);
+    expect(subs.length).toBe(2);
+    expect(subs[0].bbox).toEqual({ minX: 0, minY: 0, width: 10, height: 10 });
+    expect(subs[1].bbox).toEqual({ minX: 20, minY: 10, width: 20, height: 20 });
+  });
+
+  it('builds canvas-space items usable by mergeLayersToBoundary', () => {
+    const it2 = layerSubPathItems(multi)[1].item;
+    expect(it2.left).toBe(100 + 20 * 2);   // layer.left + bboxMinX * scaleX
+    expect(it2.top).toBe(50 + 10 * 2);
+    expect(it2.width).toBe(40);            // 20 * scaleX
+    expect(it2.height).toBe(40);
+    // path data rebased to its own bbox origin
+    expect(it2.svgMarkup).toContain('M0 0L20 0L20 20Z');
+    const merged = mergeLayersToBoundary([it2]);
+    expect(merged.x).toBe(140);
+    expect(merged.y).toBe(70);
+    expect(merged.width).toBe(40);
+  });
+
+  it('includes bezier extrema in sub-path bboxes', () => {
+    const l = {
+      ...multi,
+      svg_markup: '<svg width="10" height="3" viewBox="0 0 10 3">'
+        + '<path d="M0 3C0 -1 10 -1 10 3" fill="none" stroke="#000" stroke-width="1"/></svg>',
+    };
+    const subs = layerSubPathItems(l);
+    expect(subs[0].bbox.minY).toBeCloseTo(0, 5);   // curve peak, above both endpoints (y=3)
+    expect(subs[0].bbox.height).toBeCloseTo(3, 5);
+  });
+
+  it('keeps the original path (with stroke colour) in a tight-viewBox thumb markup', () => {
+    const subs = layerSubPathItems(multi);
+    expect(subs[1].thumbMarkup).toContain('viewBox="20 10 20 20"');
+    expect(subs[1].thumbMarkup).toContain('stroke="#ff0000"');
+  });
+
+  it('returns a single entry for a single-path layer and [] without markup', () => {
+    const single = { ...multi, svg_markup: '<svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 0L10 0L10 10Z" fill="none"/></svg>' };
+    expect(layerSubPathItems(single).length).toBe(1);
+    expect(layerSubPathItems({ type: 'svg' })).toEqual([]);
+  });
+});
