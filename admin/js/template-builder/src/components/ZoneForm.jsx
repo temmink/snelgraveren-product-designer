@@ -3,6 +3,8 @@ import { __ } from '@wordpress/i18n';
 import { extractSvgBoundingBox } from '../utils/svgPathUtils';
 import useTemplateStore from '../store/useTemplateStore';
 import { AVAILABLE_FONTS, mergeCustomFonts } from '../utils/fonts';
+import { mergeLayersToBoundary } from '../utils/mergeLayersToBoundary';
+import { layerToBoundaryItem } from '../utils/layerBoundaryItems';
 
 const isPremium = window.sgpdTemplateBuilder?.isPremium;
 
@@ -86,8 +88,20 @@ function FillColorPicker({ value, onChange, onClear, globalConfig }) {
 }
 
 export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChange }) {
-  const { globalConfig, customFonts } = useTemplateStore();
+  const { globalConfig, customFonts, views, currentViewIndex } = useTemplateStore();
   const [data, setData] = useState({ ...DEFAULT, ...initialData });
+
+  // Imported svg layers on the current view that carry inline geometry.
+  const eligibleLayers = (views[currentViewIndex]?.zones_config || []).flatMap((zone, zi) =>
+    (zone.layers || [])
+      .map((layer, li) => ({ layer, key: `${zi}:${li}` }))
+      .filter(({ layer }) => layer.type === 'svg' && layer.svg_markup)
+  );
+
+  const [svgSource, setSvgSource] = useState(
+    (initialData.svg_markup && !initialData.svg_url) ? 'layers' : 'upload'
+  );
+  const [selectedKeys, setSelectedKeys] = useState(() => new Set());
 
   // Re-sync local state when store data changes externally (e.g. canvas drag/resize).
   useEffect(() => {
@@ -107,6 +121,44 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
       if (onChange) onChange(next);
       return next;
     });
+  };
+
+  const applyLayerSelection = (keys) => {
+    const items = eligibleLayers
+      .filter(({ key }) => keys.has(key))
+      .map(({ layer }) => layerToBoundaryItem(layer))
+      .filter(Boolean);
+    const merged = items.length ? mergeLayersToBoundary(items) : null;
+    setData((d) => {
+      const next = merged
+        ? { ...d, boundary_type: 'svg', svg_url: '', svg_path_data: '',
+            svg_markup: merged.svg_markup,
+            svg_intrinsic_width: merged.width, svg_intrinsic_height: merged.height,
+            x: merged.x, y: merged.y, width: merged.width, height: merged.height,
+            svg_scale: 1 }
+        : { ...d, svg_markup: '' };
+      if (onChange) onChange(next);
+      return next;
+    });
+  };
+
+  const toggleLayer = (key) => {
+    setSelectedKeys((prev) => {
+      const nextSet = new Set(prev);
+      if (nextSet.has(key)) nextSet.delete(key); else nextSet.add(key);
+      applyLayerSelection(nextSet);
+      return nextSet;
+    });
+  };
+
+  const switchSvgSource = (src) => {
+    setSvgSource(src);
+    if (src === 'upload') {
+      setSelectedKeys(new Set());
+      setData((d) => { const next = { ...d, svg_markup: '' }; if (onChange) onChange(next); return next; });
+    } else {
+      setData((d) => { const next = { ...d, svg_url: '', svg_path_data: '' }; if (onChange) onChange(next); return next; });
+    }
   };
 
   const toggleType = (type) => {
@@ -169,6 +221,21 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
       {/* SVG Upload — only shown when boundary_type is 'svg' */}
       {data.boundary_type === 'svg' && (
         <div className="pf-zone-form__svg-upload">
+          <div className="pf-zone-form__svg-source">
+            <label className="pf-zone-form__radio">
+              <input type="radio" name="svg-source" checked={svgSource === 'upload'}
+                onChange={() => switchSvgSource('upload')} />
+              { __( 'Upload SVG', 'snelgraveren-product-designer' ) }
+            </label>
+            <label className="pf-zone-form__radio">
+              <input type="radio" name="svg-source" checked={svgSource === 'layers'}
+                onChange={() => switchSvgSource('layers')} />
+              { __( 'From layers', 'snelgraveren-product-designer' ) }
+            </label>
+          </div>
+
+          {svgSource === 'upload' && (
+          <>
           {data.svg_url ? (
             <div className="pf-zone-form__svg-preview">
               <img src={data.svg_url} alt={ __( 'Zone shape', 'snelgraveren-product-designer' ) } style={{ maxWidth: '100%', maxHeight: '80px' }} />
@@ -262,6 +329,38 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
                 { __( 'Customer can change fill color', 'snelgraveren-product-designer' ) }
               </label>
             </>
+          )}
+          </>
+          )}
+
+          {svgSource === 'layers' && (
+            <div className="pf-zone-form__layer-picker">
+              {eligibleLayers.length === 0 ? (
+                <p className="pf-zone-form__hint">
+                  { __( 'No vector layers with editable geometry on this view. Import a LightBurn file first, then reopen this form.', 'snelgraveren-product-designer' ) }
+                </p>
+              ) : (
+                <>
+                  <ul className="pf-zone-form__layer-list">
+                    {eligibleLayers.map(({ layer, key }, i) => (
+                      <li key={key} className="pf-zone-form__layer-item">
+                        <label>
+                          <input type="checkbox" checked={selectedKeys.has(key)} onChange={() => toggleLayer(key)} />
+                          <img className="pf-zone-form__layer-thumb" alt=""
+                            src={`data:image/svg+xml;utf8,${encodeURIComponent(layer.svg_markup)}`} />
+                          <span>{ __( 'Layer', 'snelgraveren-product-designer' ) } {i + 1}</span>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                  {data.svg_markup && (
+                    <div className="pf-zone-form__layer-preview">
+                      <img alt="" src={`data:image/svg+xml;utf8,${encodeURIComponent(data.svg_markup)}`} />
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           )}
         </div>
       )}

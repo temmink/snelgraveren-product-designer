@@ -1738,3 +1738,15 @@
 .pf-upgrade-prompt__btn {
   margin-top: 4px;
 }
+
+.pf-zone-form__svg-source { display: flex; gap: 12px; margin-bottom: 8px; }
+.pf-zone-form__svg-source .pf-zone-form__radio { display: inline-flex; align-items: center; gap: 4px; color: #1e1e1e; }
+.pf-zone-form__layer-picker { margin-top: 6px; }
+.pf-zone-form__layer-list { list-style: none; margin: 0; padding: 0; max-height: 220px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; }
+.pf-zone-form__layer-item { border-bottom: 1px solid #f0f0f0; }
+.pf-zone-form__layer-item:last-child { border-bottom: none; }
+.pf-zone-form__layer-item label { display: flex; align-items: center; gap: 8px; padding: 4px 8px; cursor: pointer; color: #1e1e1e; }
+.pf-zone-form__layer-thumb { width: 32px; height: 32px; object-fit: contain; background: #fff; border: 1px solid #eee; flex: none; }
+.pf-zone-form__layer-preview { margin-top: 8px; text-align: center; }
+.pf-zone-form__layer-preview img { max-width: 120px; max-height: 120px; object-fit: contain; border: 1px solid #eee; background: #fff; }
+.pf-zone-form__hint { color: #757575; font-style: italic; margin: 4px 0; }
