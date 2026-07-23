@@ -474,14 +474,28 @@ export default function DesignerCanvas() {
     zones.forEach((zone, zoneIdx) => {
       (zone.layers || []).forEach((layer) => {
         if (layer.type === 'text' && layer.text) {
-          const text = new Textbox(layer.text, {
-            left:       layer.left       ?? (zone.x + 20),
-            top:        layer.top        ?? (zone.y + 20),
-            width:      layer.width      || zone.width - 20,
+          // Use IText (auto-width, hugs its content) instead of Textbox (fixed
+          // width). A Textbox kept the old wide layout box even for a short
+          // name, so the selection/drag box ran far past the text. The layer
+          // was authored with a wide box + an alignment; anchor the IText by
+          // that alignment so its VISUAL position stays put while the box now
+          // hugs the text and grows/shrinks live as the customer types.
+          const align    = layer.textAlign || 'left';
+          const boxWidth  = layer.width || (zone.width - 20);
+          const baseLeft  = layer.left ?? (zone.x + 20);
+          let   originX   = 'left';
+          let   anchorLeft = baseLeft;
+          if (align === 'center')     { originX = 'center'; anchorLeft = baseLeft + boxWidth / 2; }
+          else if (align === 'right') { originX = 'right';  anchorLeft = baseLeft + boxWidth; }
+
+          const text = new IText(layer.text, {
+            left:       anchorLeft,
+            top:        layer.top ?? (zone.y + 20),
+            originX,
             fontSize:   layer.fontSize   || 24,
             fontFamily: layer.fontFamily || 'Arial',
             fill:       layer.fill       || '#000000',
-            textAlign:  layer.textAlign  || 'left',
+            textAlign:  align,
             data:       { elementType: 'text', zoneIndex: zoneIdx },
           });
           applyPermissions(text, 'text');
