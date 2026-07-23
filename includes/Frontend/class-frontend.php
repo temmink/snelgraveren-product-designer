@@ -28,9 +28,12 @@ class Frontend {
             return $excludes;
         });
         add_shortcode('productforge', [$this, 'shortcode']);
-        // Alias registered under the renamed "sgpd" prefix (wp.org review round
-        // 2). [productforge] stays registered too — the live site already has
-        // it embedded in product content and we don't want to break that.
+        // Aliases for the same callback. [productforge] is the old plugin name
+        // and stays registered — the live site already has it embedded in
+        // product content and we don't want to break that. [productdesigner]
+        // is the preferred, self-explanatory tag; [sgpd_designer] is the
+        // prefix-renamed alias (wp.org review round 2).
+        add_shortcode('productdesigner', [$this, 'shortcode']);
         add_shortcode('sgpd_designer', [$this, 'shortcode']);
         add_filter('woocommerce_add_cart_item_data', [$this, 'add_cart_item_data'], 10, 2);
         add_filter('woocommerce_cart_item_thumbnail', [$this, 'cart_item_thumbnail'], 10, 3);
@@ -488,6 +491,7 @@ class Frontend {
             return false;
         }
         return has_shortcode($post->post_content, 'productforge')
+            || has_shortcode($post->post_content, 'productdesigner')
             || has_shortcode($post->post_content, 'sgpd_designer')
             || has_block('snelgraveren/product-designer', $post)
             || $this->template_has_designer_block();
@@ -538,7 +542,8 @@ class Frontend {
     }
 
     /**
-     * [productforge] shortcode — renders the designer inline.
+     * [productdesigner] shortcode (and [productforge]/[sgpd_designer] aliases)
+     * — renders the designer inline.
      * Auto-detects product context on product pages.
      */
     public function shortcode(array $atts = []): string {
