@@ -484,6 +484,17 @@ export default function App() {
     };
   }, [template, customizationRequired, designSaved]);
 
+  // Hide the native WooCommerce add-to-cart button: the designer's
+  // "Save & add to cart" button is now the single add-to-cart action, so a
+  // second native button would be redundant and confusing. The form itself
+  // stays in the DOM (we submit it programmatically). Scoped by a body class
+  // so it only hides where the designer is actually present.
+  useEffect(() => {
+    if (!template) return;
+    document.body.classList.add('pf-designer-present');
+    return () => document.body.classList.remove('pf-designer-present');
+  }, [template]);
+
   // Intercept cart form submit: auto-save design before adding to cart
   useEffect(() => {
     const form = document.querySelector('form.cart');
@@ -594,9 +605,53 @@ export default function App() {
   }, [template, customizationRequired]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Save handler
+  // Submit the WooCommerce add-to-cart form, carrying the saved design hash.
+  // The form's submit interceptor (see effect above) also ensures the hidden
+  // input, but we set it here too so a direct requestSubmit always carries it.
+  const submitCartForm = () => {
+    const form = document.querySelector('form.cart');
+    if (!form) {
+      setError(__('Could not find the add-to-cart form.', 'snelgraveren-product-designer'));
+      return;
+    }
+    const hash = useDesignerStore.getState().designHash;
+    if (hash) {
+      let input = form.querySelector('input[name="pf_design_hash"]');
+      if (!input) {
+        input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'pf_design_hash';
+        form.appendChild(input);
+      }
+      input.value = hash;
+    }
+    if (typeof form.requestSubmit === 'function') {
+      form.requestSubmit();
+    } else {
+      form.submit();
+    }
+  };
+
   const handleSave = async () => {
     if (useDesignerStore.getState().isSaving) return;
     clearError();
+
+    // Block when customization is required but nothing has been designed yet —
+    // otherwise we'd create an empty design and drop it in the cart.
+    {
+      const s = useDesignerStore.getState();
+      if (customizationRequired && !s.designHash && Object.keys(s.canvasSnapshots).length === 0) {
+        setError(__('Please customize your product before adding to cart.', 'snelgraveren-product-designer'));
+        return;
+      }
+    }
+
+    // Nothing changed since the last save → skip straight to the cart.
+    if (!useDesignerStore.getState().isDirty && useDesignerStore.getState().designHash) {
+      submitCartForm();
+      return;
+    }
+
     setIsSaving(true);
     const saveStart = Date.now();
 
@@ -678,8 +733,9 @@ export default function App() {
       setIsSaving(false);
       setIsDirty(false);
       setDesignSaved(true);
-      setSavedRecently(true);
-      setTimeout(() => setSavedRecently(false), 2000);
+      // Save succeeded → add to cart. The page then POSTs/reloads (or the
+      // WooCommerce AJAX path fires 'added_to_cart', handled elsewhere).
+      submitCartForm();
     } catch (err) {
       setError(err.message);
       setIsSaving(false);
@@ -738,12 +794,14 @@ export default function App() {
             )}
             <button
               type="button"
-              className={`pf-designer__save-btn${savedRecently ? ' pf-designer__save-btn--saved' : ''}`}
+              className="pf-designer__save-btn"
               onClick={handleSave}
-              disabled={isSaving || !isDirty}
+              disabled={isSaving}
             >
               <span aria-live="polite">
-                {isSaving ? __('Saving...', 'snelgraveren-product-designer') : savedRecently ? __('Saved!', 'snelgraveren-product-designer') : __('Save Design', 'snelgraveren-product-designer')}
+                {isSaving
+                  ? __('Saving…', 'snelgraveren-product-designer')
+                  : __('Save & add to cart', 'snelgraveren-product-designer')}
               </span>
             </button>
             {isModal && (

@@ -462,6 +462,12 @@
   cursor: not-allowed;
 }
 
+/* Designer present → its "Save & add to cart" button is the single add-to-cart
+   action; hide the native WooCommerce button (the form still submits). */
+body.pf-designer-present .single_add_to_cart_button {
+  display: none !important;
+}
+
 /* ── Mobile responsive ──────────────────────────────────────────────────── */
 
 @media (max-width: 767px) {
