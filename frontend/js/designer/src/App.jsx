@@ -625,6 +625,26 @@ export default function App() {
       }
       input.value = hash;
     }
+
+    // WooCommerce adds to cart via the `add-to-cart=<product_id>` param, which
+    // is normally carried by the submit BUTTON's name/value. A programmatic
+    // form submit does not include button values, so without this the POST has
+    // no add-to-cart param and WooCommerce adds nothing (the "button does
+    // nothing" symptom). Inject it as a hidden input, taking the id from the
+    // native button when present, else from the designer config.
+    const nativeBtn = form.querySelector('button[name="add-to-cart"], input[name="add-to-cart"]:not([type="hidden"])');
+    const productId = (nativeBtn && nativeBtn.value) || config.product_id;
+    if (productId) {
+      let atc = form.querySelector('input[type="hidden"][name="add-to-cart"]');
+      if (!atc) {
+        atc = document.createElement('input');
+        atc.type = 'hidden';
+        atc.name = 'add-to-cart';
+        form.appendChild(atc);
+      }
+      atc.value = productId;
+    }
+
     if (typeof form.requestSubmit === 'function') {
       form.requestSubmit();
     } else {
