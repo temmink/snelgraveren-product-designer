@@ -509,13 +509,21 @@ export default function DesignerCanvas() {
                 scaleY:        layer.scaleY || 1,
                 angle:         layer.angle  || 0,
                 strokeUniform: true,
-                data:          { elementType: 'svg', zoneIndex: zoneIdx },
+                // Pre-placed template artwork is locked for the customer:
+                // non-selectable art they can't move, resize, rotate or delete.
+                // Only text layers stay editable. Customer-added SVGs (clipart)
+                // go through a different add path and remain interactive.
+                // data.templateLocked is re-enforced on snapshot restore.
+                selectable:    false,
+                evented:       false,
+                hasControls:   false,
+                lockMovementX: true,
+                lockMovementY: true,
+                data:          { elementType: 'svg', zoneIndex: zoneIdx, templateLocked: true },
               });
-              applyPermissions(group, 'svg');
               if (zoneClips(zone)) applyZoneClip(group, zoneIdx);
               canvas.add(group);
               group.setCoords();
-              if (zone.behavior === 'restrict') clampToZone(group);
               // Template art loads async and lands ON TOP of the synchronously
               // added text layers; a group's hit-area is its bounding box, so
               // it swallows every click meant for the text underneath and the
@@ -543,6 +551,16 @@ export default function DesignerCanvas() {
           // regardless of what the snapshot contained (it may be stale).
           const latestSolidColor = useDesignerStore.getState().solidFillColor;
           const isSolidProduct = globalConfig.solid_color;
+
+          // Re-lock pre-placed template artwork after a snapshot restore:
+          // loadFromJSON reinstates whatever selectable/evented was serialized,
+          // which for designs saved before locking (or by a future edit) could
+          // be interactive. Keep template SVGs non-interactive for customers.
+          canvas.getObjects().forEach((obj) => {
+            if (obj.data?.templateLocked) {
+              obj.set({ selectable: false, evented: false, hasControls: false, lockMovementX: true, lockMovementY: true });
+            }
+          });
 
           // Sync zone fill colors from restored zone overlay objects.
           // Zone overlays may have `data.isZoneOverlay` (new saves) or may be
