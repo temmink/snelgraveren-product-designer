@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.7.2
+Stable tag: 1.7.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -93,6 +93,9 @@ Freemius Terms of Service: https://freemius.com/terms/
 No other external services are used. Design exports (PDF/PNG/SVG) are rendered entirely on your own server — nothing about your customers' designs, uploads, or orders is ever sent off-site.
 
 == Changelog ==
+
+= 1.7.3 =
+* Fix: a text field now hugs its content — after typing a name the selection box no longer stays full-width, so moving the text feels natural.
 
 = 1.7.2 =
 * New: pre-placed template artwork (SVG) is now locked in the customer designer — customers can no longer move, resize, rotate or delete the design's artwork; only text stays editable. Customer-added clipart remains movable.
