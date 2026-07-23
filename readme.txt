@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.7.4
+Stable tag: 1.7.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -94,8 +94,9 @@ No other external services are used. Design exports (PDF/PNG/SVG) are rendered e
 
 == Changelog ==
 
-= 1.7.4 =
+= 1.7.5 =
 * New: the designer's save button now saves the design AND adds the product to the cart in one action ("Save & add to cart"). The separate WooCommerce add-to-cart button is hidden while the designer is shown, for one clear action.
+* Fix: the "Save & add to cart" button now actually adds the product to the cart (the add-to-cart request parameter was missing on the programmatic form submit).
 
 = 1.7.3 =
 * Fix: a text field now hugs its content — after typing a name the selection box no longer stays full-width, so moving the text feels natural.
