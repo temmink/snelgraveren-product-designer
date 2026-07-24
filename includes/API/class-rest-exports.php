@@ -1,11 +1,11 @@
 <?php
-namespace ProductForge\API;
+namespace Snelgraveren\ProductDesigner\API;
 
 defined('ABSPATH') || exit;
 
-use ProductForge\Export\ExportManager;
-use ProductForge\Database\ExportRepository;
-use ProductForge\ProductForge;
+use Snelgraveren\ProductDesigner\Export\ExportManager;
+use Snelgraveren\ProductDesigner\Database\ExportRepository;
+use Snelgraveren\ProductDesigner\Plugin;
 
 class RestExports {
 
@@ -76,10 +76,10 @@ class RestExports {
         $order_id = (int) ($request->get_param('order_id') ?: 0);
         $variant  = $request->get_param('variant') === 'embed' ? 'embed' : 'outline';
 
-        if ( $format === 'pdf' && ! ProductForge::has_feature( 'pdf_export' ) ) {
+        if ( $format === 'pdf' && ! Plugin::has_feature( 'pdf_export' ) ) {
             return new \WP_REST_Response( ['error' => __( 'PDF export requires Snelgraveren Product Designer Pro.', 'snelgraveren-product-designer' )], 403 );
         }
-        if ( $format === 'svg' && ! ProductForge::has_feature( 'svg_export' ) ) {
+        if ( $format === 'svg' && ! Plugin::has_feature( 'svg_export' ) ) {
             return new \WP_REST_Response( ['error' => __( 'SVG export requires Snelgraveren Product Designer Pro.', 'snelgraveren-product-designer' )], 403 );
         }
 

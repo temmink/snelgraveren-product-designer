@@ -1,9 +1,9 @@
 <?php
-namespace ProductForge\Frontend;
+namespace Snelgraveren\ProductDesigner\Frontend;
 
 defined('ABSPATH') || exit;
 
-use ProductForge\ProductForge;
+use Snelgraveren\ProductDesigner\Plugin;
 
 /**
  * Handles WooCommerce order integration for custom designs.
@@ -12,11 +12,11 @@ use ProductForge\ProductForge;
  */
 class OrderIntegration {
 
-    private ?\ProductForge\Database\DesignRepository $design_repo = null;
+    private ?\Snelgraveren\ProductDesigner\Database\DesignRepository $design_repo = null;
 
-    private function design_repo(): \ProductForge\Database\DesignRepository {
+    private function design_repo(): \Snelgraveren\ProductDesigner\Database\DesignRepository {
         if (!$this->design_repo) {
-            $this->design_repo = new \ProductForge\Database\DesignRepository();
+            $this->design_repo = new \Snelgraveren\ProductDesigner\Database\DesignRepository();
         }
         return $this->design_repo;
     }
@@ -188,13 +188,13 @@ class OrderIntegration {
         $design = $this->design_repo()->get_by_hash($hash);
         $design_id = $design ? (int) $design['id'] : 0;
 
-        $export_repo = new \ProductForge\Database\ExportRepository();
+        $export_repo = new \Snelgraveren\ProductDesigner\Database\ExportRepository();
         $existing = $design_id ? $export_repo->get_by_design($design_id) : [];
 
         echo '<div class="pf-export-actions" style="margin-top:8px;">';
 
         // Show raster warning if design contains images
-        if ($design && \ProductForge\Export\DesignInspector::contains_raster($design['views'] ?? [])) {
+        if ($design && \Snelgraveren\ProductDesigner\Export\DesignInspector::contains_raster($design['views'] ?? [])) {
             echo '<p style="color:#b32d2e;margin:4px 0;">⚠ '
                 . esc_html__('This design contains raster images (photos) — check engraving suitability before production.', 'snelgraveren-product-designer')
                 . '</p>';
@@ -204,7 +204,7 @@ class OrderIntegration {
 
         // Export buttons — gate PDF/SVG for Pro
         foreach (['png', 'pdf', 'svg'] as $format) {
-            if ( $format !== 'png' && ! ProductForge::has_feature( $format . '_export' ) ) {
+            if ( $format !== 'png' && ! Plugin::has_feature( $format . '_export' ) ) {
                 continue;
             }
             $label = strtoupper($format);
@@ -220,7 +220,7 @@ class OrderIntegration {
 
         // Extra SVG variant: keep text editable with the fonts embedded, instead
         // of the default outlined (text-as-paths) SVG.
-        if ( ProductForge::has_feature( 'svg_export' ) ) {
+        if ( Plugin::has_feature( 'svg_export' ) ) {
             echo '<button type="button" class="button button-small pf-export-btn" '
                 . 'data-hash="' . esc_attr($hash) . '" '
                 . 'data-format="svg" '
@@ -233,7 +233,7 @@ class OrderIntegration {
                 . '</button>';
         }
 
-        if ( ! ProductForge::is_premium() ) {
+        if ( ! Plugin::is_premium() ) {
             echo '<span style="font-size:11px;color:#666;margin-left:4px;">'
                . esc_html__( 'Pro: PDF & SVG export', 'snelgraveren-product-designer' ) . '</span>';
         }

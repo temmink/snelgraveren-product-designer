@@ -1,5 +1,5 @@
 <?php
-namespace ProductForge\Admin;
+namespace Snelgraveren\ProductDesigner\Admin;
 
 defined('ABSPATH') || exit;
 
@@ -89,7 +89,7 @@ class SettingsPage {
 
         // Auto-export + PDF/SVG formats are premium-only (PremiumExports is
         // stripped from the free build) — hide the settings that have no effect.
-        $has_premium_exports = class_exists('ProductForge\\Export\\PremiumExports');
+        $has_premium_exports = class_exists('Snelgraveren\\ProductDesigner\\Export\\PremiumExports');
 
         $trigger_status  = get_option('sgpd_export_trigger_status', 'completed');
         $default_format  = get_option('sgpd_export_default_format', 'pdf');
@@ -180,7 +180,7 @@ class SettingsPage {
 
             <hr />
             <h2><?php esc_html_e('Design statistics (last 30 days)', 'snelgraveren-product-designer'); ?></h2>
-            <?php $stats = (new \ProductForge\Database\DesignRepository())->funnel_stats(30); ?>
+            <?php $stats = (new \Snelgraveren\ProductDesigner\Database\DesignRepository())->funnel_stats(30); ?>
             <table class="widefat striped" style="max-width:640px;">
                 <tbody>
                     <tr><td><?php esc_html_e('Designs saved', 'snelgraveren-product-designer'); ?></td><td><strong><?php echo esc_html($stats['saved']); ?></strong></td></tr>

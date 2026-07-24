@@ -1,5 +1,5 @@
 <?php
-namespace ProductForge\Admin;
+namespace Snelgraveren\ProductDesigner\Admin;
 
 defined('ABSPATH') || exit;
 

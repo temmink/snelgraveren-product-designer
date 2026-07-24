@@ -1,15 +1,15 @@
 <?php
-namespace ProductForge\Frontend;
+namespace Snelgraveren\ProductDesigner\Frontend;
 
 defined('ABSPATH') || exit;
 
 class Frontend {
 
-    private ?\ProductForge\Database\DesignRepository $design_repo = null;
+    private ?\Snelgraveren\ProductDesigner\Database\DesignRepository $design_repo = null;
 
-    private function design_repo(): \ProductForge\Database\DesignRepository {
+    private function design_repo(): \Snelgraveren\ProductDesigner\Database\DesignRepository {
         if (!$this->design_repo) {
-            $this->design_repo = new \ProductForge\Database\DesignRepository();
+            $this->design_repo = new \Snelgraveren\ProductDesigner\Database\DesignRepository();
         }
         return $this->design_repo;
     }
@@ -27,12 +27,10 @@ class Frontend {
             $excludes[] = 'frontend-designer.';
             return $excludes;
         });
-        add_shortcode('productforge', [$this, 'shortcode']);
-        // Aliases for the same callback. [productforge] is the old plugin name
-        // and stays registered — the live site already has it embedded in
-        // product content and we don't want to break that. [productdesigner]
-        // is the preferred, self-explanatory tag; [sgpd_designer] is the
-        // prefix-renamed alias (wp.org review round 2).
+        // [productdesigner] is the preferred, self-explanatory tag;
+        // [sgpd_designer] is the prefixed alias. (The old [productforge] tag was
+        // dropped for the wp.org listing — it echoed a former, non-distinctive
+        // brand name.)
         add_shortcode('productdesigner', [$this, 'shortcode']);
         add_shortcode('sgpd_designer', [$this, 'shortcode']);
         add_filter('woocommerce_add_cart_item_data', [$this, 'add_cart_item_data'], 10, 2);
@@ -49,18 +47,17 @@ class Frontend {
     /**
      * Attach design_hash to cart item data when adding to cart.
      *
-     * Ownership validation (ProductForge\Database\DesignRepository::get_by_hash
+     * Ownership validation (Snelgraveren\ProductDesigner\Database\DesignRepository::get_by_hash
      * + a customer_id/session_id match, mirroring RestDesigns::owns_design) is
      * the PRIMARY defense here: without it, any visitor could paste any 32-hex
      * design hash into the pf_design_hash field and attach someone else's
      * design (and its saved price) to their own cart.
      *
-     * The nonce is defense-in-depth only, not authoritative: WordPress.org
-     * flags unchecked $_POST access, so we verify it when present — but
-     * LiteSpeed page-caches product pages, so a logged-out customer can be
-     * served a cached page with a stale nonce from a previous page-cache
-     * generation. A missing or failed nonce must NOT block a legitimately
-     * owned design; only the ownership check gates attachment.
+     * The nonce is defense-in-depth, not authoritative: LiteSpeed page-caches
+     * product pages, so a logged-out customer can be served a cached form
+     * carrying a stale nonce. A MISSING nonce is therefore tolerated — the
+     * ownership check still gates attachment. But a nonce that IS supplied and
+     * fails verification is treated as a forged request and rejected outright.
      */
     public function add_cart_item_data(array $cart_item_data, int $product_id): array {
         if (empty($_POST['pf_design_hash'])) {
@@ -72,10 +69,11 @@ class Frontend {
             return $cart_item_data;
         }
 
-        // Verified for WPCS/wp.org nonce-hygiene compliance, but intentionally
-        // NOT used to gate below — see method docblock (LiteSpeed caching).
-        if (isset($_POST['sgpd_design_nonce'])) {
-            wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['sgpd_design_nonce'])), 'sgpd_add_design');
+        // When a nonce is supplied it MUST verify; a missing nonce is tolerated
+        // for cached forms (see method docblock). Ownership still gates below.
+        if (isset($_POST['sgpd_design_nonce'])
+            && !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['sgpd_design_nonce'])), 'sgpd_add_design')) {
+            return $cart_item_data;
         }
 
         $design = $this->design_repo()->get_by_hash($hash);
@@ -88,7 +86,7 @@ class Frontend {
     }
 
     /**
-     * Mirrors ProductForge\API\RestDesigns::owns_design(): the current
+     * Mirrors Snelgraveren\ProductDesigner\API\RestDesigns::owns_design(): the current
      * requester must be the design's logged-in customer, or hold the same
      * guest session id the design was saved under, or be able to manage
      * templates (admins/shop managers legitimately reassigning designs).
@@ -99,7 +97,7 @@ class Frontend {
             return true;
         }
 
-        $session_id = \ProductForge\Security\CapabilityChecker::current_session_id();
+        $session_id = \Snelgraveren\ProductDesigner\Security\CapabilityChecker::current_session_id();
         if (!empty($session_id) && $design['session_id'] === $session_id) {
             return true;
         }
@@ -208,11 +206,17 @@ class Frontend {
 
     /**
      * Get the existing design hash from the URL query parameter, if valid.
+     *
+     * Read-only: this drives navigation (reopening a design when returning from
+     * the cart), so a nonce is not appropriate — the link must survive caching
+     * and bookmarking. No design data is exposed on the strength of the hash
+     * alone: every caller either loads the design over an ownership-checked REST
+     * route or gates rendering with owns_design() (see override_gallery_thumbnail_html).
      */
     private function get_design_hash_from_url(): string {
-        // phpcs:disable WordPress.Security.NonceVerification
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only navigation param, callers enforce ownership.
         $hash = isset($_GET['pf_design']) ? sanitize_text_field(wp_unslash($_GET['pf_design'])) : '';
-        // phpcs:enable
+        // phpcs:enable WordPress.Security.NonceVerification.Recommended
         if ($hash !== '' && preg_match('/^[0-9a-f]{32}$/', $hash)) {
             return $hash;
         }
@@ -235,6 +239,15 @@ class Frontend {
         // (main) image with the design thumbnail; replacing every image would
         // show the same thumbnail multiple times on products with a gallery.
         if ($this->gallery_thumb_replaced) {
+            return $html;
+        }
+
+        // The hash arrives via a URL query param, so only reveal the design's
+        // thumbnail to its owner (logged-in customer, matching guest session, or
+        // a template manager). Without this, a known hash could expose another
+        // customer's design preview.
+        $design = $this->design_repo()->get_by_hash($hash);
+        if (!$design || !$this->owns_design($design)) {
             return $html;
         }
 
@@ -446,7 +459,7 @@ class Frontend {
             'currency_symbol' => function_exists('get_woocommerce_currency_symbol')
                 ? get_woocommerce_currency_symbol()
                 : '€',
-            'isPremium'       => \ProductForge\ProductForge::is_premium(),
+            'isPremium'       => \Snelgraveren\ProductDesigner\Plugin::is_premium(),
         ];
 
         // If returning from cart with an existing design, pass the hash and auto-open
@@ -479,7 +492,7 @@ class Frontend {
     }
 
     /**
-     * Check if the current product's content contains the [productforge]
+     * Check if the current product's content contains the [productdesigner]
      * shortcode (or its [sgpd_designer] alias) or the snelgraveren/product-designer
      * block. Any of these mean "the merchant placed the designer explicitly" —
      * the before-add-to-cart auto-render must then stay out of the way (no
@@ -490,8 +503,7 @@ class Frontend {
         if (!$post) {
             return false;
         }
-        return has_shortcode($post->post_content, 'productforge')
-            || has_shortcode($post->post_content, 'productdesigner')
+        return has_shortcode($post->post_content, 'productdesigner')
             || has_shortcode($post->post_content, 'sgpd_designer')
             || has_block('snelgraveren/product-designer', $post)
             || $this->template_has_designer_block();

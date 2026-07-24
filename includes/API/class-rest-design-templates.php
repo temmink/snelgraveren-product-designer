@@ -1,10 +1,10 @@
 <?php
-namespace ProductForge\API;
+namespace Snelgraveren\ProductDesigner\API;
 
 defined('ABSPATH') || exit;
 
-use ProductForge\Database\DesignTemplateRepository;
-use ProductForge\Security\DesignTemplateValidator;
+use Snelgraveren\ProductDesigner\Database\DesignTemplateRepository;
+use Snelgraveren\ProductDesigner\Security\DesignTemplateValidator;
 
 class RestDesignTemplates {
 

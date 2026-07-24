@@ -1,11 +1,11 @@
 <?php
-namespace ProductForge\API;
+namespace Snelgraveren\ProductDesigner\API;
 
 defined('ABSPATH') || exit;
 
-use ProductForge\Database\DesignRepository;
-use ProductForge\Database\TemplateRepository;
-use ProductForge\Security\CapabilityChecker;
+use Snelgraveren\ProductDesigner\Database\DesignRepository;
+use Snelgraveren\ProductDesigner\Database\TemplateRepository;
+use Snelgraveren\ProductDesigner\Security\CapabilityChecker;
 
 class RestDesigns {
 

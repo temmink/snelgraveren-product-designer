@@ -1,12 +1,12 @@
 <?php
-namespace ProductForge\Export;
+namespace Snelgraveren\ProductDesigner\Export;
 
 defined('ABSPATH') || exit;
 
-use ProductForge\Database\DesignRepository;
-use ProductForge\Database\ExportRepository;
-use ProductForge\Database\TemplateRepository;
-use ProductForge\ProductForge;
+use Snelgraveren\ProductDesigner\Database\DesignRepository;
+use Snelgraveren\ProductDesigner\Database\ExportRepository;
+use Snelgraveren\ProductDesigner\Database\TemplateRepository;
+use Snelgraveren\ProductDesigner\Plugin;
 
 class ExportManager {
 
@@ -40,10 +40,10 @@ class ExportManager {
      * @return array{export_id: int, status: string, file_path: string}|array{error: string}
      */
     public function generate_export(string $design_hash, string $format = 'pdf', int $order_id = 0, string $variant = 'outline'): array {
-        if ( $format === 'pdf' && ! ProductForge::has_feature( 'pdf_export' ) ) {
+        if ( $format === 'pdf' && ! Plugin::has_feature( 'pdf_export' ) ) {
             return [ 'error' => __( 'PDF export requires Snelgraveren Product Designer Pro.', 'snelgraveren-product-designer' ) ];
         }
-        if ( $format === 'svg' && ! ProductForge::has_feature( 'svg_export' ) ) {
+        if ( $format === 'svg' && ! Plugin::has_feature( 'svg_export' ) ) {
             return [ 'error' => __( 'SVG export requires Snelgraveren Product Designer Pro.', 'snelgraveren-product-designer' ) ];
         }
         // PDF/SVG generation lives in PremiumExports, which is stripped from

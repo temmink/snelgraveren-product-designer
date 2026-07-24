@@ -1,10 +1,10 @@
 <?php
-namespace ProductForge;
+namespace Snelgraveren\ProductDesigner;
 
 defined('ABSPATH') || exit;
 
-use ProductForge\Database\DesignRepository;
-use ProductForge\Export\FileUtils;
+use Snelgraveren\ProductDesigner\Database\DesignRepository;
+use Snelgraveren\ProductDesigner\Export\FileUtils;
 
 /**
  * Daily maintenance: prune abandoned guest designs (and their thumbnail
@@ -84,7 +84,7 @@ class Cleanup {
         }
 
         $failures = array_values(array_filter(
-            \ProductForge\Admin\SystemStatus::run_checks(),
+            \Snelgraveren\ProductDesigner\Admin\SystemStatus::run_checks(),
             static fn($c) => $c['status'] === 'error'
         ));
 

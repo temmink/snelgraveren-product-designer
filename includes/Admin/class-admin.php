@@ -1,5 +1,5 @@
 <?php
-namespace ProductForge\Admin;
+namespace Snelgraveren\ProductDesigner\Admin;
 
 defined('ABSPATH') || exit;
 
@@ -165,7 +165,7 @@ class Admin {
             'templateId'      => $template_id,
             'pluginUrl'       => SGPD_PLUGIN_URL,
             'currency_symbol' => get_woocommerce_currency_symbol(),
-            'isPremium'       => \ProductForge\ProductForge::is_premium(),
+            'isPremium'       => \Snelgraveren\ProductDesigner\Plugin::is_premium(),
             'upgradeUrl'      => function_exists( 'sgpd_fs' ) ? sgpd_fs()->get_upgrade_url() : '',
         ]);
 
@@ -361,7 +361,7 @@ class Admin {
         $this->inline_script_translations('sgpd-design-templates', 'snelgraveren-product-designer', 'dist/admin-design-templates.js');
 
         // Pass all product templates so the form can link design templates to them.
-        $repo = new \ProductForge\Database\TemplateRepository();
+        $repo = new \Snelgraveren\ProductDesigner\Database\TemplateRepository();
         $all_templates = array_map(function ($t) {
             return ['id' => (int) $t['id'], 'title' => $t['title']];
         }, $repo->list(100, 1, 'published'));
@@ -395,7 +395,7 @@ class Admin {
         wp_localize_script('sgpd-clipart', 'sgpdClipart', [
             'restUrl'    => esc_url_raw(rest_url()),
             'nonce'      => wp_create_nonce('wp_rest'),
-            'isPremium'  => \ProductForge\ProductForge::is_premium(),
+            'isPremium'  => \Snelgraveren\ProductDesigner\Plugin::is_premium(),
             'upgradeUrl' => function_exists('sgpd_fs') ? sgpd_fs()->get_upgrade_url() : '',
         ]);
     }

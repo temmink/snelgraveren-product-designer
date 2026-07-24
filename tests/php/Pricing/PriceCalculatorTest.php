@@ -1,7 +1,7 @@
 <?php
 use PHPUnit\Framework\TestCase;
-use ProductForge\Pricing\PriceCalculator;
-use ProductForge\Database\DesignRepository;
+use Snelgraveren\ProductDesigner\Pricing\PriceCalculator;
+use Snelgraveren\ProductDesigner\Database\DesignRepository;
 
 class PriceCalculatorTest extends TestCase {
     private PriceCalculator $calc;

@@ -1,7 +1,7 @@
 <?php
 use PHPUnit\Framework\TestCase;
-use ProductForge\Database\TemplateRepository;
-use ProductForge\Database\DesignRepository;
+use Snelgraveren\ProductDesigner\Database\TemplateRepository;
+use Snelgraveren\ProductDesigner\Database\DesignRepository;
 
 class DesignEndpointTest extends TestCase {
     private $server;
@@ -33,6 +33,7 @@ class DesignEndpointTest extends TestCase {
     public function test_create_design_requires_template_id(): void {
         $request = new \WP_REST_Request('POST', '/pf/v1/designs');
         $request->set_header('Content-Type', 'application/json');
+        $request->set_header('X-WP-Nonce', wp_create_nonce('wp_rest'));
         $request->set_body(json_encode(['product_id' => 1]));
         $response = $this->server->dispatch($request);
         $this->assertEquals(400, $response->get_status());
@@ -48,6 +49,7 @@ class DesignEndpointTest extends TestCase {
 
         $request = new \WP_REST_Request('POST', '/pf/v1/designs');
         $request->set_header('Content-Type', 'application/json');
+        $request->set_header('X-WP-Nonce', wp_create_nonce('wp_rest'));
         $request->set_body(json_encode(['template_id' => $draft_id, 'product_id' => 1]));
         $response = $this->server->dispatch($request);
         $this->assertEquals(400, $response->get_status());
@@ -58,6 +60,7 @@ class DesignEndpointTest extends TestCase {
 
         $request = new \WP_REST_Request('POST', '/pf/v1/designs');
         $request->set_header('Content-Type', 'application/json');
+        $request->set_header('X-WP-Nonce', wp_create_nonce('wp_rest'));
         $request->set_body(json_encode(['template_id' => $template_id, 'product_id' => 1]));
         $response = $this->server->dispatch($request);
 
@@ -105,6 +108,7 @@ class DesignEndpointTest extends TestCase {
         // Create design as admin (user 1)
         $request = new \WP_REST_Request('POST', '/pf/v1/designs');
         $request->set_header('Content-Type', 'application/json');
+        $request->set_header('X-WP-Nonce', wp_create_nonce('wp_rest'));
         $request->set_body(json_encode(['template_id' => $template_id, 'product_id' => 1]));
         $create_response = $this->server->dispatch($request);
         $this->assertEquals(201, $create_response->get_status());

@@ -5,7 +5,7 @@
  * This file is intentionally NOT namespaced so that sgpd_fs() is defined
  * in the global namespace, which Freemius requires.
  *
- * @package ProductForge
+ * @package Snelgraveren\ProductDesigner
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -54,7 +54,7 @@ if ( ! function_exists( 'sgpd_fs' ) ) {
 
     // Freemius owns the uninstall flow (no uninstall.php allowed in the
     // deployment); run our cleanup through its hook instead.
-    sgpd_fs()->add_action( 'after_uninstall', [ \ProductForge\Uninstaller::class, 'uninstall' ] );
+    sgpd_fs()->add_action( 'after_uninstall', [ \Snelgraveren\ProductDesigner\Uninstaller::class, 'uninstall' ] );
 
     do_action( 'sgpd_fs_loaded' );
 

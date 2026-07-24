@@ -125,7 +125,8 @@ export function loadCustomFonts(customFonts) {
 
 /**
  * Merge custom fonts into AVAILABLE_FONTS for the font picker.
- * Returns a new array with custom fonts appended.
+ * Returns a new array with builtin + custom fonts sorted alphabetically by
+ * family (case-insensitive), so the picker reads A→Z everywhere.
  */
 export function mergeCustomFonts(customFonts) {
   return [
@@ -135,5 +136,5 @@ export function mergeCustomFonts(customFonts) {
       category: 'custom',
       source: 'custom',
     })),
-  ];
+  ].sort((a, b) => a.family.localeCompare(b.family, undefined, { sensitivity: 'base' }));
 }

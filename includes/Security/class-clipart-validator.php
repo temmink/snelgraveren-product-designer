@@ -1,5 +1,5 @@
 <?php
-namespace ProductForge\Security;
+namespace Snelgraveren\ProductDesigner\Security;
 
 defined('ABSPATH') || exit;
 

@@ -1,10 +1,10 @@
 <?php
-namespace ProductForge\API;
+namespace Snelgraveren\ProductDesigner\API;
 
 defined('ABSPATH') || exit;
 
-use ProductForge\Database\TemplateRepository;
-use ProductForge\Database\FontRepository;
+use Snelgraveren\ProductDesigner\Database\TemplateRepository;
+use Snelgraveren\ProductDesigner\Database\FontRepository;
 
 /**
  * Cross-site template transfer: export a product template (views/zones/layers

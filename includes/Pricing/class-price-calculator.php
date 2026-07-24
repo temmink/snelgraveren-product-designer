@@ -1,11 +1,11 @@
 <?php
-namespace ProductForge\Pricing;
+namespace Snelgraveren\ProductDesigner\Pricing;
 
 defined('ABSPATH') || exit;
 
-use ProductForge\Database\DesignRepository;
-use ProductForge\Database\TemplateRepository;
-use ProductForge\Database\PriceRepository;
+use Snelgraveren\ProductDesigner\Database\DesignRepository;
+use Snelgraveren\ProductDesigner\Database\TemplateRepository;
+use Snelgraveren\ProductDesigner\Database\PriceRepository;
 
 class PriceCalculator {
 

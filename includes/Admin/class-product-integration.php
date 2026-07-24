@@ -1,9 +1,9 @@
 <?php
-namespace ProductForge\Admin;
+namespace Snelgraveren\ProductDesigner\Admin;
 
 defined('ABSPATH') || exit;
 
-use ProductForge\Database\TemplateRepository;
+use Snelgraveren\ProductDesigner\Database\TemplateRepository;
 
 class ProductIntegration {
 

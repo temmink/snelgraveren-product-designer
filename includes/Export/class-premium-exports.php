@@ -1,9 +1,9 @@
 <?php
-namespace ProductForge\Export;
+namespace Snelgraveren\ProductDesigner\Export;
 
 defined('ABSPATH') || exit;
 
-use ProductForge\ProductForge;
+use Snelgraveren\ProductDesigner\Plugin;
 
 /**
  * Premium-only export functionality: PDF/SVG generation and auto-export on
@@ -34,7 +34,7 @@ class PremiumExports {
      * Auto-export designs when order reaches the configured trigger status.
      */
     public function on_order_status_changed(int $order_id, string $from, string $to, \WC_Order $order): void {
-        if ( ! ProductForge::has_feature( 'auto_export' ) ) {
+        if ( ! Plugin::has_feature( 'auto_export' ) ) {
             return;
         }
 

@@ -1,9 +1,9 @@
 <?php
-namespace ProductForge\API;
+namespace Snelgraveren\ProductDesigner\API;
 
 defined('ABSPATH') || exit;
 
-use ProductForge\Database\TemplateRepository;
+use Snelgraveren\ProductDesigner\Database\TemplateRepository;
 
 class RestTemplates {
 

@@ -1,6 +1,6 @@
 <?php
 use PHPUnit\Framework\TestCase;
-use ProductForge\Security\UploadValidator;
+use Snelgraveren\ProductDesigner\Security\UploadValidator;
 
 class UploadValidatorTest extends TestCase {
 

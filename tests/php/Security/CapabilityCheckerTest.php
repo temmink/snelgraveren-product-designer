@@ -1,6 +1,6 @@
 <?php
 use PHPUnit\Framework\TestCase;
-use ProductForge\Security\CapabilityChecker;
+use Snelgraveren\ProductDesigner\Security\CapabilityChecker;
 
 class CapabilityCheckerTest extends TestCase {
 

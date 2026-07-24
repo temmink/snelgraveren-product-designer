@@ -1,5 +1,5 @@
 <?php
-namespace ProductForge\Admin;
+namespace Snelgraveren\ProductDesigner\Admin;
 
 defined('ABSPATH') || exit;
 
@@ -11,7 +11,7 @@ $starter_pending    = array_filter($starter_catalog, function ($entry) {
     return empty($entry['imported']);
 });
 
-$template_repo   = new \ProductForge\Database\TemplateRepository();
+$template_repo   = new \Snelgraveren\ProductDesigner\Database\TemplateRepository();
 $has_any_template = array_sum($template_repo->get_status_counts()) > 0;
 
 $set_labels = [

@@ -1,10 +1,10 @@
 <?php
-namespace ProductForge\API;
+namespace Snelgraveren\ProductDesigner\API;
 
 defined('ABSPATH') || exit;
 
-use ProductForge\Database\TemplateRepository;
-use ProductForge\Pricing\PriceCalculator;
+use Snelgraveren\ProductDesigner\Database\TemplateRepository;
+use Snelgraveren\ProductDesigner\Pricing\PriceCalculator;
 
 /**
  * Live price-preview endpoint for the frontend designer. Premium-only: the

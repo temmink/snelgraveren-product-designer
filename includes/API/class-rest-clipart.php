@@ -1,9 +1,9 @@
 <?php
-namespace ProductForge\API;
+namespace Snelgraveren\ProductDesigner\API;
 
 defined('ABSPATH') || exit;
 
-use ProductForge\Database\ClipartRepository;
+use Snelgraveren\ProductDesigner\Database\ClipartRepository;
 
 /**
  * Public clipart read endpoints. Guest customers need these in the frontend

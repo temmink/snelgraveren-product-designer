@@ -1,5 +1,5 @@
 <?php
-namespace ProductForge;
+namespace Snelgraveren\ProductDesigner;
 
 defined('ABSPATH') || exit;
 
@@ -10,7 +10,7 @@ class Autoloader {
     }
 
     public static function load(string $class): void {
-        $prefix = 'ProductForge\\';
+        $prefix = 'Snelgraveren\\ProductDesigner\\';
         if (!str_starts_with($class, $prefix)) {
             return;
         }

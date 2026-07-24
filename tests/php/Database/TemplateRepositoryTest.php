@@ -1,6 +1,6 @@
 <?php
 use PHPUnit\Framework\TestCase;
-use ProductForge\Database\TemplateRepository;
+use Snelgraveren\ProductDesigner\Database\TemplateRepository;
 
 class TemplateRepositoryTest extends TestCase {
     private TemplateRepository $repo;

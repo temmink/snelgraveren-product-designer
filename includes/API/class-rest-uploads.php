@@ -1,10 +1,10 @@
 <?php
-namespace ProductForge\API;
+namespace Snelgraveren\ProductDesigner\API;
 
 defined('ABSPATH') || exit;
 
-use ProductForge\Security\CapabilityChecker;
-use ProductForge\Security\UploadValidator;
+use Snelgraveren\ProductDesigner\Security\CapabilityChecker;
+use Snelgraveren\ProductDesigner\Security\UploadValidator;
 
 class RestUploads {
 

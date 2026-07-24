@@ -1,12 +1,12 @@
 <?php
-namespace ProductForge\Admin;
+namespace Snelgraveren\ProductDesigner\Admin;
 
 defined('ABSPATH') || exit;
 
-use ProductForge\Database\DesignRepository;
-use ProductForge\Database\ExportRepository;
-use ProductForge\Export\DesignInspector;
-use ProductForge\Export\ExportManager;
+use Snelgraveren\ProductDesigner\Database\DesignRepository;
+use Snelgraveren\ProductDesigner\Database\ExportRepository;
+use Snelgraveren\ProductDesigner\Export\DesignInspector;
+use Snelgraveren\ProductDesigner\Export\ExportManager;
 
 /**
  * Production dashboard: all recent orders containing designs, with a
@@ -148,7 +148,7 @@ class ExportDashboard {
 
         $format = get_option('sgpd_export_default_format', 'pdf');
         // PDF/SVG generation is premium-only; the free build falls back to PNG.
-        if (!class_exists('ProductForge\\Export\\PremiumExports') && $format !== 'png') {
+        if (!class_exists('Snelgraveren\\ProductDesigner\\Export\\PremiumExports') && $format !== 'png') {
             $format = 'png';
         }
         $manager = new ExportManager();

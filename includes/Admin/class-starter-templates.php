@@ -1,9 +1,9 @@
 <?php
-namespace ProductForge\Admin;
+namespace Snelgraveren\ProductDesigner\Admin;
 
 defined('ABSPATH') || exit;
 
-use ProductForge\Database\TemplateRepository;
+use Snelgraveren\ProductDesigner\Database\TemplateRepository;
 
 /**
  * Bundled "starter" product templates (see templates/starter/manifest.json).

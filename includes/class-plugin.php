@@ -1,11 +1,11 @@
 <?php
-namespace ProductForge;
+namespace Snelgraveren\ProductDesigner;
 
 defined('ABSPATH') || exit;
 
-class ProductForge {
+class Plugin {
 
-    private static ?ProductForge $instance = null;
+    private static ?Plugin $instance = null;
 
     public static function instance(): self {
         if (self::$instance === null) {

@@ -1,11 +1,11 @@
 <?php
-namespace ProductForge\API;
+namespace Snelgraveren\ProductDesigner\API;
 
 defined('ABSPATH') || exit;
 
-use ProductForge\Database\ClipartRepository;
-use ProductForge\ProductForge;
-use ProductForge\Security\ClipartValidator;
+use Snelgraveren\ProductDesigner\Database\ClipartRepository;
+use Snelgraveren\ProductDesigner\Plugin;
+use Snelgraveren\ProductDesigner\Security\ClipartValidator;
 
 /**
  * Premium-only clipart management endpoints (create/rename/delete collections,
@@ -57,8 +57,8 @@ class RestClipartAdmin {
     }
 
     public function create_collection(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
-        if ( ! ProductForge::has_feature( 'clipart' ) ) {
-            return ProductForge::premium_error( 'clipart' );
+        if ( ! Plugin::has_feature( 'clipart' ) ) {
+            return Plugin::premium_error( 'clipart' );
         }
 
         $name = sanitize_text_field($request->get_param('name') ?? '');
@@ -77,8 +77,8 @@ class RestClipartAdmin {
     }
 
     public function rename_collection(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
-        if ( ! ProductForge::has_feature( 'clipart' ) ) {
-            return ProductForge::premium_error( 'clipart' );
+        if ( ! Plugin::has_feature( 'clipart' ) ) {
+            return Plugin::premium_error( 'clipart' );
         }
 
         $id   = (int) $request['id'];
@@ -96,8 +96,8 @@ class RestClipartAdmin {
     }
 
     public function delete_collection(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
-        if ( ! ProductForge::has_feature( 'clipart' ) ) {
-            return ProductForge::premium_error( 'clipart' );
+        if ( ! Plugin::has_feature( 'clipart' ) ) {
+            return Plugin::premium_error( 'clipart' );
         }
 
         $id    = (int) $request['id'];
@@ -115,8 +115,8 @@ class RestClipartAdmin {
     }
 
     public function upload_item(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
-        if ( ! ProductForge::has_feature( 'clipart' ) ) {
-            return ProductForge::premium_error( 'clipart' );
+        if ( ! Plugin::has_feature( 'clipart' ) ) {
+            return Plugin::premium_error( 'clipart' );
         }
 
         $files = $request->get_file_params();
@@ -157,8 +157,8 @@ class RestClipartAdmin {
     }
 
     public function delete_item(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
-        if ( ! ProductForge::has_feature( 'clipart' ) ) {
-            return ProductForge::premium_error( 'clipart' );
+        if ( ! Plugin::has_feature( 'clipart' ) ) {
+            return Plugin::premium_error( 'clipart' );
         }
 
         $id  = (int) $request['id'];

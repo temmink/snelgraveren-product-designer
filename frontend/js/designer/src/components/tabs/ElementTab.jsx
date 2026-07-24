@@ -144,7 +144,9 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
     setFontFamily(fabricObj.fontFamily || 'Arial');
   }, [fabricObj]);
 
-  const allowedFonts = globalConfig.allowed_fonts || [];
+  // Sorted A→Z (case-insensitive) so the customer's font dropdown is alphabetical.
+  const allowedFonts = [...(globalConfig.allowed_fonts || [])]
+    .sort((a, b) => String(a).localeCompare(String(b), undefined, { sensitivity: 'base' }));
   const elementColorsEnabled = globalConfig.element_colors_enabled ?? globalConfig.colors_enabled ?? true;
   const allowedColors = globalConfig.element_allowed_colors || globalConfig.allowed_colors || [];
   const anyColor = globalConfig.element_any_color ?? globalConfig.any_color ?? false;

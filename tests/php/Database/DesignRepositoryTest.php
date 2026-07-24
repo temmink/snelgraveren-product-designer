@@ -1,6 +1,6 @@
 <?php
 use PHPUnit\Framework\TestCase;
-use ProductForge\Database\DesignRepository;
+use Snelgraveren\ProductDesigner\Database\DesignRepository;
 
 class DesignRepositoryTest extends TestCase {
     private DesignRepository $repo;

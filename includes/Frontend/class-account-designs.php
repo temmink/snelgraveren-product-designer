@@ -1,9 +1,9 @@
 <?php
-namespace ProductForge\Frontend;
+namespace Snelgraveren\ProductDesigner\Frontend;
 
 defined('ABSPATH') || exit;
 
-use ProductForge\Database\DesignRepository;
+use Snelgraveren\ProductDesigner\Database\DesignRepository;
 
 /**
  * "My designs" tab on the WooCommerce My Account page. Lists the logged-in

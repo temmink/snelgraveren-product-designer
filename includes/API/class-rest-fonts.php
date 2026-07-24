@@ -1,9 +1,9 @@
 <?php
-namespace ProductForge\API;
+namespace Snelgraveren\ProductDesigner\API;
 
 defined('ABSPATH') || exit;
 
-use ProductForge\Database\FontRepository;
+use Snelgraveren\ProductDesigner\Database\FontRepository;
 
 /**
  * Public font read endpoint. The frontend designer needs the font list for

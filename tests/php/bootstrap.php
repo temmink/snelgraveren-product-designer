@@ -13,4 +13,4 @@ if (!is_plugin_active('productforge/productforge.php')) {
 }
 
 // Ensure our tables exist
-ProductForge\Database\DbManager::run_migrations();
+Snelgraveren\ProductDesigner\Database\DbManager::run_migrations();

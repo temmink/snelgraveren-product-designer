@@ -1,5 +1,5 @@
 <?php
-namespace ProductForge\Frontend;
+namespace Snelgraveren\ProductDesigner\Frontend;
 
 defined('ABSPATH') || exit;
 
@@ -40,9 +40,9 @@ class DesignerBlock {
      * literal shortcode text.
      */
     public function render(): string {
-        if (!shortcode_exists('productforge')) {
+        if (!shortcode_exists('productdesigner')) {
             return '';
         }
-        return do_shortcode('[productforge]');
+        return do_shortcode('[productdesigner]');
     }
 }

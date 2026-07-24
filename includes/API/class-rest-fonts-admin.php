@@ -1,11 +1,11 @@
 <?php
-namespace ProductForge\API;
+namespace Snelgraveren\ProductDesigner\API;
 
 defined('ABSPATH') || exit;
 
-use ProductForge\Database\FontRepository;
-use ProductForge\ProductForge;
-use ProductForge\Security\FontValidator;
+use Snelgraveren\ProductDesigner\Database\FontRepository;
+use Snelgraveren\ProductDesigner\Plugin;
+use Snelgraveren\ProductDesigner\Security\FontValidator;
 
 /**
  * Premium-only custom-font management endpoints (upload/delete). Listed under
@@ -43,8 +43,8 @@ class RestFontsAdmin {
     }
 
     public function upload_font(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
-        if ( ! ProductForge::has_feature( 'custom_fonts' ) ) {
-            return ProductForge::premium_error( 'custom_fonts' );
+        if ( ! Plugin::has_feature( 'custom_fonts' ) ) {
+            return Plugin::premium_error( 'custom_fonts' );
         }
 
         $files = $request->get_file_params();
@@ -90,8 +90,8 @@ class RestFontsAdmin {
     }
 
     public function delete_font(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
-        if ( ! ProductForge::has_feature( 'custom_fonts' ) ) {
-            return ProductForge::premium_error( 'custom_fonts' );
+        if ( ! Plugin::has_feature( 'custom_fonts' ) ) {
+            return Plugin::premium_error( 'custom_fonts' );
         }
 
         $id  = (int) $request['id'];
@@ -107,8 +107,8 @@ class RestFontsAdmin {
     }
 
     public function delete_family(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
-        if ( ! ProductForge::has_feature( 'custom_fonts' ) ) {
-            return ProductForge::premium_error( 'custom_fonts' );
+        if ( ! Plugin::has_feature( 'custom_fonts' ) ) {
+            return Plugin::premium_error( 'custom_fonts' );
         }
 
         $family = sanitize_text_field(urldecode($request['family']));

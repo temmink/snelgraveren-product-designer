@@ -1,5 +1,5 @@
 <?php
-namespace ProductForge\Pricing;
+namespace Snelgraveren\ProductDesigner\Pricing;
 
 defined('ABSPATH') || exit;
 

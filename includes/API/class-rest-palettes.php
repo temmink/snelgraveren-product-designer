@@ -1,9 +1,9 @@
 <?php
-namespace ProductForge\API;
+namespace Snelgraveren\ProductDesigner\API;
 
 defined('ABSPATH') || exit;
 
-use ProductForge\ProductForge;
+use Snelgraveren\ProductDesigner\Plugin;
 
 /**
  * Color-palette endpoints. The whole controller is premium-only: palettes are
@@ -48,8 +48,8 @@ class RestPalettes {
     }
 
     public function create_palette(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
-        if ( ! ProductForge::has_feature( 'color_palettes' ) ) {
-            return ProductForge::premium_error( 'color_palettes' );
+        if ( ! Plugin::has_feature( 'color_palettes' ) ) {
+            return Plugin::premium_error( 'color_palettes' );
         }
 
         $body = $request->get_json_params();
@@ -74,8 +74,8 @@ class RestPalettes {
     }
 
     public function update_palette(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
-        if ( ! ProductForge::has_feature( 'color_palettes' ) ) {
-            return ProductForge::premium_error( 'color_palettes' );
+        if ( ! Plugin::has_feature( 'color_palettes' ) ) {
+            return Plugin::premium_error( 'color_palettes' );
         }
 
         $id       = sanitize_text_field($request['id']);
@@ -99,8 +99,8 @@ class RestPalettes {
     }
 
     public function delete_palette(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
-        if ( ! ProductForge::has_feature( 'color_palettes' ) ) {
-            return ProductForge::premium_error( 'color_palettes' );
+        if ( ! Plugin::has_feature( 'color_palettes' ) ) {
+            return Plugin::premium_error( 'color_palettes' );
         }
 
         $id       = sanitize_text_field($request['id']);
