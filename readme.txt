@@ -46,6 +46,38 @@ Built from the ground up as a secure alternative to legacy product designers, wi
 * Design links use unguessable random identifiers
 * Rate-limited uploads
 
+= Free vs Pro =
+
+The free plugin is a complete, working product designer. Pro adds the tools that turn it into a full production and pricing workflow.
+
+Free:
+
+* Drag-and-drop designer (text, photos, SVG)
+* One template
+* Ready-made starter templates
+* PNG export
+* Shortcode + Gutenberg block
+* "My designs" in the customer account
+* Mobile designer
+* Server-side pricing and SVG sanitization
+
+Pro adds:
+
+* Unlimited templates
+* Multiple product views (front, back, …)
+* Custom font uploads
+* Clip art collections
+* Pricing rules (surcharge per element or per tier)
+* Per-element and per-zone permissions
+* SVG-shape design zones and safe areas
+* Product colors and color palettes
+* PDF and SVG production export
+* Automatic export on order status
+* Upload restrictions (vector-only engraving)
+* LightBurn (.lbrn2) import
+
+Learn more and compare plans on the product page linked from this listing.
+
 == Installation ==
 
 1. Upload the plugin ZIP via Plugins → Add New → Upload Plugin, or unzip into `wp-content/plugins/`.
