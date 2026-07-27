@@ -13,6 +13,23 @@ use Snelgraveren\ProductDesigner\Database\FontRepository;
  */
 class RestFonts {
 
+    /**
+     * Curated Google-font families the designer offers (mirrors AVAILABLE_FONTS
+     * in the builder). The public /font-file proxy only ever needs these, so it
+     * refuses anything else: this bounds the transient cache to a fixed, known
+     * set and stops an attacker from enumerating arbitrary family names to bloat
+     * the cache or amplify outbound requests to Google. Custom uploaded fonts
+     * are served from their own URLs and never pass through this proxy.
+     */
+    private const ALLOWED_GOOGLE_FONTS = [
+        'Roboto', 'Open Sans', 'Lato', 'Montserrat', 'Poppins', 'Inter', 'Raleway',
+        'Nunito', 'Ubuntu', 'Oswald', 'Playfair Display', 'Merriweather', 'Lora',
+        'PT Serif', 'Roboto Slab', 'Roboto Mono', 'Source Code Pro', 'Fira Code',
+        'Dancing Script', 'Pacifico', 'Great Vibes', 'Caveat', 'Satisfy',
+        'Bebas Neue', 'Lobster', 'Righteous', 'Permanent Marker', 'Alfa Slab One',
+        'Anton', 'Bangers',
+    ];
+
     public function register_routes(): void {
         // Public: list all custom fonts (needed by frontend designer)
         register_rest_route('pf/v1', '/fonts', [
@@ -52,6 +69,16 @@ class RestFonts {
             return new \WP_REST_Response(['error' => 'family required'], 400);
         }
 
+        // Confine to the curated Google-font set, accepting the de-camelCased
+        // form ("BebasNeue" → "Bebas Neue"). Anything else is refused before we
+        // fetch or cache, keeping the transient store bounded.
+        $spaced  = trim(preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', $family));
+        $allowed = array_map('strtolower', self::ALLOWED_GOOGLE_FONTS);
+        if (!in_array(strtolower($family), $allowed, true)
+            && !in_array(strtolower($spaced), $allowed, true)) {
+            return new \WP_REST_Response(['error' => 'font not allowed'], 400);
+        }
+
         $cache_key = 'sgpd_fontfile_' . md5($family . '|' . $weight);
         $cached = get_transient($cache_key);
         if (is_string($cached) && $cached !== '') {
@@ -62,7 +89,6 @@ class RestFonts {
         // may store a camelCase variant ("BebasNeue"). Try the name as given,
         // then a de-camelCased fallback.
         $candidates = [$family];
-        $spaced = trim(preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', $family));
         if ($spaced !== $family) {
             $candidates[] = $spaced;
         }

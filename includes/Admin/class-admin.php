@@ -470,13 +470,28 @@ class Admin {
             return;
         }
 
-        $script = '(function(domain, translations) {'
-            . 'var localeData = translations.locale_data.messages || translations.locale_data[domain];'
-            . 'if (localeData) {'
-            . 'localeData[""].domain = domain;'
-            . 'wp.i18n.setLocaleData(localeData, domain);'
-            . '}'
-            . '})("' . $domain . '", ' . $json . ');';
+        // Decode the shipped translation JSON and re-encode the locale data with
+        // wp_json_encode() so it is escaped LATE for the <script> context —
+        // JSON_HEX_TAG neutralises any "</script>" sequence, rather than trusting
+        // the file contents verbatim in a string concatenation.
+        $translations = json_decode($json, true);
+        if (!is_array($translations)) {
+            return;
+        }
+        $locale_data = $translations['locale_data']['messages']
+            ?? $translations['locale_data'][$domain]
+            ?? null;
+        if (!is_array($locale_data)) {
+            return;
+        }
+        $locale_data[''] = is_array($locale_data[''] ?? null) ? $locale_data[''] : [];
+        $locale_data['']['domain'] = $domain;
+
+        $script = 'wp.i18n.setLocaleData('
+            . wp_json_encode($locale_data, JSON_HEX_TAG | JSON_HEX_AMP)
+            . ', '
+            . wp_json_encode($domain, JSON_HEX_TAG | JSON_HEX_AMP)
+            . ');';
 
         wp_add_inline_script($handle, $script, 'before');
     }

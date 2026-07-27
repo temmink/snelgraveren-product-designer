@@ -67,26 +67,35 @@ class RestTemplateTransfer {
             return new \WP_Error('pf_not_found', __('Template not found.', 'snelgraveren-product-designer'), ['status' => 404]);
         }
 
-        $uploads = wp_upload_dir();
-        $assets  = [];
-        $url_map = []; // url → asset:key (dedupe shared assets)
+        $uploads      = wp_upload_dir();
+        $real_basedir = realpath($uploads['basedir']);
+        $assets       = [];
+        $url_map      = []; // url → asset:key (dedupe shared assets)
 
-        $embed = function ($url) use ($uploads, &$assets, &$url_map) {
+        $embed = function ($url) use ($uploads, $real_basedir, &$assets, &$url_map) {
             if (!is_string($url) || $url === '' || !str_starts_with($url, $uploads['baseurl'])) {
                 return $url; // external or empty — leave untouched
             }
             if (isset($url_map[$url])) {
                 return $url_map[$url];
             }
+            // Map the uploads URL back to a filesystem path, then confine the
+            // resolved path to the uploads dir. A crafted stored URL containing
+            // "../" segments must never let file_get_contents() escape uploads.
             $path = str_replace($uploads['baseurl'], $uploads['basedir'], $url);
-            $data = is_readable($path) ? file_get_contents($path) : false;
+            $real = realpath($path);
+            if ($real === false || $real_basedir === false
+                || !str_starts_with($real, $real_basedir . DIRECTORY_SEPARATOR)) {
+                return $url; // outside uploads (or missing) — keep original URL
+            }
+            $data = is_readable($real) ? file_get_contents($real) : false;
             if ($data === false) {
                 return $url; // unreadable — keep original URL (best effort)
             }
-            $key = 'a' . (count($assets) + 1) . '-' . sanitize_file_name(basename($path));
+            $key = 'a' . (count($assets) + 1) . '-' . sanitize_file_name(basename($real));
             $finfo = new \finfo(FILEINFO_MIME_TYPE);
             $assets[$key] = [
-                'name' => sanitize_file_name(basename($path)),
+                'name' => sanitize_file_name(basename($real)),
                 'mime' => $finfo->buffer($data) ?: 'application/octet-stream',
                 'data' => base64_encode($data),
             ];

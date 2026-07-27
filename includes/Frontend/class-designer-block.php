@@ -40,9 +40,9 @@ class DesignerBlock {
      * literal shortcode text.
      */
     public function render(): string {
-        if (!shortcode_exists('productdesigner')) {
+        if (!shortcode_exists('sgpd_designer')) {
             return '';
         }
-        return do_shortcode('[productdesigner]');
+        return do_shortcode('[sgpd_designer]');
     }
 }

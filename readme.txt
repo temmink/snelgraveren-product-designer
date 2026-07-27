@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.7.6
+Stable tag: 1.7.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -98,7 +98,7 @@ Build steps: `npm install && npm run build` (Vite) compiles the designer and adm
 
 = Does it work with block themes? =
 
-Yes. Classic themes render the designer automatically on the product page (or via the `[productforge]` / `[sgpd_designer]` shortcode). Block themes use the Snelgraveren Product Designer block in the Site Editor or product description.
+Yes. Classic themes render the designer automatically on the product page (or via the `[sgpd_designer]` shortcode). Block themes use the Snelgraveren Product Designer block in the Site Editor or product description.
 
 = Where are the production files? =
 
@@ -125,6 +125,11 @@ Freemius Terms of Service: https://freemius.com/terms/
 No other external services are used. Design exports (PDF/PNG/SVG) are rendered entirely on your own server — nothing about your customers' designs, uploads, or orders is ever sent off-site.
 
 == Changelog ==
+
+= 1.7.7 =
+* Security: hardened the template export/import — embedded asset paths are now confined to the uploads directory (realpath check), so a crafted stored URL cannot read files outside uploads.
+* Security: the public font proxy now only serves the designer's curated Google-font set, keeping its cache bounded, and inline translation data is JSON-escaped for the script context.
+* Change: the designer shortcode is now `[sgpd_designer]` only (distinctive prefix). Any leftover `[productdesigner]`/`[productforge]` tags fall through to the product-page auto-render, so the designer keeps showing.
 
 = 1.7.6 =
 * Security: a design attached to the cart now requires a valid submission nonce when one is present, and returning to a product page with a design link only shows that design's preview to its owner.

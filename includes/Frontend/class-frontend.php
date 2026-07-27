@@ -27,11 +27,12 @@ class Frontend {
             $excludes[] = 'frontend-designer.';
             return $excludes;
         });
-        // [productdesigner] is the preferred, self-explanatory tag;
-        // [sgpd_designer] is the prefixed alias. (The old [productforge] tag was
-        // dropped for the wp.org listing — it echoed a former, non-distinctive
-        // brand name.)
-        add_shortcode('productdesigner', [$this, 'shortcode']);
+        // [sgpd_designer] is the only registered tag — a distinctive prefix, as
+        // the wp.org guidelines require for plugin-owned shortcodes. (The earlier
+        // unprefixed [productdesigner] and the legacy [productforge] tags were
+        // dropped for the listing; any leftover instances in existing content
+        // fall through to the product-page auto-render, so the designer still
+        // shows without a #pf-designer-root duplicate.)
         add_shortcode('sgpd_designer', [$this, 'shortcode']);
         add_filter('woocommerce_add_cart_item_data', [$this, 'add_cart_item_data'], 10, 2);
         add_filter('woocommerce_cart_item_thumbnail', [$this, 'cart_item_thumbnail'], 10, 3);
@@ -492,19 +493,21 @@ class Frontend {
     }
 
     /**
-     * Check if the current product's content contains the [productdesigner]
-     * shortcode (or its [sgpd_designer] alias) or the snelgraveren/product-designer
-     * block. Any of these mean "the merchant placed the designer explicitly" —
-     * the before-add-to-cart auto-render must then stay out of the way (no
-     * duplicate #pf-designer-root) and the display mode is forced to embedded.
+     * Check if the current product's content contains the [sgpd_designer]
+     * shortcode or the snelgraveren/product-designer block. Either means "the
+     * merchant placed the designer explicitly" — the before-add-to-cart
+     * auto-render must then stay out of the way (no duplicate #pf-designer-root)
+     * and the display mode is forced to embedded. Legacy unprefixed tags are
+     * intentionally NOT detected here: a leftover [productdesigner] must fall
+     * through to auto-render (it is no longer a registered shortcode), so the
+     * designer keeps rendering instead of leaving a bare tag on the page.
      */
     private function has_shortcode_in_content(): bool {
         global $post;
         if (!$post) {
             return false;
         }
-        return has_shortcode($post->post_content, 'productdesigner')
-            || has_shortcode($post->post_content, 'sgpd_designer')
+        return has_shortcode($post->post_content, 'sgpd_designer')
             || has_block('snelgraveren/product-designer', $post)
             || $this->template_has_designer_block();
     }
@@ -554,8 +557,7 @@ class Frontend {
     }
 
     /**
-     * [productdesigner] shortcode (and [productforge]/[sgpd_designer] aliases)
-     * — renders the designer inline.
+     * [sgpd_designer] shortcode — renders the designer inline.
      * Auto-detects product context on product pages.
      */
     public function shortcode(array $atts = []): string {
@@ -612,13 +614,28 @@ class Frontend {
             return;
         }
 
-        $script = '(function(domain, translations) {'
-            . 'var localeData = translations.locale_data.messages || translations.locale_data[domain];'
-            . 'if (localeData) {'
-            . 'localeData[""].domain = domain;'
-            . 'wp.i18n.setLocaleData(localeData, domain);'
-            . '}'
-            . '})("' . $domain . '", ' . $json . ');';
+        // Decode the shipped translation JSON and re-encode the locale data with
+        // wp_json_encode() so it is escaped LATE for the <script> context —
+        // JSON_HEX_TAG neutralises any "</script>" sequence, rather than trusting
+        // the file contents verbatim in a string concatenation.
+        $translations = json_decode($json, true);
+        if (!is_array($translations)) {
+            return;
+        }
+        $locale_data = $translations['locale_data']['messages']
+            ?? $translations['locale_data'][$domain]
+            ?? null;
+        if (!is_array($locale_data)) {
+            return;
+        }
+        $locale_data[''] = is_array($locale_data[''] ?? null) ? $locale_data[''] : [];
+        $locale_data['']['domain'] = $domain;
+
+        $script = 'wp.i18n.setLocaleData('
+            . wp_json_encode($locale_data, JSON_HEX_TAG | JSON_HEX_AMP)
+            . ', '
+            . wp_json_encode($domain, JSON_HEX_TAG | JSON_HEX_AMP)
+            . ');';
 
         wp_add_inline_script($handle, $script, 'before');
     }
