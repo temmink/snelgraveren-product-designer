@@ -44,15 +44,27 @@ and the remote guard refuses to re-tag a released version.
 
 ## Live site plugin folders
 
-`wp-content/plugins/` on snelgraveren.nl holds three copies; only the first is active:
+Cleaned up 2026-08-20 — `wp-content/plugins/` now holds only the active
+`snelgraveren-product-designer/` (1.7.8). The two leftovers are gone:
+`snelgraveren-product-designer-premium/` (1.7.7, a Freemius download — their ZIP is named
+`-premium`, which is why WordPress made it a second folder instead of updating the first)
+and `productforge/` (1.0.4, from before the rename).
 
-| Folder | Version | State |
-|---|---|---|
-| `snelgraveren-product-designer/` | 1.7.8 | **active** — this is the one to overwrite |
-| `snelgraveren-product-designer-premium/` | 1.7.7 | inactive — a Freemius download (their ZIP is named `-premium`, hence the separate folder) |
-| `productforge/` | 1.0.4 | inactive — the pre-rename folder |
+**Deleting either one was a data-loss risk**, because all three shared the `wp_pf_*` tables
+and WordPress runs a plugin's uninstall routine on delete:
 
-The two inactive copies are dead weight and make "which version is live?" ambiguous — worth deleting once you are sure nothing references them.
+- `Uninstaller::uninstall()` drops all 11 tables, but only when the opt-in flag is set.
+- The `-premium` folder reads `sgpd_delete_data_on_uninstall` — verified **off** in Settings
+  before deleting, so its uninstaller returned immediately.
+- `productforge/` (1.0.4) reads the pre-rename `pf_delete_data_on_uninstall`, which is not
+  readable from any admin screen. WordPress even warned "zal ook zijn gegevens verwijderen",
+  confirming an uninstall callback was registered. Rather than betting on `LegacyMigration`
+  having deleted that option, its `includes/class-uninstaller.php` was rewritten to a no-op
+  through the plugin file editor first (`DROP TABLE` existed nowhere else in that tree),
+  and only then was the folder deleted.
+
+Verified afterwards: **all 11 tables present**, 15 designs and the same top products in the
+statistics panel, product page 200 with the designer bundle, no PHP notices in the HTML.
 
 ## Gotchas learned
 
