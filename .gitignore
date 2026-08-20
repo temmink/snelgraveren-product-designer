@@ -19,3 +19,5 @@ APP-META.INI
 *.png
 !assets/**/*.png
 template-*.json
+.svn-wporg/
+!wporg-assets/*.png
