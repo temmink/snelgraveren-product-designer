@@ -28,8 +28,10 @@ Everything is committed on `master` (not pushed):
 
 1. ~~Upload the premium ZIP to Freemius → Deployment.~~ **Done 2026-08-20**: deployment ID 146191, status Released, SDK 2.13.4, rollout to all websites, incremental off (same as 1.7.7 and 1.7.6).
 2. ~~Deploy to snelgraveren.nl + LiteSpeed Purge All.~~ **Done 2026-08-20**: the live site was on **1.7.5** (not 1.7.7), overwritten in place to 1.7.8, plugin active, no error notices, all caches purged. Verified as a guest: product page 200 with `#pf-designer-root`, bundle `frontend-designer.265c3ce0.js` byte-identical to the local build, `x-litespeed-cache-control: no-cache` still set on designer pages. Freemius does not push updates here (dev licence), so this stays a manual upload.
-3. Check https://wordpress.org/plugins/snelgraveren-product-designer/ renders banner, icon and the 4 screenshots.
-4. Whitelist plugins@wordpress.org; validate the readme at wordpress.org/plugins/developers/readme-validator/.
+3. ~~Check the listing renders banner, icon and screenshots.~~ **Done 2026-08-20**: banner (1544×500 img, not a CSS background), icon and all 4 screenshots load with their captions; the Gutenberg block is detected ("provides 1 block").
+4. ~~Validate the readme.~~ **Done**: no errors or warnings, only three informational notes — the `engraving` tag is uncommon, no `== Upgrade Notice ==` section, no donate link. All optional.
+5. Still open, and only you can do it: whitelist plugins@wordpress.org so directory mail does not go to spam.
+6. Worth doing at the next release: the listing says **Tested up to 7.0.4** while WordPress 7.1 is out and snelgraveren.nl runs 1.7.8 on 7.1 without trouble. Bump `Tested up to:` in `readme.txt` together with the next version — tags are immutable, so it cannot be corrected in 1.7.8 itself.
 
 Releasing a later version is one command (it rebuilds, re-checks and re-tags):
 
