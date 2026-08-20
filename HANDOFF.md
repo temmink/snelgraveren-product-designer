@@ -1,6 +1,6 @@
 # Handoff — wordpress.org release
 
-_Last updated: 2026-08-20 (Cowork session)._
+_Last updated: 2026-08-20._
 
 ## Status
 
@@ -16,9 +16,12 @@ _Last updated: 2026-08-20 (Cowork session)._
 4. **Bug found & fixed → 1.7.8:** starter templates with SVG boundaries imported misaligned (boundary at top-left, background oversized). Cause: manifest assumed boundary SVG maps 1:1 onto the canvas, but renderers place the boundary group's bounding box at `zone.x/y`. Fix is data-only: `templates/starter/manifest.json` zones now use the shape bbox for `x/y/width/height` + `svg_intrinsic_*`; all `templates/starter/assets/*.svg` got explicit `width`/`height`. Renderer untouched (live-site boundaries depend on the bbox convention). Verified in Docker builder + frontend.
 5. `CLAUDE.md` updated (wp.org release bullet, SVG-boundary convention, removed stale "1 template free limit" note).
 
-## Uncommitted in git (commit first)
+## Git status
 
-`.gitignore` (adds `.svn-wporg/`), `CLAUDE.md`, `HANDOFF.md`, `readme.txt`, `snelgraveren-product-designer.php`, `templates/starter/manifest.json`, `templates/starter/assets/*.svg` (10), `bin/wporg-release.sh` (new), `wporg-assets/screenshot-1..4.png` (new — `*.png` is git-ignored except `assets/**`, so `git add -f wporg-assets/screenshot-*.png` or widen the ignore exception). Delete `wporg-assets/Screen Shot 2026-08-20 at 15.01.30.jpg` (source of screenshot-1, not needed).
+Everything is committed on `master` (not pushed):
+
+- `b2df20f` — release 1.7.8 (`readme.txt`, `snelgraveren-product-designer.php`, `templates/starter/manifest.json` + the 10 starter SVGs).
+- `11c763f` — `bin/wporg-release.sh`, `wporg-assets/` (icon 128/256, banner 772/1544, screenshot-1..4), `CLAUDE.md`, this file, and `.gitignore` (ignores `.svn-wporg/`, un-ignores `wporg-assets/*.png` so the listing assets no longer need `git add -f`).
 
 ## Next steps (in order)
 
