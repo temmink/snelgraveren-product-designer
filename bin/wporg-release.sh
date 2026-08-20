@@ -24,6 +24,9 @@ PLUGIN_SLUG="snelgraveren-product-designer"
 PLUGIN_FILE="${PLUGIN_SLUG}.php"
 SVN_URL="https://plugins.svn.wordpress.org/${PLUGIN_SLUG}"
 SVN_DIR=".svn-wporg"
+# svn otherwise offers the macOS account name as the wp.org login; override with
+# SVN_USER=… if someone else releases.
+SVN_USER="${SVN_USER:-snelgraveren}"
 ASSETS_SRC="wporg-assets"
 
 DRY_RUN=0
@@ -86,6 +89,7 @@ echo "    contents clean, ${SIZE_MB} MB ✓"
 
 echo "==> Syncing SVN working copy (${SVN_DIR})"
 if [ -d "$SVN_DIR/.svn" ]; then
+    svn cleanup "$SVN_DIR" >/dev/null 2>&1 || true   # clear locks left by an interrupted run
     svn update -q "$SVN_DIR"
 else
     svn checkout -q "$SVN_URL" "$SVN_DIR"
