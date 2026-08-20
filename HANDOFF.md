@@ -26,8 +26,8 @@ Everything is committed on `master` (not pushed):
 
 ## Next steps (in order)
 
-1. Upload `snelgraveren-product-designer-1.7.8.zip` (premium) to Freemius → Deployment.
-2. Deploy that same ZIP to snelgraveren.nl (Plugins → Upload → replace), then LiteSpeed Purge All.
+1. ~~Upload the premium ZIP to Freemius → Deployment.~~ **Done 2026-08-20**: deployment ID 146191, status Released, SDK 2.13.4, rollout to all websites, incremental off (same as 1.7.7 and 1.7.6).
+2. Deploy `snelgraveren-product-designer-1.7.8.zip` to snelgraveren.nl (Plugins → Upload → replace), then LiteSpeed Purge All. Freemius does not push updates to the live site — it runs on the dev licence, so this stays a manual upload.
 3. Check https://wordpress.org/plugins/snelgraveren-product-designer/ renders banner, icon and the 4 screenshots.
 4. Whitelist plugins@wordpress.org; validate the readme at wordpress.org/plugins/developers/readme-validator/.
 
