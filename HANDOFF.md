@@ -27,7 +27,7 @@ Everything is committed on `master` (not pushed):
 ## Next steps (in order)
 
 1. ~~Upload the premium ZIP to Freemius → Deployment.~~ **Done 2026-08-20**: deployment ID 146191, status Released, SDK 2.13.4, rollout to all websites, incremental off (same as 1.7.7 and 1.7.6).
-2. Deploy `snelgraveren-product-designer-1.7.8.zip` to snelgraveren.nl (Plugins → Upload → replace), then LiteSpeed Purge All. Freemius does not push updates to the live site — it runs on the dev licence, so this stays a manual upload.
+2. ~~Deploy to snelgraveren.nl + LiteSpeed Purge All.~~ **Done 2026-08-20**: the live site was on **1.7.5** (not 1.7.7), overwritten in place to 1.7.8, plugin active, no error notices, all caches purged. Verified as a guest: product page 200 with `#pf-designer-root`, bundle `frontend-designer.265c3ce0.js` byte-identical to the local build, `x-litespeed-cache-control: no-cache` still set on designer pages. Freemius does not push updates here (dev licence), so this stays a manual upload.
 3. Check https://wordpress.org/plugins/snelgraveren-product-designer/ renders banner, icon and the 4 screenshots.
 4. Whitelist plugins@wordpress.org; validate the readme at wordpress.org/plugins/developers/readme-validator/.
 
@@ -41,6 +41,18 @@ bash bin/wporg-release.sh             # same, then prompts before committing
 Bump the version in `snelgraveren-product-designer.php` (header + `SGPD_VERSION`) and
 `readme.txt` (Stable tag + changelog) first — pre-flight refuses to run if they disagree,
 and the remote guard refuses to re-tag a released version.
+
+## Live site plugin folders
+
+`wp-content/plugins/` on snelgraveren.nl holds three copies; only the first is active:
+
+| Folder | Version | State |
+|---|---|---|
+| `snelgraveren-product-designer/` | 1.7.8 | **active** — this is the one to overwrite |
+| `snelgraveren-product-designer-premium/` | 1.7.7 | inactive — a Freemius download (their ZIP is named `-premium`, hence the separate folder) |
+| `productforge/` | 1.0.4 | inactive — the pre-rename folder |
+
+The two inactive copies are dead weight and make "which version is live?" ambiguous — worth deleting once you are sure nothing references them.
 
 ## Gotchas learned
 
