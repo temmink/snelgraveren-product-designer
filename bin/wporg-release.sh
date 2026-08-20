@@ -39,6 +39,17 @@ for arg in "$@"; do
     esac
 done
 
+# One run at a time: two concurrent runs share the working copy and interleave
+# their output and credential prompts, leaving neither able to finish.
+# (mkdir is the atomic primitive here — macOS has no flock.)
+LOCK_DIR="${SVN_DIR}.lock"
+if ! mkdir "$LOCK_DIR" 2>/dev/null; then
+    echo "FAIL: another run is already active (lock: ${LOCK_DIR})."
+    echo "If no such run exists, the lock is stale — remove it with: rmdir ${LOCK_DIR}"
+    exit 1
+fi
+trap 'rmdir "$LOCK_DIR" 2>/dev/null || true' EXIT
+
 command -v svn >/dev/null || { echo "svn not found. Install with: brew install svn"; exit 1; }
 [ -f "$PLUGIN_FILE" ] || { echo "Run this from the project root ($PLUGIN_FILE missing)"; exit 1; }
 

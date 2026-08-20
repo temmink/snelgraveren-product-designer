@@ -21,3 +21,4 @@ APP-META.INI
 template-*.json
 .svn-wporg/
 !wporg-assets/*.png
+.svn-wporg.lock/
