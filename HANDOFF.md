@@ -5,8 +5,8 @@ _Last updated: 2026-08-20._
 ## Status
 
 - **Approved on wordpress.org** 2026-08-20 (review ID P0TDX342667HGN, after 4 rounds). Slug `snelgraveren-product-designer`, SVN `https://plugins.svn.wordpress.org/snelgraveren-product-designer`, wp.org user `snelgraveren`. Updates after approval are **not** re-reviewed — commits to SVN go live within minutes (automated scanners + spot checks continue).
-- **Nothing has been committed to SVN yet.** The public page is invisible until the first upload.
-- **Current version: 1.7.8** (bumped in `snelgraveren-product-designer.php` header + `SGPD_VERSION`, and `readme.txt` Stable tag + changelog). The 1.7.7 ZIPs in the project dir are stale — rebuild.
+- **Released 2026-08-20: r3657251** — `trunk/` + `tags/1.7.8/` + `assets/` (2 banners, 2 icons, 4 screenshots) are live. Listing returns HTTP 200 and the wp.org API reports 1.7.8.
+- **Current version: 1.7.8** (header + `SGPD_VERSION` + `readme.txt` Stable tag/changelog all agree; the release script enforces this in pre-flight).
 
 ## Done this session
 
@@ -20,23 +20,33 @@ _Last updated: 2026-08-20._
 
 Everything is committed on `master` (not pushed):
 
-- `b2df20f` — release 1.7.8 (`readme.txt`, `snelgraveren-product-designer.php`, `templates/starter/manifest.json` + the 10 starter SVGs).
-- `11c763f` — `bin/wporg-release.sh`, `wporg-assets/` (icon 128/256, banner 772/1544, screenshot-1..4), `CLAUDE.md`, this file, and `.gitignore` (ignores `.svn-wporg/`, un-ignores `wporg-assets/*.png` so the listing assets no longer need `git add -f`).
+- `b2df20f` — release 1.7.8 (`readme.txt`, plugin header, `templates/starter/manifest.json` + the 10 starter SVGs).
+- `11c763f` — `bin/wporg-release.sh`, `wporg-assets/` (icon 128/256, banner 772/1544, screenshot-1..4), `CLAUDE.md`, this file, `.gitignore`.
+- `6861158`, `381aab6`, `59e7570`, `7b7af2b`, `4fe4c4c` — release-script fixes found by actually running it: remote-based tag guard, no `svn status | head` under `pipefail`, no empty-array expansion on bash 3.2, default `--username snelgraveren` + `svn cleanup`, and a single-run lock. The commit path is covered end to end against a throwaway `file://` repo.
 
 ## Next steps (in order)
 
+1. Upload `snelgraveren-product-designer-1.7.8.zip` (premium) to Freemius → Deployment.
+2. Deploy that same ZIP to snelgraveren.nl (Plugins → Upload → replace), then LiteSpeed Purge All.
+3. Check https://wordpress.org/plugins/snelgraveren-product-designer/ renders banner, icon and the 4 screenshots.
+4. Whitelist plugins@wordpress.org; validate the readme at wordpress.org/plugins/developers/readme-validator/.
+
+Releasing a later version is one command (it rebuilds, re-checks and re-tags):
+
 ```bash
-# 0. optional but recommended: Plugin Check on the free ZIP once built
-# 1. release to wordpress.org (prompts for SVN user/password on first commit)
-brew install svn                      # if missing
 bash bin/wporg-release.sh --dry-run   # build + stage + show svn status
-bash bin/wporg-release.sh             # same, then commit "Release 1.7.8"
+bash bin/wporg-release.sh             # same, then prompts before committing
 ```
 
-Then: upload `snelgraveren-product-designer-1.7.8.zip` (premium) to Freemius → Deployment; deploy the same ZIP to snelgraveren.nl (Plugins → Upload → replace) and LiteSpeed Purge All; check https://wordpress.org/plugins/snelgraveren-product-designer/ renders banner/icon/screenshots; whitelist plugins@wordpress.org; validate readme at wordpress.org/plugins/developers/readme-validator/.
+Bump the version in `snelgraveren-product-designer.php` (header + `SGPD_VERSION`) and
+`readme.txt` (Stable tag + changelog) first — pre-flight refuses to run if they disagree,
+and the remote guard refuses to re-tag a released version.
 
 ## Gotchas learned
 
 - `docker/setup.sh` is stale (slug `product-designer`, WP image is 6.7 while current WooCommerce needs 6.9+ → run `wp core update` after install). Fresh WooCommerce enables Coming Soon mode: `wp option update woocommerce_coming_soon no`.
 - To retest starters on Docker after changing manifest/assets: copy `templates/starter/` into the installed plugin dir, delete rows in `wp_pf_template_views`/`wp_pf_templates`, remove `uploads/pf-template-assets/`, re-import. `wp db query` only runs the first `;`-separated statement.
 - SVN tags are immutable: never re-tag, bump the version instead.
+- Run the release script in a real terminal, once. It needs a tty (confirmation + SVN password) and now refuses to start twice (mkdir lock on `.svn-wporg.lock`) — two concurrent runs interleave their output and credential prompts, which is unreadable and finishes neither.
+- SVN login = wp.org username `snelgraveren` (the script passes `--username`, or svn offers the macOS account name) + the **separate** SVN password from profiles.wordpress.org → Account & Security.
+- macOS ships bash 3.2: expanding an empty array under `set -u` aborts the script, and `cmd | head` SIGPIPEs the producer under `set -o pipefail`. Both bit this script; keep the release path free of arrays and of piping long output into `head`.
