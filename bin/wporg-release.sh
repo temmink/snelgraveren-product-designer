@@ -133,8 +133,11 @@ fi
 )
 
 echo "==> SVN status"
-(cd "$SVN_DIR" && svn status | head -60)
-echo "    (showing first 60 lines)"
+# Capture first, then trim: `svn status | head` would SIGPIPE svn, and under
+# `set -o pipefail` that kills this script before it reaches the commit prompt.
+SVN_STATUS=$(cd "$SVN_DIR" && svn status)
+echo "$SVN_STATUS" | head -40
+echo "    ($(echo "$SVN_STATUS" | grep -c . ) changed paths, showing first 40)"
 
 if [ "$DRY_RUN" -eq 1 ]; then
     echo ""
@@ -144,6 +147,11 @@ if [ "$DRY_RUN" -eq 1 ]; then
 fi
 
 echo ""
+if [ ! -t 0 ]; then
+    echo "This step is interactive (confirmation + SVN credentials) and stdin is not a terminal."
+    echo "Run it in a real terminal:  bash bin/wporg-release.sh --skip-build"
+    exit 1
+fi
 read -r -p "Commit 'Release ${VERSION}' to ${SVN_URL}? [y/N] " answer
 if [ "${answer}" != "y" ] && [ "${answer}" != "Y" ]; then
     echo "Aborted. Working copy left in ${SVN_DIR}/ — revert with: (cd ${SVN_DIR} && svn revert -R . && svn cleanup --remove-unversioned)"
