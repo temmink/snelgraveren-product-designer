@@ -152,15 +152,20 @@ if [ ! -t 0 ]; then
     echo "Run it in a real terminal:  bash bin/wporg-release.sh --skip-build"
     exit 1
 fi
-read -r -p "Commit 'Release ${VERSION}' to ${SVN_URL}? [y/N] " answer
+answer=""
+read -r -p "Commit 'Release ${VERSION}' to ${SVN_URL}? [y/N] " answer || true
 if [ "${answer}" != "y" ] && [ "${answer}" != "Y" ]; then
     echo "Aborted. Working copy left in ${SVN_DIR}/ — revert with: (cd ${SVN_DIR} && svn revert -R . && svn cleanup --remove-unversioned)"
     exit 1
 fi
 
-SVN_AUTH=()
-[ -n "${SVN_USER:-}" ] && SVN_AUTH=(--username "$SVN_USER")
-(cd "$SVN_DIR" && svn commit "${SVN_AUTH[@]}" -m "Release ${VERSION}")
+# No arrays here on purpose: macOS ships bash 3.2, where expanding an empty
+# array under `set -u` aborts the script ("unbound variable").
+if [ -n "${SVN_USER:-}" ]; then
+    (cd "$SVN_DIR" && svn commit --username "$SVN_USER" -m "Release ${VERSION}")
+else
+    (cd "$SVN_DIR" && svn commit -m "Release ${VERSION}")
+fi
 
 echo ""
 echo "Released ${VERSION}. The listing updates within a few minutes:"
