@@ -31,7 +31,7 @@ Everything is committed on `master` (not pushed):
 3. ~~Check the listing renders banner, icon and screenshots.~~ **Done 2026-08-20**: banner (1544×500 img, not a CSS background), icon and all 4 screenshots load with their captions; the Gutenberg block is detected ("provides 1 block").
 4. ~~Validate the readme.~~ **Done**: no errors or warnings, only three informational notes — the `engraving` tag is uncommon, no `== Upgrade Notice ==` section, no donate link. All optional.
 5. Still open, and only you can do it: whitelist plugins@wordpress.org so directory mail does not go to spam.
-6. Worth doing at the next release: the listing says **Tested up to 7.0.4** while WordPress 7.1 is out and snelgraveren.nl runs 1.7.8 on 7.1 without trouble. Bump `Tested up to:` in `readme.txt` together with the next version — tags are immutable, so it cannot be corrected in 1.7.8 itself.
+6. ~~Bump `Tested up to`.~~ Already set to **7.1** in `readme.txt` (`5a964c7`); the listing keeps showing 7.0.4 until the next release ships, since `tags/1.7.8` is immutable.
 
 Releasing a later version is one command (it rebuilds, re-checks and re-tags):
 
