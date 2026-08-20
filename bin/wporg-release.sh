@@ -92,9 +92,20 @@ else
 fi
 mkdir -p "$SVN_DIR/trunk" "$SVN_DIR/tags" "$SVN_DIR/assets"
 
+# The remote is the only authority on what has been released — a tags/ directory in
+# the working copy may just be a copy staged by an earlier (dry) run of this script.
+if REMOTE_TAGS=$(svn ls "${SVN_URL}/tags/" 2>/dev/null); then
+    if echo "$REMOTE_TAGS" | grep -qx "${VERSION}/"; then
+        echo "FAIL: tags/${VERSION} is already released in SVN. Bump the version — released tags must never be rewritten."
+        exit 1
+    fi
+else
+    echo "WARN: could not list remote tags — if ${VERSION} is already released, the commit will be rejected."
+fi
 if [ -d "$SVN_DIR/tags/$VERSION" ]; then
-    echo "FAIL: tags/${VERSION} already exists in SVN. Bump the version — released tags must never be rewritten."
-    exit 1
+    echo "    dropping tags/${VERSION} staged by an earlier run"
+    (cd "$SVN_DIR" && svn revert -R "tags/$VERSION" >/dev/null 2>&1 || true)
+    rm -rf "${SVN_DIR:?}/tags/$VERSION"
 fi
 
 # Replace trunk contents with the free build.
