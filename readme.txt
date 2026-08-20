@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.7.7
+Stable tag: 1.7.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -124,7 +124,17 @@ Freemius Terms of Service: https://freemius.com/terms/
 
 No other external services are used. Design exports (PDF/PNG/SVG) are rendered entirely on your own server — nothing about your customers' designs, uploads, or orders is ever sent off-site.
 
+== Screenshots ==
+
+1. The customer-facing designer: a name engraved on a bone-shaped dog tag, with product colour swatches, font, size, colour and alignment controls, undo/redo, and a Save & add to cart button.
+2. The template builder: imported vector artwork and text zones on a canvas, with a layer tree, per-zone permissions, pricing rules and LightBurn import.
+3. Starter templates gallery: import a ready-made engrave, print or basic template with one click.
+4. Production dashboard: every order with a design, filtered by status and period, ready to download as one ZIP.
+
 == Changelog ==
+
+= 1.7.8 =
+* Fix: starter templates with an SVG-shaped design zone (dog tags, keychain, name plate, T-shirt, round, heart) now import with the zone exactly aligned to the product background. Previously the zone outline was shifted to the top-left corner and the background could appear oversized. Existing templates are not affected.
 
 = 1.7.7 =
 * Security: hardened the template export/import — embedded asset paths are now confined to the uploads directory (realpath check), so a crafted stored URL cannot read files outside uploads.

@@ -1,4 +1,4 @@
-<svg viewBox="0 0 700 850" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 700 850" width="700" height="850" xmlns="http://www.w3.org/2000/svg">
   <path fill="#e5e7eb" stroke="#9ca3af" stroke-width="1.5" d="
     M 120,260 L 580,260 L 560,760
     C 558,780 545,790 525,790
