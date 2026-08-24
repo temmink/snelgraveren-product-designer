@@ -496,6 +496,7 @@ export default function DesignerCanvas() {
             fontFamily: layer.fontFamily || 'Arial',
             fill:       layer.fill       || '#000000',
             textAlign:  align,
+            opacity:    layer.opacity ?? 1,
             data:       { elementType: 'text', zoneIndex: zoneIdx },
           });
           applyPermissions(text, 'text');
@@ -522,6 +523,7 @@ export default function DesignerCanvas() {
                 scaleX:        layer.scaleX || 1,
                 scaleY:        layer.scaleY || 1,
                 angle:         layer.angle  || 0,
+                opacity:       layer.opacity ?? 1,
                 strokeUniform: true,
                 // Pre-placed template artwork is locked for the customer:
                 // non-selectable art they can't move, resize, rotate or delete.
@@ -549,6 +551,47 @@ export default function DesignerCanvas() {
               canvas.renderAll();
             })
             .catch((err) => console.warn('[PF] template svg layer load failed:', err));
+        }
+
+        if (!hasSnapshotForView && layer.type === 'image' && layer.src) {
+          FabricImage.fromURL(layer.src, { crossOrigin: 'anonymous' })
+            .then((img) => {
+              if (disposed) return;
+              img.set({
+                left:          layer.left   ?? zone.x,
+                top:           layer.top    ?? zone.y,
+                originX:       layer.originX || 'left',
+                originY:       layer.originY || 'top',
+                scaleX:        layer.scaleX || 1,
+                scaleY:        layer.scaleY || 1,
+                angle:         layer.angle  || 0,
+                opacity:       layer.opacity ?? 1,
+                visible:       layer.visible !== false,
+                // Background reference art: never selectable, never movable.
+                // evented:false is what lets clicks fall through to the text
+                // and logos above it.
+                selectable:    false,
+                evented:       false,
+                hasControls:   false,
+                lockMovementX: true,
+                lockMovementY: true,
+                data: {
+                  elementType:       'image',
+                  zoneIndex:         zoneIdx,
+                  templateLocked:    true,
+                  // Kept out of every export render (App.jsx) and out of both
+                  // price counters (priceCounts.js / PriceCalculator).
+                  excludeFromExport: layer.exclude_from_export !== false,
+                  templateArt:       layer.template_art !== false,
+                },
+              });
+              if (zoneClips(zone)) applyZoneClip(img, zoneIdx);
+              canvas.add(img);
+              canvas.sendObjectToBack(img);
+              img.setCoords();
+              canvas.renderAll();
+            })
+            .catch((err) => console.warn('[PF] template image layer load failed:', err));
         }
       });
     });
