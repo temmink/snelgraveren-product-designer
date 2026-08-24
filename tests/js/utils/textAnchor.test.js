@@ -1,4 +1,4 @@
-import { resolveTextAnchor } from '../../../shared/js/textAnchor';
+import { resolveTextAnchor, buildTextAnchorPatch } from '../../../shared/js/textAnchor';
 
 // Live-data shape: Template 4 view 5 zone 1. zone.width = 526.178, layer.left
 // = -58, textAlign 'center', no originX. See CLAUDE.md / task report for the
@@ -105,5 +105,68 @@ describe('resolveTextAnchor', () => {
     const anchor = resolveTextAnchor({ left: 10, top: 20, textAlign: 'center' }, null);
     // boxWidth falls back to the fixed 200 default when there's no zone.
     expect(anchor.left).toBeCloseTo(10 + 100, 6);
+  });
+});
+
+// Regression guard for the align-toolbar hole: `object:modified` (Canvas.jsx)
+// persists originX/originY alongside left/top, but until this fix
+// `handleAlign` persisted only { left, top } — so a single align-toolbar
+// click on a legacy layer (no stored originX) wrote the anchor-left raw, and
+// the next layer-sync re-derived the textAlign compensation on top of it:
+// the identical half-box jump the drag path was fixed for, reached through
+// the align button instead. Both write-back sites must build their patch
+// through this one helper so they can't drift apart again — deleting
+// `patch.originX`/`patch.originY` from either call site should fail this
+// suite.
+describe('buildTextAnchorPatch', () => {
+  it('always includes originX/originY, not just left/top', () => {
+    // A Fabric object mid-session already carries the origin it was
+    // constructed with (from a prior resolveTextAnchor call) — this is what
+    // the live canvas object looks like right after an align-toolbar click
+    // or a drag ends (`object:modified` fires with this same shape).
+    const objAfterAlign = { left: 195.089, top: 40, originX: 'center', originY: 'top' };
+    const patch = buildTextAnchorPatch(objAfterAlign);
+    expect(patch.originX).toBe('center');
+    expect(patch.originY).toBe('top');
+  });
+
+  it('rounds left/top to whole pixels', () => {
+    const patch = buildTextAnchorPatch({ left: 10.6, top: 20.4, originX: 'left', originY: 'top' });
+    expect(patch.left).toBe(11);
+    expect(patch.top).toBe(20);
+  });
+
+  it('round-trips through resolveTextAnchor: the live template-4 legacy case', () => {
+    // zone.width 526.178, layer.left -58, textAlign 'center', no originX —
+    // the exact live-data shape documented at the top of this file.
+    const zone = LEGACY_ZONE;
+    const legacyLayer = LEGACY_LAYER;
+
+    // First resolve: this is what happens when the layer is loaded onto the
+    // canvas — the Fabric object is constructed at this anchor.
+    const first = resolveTextAnchor(legacyLayer, zone);
+
+    // Simulate the Fabric object after an align-toolbar click: originX/originY
+    // are whatever the object was constructed with (`first`'s), left/top are
+    // wherever alignElement() moved it to.
+    const objAfterAlign = {
+      left: first.left + 12.4, // moved by the align click
+      top: first.top,
+      originX: first.originX,
+      originY: first.originY,
+    };
+
+    const patch = buildTextAnchorPatch(objAfterAlign);
+
+    // The bug: without originX/originY in the patch, feeding the merged
+    // layer back through resolveTextAnchor re-derives the textAlign
+    // compensation a second time and the position drifts.
+    const patchedLayer = { ...legacyLayer, ...patch };
+    const second = resolveTextAnchor(patchedLayer, zone);
+
+    expect(second.left).toBeCloseTo(patch.left, 6);
+    expect(second.top).toBeCloseTo(patch.top, 6);
+    expect(second.originX).toBe(patch.originX);
+    expect(second.originY).toBe(patch.originY);
   });
 });

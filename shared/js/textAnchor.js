@@ -37,3 +37,31 @@ export function resolveTextAnchor(layer, zone) {
   }
   return { left, top, originX, originY };
 }
+
+/**
+ * Build the write-back patch for a text layer from its live Fabric object
+ * state. ALWAYS includes originX/originY alongside left/top — omitting them
+ * is exactly the defect resolveTextAnchor()'s idempotence contract guards
+ * against: without an explicit origin in the persisted layer, the next
+ * resolveTextAnchor() call (on the following layer-sync render) re-derives
+ * the anchor from textAlign again, and since `left` here is already the
+ * compensated value, re-deriving a second time double-applies the
+ * compensation — the text jumps by half/all of the box width.
+ *
+ * Every site that writes a text layer's position back to the store (the
+ * `object:modified` handler, the align-toolbar handler) MUST build its patch
+ * through this one function so they can't drift apart and reintroduce the
+ * bug through a different code path. See
+ * tests/js/utils/textAnchor.test.js for the regression this guards.
+ *
+ * @param {{left:number, top:number, originX?:string, originY?:string}} obj live Fabric object state (or an object-like with the same shape)
+ * @returns {{left:number, top:number, originX?:string, originY?:string}}
+ */
+export function buildTextAnchorPatch(obj) {
+  return {
+    left: Math.round(obj.left),
+    top: Math.round(obj.top),
+    originX: obj.originX,
+    originY: obj.originY,
+  };
+}

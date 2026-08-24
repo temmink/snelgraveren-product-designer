@@ -8,7 +8,7 @@ import { zoneShapePath, objectSamplePoints, pointsInsideZoneShape } from '../../
 import { mergeLayersToBoundary } from '../utils/mergeLayersToBoundary';
 import MmRuler from '../../../../../shared/js/MmRuler.jsx';
 import { resolveWidthMm } from '../../../../../shared/js/rulerTicks';
-import { resolveTextAnchor } from '../../../../../shared/js/textAnchor';
+import { resolveTextAnchor, buildTextAnchorPatch } from '../../../../../shared/js/textAnchor';
 
 const ALLOWED_FABRIC_TYPES = new Set([
   'IText', 'Textbox', 'Image', 'Rect', 'Path', 'Group', 'FabricText',
@@ -881,8 +881,11 @@ export default function Canvas() {
         // very next re-render. Writing originX/originY here converts the layer
         // to the explicit convention permanently, so textAnchor() short-circuits
         // the compensation from now on and `left`/`top` stay unambiguous.
-        patch.originX = obj.originX;
-        patch.originY = obj.originY;
+        // Built through buildTextAnchorPatch() so this stays in lockstep with
+        // handleAlign()'s write-back — see shared/js/textAnchor.js.
+        const anchorPatch = buildTextAnchorPatch(obj);
+        patch.originX = anchorPatch.originX;
+        patch.originY = anchorPatch.originY;
       } else {
         // For image/svg layers, persist scale values.
         patch.scaleX = obj.scaleX || 1;
@@ -1103,10 +1106,18 @@ export default function Canvas() {
 
     // Persist position to Zustand store so the layer-sync effect doesn't reset it.
     if (obj.data?.zoneIndex != null && obj.data?.layerIndex != null) {
-      updateLayer(currentViewIndex, obj.data.zoneIndex, obj.data.layerIndex, {
-        left: Math.round(obj.left),
-        top:  Math.round(obj.top),
-      });
+      // Text layers must also persist originX/originY here, exactly as the
+      // object:modified handler does (built through the same
+      // buildTextAnchorPatch() helper — see shared/js/textAnchor.js).
+      // Without it, a legacy layer (no stored originX) gets its anchor-left
+      // written raw by the align click, and the next layer-sync re-derives
+      // the textAlign compensation on top of it: the identical half-box
+      // jump the drag path was fixed for (ccb341f), reached through the
+      // align toolbar instead of a drag.
+      const patch = obj.data?.layerType === 'text'
+        ? buildTextAnchorPatch(obj)
+        : { left: Math.round(obj.left), top: Math.round(obj.top) };
+      updateLayer(currentViewIndex, obj.data.zoneIndex, obj.data.layerIndex, patch);
     }
 
     // Re-select so the object stays active for further alignment clicks.
