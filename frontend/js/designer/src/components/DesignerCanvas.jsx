@@ -18,6 +18,7 @@ import { resolveWidthMm } from '../../../../../shared/js/rulerTicks';
 import { resolveTextAnchor } from '../../../../../shared/js/textAnchor';
 import { ensureFontMeasured } from '../../../../../shared/js/ensureFontMeasured';
 import { onFontFamilyLoaded } from '../../../../../shared/js/googleFontLoader';
+import { installTextPlaceholders, isTextPlaceholder } from '../../../../../shared/js/textPlaceholder';
 import { inferElementType, reapplyPostRestoreState } from '../utils/postRestoreState';
 
 // Shape-aware initial placement for a newly-added image/clipart object.
@@ -550,7 +551,11 @@ export default function DesignerCanvas() {
     // Render pre-placed template layers from zones.
     zones.forEach((zone, zoneIdx) => {
       (zone.layers || []).forEach((layer) => {
-        if (layer.type === 'text' && layer.text) {
+        // An EMPTY template text layer is seeded too. It used to be skipped
+        // entirely, so a layer the merchant authored empty for the customer to
+        // fill in simply was not there. shared/js/textPlaceholder.js gives the
+        // empty IText a dashed, clickable box; clicking it opens the caret.
+        if (layer.type === 'text') {
           // Use IText (auto-width, hugs its content) instead of Textbox (fixed
           // width). A Textbox kept the old wide layout box even for a short
           // name, so the selection/drag box ran far past the text. The layer
@@ -564,7 +569,7 @@ export default function DesignerCanvas() {
           // stays movable (locked only when the merchant explicitly locks it).
           const locked = isLayerLockedForCustomer(layer);
 
-          const text = new IText(layer.text, {
+          const text = new IText(layer.text || '', {
             left:       anchor.left,
             top:        anchor.top,
             originX:    anchor.originX,
@@ -842,7 +847,12 @@ export default function DesignerCanvas() {
       }
     });
 
-    canvas.on('object:removed', () => {
+    canvas.on('object:removed', (e) => {
+      // Placeholder decorations are chrome: they are added and removed as text
+      // empties and fills, and are excluded from toObject() anyway. Snapshotting
+      // and pushing history for them would add undo steps for a change that is
+      // not in the design.
+      if (isTextPlaceholder(e?.target)) return;
       if (!disposed) {
         snapshotViewRef.current?.(currentViewIndexRef.current, canvas.toObject(['data']));
         pushHistoryRef.current?.();
@@ -893,6 +903,13 @@ export default function DesignerCanvas() {
     };
     document.addEventListener('keydown', onKeyDown);
 
+    // An emptied text object — a template layer authored empty, or the
+    // customer's own text they just cleared — stays on the canvas as a dashed,
+    // clickable box. enterEditing: true because typing on the canvas is the
+    // ONLY way a customer can put text back (the sidebar has no text field),
+    // so a click has to open the caret, not just select.
+    const disposePlaceholders = installTextPlaceholders(canvas, Rect, { enterEditing: true });
+
     canvas.renderAll();
 
     return () => {
@@ -904,6 +921,8 @@ export default function DesignerCanvas() {
         snapshotView(currentViewIndex, fabricRef.current.toObject(['data']));
       }
       disposed = true;
+      canvas.__sgpdDisposed = true;
+      disposePlaceholders();
       document.removeEventListener('keydown', onKeyDown);
       canvas.dispose();
       fabricRef.current = null;

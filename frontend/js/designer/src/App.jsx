@@ -11,6 +11,7 @@ import { getDesignerConfig } from './utils/config';
 import { outlineSvgText, embedFontsInSvg } from './utils/textOutline';
 import { countPriceableElements } from './utils/priceCounts';
 import useIsMobile from './hooks/useIsMobile';
+import { withoutTextPlaceholders } from '../../../../shared/js/textPlaceholder';
 
 /**
  * Ensure every text object's font is loaded and re-measured before an offscreen
@@ -605,7 +606,12 @@ export default function App() {
 
             if (idx === store.currentViewIndex && store.fabricCanvasRef) {
               try {
-                thumbnail = store.fabricCanvasRef.toDataURL({ format: 'png', multiplier: 0.5 });
+                // toDataURL rasterises the live canvas, so neither
+                // excludeFromExport flag can keep an empty-text placeholder box
+                // out of it — hide the chrome for the duration of the render.
+                thumbnail = withoutTextPlaceholders(store.fabricCanvasRef, () =>
+                  store.fabricCanvasRef.toDataURL({ format: 'png', multiplier: 0.5 })
+                );
               } catch (_) { /* ignore */ }
               try {
                 exportSvg = withoutExcludedObjects(store.fabricCanvasRef, () =>
@@ -764,7 +770,10 @@ export default function App() {
         if (idx === activeViewIndex && fabricCanvasRef) {
           // Active view: capture directly from the live canvas
           try {
-            thumbnail = fabricCanvasRef.toDataURL({ format: 'png', multiplier: 0.5 });
+            // See the matching comment in the add-to-cart save path above.
+            thumbnail = withoutTextPlaceholders(fabricCanvasRef, () =>
+              fabricCanvasRef.toDataURL({ format: 'png', multiplier: 0.5 })
+            );
           } catch (_) { /* ignore */ }
           try {
             exportSvg = withoutExcludedObjects(fabricCanvasRef, () =>

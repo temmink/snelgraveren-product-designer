@@ -10,6 +10,7 @@ import { mergeLayersToBoundary } from '../utils/mergeLayersToBoundary';
 import MmRuler from '../../../../../shared/js/MmRuler.jsx';
 import { resolveWidthMm } from '../../../../../shared/js/rulerTicks';
 import { textMinScaleLimit } from '../../../../../shared/js/fontSizeLimits';
+import { installTextPlaceholders, syncTextPlaceholders } from '../../../../../shared/js/textPlaceholder';
 import { resolveTextAnchor, buildTextAnchorPatch } from '../../../../../shared/js/textAnchor';
 import { ensureFontMeasured } from '../../../../../shared/js/ensureFontMeasured';
 import { onFontFamilyLoaded } from '../../../../../shared/js/googleFontLoader';
@@ -350,12 +351,21 @@ export default function Canvas() {
       pushHistory(viewKey, canvas.toObject(['data']));
     }
 
+    // Empty text layers stay visible as a dashed, clickable placeholder; a
+    // click on one selects the layer so the merchant can type into the tree
+    // panel's Text field. No enterEditing here — on-canvas text edits are not
+    // written back to the store in the builder, so the tree field is the only
+    // place text actually persists.
+    const disposePlaceholders = installTextPlaceholders(canvas, Rect, { enterEditing: false });
+
     // Intentionally omit currentView/pushHistory from deps: we only want to
     // re-initialise the Fabric canvas when the active view index changes, not on
     // every Zustand state update. currentView and pushHistory are read inside
     // the effect via closure and are stable enough for this purpose.
     return () => {
       disposed = true;
+      canvas.__sgpdDisposed = true;
+      disposePlaceholders();
       canvas.dispose();
       fabricRef.current = null;
     };
@@ -577,18 +587,19 @@ export default function Canvas() {
       handledKeys.add(layer._key);
 
       if (layer.type === 'text') {
-        if (!layer.text) {
-          if (existing) canvas.remove(existing);
-          return;
-        }
-
+        // An EMPTY text layer stays on the canvas. It used to be removed here,
+        // so clearing the Text field to retype made the whole layer vanish and
+        // a layer authored empty could never be filled in. The object keeps
+        // every property it had — font, size, colour, anchor, layerKey — and
+        // shared/js/textPlaceholder.js hangs a dashed, clickable box on it so
+        // there is something to aim at while it has no glyphs of its own.
         const fontFamily = layer.fontFamily || 'Arial';
 
         const anchor = textAnchor(layer);
 
         if (existing) {
           existing.set({
-            text:       layer.text,
+            text:       layer.text || '',
             left:       anchor.left,
             top:        anchor.top,
             originX:    anchor.originX,
@@ -614,7 +625,7 @@ export default function Canvas() {
           // selection box matches the glyphs, not a fallback face.
           ensureFontMeasured(existing, fabricCache);
         } else {
-          const text = new IText(layer.text, {
+          const text = new IText(layer.text || '', {
             left:       anchor.left,
             top:        anchor.top,
             originX:    anchor.originX,
@@ -818,6 +829,11 @@ export default function Canvas() {
     // Re-stack: zones at bottom, then layers in tree order.
     zoneObjects.forEach((obj) => canvas.sendObjectToBack(obj));
     layerObjects.forEach((obj) => canvas.bringObjectToFront(obj));
+
+    // Existing objects are mutated in place above, which fires no fabric
+    // event, so the placeholder bridge would not hear about a text layer that
+    // just became empty (or just stopped being empty). Sync explicitly.
+    syncTextPlaceholders(canvas, Rect);
 
     canvas.renderAll();
   }, [layers]); // eslint-disable-line react-hooks/exhaustive-deps
