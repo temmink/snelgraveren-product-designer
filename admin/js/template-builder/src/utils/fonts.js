@@ -2,6 +2,7 @@
  * Curated list of fonts available in the template builder.
  * Web-safe fonts are available without loading; Google Fonts need a stylesheet.
  */
+import { loadGoogleFontFamilies, injectCustomFontFaces, normalizeGoogleName } from '../../../../../shared/js/googleFontLoader';
 
 export const AVAILABLE_FONTS = [
   // Web-safe fonts (no loading needed)
@@ -52,42 +53,29 @@ export const AVAILABLE_FONTS = [
 
 /**
  * Load Google Fonts that aren't already loaded.
- * Injects a single <link> tag for all required Google Fonts.
+ *
+ * The actual loading (proxy-FontFace registration under the exact stored
+ * family name + css2 <link> fallback) lives in the shared module, so the
+ * builder resolves non-canonical aliases ("BebasNeue") the same way the
+ * customer-facing designer does — see shared/js/googleFontLoader.js for why
+ * that matters. `restUrl` is the plugin's REST base, read by the caller
+ * from `window.sgpdTemplateBuilder.restUrl` (mirrors `config.rest_url` on
+ * the frontend) and passed in rather than read from a global here.
  */
-export function loadGoogleFonts(fontFamilies) {
+export function loadGoogleFonts(fontFamilies, restUrl) {
   const googleFonts = fontFamilies.filter((family) => {
-    const font = AVAILABLE_FONTS.find((f) => f.family === family);
+    // A stored family may be a non-canonical alias ("BebasNeue" instead of
+    // the catalogue's "Bebas Neue") — match against the catalogue's
+    // canonical name too, so the alias still gets recognised as a Google
+    // font and reaches loadGoogleFontFamilies (which registers it under
+    // its EXACT stored name via the proxy).
+    const font = AVAILABLE_FONTS.find(
+      (f) => f.family === family || f.family === normalizeGoogleName(family)
+    );
     return font && font.source === 'google';
   });
 
-  if (googleFonts.length === 0) return;
-
-  const linkId = 'pf-google-fonts';
-  let link = document.getElementById(linkId);
-
-  const families = googleFonts
-    .map((f) => f.replace(/ /g, '+') + ':wght@400;700')
-    .join('&family=');
-  const href = `https://fonts.googleapis.com/css2?family=${families}&display=swap`;
-
-  if (link) {
-    if (link.href !== href) {
-      link.href = href;
-    }
-  } else {
-    link = document.createElement('link');
-    link.id = linkId;
-    link.rel = 'stylesheet';
-    link.href = href;
-    document.head.appendChild(link);
-  }
-}
-
-/**
- * Escape a string for safe use inside CSS single-quoted values.
- */
-function cssEscape(str) {
-  return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  loadGoogleFontFamilies(googleFonts, restUrl);
 }
 
 /**
@@ -95,32 +83,7 @@ function cssEscape(str) {
  * @param {Array} customFonts — from GET /pf/v1/fonts: [{family, files: [{file_url, format}]}]
  */
 export function loadCustomFonts(customFonts) {
-  if (!customFonts || customFonts.length === 0) return;
-
-  const styleId = 'pf-custom-fonts';
-  let style = document.getElementById(styleId);
-
-  const css = customFonts
-    .map((font) => {
-      const sources = font.files
-        .map((f) => `url('${cssEscape(f.file_url)}') format('${cssEscape(f.format)}')`)
-        .join(',\n       ');
-      return `@font-face {
-  font-family: '${cssEscape(font.family)}';
-  src: ${sources};
-  font-display: swap;
-}`;
-    })
-    .join('\n\n');
-
-  if (style) {
-    style.textContent = css;
-  } else {
-    style = document.createElement('style');
-    style.id = styleId;
-    style.textContent = css;
-    document.head.appendChild(style);
-  }
+  injectCustomFontFaces(customFonts);
 }
 
 /**

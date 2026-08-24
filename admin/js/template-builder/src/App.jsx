@@ -105,11 +105,15 @@ export default function App() {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Load Google Fonts when allowed_fonts changes
+  // Load Google Fonts when allowed_fonts changes.
+  // The proxy path in loadGoogleFonts needs the pf/v1-namespaced REST base
+  // (matching templateApi's `${base()}pf/v1/${path}` convention) — the
+  // localized `restUrl` is only the wp-json root.
   useEffect(() => {
     const fonts = globalConfig.allowed_fonts || [];
     if (fonts.length > 0) {
-      loadGoogleFonts(fonts);
+      const wpJsonBase = window.sgpdTemplateBuilder?.restUrl || '/wp-json/';
+      loadGoogleFonts(fonts, `${wpJsonBase}pf/v1`);
     }
   }, [globalConfig.allowed_fonts]);
 
