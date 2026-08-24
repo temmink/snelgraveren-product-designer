@@ -9,7 +9,7 @@ import useCanvasScale from '../hooks/useCanvasScale';
 import useIsMobile from '../hooks/useIsMobile';
 import useCanvasHistory from '../hooks/useCanvasHistory';
 import { filterFabricJson } from '../utils/fabricJson';
-import { zoneShapePath, objectSamplePoints, pointsInsideZoneShape } from '../../../../../shared/js/zoneContainment';
+import { zoneShapePath, objectSamplePoints, pointsInsideZoneShape, fitInsideZoneShape } from '../../../../../shared/js/zoneContainment';
 import { minFontSizePx } from '../../../../../shared/js/fontSizeLimits';
 import MmRuler from '../../../../../shared/js/MmRuler.jsx';
 import { resolveWidthMm } from '../../../../../shared/js/rulerTicks';
@@ -23,6 +23,28 @@ function inferElementType(obj) {
   if (t === 'image') return 'image';
   if (t === 'path' || t === 'group') return 'svg';
   return 'unknown';
+}
+
+// Shape-aware initial placement for a newly-added image/clipart object.
+// Mirrors clampToZone's exact conditions for when a zone is truly shape-
+// -tested (behavior 'restrict' + inline svg boundary, no rotation) — placing
+// blind at the bbox centre and letting clampToZone reject it afterwards would
+// leave the object stuck outside a concave/off-centre contour. Returns true
+// (and mutates `img`'s left/top/scaleX/scaleY) when it placed the object via
+// the shape fit; false means the caller should fall back to the existing
+// bbox-centred placement unchanged.
+function placeInsideZoneShape(img, zone) {
+  if (!zone || zone.behavior !== 'restrict') return false;
+  if (zone.boundary_type !== 'svg' || !zone.svg_markup || zone.svg_rotation) return false;
+  const shape = zoneShapePath(zone);
+  if (!shape) return false;
+  // Same cap as the existing scaleToWidth(Math.min(img.width, zone.width * 0.8))
+  // call it replaces: never upscale past the source's natural pixel size.
+  const maxScale = Math.min(1, (zone.width * 0.8) / img.width);
+  const fit = fitInsideZoneShape({ shape, zone, width: img.width, height: img.height, maxScale });
+  if (!fit) return false;
+  img.set({ scaleX: fit.scale, scaleY: fit.scale, left: fit.left, top: fit.top });
+  return true;
 }
 
 // Stable fallbacks for optional template config. Inline `|| {}` / `|| []`
@@ -1057,11 +1079,13 @@ export default function DesignerCanvas() {
       // Position: center on zone if found, otherwise center on canvas
       if (zoneIdx >= 0) {
         const zone = zones[zoneIdx];
-        img.scaleToWidth(Math.min(img.width, zone.width * 0.8));
-        img.set({
-          left: zone.x + zone.width / 2 - (img.getScaledWidth() / 2),
-          top:  zone.y + zone.height / 2 - (img.getScaledHeight() / 2),
-        });
+        if (!placeInsideZoneShape(img, zone)) {
+          img.scaleToWidth(Math.min(img.width, zone.width * 0.8));
+          img.set({
+            left: zone.x + zone.width / 2 - (img.getScaledWidth() / 2),
+            top:  zone.y + zone.height / 2 - (img.getScaledHeight() / 2),
+          });
+        }
       } else {
         img.scaleToWidth(Math.min(img.width, canvas.width * 0.5));
         img.set({
@@ -1127,11 +1151,13 @@ export default function DesignerCanvas() {
 
       if (zoneIdx >= 0) {
         const zone = zones[zoneIdx];
-        img.scaleToWidth(Math.min(img.width, zone.width * 0.8));
-        img.set({
-          left: zone.x + zone.width / 2 - (img.getScaledWidth() / 2),
-          top:  zone.y + zone.height / 2 - (img.getScaledHeight() / 2),
-        });
+        if (!placeInsideZoneShape(img, zone)) {
+          img.scaleToWidth(Math.min(img.width, zone.width * 0.8));
+          img.set({
+            left: zone.x + zone.width / 2 - (img.getScaledWidth() / 2),
+            top:  zone.y + zone.height / 2 - (img.getScaledHeight() / 2),
+          });
+        }
       } else {
         img.scaleToWidth(Math.min(img.width, canvas.width * 0.5));
         img.set({

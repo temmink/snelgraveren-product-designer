@@ -85,3 +85,74 @@ export function pointsInsideZoneShape(path, zone, points) {
     containmentCtx.isPointInPath(path, (x - (zone.x || 0)) / s, (y - (zone.y || 0)) / s)
   );
 }
+
+/**
+ * Largest placement of a width x height object that fits wholly inside a zone's
+ * shape, centred as close to the zone's bounding-box centre as the contour allows.
+ *
+ * Placement and clamping MUST agree, so this reuses the very predicates
+ * clampToZone uses (objectSamplePoints + pointsInsideZoneShape) rather than
+ * approximating containment a second way.
+ *
+ * @param {object}   opts
+ * @param {Path2D}   opts.shape     from zoneShapePath(zone)
+ * @param {object}   opts.zone      needs x, y, width, height, svg_scale
+ * @param {number}   opts.width     the object's unscaled width in canvas px
+ * @param {number}   opts.height    the object's unscaled height in canvas px
+ * @param {number}   [opts.maxScale] largest scale to consider (default 1)
+ * @param {number}   [opts.minScale] give up below this (default 0.05)
+ * @param {Function} [opts.isInside] containment predicate, injected for tests
+ * @returns {{left:number, top:number, scale:number}|null} null when nothing fits
+ */
+export function fitInsideZoneShape({
+  shape, zone, width, height,
+  maxScale = 1, minScale = 0.05,
+  isInside = pointsInsideZoneShape,
+}) {
+  if (!shape || !zone || !(width > 0) || !(height > 0)) return null;
+
+  const fits = (cx, cy, scale) => {
+    const w = (width * scale) / 2;
+    const h = (height * scale) / 2;
+    const corners = [
+      { x: cx - w, y: cy - h }, { x: cx + w, y: cy - h },
+      { x: cx + w, y: cy + h }, { x: cx - w, y: cy + h },
+    ];
+    return isInside(shape, zone, objectSamplePoints(corners));
+  };
+
+  // 1. Anchor: the bounding-box centre when the contour allows it, otherwise the
+  //    inside grid point closest to it. A coarse grid is enough — we only need a
+  //    foothold, step 2 does the real work.
+  const cx0 = zone.x + zone.width / 2;
+  const cy0 = zone.y + zone.height / 2;
+  let anchor = fits(cx0, cy0, minScale) ? [cx0, cy0] : null;
+  if (!anchor) {
+    const N = 15;
+    let bestD = Infinity;
+    for (let i = 0; i <= N; i++) {
+      for (let j = 0; j <= N; j++) {
+        const x = zone.x + (zone.width * i) / N;
+        const y = zone.y + (zone.height * j) / N;
+        if (!fits(x, y, minScale)) continue;
+        const d = (x - cx0) ** 2 + (y - cy0) ** 2;
+        if (d < bestD) { bestD = d; anchor = [x, y]; }
+      }
+    }
+  }
+  if (!anchor) return null;
+
+  // 2. Largest scale that still fits, by bisection.
+  const [ax, ay] = anchor;
+  if (fits(ax, ay, maxScale)) {
+    return { left: ax - (width * maxScale) / 2, top: ay - (height * maxScale) / 2, scale: maxScale };
+  }
+  let lo = minScale;
+  let hi = maxScale;
+  if (!fits(ax, ay, lo)) return null;
+  for (let k = 0; k < 18; k++) {
+    const mid = (lo + hi) / 2;
+    if (fits(ax, ay, mid)) lo = mid; else hi = mid;
+  }
+  return { left: ax - (width * lo) / 2, top: ay - (height * lo) / 2, scale: lo };
+}
