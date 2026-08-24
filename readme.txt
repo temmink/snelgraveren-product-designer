@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.8.0
+Stable tag: 1.8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -132,6 +132,15 @@ No other external services are used. Design exports (PDF/PNG/SVG) are rendered e
 4. Production dashboard: every order with a design, filtered by status and period, ready to download as one ZIP.
 
 == Changelog ==
+
+= 1.8.1 =
+* New: the minimum font size is now enforced in the Template Builder as strictly as it is for the customer, on the size field as well as on the corner handles. The field shows the minimum, and a value below it is raised instead of rejected silently.
+* New: clearing a text layer's content no longer makes it disappear. The layer stays on the canvas as a dashed empty placeholder that can be clicked and refilled, keeping its font, size, colour and position. Placeholders are never engraved, printed or included in a thumbnail.
+* Fix: an element larger than its design zone could no longer be moved at all, because every position was forced back to the one spot that still covered the zone. An element that does not fit is now left free to move, so the mistake can actually be corrected. Elements that do fit are still kept inside the boundary.
+* Fix: an element wider or taller than its zone jumped to the opposite side when dragged.
+* Fix: typing in the font size field could insert digits in front of the value, e.g. leaving 430 after replacing 20 with 30, after which the size could no longer be changed.
+* Fix: the selection box around text did not match the letters, being measured against a fallback font while the real font was still loading. Text is now re-measured once its font is confirmed loaded.
+* Fix: the Template Builder could display text in the wrong typeface entirely, because the font was requested under a name the browser never registered.
 
 = 1.8.0 =
 * New: LightBurn imports now bring in embedded bitmap images as a locked background layer instead of skipping them, with an opacity slider and the existing visibility toggle. The bitmap is shown to the customer and in the cart thumbnail, but is left out of every production export and is never billed as a design element.
