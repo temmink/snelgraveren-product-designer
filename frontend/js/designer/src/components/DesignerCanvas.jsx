@@ -10,6 +10,7 @@ import useIsMobile from '../hooks/useIsMobile';
 import useCanvasHistory from '../hooks/useCanvasHistory';
 import { filterFabricJson } from '../utils/fabricJson';
 import { zoneShapePath, objectSamplePoints, pointsInsideZoneShape, fitInsideZoneShape } from '../../../../../shared/js/zoneContainment';
+import { clampRectToZone } from '../../../../../shared/js/zoneRectClamp';
 import { minFontSizePx } from '../../../../../shared/js/fontSizeLimits';
 import { isLayerLockedForCustomer } from '../../../../../shared/js/layerLockForCustomer';
 import MmRuler from '../../../../../shared/js/MmRuler.jsx';
@@ -258,16 +259,7 @@ export default function DesignerCanvas() {
     }
 
     const bound = obj.getBoundingRect();
-
-    let left = obj.left;
-    let top  = obj.top;
-
-    if (bound.left < zone.x) left += zone.x - bound.left;
-    if (bound.top  < zone.y) top  += zone.y - bound.top;
-    if (bound.left + bound.width  > zone.x + zone.width)
-      left -= (bound.left + bound.width) - (zone.x + zone.width);
-    if (bound.top  + bound.height > zone.y + zone.height)
-      top  -= (bound.top + bound.height) - (zone.y + zone.height);
+    const { left, top } = clampRectToZone({ objLeft: obj.left, objTop: obj.top, bound, zone });
 
     obj.set({ left, top });
     obj.setCoords();

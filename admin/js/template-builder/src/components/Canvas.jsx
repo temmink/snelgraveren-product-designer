@@ -5,6 +5,7 @@ import useTemplateStore from '../store/useTemplateStore';
 import { parseSvgToFabric } from '../utils/svgPathUtils';
 import { alignElement } from '../../../../../shared/js/alignElement';
 import { zoneShapePath, objectSamplePoints, pointsInsideZoneShape } from '../../../../../shared/js/zoneContainment';
+import { clampRectToZone } from '../../../../../shared/js/zoneRectClamp';
 import { mergeLayersToBoundary } from '../utils/mergeLayersToBoundary';
 import MmRuler from '../../../../../shared/js/MmRuler.jsx';
 import { resolveWidthMm } from '../../../../../shared/js/rulerTicks';
@@ -149,16 +150,7 @@ export default function Canvas() {
     }
 
     const bound = obj.getBoundingRect();
-
-    let left = obj.left;
-    let top  = obj.top;
-
-    if (bound.left < zone.x) left += zone.x - bound.left;
-    if (bound.top  < zone.y) top  += zone.y - bound.top;
-    if (bound.left + bound.width  > zone.x + zone.width)
-      left -= (bound.left + bound.width) - (zone.x + zone.width);
-    if (bound.top  + bound.height > zone.y + zone.height)
-      top  -= (bound.top + bound.height) - (zone.y + zone.height);
+    const { left, top } = clampRectToZone({ objLeft: obj.left, objTop: obj.top, bound, zone });
 
     obj.set({ left, top });
     obj.setCoords();
