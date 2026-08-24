@@ -43,24 +43,39 @@ async function ensureFontsAndRemeasure(canvas) {
  * restore. Used for the production export renders only — thumbnails keep those
  * objects, because a thumbnail should look like what the customer designed.
  *
+ * Sets BOTH the plugin's `data.excludeFromExport` flag AND Fabric's own
+ * top-level `excludeFromExport` property (unrelated properties that happen to
+ * share a name). `visible = false` alone hides the object from raster output
+ * (toDataURL) but NOT from toSVG() — Fabric's toSVG() still emits invisible
+ * objects, just marked `visibility: hidden` in the markup, so a bitmap
+ * reference layer flagged only this way still ships inside export_vector /
+ * export_vector_embed for a laser operator to open. The native
+ * `excludeFromExport` is what toSVG() actually honours by omitting the object.
+ * We restore each object's PRIOR native-flag value (not assume false) so we
+ * never clobber a flag some other code path may have already set.
+ *
  * The restore lives in `finally` on purpose: two call sites operate on the
  * customer's LIVE on-screen canvas, so a throwing render must never leave a
- * layer hidden in front of them.
+ * layer hidden (or export-excluded) in front of them.
  */
 function withoutExcludedObjects(canvas, fn) {
   const hidden = [];
   try {
     canvas.getObjects().forEach((o) => {
       if (o.data?.excludeFromExport && o.visible !== false) {
-        hidden.push(o);
+        hidden.push({ obj: o, prevExcludeFromExport: o.excludeFromExport });
         o.visible = false;
+        o.excludeFromExport = true;
       }
     });
     if (hidden.length) canvas.renderAll();
     return fn();
   } finally {
     if (hidden.length) {
-      hidden.forEach((o) => { o.visible = true; });
+      hidden.forEach(({ obj, prevExcludeFromExport }) => {
+        obj.visible = true;
+        obj.excludeFromExport = prevExcludeFromExport;
+      });
       canvas.renderAll();
     }
   }
