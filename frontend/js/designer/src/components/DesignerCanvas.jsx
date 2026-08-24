@@ -535,18 +535,23 @@ export default function DesignerCanvas() {
           // was authored with a wide box + an alignment; anchor the IText by
           // that alignment so its VISUAL position stays put while the box now
           // hugs the text and grows/shrinks live as the customer types.
-          const align    = layer.textAlign || 'left';
-          const boxWidth  = layer.width || (zone.width - 20);
-          const baseLeft  = layer.left ?? (zone.x + 20);
-          let   originX   = 'left';
+          const align      = layer.textAlign || 'left';
+          const boxWidth   = layer.width || (zone.width - 20);
+          const baseLeft   = layer.left ?? (zone.x + 20);
+          let   originX    = layer.originX;
+          const originY    = layer.originY || 'top';
           let   anchorLeft = baseLeft;
-          if (align === 'center')     { originX = 'center'; anchorLeft = baseLeft + boxWidth / 2; }
-          else if (align === 'right') { originX = 'right';  anchorLeft = baseLeft + boxWidth; }
+          if (!originX) {
+            originX = 'left';
+            if (align === 'center')     { originX = 'center'; anchorLeft = baseLeft + boxWidth / 2; }
+            else if (align === 'right') { originX = 'right';  anchorLeft = baseLeft + boxWidth; }
+          }
 
           const text = new IText(layer.text, {
             left:       anchorLeft,
             top:        layer.top ?? (zone.y + 20),
             originX,
+            originY,
             fontSize:   layer.fontSize   || 24,
             fontFamily: layer.fontFamily || 'Arial',
             fill:       layer.fill       || '#000000',
