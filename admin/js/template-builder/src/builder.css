@@ -371,11 +371,19 @@
   display: grid;
   grid-template-columns: 1fr;
   grid-template-rows: 1fr;
+  flex: 1;        /* fill the column flex parent (.pf-canvas-wrap), as .pf-canvas-scroll used to */
+  min-height: 0;  /* let the grid shrink so its child can scroll instead of pushing the page */
 }
 
 .pf-canvas-grid--ruler {
   grid-template-columns: 22px 1fr;
   grid-template-rows: 22px 1fr;
+}
+
+.pf-canvas-cell {
+  display: flex;         /* re-establish the flex context .pf-canvas-scroll's flex:1 expects */
+  flex-direction: column;
+  min-height: 0;
 }
 
 .pf-ruler__corner {
