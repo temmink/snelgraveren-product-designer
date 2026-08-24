@@ -9,6 +9,7 @@ import { clampRectToZone } from '../../../../../shared/js/zoneRectClamp';
 import { mergeLayersToBoundary } from '../utils/mergeLayersToBoundary';
 import MmRuler from '../../../../../shared/js/MmRuler.jsx';
 import { resolveWidthMm } from '../../../../../shared/js/rulerTicks';
+import { textMinScaleLimit } from '../../../../../shared/js/fontSizeLimits';
 import { resolveTextAnchor, buildTextAnchorPatch } from '../../../../../shared/js/textAnchor';
 import { ensureFontMeasured } from '../../../../../shared/js/ensureFontMeasured';
 import { onFontFamilyLoaded } from '../../../../../shared/js/googleFontLoader';
@@ -61,6 +62,10 @@ export default function Canvas() {
   // Ruler physical width: falls back to a sibling view's width_mm when this
   // view has none set (R13 — front/back of one physical object share it).
   const { widthMm } = resolveWidthMm(views, currentViewIndex);
+  // Same default the Fabric canvas is initialised with below. Paired with
+  // widthMm this is the mm→px scale used for the minimum-font-size floor, so
+  // the floor and the ruler always read the view the same way.
+  const canvasWidth = currentView?.canvas_width || 800;
 
   // ── Zone enforcement helpers ─────────────────────────────────────────────
 
@@ -206,13 +211,46 @@ export default function Canvas() {
   snapToGridRef.current     = snapToGrid;
   applyZoneClipRef.current  = applyZoneClip;
 
+  // The template's minimum font size (authored in mm) enforced on the CANVAS
+  // handles, exactly as the customer designer enforces it
+  // (DesignerCanvas.jsx#applyPermissions — same textMinScaleLimit helper, same
+  // widthMm the ruler uses). Corner handles change scaleY, not fontSize, so
+  // the rendered size is fontSize * scaleY: flooring only the size input in
+  // TreePanel would leave the handles as an open door under the minimum, which
+  // is precisely the hole the merchant had and the customer did not.
+  //
+  // Deliberately NOT gated on isFreeMove: Free Move suspends ZONE enforcement
+  // (positioning), and legibility in millimetres has nothing to do with zones.
+  // The customer has no such escape hatch, and the requirement is that the
+  // merchant is held to the same floor.
+  //
+  // Only ever sets minScaleLimit, which constrains interactive scaling and
+  // never resizes anything — opening a template that already contains
+  // sub-minimum text must not silently rewrite it.
+  const applyTextFontFloor = useCallback((obj) => {
+    if (!obj) return;
+    const perms = permissions.text || {};
+    const limit = textMinScaleLimit({
+      minFontSizeMm: perms.min_font_size_mm,
+      canvasWidth,
+      widthMm,
+      fontSize: obj.fontSize,
+      minScale: perms.min_scale,
+    });
+    if (limit != null) obj.set({ minScaleLimit: limit });
+  }, [permissions, canvasWidth, widthMm]);
+
   const applyPermissions = useCallback((obj, elementType) => {
+    // Before the Free Move bail-out on purpose — see applyTextFontFloor.
+    applyTextFontFloor(obj);
     if (isFreeMove) return;
     const perms = permissions[elementType] || {};
     if (perms.resize === false) obj.set({ hasControls: false });
     if (perms.rotate === false && obj.controls?.mtr) obj.controls.mtr.visible = false;
     if (perms.min_scale != null) obj.set({ minScaleLimit: perms.min_scale });
-  }, [permissions, isFreeMove]);
+    // min_scale must not undercut the font floor, so re-assert it last.
+    applyTextFontFloor(obj);
+  }, [permissions, isFreeMove, applyTextFontFloor]);
 
   // ── Fabric initialisation ─────────────────────────────────────────────────
 
@@ -783,6 +821,29 @@ export default function Canvas() {
 
     canvas.renderAll();
   }, [layers]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Re-apply the minimum-font-size floor ────────────────────────────────
+  // The floor is a ratio against each object's own fontSize, so it goes stale
+  // the moment any of its three inputs move: the template's permissions (the
+  // merchant edits min_font_size_mm in the Permissions panel), the view's
+  // physical width in mm, the canvas width, or a layer's own font size
+  // (changed from the tree panel, which updates the existing fabric object
+  // without going back through applyPermissions).
+  //
+  // Declared AFTER the layer-sync effect so it runs after that effect has
+  // created/updated this render's objects. Interactivity only — it never
+  // touches geometry, so a template that already contains sub-minimum text
+  // opens unchanged and is only held to the floor when the merchant next
+  // drags a handle.
+  useEffect(() => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    canvas.getObjects().forEach((obj) => {
+      if (obj.data?.isZone || obj.data?.isZoneOverlay) return;
+      applyTextFontFloor(obj);
+    });
+  }, [layers, applyTextFontFloor]);
+
 
   // ── Re-measure text objects after fonts load (secondary safety net) ─────
   // Custom fonts may load asynchronously. When loaded, Fabric's static char

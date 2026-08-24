@@ -11,7 +11,7 @@ import useCanvasHistory from '../hooks/useCanvasHistory';
 import { filterFabricJson } from '../utils/fabricJson';
 import { zoneShapePath, objectSamplePoints, pointsInsideZoneShape, fitInsideZoneShape } from '../../../../../shared/js/zoneContainment';
 import { clampRectToZone } from '../../../../../shared/js/zoneRectClamp';
-import { minFontSizePx } from '../../../../../shared/js/fontSizeLimits';
+import { minFontSizePx, textMinScaleLimit } from '../../../../../shared/js/fontSizeLimits';
 import { isLayerLockedForCustomer } from '../../../../../shared/js/layerLockForCustomer';
 import MmRuler from '../../../../../shared/js/MmRuler.jsx';
 import { resolveWidthMm } from '../../../../../shared/js/rulerTicks';
@@ -220,15 +220,17 @@ export default function DesignerCanvas() {
 
     // Corner handles change scaleY, not fontSize, so the effective size is
     // fontSize * scaleY. Clamping the size input alone leaves the handles as an
-    // open door under the template's engraving minimum.
-    const minPx = minFontSizePx({
+    // open door under the template's engraving minimum. Same helper the
+    // template builder's Canvas.jsx uses — the merchant is held to the exact
+    // same floor as the customer, from one implementation.
+    const limit = textMinScaleLimit({
       minFontSizeMm: permissions.text?.min_font_size_mm,
       canvasWidth,
       widthMm,
+      fontSize: obj.fontSize,
+      minScale: perms.min_scale,
     });
-    if (minPx > 0 && obj.fontSize > 0) {
-      obj.set({ minScaleLimit: Math.max(perms.min_scale ?? 0, minPx / obj.fontSize) });
-    }
+    if (limit != null) obj.set({ minScaleLimit: limit });
   }, [permissions, canvasWidth, widthMm]);
 
   // ── Clamp object inside its assigned zone ─────────────────────────────────

@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { __ } from '@wordpress/i18n';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { __, sprintf } from '@wordpress/i18n';
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
 } from '@dnd-kit/core';
@@ -10,6 +10,8 @@ import ZoneForm from './ZoneForm';
 import { AVAILABLE_FONTS, mergeCustomFonts } from '../utils/fonts';
 import { clipartApi } from '../api/templateApi';
 import { isLayerLockedForCustomer } from '../../../../../shared/js/layerLockForCustomer';
+import { fontSizeInputFloorPx, clampFontSizePx } from '../../../../../shared/js/fontSizeLimits';
+import { resolveWidthMm } from '../../../../../shared/js/rulerTicks';
 
 export default function TreePanel() {
   const {
@@ -527,6 +529,106 @@ function ColorField({ value, onChange, globalConfig, colorPalettes }) {
   );
 }
 
+/**
+ * Font-size input for a text layer, floored at the TEMPLATE's minimum.
+ *
+ * The floor used to be a hardcoded min="8" here while the customer's designer
+ * derived its floor from the template — the merchant could author text the
+ * customer would not be allowed to keep. Both inputs now read the same
+ * fontSizeInputFloorPx() / clampFontSizePx() helpers, against the same
+ * resolveWidthMm() the ruler uses.
+ *
+ * The floor is enforced on the value that gets COMMITTED, not only through the
+ * `min` attribute (which browsers treat as advisory for typed input), so a
+ * sub-minimum number can never reach the layer. What the merchant is typing is
+ * held in local state so a clamp mid-word never rewrites the box under their
+ * cursor (the mangling defect the customer's input already had).
+ *
+ * Nothing here resizes existing text: the layer keeps whatever size it was
+ * saved with until the merchant edits this field.
+ */
+function FontSizeField({ layer, onChange }) {
+  const views = useTemplateStore((s) => s.views);
+  const currentViewIndex = useTemplateStore((s) => s.currentViewIndex);
+  const globalConfig = useTemplateStore((s) => s.globalConfig);
+
+  const minMm = globalConfig?.permissions?.text?.min_font_size_mm;
+  const { widthMm } = resolveWidthMm(views, currentViewIndex);
+  const canvasWidth = views?.[currentViewIndex]?.canvas_width || 800;
+  const floor = fontSizeInputFloorPx({ minFontSizeMm: minMm, canvasWidth, widthMm });
+  // Only mention millimetres when the template's minimum is what is actually
+  // binding — below that the 8px floor is a builder convention, not a rule the
+  // merchant authored, and naming a millimetre value there would be a lie.
+  const mmBinding = floor > 8 && Number(minMm) > 0 && widthMm > 0;
+  const max = Math.max(200, floor);
+
+  const [sizeText, setSizeText] = useState(String(layer.fontSize || 24));
+  const [raised, setRaised] = useState(false);
+  const focusedRef = useRef(false);
+
+  // Follow the stored size (a canvas resize handle writes it back), but never
+  // while the merchant is typing in this box.
+  useEffect(() => {
+    if (focusedRef.current) return;
+    setSizeText(String(layer.fontSize || 24));
+  }, [layer._key, layer.fontSize]);
+
+  useEffect(() => { setRaised(false); }, [layer._key]);
+
+  const commit = (raw) => {
+    const clamped = clampFontSizePx({
+      value: raw,
+      floor,
+      max,
+      fallback: layer.fontSize || 24,
+    });
+    onChange({ fontSize: clamped });
+    return clamped;
+  };
+
+  return (
+    <>
+      <label>
+        { __( 'Font Size', 'snelgraveren-product-designer' ) }
+        <input
+          type="number"
+          min={floor}
+          max={max}
+          value={sizeText}
+          onFocus={() => { focusedRef.current = true; }}
+          onChange={(e) => {
+            setSizeText(e.target.value);
+            commit(e.target.value);
+          }}
+          onBlur={(e) => {
+            focusedRef.current = false;
+            const clamped = commit(e.target.value);
+            const parsed = parseInt(e.target.value, 10);
+            setRaised(Number.isFinite(parsed) && parsed > 0 && parsed < clamped);
+            setSizeText(String(clamped));
+          }}
+          onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }}
+        />
+      </label>
+      {(mmBinding || raised) && (
+        <p
+          className="pf-tree-panel__size-note"
+          style={{ fontSize: 11, margin: '-4px 0 8px', color: raised ? '#b32d2e' : undefined, opacity: raised ? 1 : 0.7 }}
+        >
+          {raised
+            ? (mmBinding
+              /* translators: 1: minimum font size in millimetres, 2: the same minimum in pixels */
+              ? sprintf( __( 'Raised to %2$d px — this template\u2019s minimum text size is %1$s mm.', 'snelgraveren-product-designer' ), String(minMm), floor )
+              /* translators: %d: minimum font size in pixels */
+              : sprintf( __( 'Raised to %d px — the smallest size this field accepts.', 'snelgraveren-product-designer' ), floor ))
+            /* translators: 1: minimum font size in millimetres, 2: the same minimum in pixels */
+            : sprintf( __( 'Minimum %1$s mm (%2$d px), set under Permissions \u2192 Text.', 'snelgraveren-product-designer' ), String(minMm), floor )}
+        </p>
+      )}
+    </>
+  );
+}
+
 function LayerDetail({ layer, onChange }) {
   const { globalConfig, customFonts, colorPalettes } = useTemplateStore();
   const allowedFonts = globalConfig.allowed_fonts || [];
@@ -554,10 +656,7 @@ function LayerDetail({ layer, onChange }) {
           { __( 'Text', 'snelgraveren-product-designer' ) }
           <input type="text" value={layer.text || ''} onChange={(e) => onChange({ text: e.target.value })} />
         </label>
-        <label>
-          { __( 'Font Size', 'snelgraveren-product-designer' ) }
-          <input type="number" min="8" max="200" value={layer.fontSize || 24} onChange={(e) => onChange({ fontSize: parseInt(e.target.value, 10) || 24 })} />
-        </label>
+        <FontSizeField layer={layer} onChange={onChange} />
         <label>
           { __( 'Font Family', 'snelgraveren-product-designer' ) }
           <select value={layer.fontFamily || 'Arial'} onChange={(e) => onChange({ fontFamily: e.target.value })}>

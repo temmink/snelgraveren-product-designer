@@ -7,7 +7,7 @@ import ImageFilters from '../ImageFilters';
 import CurvedTextProperties from '../CurvedTextProperties';
 import { renderHersheyText, ENGRAVING_FONTS } from '../../utils/hersheyFonts';
 import { getImageQuality } from '../../utils/imageQuality';
-import { minFontSizePx } from '../../../../../../shared/js/fontSizeLimits';
+import { fontSizeInputFloorPx, clampFontSizePx } from '../../../../../../shared/js/fontSizeLimits';
 import { resolveWidthMm } from '../../../../../../shared/js/rulerTicks';
 
 export default function ElementTab() {
@@ -20,11 +20,13 @@ export default function ElementTab() {
   const zones = currentView?.zones_config || [];
   const editableZones = zones.filter((z) => z.boundary_type === 'svg' && z.svg_url && z.svg_fill_editable);
   const { widthMm } = resolveWidthMm(views, currentViewIndex);
-  const sizeFloor = Math.max(8, Math.ceil(minFontSizePx({
+  // Same floor helper the merchant's TreePanel size input uses — one rule for
+  // "how small may this template's text get", not one per app.
+  const sizeFloor = fontSizeInputFloorPx({
     minFontSizeMm: permissions.text?.min_font_size_mm,
     canvasWidth: currentView?.canvas_width || 0,
     widthMm,
-  })));
+  });
 
   const { type, fabricObj } = selectedObject || {};
   const perms = type ? (permissions[type] || {}) : {};
@@ -194,7 +196,7 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
         <input
           type="number"
           min={sizeFloor}
-          max="200"
+          max={Math.max(200, sizeFloor)}
           value={fontSizeText}
           onChange={(e) => {
             const raw = e.target.value;
@@ -209,9 +211,15 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
             }
           }}
           onBlur={(e) => {
-            const parsed = parseInt(e.target.value, 10);
-            const usable = (Number.isFinite(parsed) && parsed > 0) ? parsed : (fabricObj.fontSize || sizeFloor);
-            const clamped = Math.min(200, Math.max(sizeFloor, usable));
+            // Shared clamp — the merchant's TreePanel size input uses the
+            // same helper, so neither app can drift below the template minimum
+            // (and a minimum larger than the 200px cap still wins).
+            const clamped = clampFontSizePx({
+              value: e.target.value,
+              floor: sizeFloor,
+              max: 200,
+              fallback: fabricObj.fontSize || sizeFloor,
+            });
             setFontSizeText(String(clamped));
             update({ fontSize: clamped });
           }}
@@ -656,7 +664,7 @@ function EngravingTextProperties({ fabricObj, snapshotView, currentViewIndex, si
         className="pf-element__input pf-element__input--short"
         value={fontSizeText}
         min={sizeFloor}
-        max={120}
+        max={Math.max(120, sizeFloor)}
         onChange={(e) => {
           const raw = e.target.value;
           setFontSizeText(raw);
@@ -668,9 +676,12 @@ function EngravingTextProperties({ fabricObj, snapshotView, currentViewIndex, si
           }
         }}
         onBlur={(e) => {
-          const parsed = parseInt(e.target.value, 10);
-          const usable = (Number.isFinite(parsed) && parsed > 0) ? parsed : (fabricObj.data?.engravingFontSize || sizeFloor);
-          const clamped = Math.min(120, Math.max(sizeFloor, usable));
+          const clamped = clampFontSizePx({
+            value: e.target.value,
+            floor: sizeFloor,
+            max: 120,
+            fallback: fabricObj.data?.engravingFontSize || sizeFloor,
+          });
           setFontSizeText(String(clamped));
           rerender(text, fontId, clamped, stroke);
         }}
