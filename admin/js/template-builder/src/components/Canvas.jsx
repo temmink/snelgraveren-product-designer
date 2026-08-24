@@ -8,6 +8,7 @@ import { zoneShapePath, objectSamplePoints, pointsInsideZoneShape } from '../../
 import { mergeLayersToBoundary } from '../utils/mergeLayersToBoundary';
 import MmRuler from '../../../../../shared/js/MmRuler.jsx';
 import { resolveWidthMm } from '../../../../../shared/js/rulerTicks';
+import { resolveTextAnchor } from '../../../../../shared/js/textAnchor';
 
 const ALLOWED_FABRIC_TYPES = new Set([
   'IText', 'Textbox', 'Image', 'Rect', 'Path', 'Group', 'FabricText',
@@ -537,21 +538,7 @@ export default function Canvas() {
     // would shift text that was centered/right-aligned in its old box (this
     // is the "compatibility trap" — mirrors the same calc in the customer
     // designer's DesignerCanvas.jsx so old templates render identically).
-    const textAnchor = (layer) => {
-      let originX = layer.originX;
-      const originY = layer.originY || 'top';
-      const parentZone = zones[layer._zoneIndex];
-      let left = layer.left ?? (parentZone ? parentZone.x + 20 : 100);
-      const top = layer.top ?? (parentZone ? parentZone.y + 20 : 100);
-      if (!originX) {
-        const align = layer.textAlign || 'left';
-        const boxWidth = layer.width || (parentZone ? parentZone.width - 20 : 200);
-        originX = 'left';
-        if (align === 'center')      { originX = 'center'; left += boxWidth / 2; }
-        else if (align === 'right')  { originX = 'right';  left += boxWidth; }
-      }
-      return { left, top, originX, originY };
-    };
+    const textAnchor = (layer) => resolveTextAnchor(layer, zones[layer._zoneIndex]);
 
     layers.forEach((layer) => {
       const existing = existingByKey[layer._key];
@@ -886,6 +873,16 @@ export default function Canvas() {
         const newFontSize = Math.round((obj.fontSize || 24) * (obj.scaleX || 1));
         obj.set({ fontSize: newFontSize, scaleX: 1, scaleY: 1 });
         patch.fontSize = newFontSize;
+        // Persist the origin the object is actually anchored at. Without this,
+        // a legacy layer (no stored originX) keeps re-deriving its anchor from
+        // textAlign on every layer-sync pass, and since `left` above is already
+        // the compensated anchor, re-deriving a SECOND time double-applies the
+        // compensation — the text jumps by half/all of the box width on the
+        // very next re-render. Writing originX/originY here converts the layer
+        // to the explicit convention permanently, so textAnchor() short-circuits
+        // the compensation from now on and `left`/`top` stay unambiguous.
+        patch.originX = obj.originX;
+        patch.originY = obj.originY;
       } else {
         // For image/svg layers, persist scale values.
         patch.scaleX = obj.scaleX || 1;
