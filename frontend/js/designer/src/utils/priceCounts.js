@@ -12,6 +12,9 @@ export function countPriceableElements(snapshots) {
             // Mirrors PriceCalculator::classify_object(): zone overlays are
             // template chrome, never billable.
             if (obj.data?.isZoneOverlay) continue;
+            // Template-supplied background art (e.g. an imported LightBurn
+            // bitmap) is not something the customer added — never billable.
+            if (obj.data?.templateArt) continue;
             const type = String(obj.type || '').toLowerCase().replace(/-/g, '');
             if (TEXT_TYPES.has(type)) counts.text += 1;
             else if (type === 'image') counts.image += 1;

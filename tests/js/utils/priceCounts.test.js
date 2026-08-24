@@ -30,4 +30,18 @@ describe('countPriceableElements', () => {
         };
         expect(countPriceableElements(snapshots)).toEqual({ text: 1, image: 0, svg: 1 });
     });
+
+    it('does not bill template background art', () => {
+        const counts = countPriceableElements({
+            0: {
+                objects: [
+                    { type: 'Image', data: { templateArt: true } },   // the bitmap background
+                    { type: 'Image' },                                 // a customer upload
+                    { type: 'IText' },
+                ],
+            },
+        });
+        expect(counts.image).toBe(1);
+        expect(counts.text).toBe(1);
+    });
 });

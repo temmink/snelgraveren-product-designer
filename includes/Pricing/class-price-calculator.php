@@ -121,6 +121,13 @@ class PriceCalculator {
             return null;
         }
 
+        // Template-supplied background art (e.g. an imported LightBurn bitmap)
+        // is not a customer element — never billable. Set by the designer on
+        // the Fabric object as data.templateArt.
+        if (!empty($obj['data']['templateArt'])) {
+            return null;
+        }
+
         $fabric_type = $obj['type'] ?? '';
 
         // Text types

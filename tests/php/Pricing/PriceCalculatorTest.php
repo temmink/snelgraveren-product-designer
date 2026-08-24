@@ -39,4 +39,31 @@ class PriceCalculatorTest extends TestCase {
             $this->designs->delete($id);
         }
     }
+
+    /**
+     * classify_object() is private and has no collaborators — reflection is the
+     * least invasive way to pin its behaviour.
+     */
+    private function classify(array $obj): ?string {
+        $m = new \ReflectionMethod(PriceCalculator::class, 'classify_object');
+        $m->setAccessible(true);
+        return $m->invoke($this->calc, $obj);
+    }
+
+    public function test_classifies_a_customer_image_as_billable(): void {
+        $this->assertSame('image', $this->classify(['type' => 'Image']));
+    }
+
+    public function test_does_not_bill_template_background_art(): void {
+        $this->assertNull($this->classify([
+            'type' => 'Image',
+            'data' => ['templateArt' => true],
+        ]));
+    }
+
+    public function test_still_bills_template_svg_layers(): void {
+        // Deliberate: svg template layers are billable today and must stay so,
+        // or live prices on existing products would change.
+        $this->assertSame('svg', $this->classify(['type' => 'Group']));
+    }
 }

@@ -8,8 +8,8 @@
 require_once '/var/www/html/wp-load.php';
 
 // Activate plugin if not already active
-if (!is_plugin_active('productforge/productforge.php')) {
-    activate_plugin('productforge/productforge.php');
+if (!is_plugin_active('productforge/snelgraveren-product-designer.php')) {
+    activate_plugin('productforge/snelgraveren-product-designer.php');
 }
 
 // Ensure our tables exist
