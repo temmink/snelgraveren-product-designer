@@ -147,6 +147,9 @@ export default function ViewTabs() {
           onChange={(e) => updateView(currentViewIndex, { width_mm: parseFloat(e.target.value) || 0 })}
           style={{ width: 90, color: '#1e1e1e' }}
         />
+        <span style={{ fontSize: 11, opacity: 0.7, marginLeft: 6 }}>
+          { __( 'Physical width. Fill this in to show the millimetre ruler and to enable the minimum font size.', 'snelgraveren-product-designer' ) }
+        </span>
         <span style={{ fontSize: 12, color: '#757575' }}>
           {widthMm > 0
             /* translators: %s is the derived height in millimetres */

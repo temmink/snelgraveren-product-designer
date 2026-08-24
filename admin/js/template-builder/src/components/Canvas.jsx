@@ -6,6 +6,7 @@ import { parseSvgToFabric } from '../utils/svgPathUtils';
 import { alignElement } from '../../../../../shared/js/alignElement';
 import { zoneShapePath, objectSamplePoints, pointsInsideZoneShape } from '../../../../../shared/js/zoneContainment';
 import { mergeLayersToBoundary } from '../utils/mergeLayersToBoundary';
+import MmRuler from '../../../../../shared/js/MmRuler.jsx';
 
 const ALLOWED_FABRIC_TYPES = new Set([
   'IText', 'Textbox', 'Image', 'Rect', 'Path', 'Group', 'FabricText',
@@ -52,6 +53,7 @@ export default function Canvas() {
 
   const currentView = views[currentViewIndex];
   const viewKey = currentView?._clientId || currentViewIndex;
+  const widthMm = Number(currentView?.width_mm) || 0;
 
   // ── Zone enforcement helpers ─────────────────────────────────────────────
 
@@ -1221,8 +1223,21 @@ export default function Canvas() {
           <AlignToolbar hasSelection={hasSelection} handleAlign={handleAlign} />
         )}
       </div>
-      <div className="pf-canvas-scroll">
-        <canvas ref={canvasEl} />
+      <div className={`pf-canvas-grid${widthMm > 0 ? ' pf-canvas-grid--ruler' : ''}`}>
+        {widthMm > 0 && (
+          <MmRuler
+            key={currentViewIndex}
+            canvasRef={canvasEl}
+            widthMm={widthMm}
+            canvasWidth={currentView?.canvas_width || 800}
+            canvasHeight={currentView?.canvas_height || 600}
+          />
+        )}
+        <div className="pf-canvas-cell">
+          <div className="pf-canvas-scroll">
+            <canvas ref={canvasEl} />
+          </div>
+        </div>
       </div>
     </div>
   );
