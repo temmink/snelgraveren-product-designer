@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.8.1
+Stable tag: 1.8.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -132,6 +132,12 @@ No other external services are used. Design exports (PDF/PNG/SVG) are rendered e
 4. Production dashboard: every order with a design, filtered by status and period, ready to download as one ZIP.
 
 == Changelog ==
+
+= 1.8.2 =
+* Fix: an element could not be dragged any more once it touched an SVG-shaped design zone. The element was teleported back to a remembered position on every frame of the drag, which broke the link between the pointer and the element and made it fight the mouse. Dragging is now unconstrained inside the zone's bounding box and the outline is applied once, when the element is released.
+* Fix: an element too large to fit inside an SVG-shaped zone was pinned to a single position with no way to move it. Nothing is enforced when nothing fits, so the element stays movable and the mistake can be corrected. Elements are never silently shrunk to make them fit.
+* Fix: an element could drift outside its design zone during a long drag, because the position was measured against coordinates that are only refreshed when a drag ends.
+* Fix: an element settled inside a shaped zone could come to rest a fraction outside the outline.
 
 = 1.8.1 =
 * New: the minimum font size is now enforced in the Template Builder as strictly as it is for the customer, on the size field as well as on the corner handles. The field shows the minimum, and a value below it is raised instead of rejected silently.
