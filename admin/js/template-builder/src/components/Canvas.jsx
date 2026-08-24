@@ -540,11 +540,11 @@ export default function Canvas() {
     const textAnchor = (layer) => {
       let originX = layer.originX;
       const originY = layer.originY || 'top';
-      let left = layer.left ?? 100;
-      const top = layer.top ?? 100;
+      const parentZone = zones[layer._zoneIndex];
+      let left = layer.left ?? (parentZone ? parentZone.x + 20 : 100);
+      const top = layer.top ?? (parentZone ? parentZone.y + 20 : 100);
       if (!originX) {
         const align = layer.textAlign || 'left';
-        const parentZone = zones[layer._zoneIndex];
         const boxWidth = layer.width || (parentZone ? parentZone.width - 20 : 200);
         originX = 'left';
         if (align === 'center')      { originX = 'center'; left += boxWidth / 2; }
