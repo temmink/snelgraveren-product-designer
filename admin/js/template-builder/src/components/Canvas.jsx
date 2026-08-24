@@ -10,6 +10,7 @@ import { mergeLayersToBoundary } from '../utils/mergeLayersToBoundary';
 import MmRuler from '../../../../../shared/js/MmRuler.jsx';
 import { resolveWidthMm } from '../../../../../shared/js/rulerTicks';
 import { resolveTextAnchor, buildTextAnchorPatch } from '../../../../../shared/js/textAnchor';
+import { ensureFontMeasured } from '../../../../../shared/js/ensureFontMeasured';
 
 const ALLOWED_FABRIC_TYPES = new Set([
   'IText', 'Textbox', 'Image', 'Rect', 'Path', 'Group', 'FabricText',
@@ -547,9 +548,6 @@ export default function Canvas() {
         const anchor = textAnchor(layer);
 
         if (existing) {
-          if (existing.fontFamily !== fontFamily) {
-            fabricCache.clearFontCache(fontFamily);
-          }
           existing.set({
             text:       layer.text,
             left:       anchor.left,
@@ -571,8 +569,12 @@ export default function Canvas() {
           existing.setCoords();
           existing.data = { ...existing.data, layerIndex: layer._layerIndex, zoneIndex: layer._zoneIndex };
           applyClipAndClamp(existing, layer);
+          // fontFamily/fontSize may reference a face that hasn't finished
+          // loading yet (e.g. right after picking a new font in the
+          // sidebar) — re-measure once it's confirmed loaded so the
+          // selection box matches the glyphs, not a fallback face.
+          ensureFontMeasured(existing, fabricCache);
         } else {
-          fabricCache.clearFontCache(fontFamily);
           const text = new IText(layer.text, {
             left:       anchor.left,
             top:        anchor.top,
@@ -591,6 +593,7 @@ export default function Canvas() {
           canvas.add(text);
           applyPermissions(text, layer.type);
           applyClipAndClamp(text, layer);
+          ensureFontMeasured(text, fabricCache);
         }
       } else if (layer.type === 'image') {
         if (existing) {

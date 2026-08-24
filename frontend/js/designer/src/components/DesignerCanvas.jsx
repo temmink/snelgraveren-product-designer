@@ -16,6 +16,7 @@ import { isLayerLockedForCustomer } from '../../../../../shared/js/layerLockForC
 import MmRuler from '../../../../../shared/js/MmRuler.jsx';
 import { resolveWidthMm } from '../../../../../shared/js/rulerTicks';
 import { resolveTextAnchor } from '../../../../../shared/js/textAnchor';
+import { ensureFontMeasured } from '../../../../../shared/js/ensureFontMeasured';
 import { inferElementType, reapplyPostRestoreState } from '../utils/postRestoreState';
 
 // Shape-aware initial placement for a newly-added image/clipart object.
@@ -585,6 +586,11 @@ export default function DesignerCanvas() {
             applyPermissions(text, 'text');
             if (zone.behavior === 'restrict') clampToZone(text);
           }
+          // Template text renders before its custom font may have finished
+          // loading (real-world timing, not covered by the global
+          // 'loadingdone' listener below) — re-measure this object
+          // specifically once its exact font is confirmed loaded.
+          ensureFontMeasured(text, fabricCache);
         }
 
         if (!hasSnapshotForView && layer.type === 'svg' && (layer.svg_markup || layer.src)) {
@@ -978,6 +984,9 @@ export default function DesignerCanvas() {
     // boundary snaps it back to nowhere.
     text._sgpdLastValid = { left: text.left, top: text.top };
     if (zoneIdx >= 0) clampToZone(text);
+    // The zone's default font may still be loading at the moment the tool
+    // places this object — re-measure once it's confirmed loaded.
+    ensureFontMeasured(text, fabricCache);
 
     pushHistoryRef.current?.();
     canvas.renderAll();
@@ -1031,6 +1040,9 @@ export default function DesignerCanvas() {
       // the zone — so the very first drag has a valid position to fall back to.
       text._sgpdLastValid = { left: text.left, top: text.top };
       if (zoneIdx >= 0) clampToZone(text);
+      // The zone's default font may still be loading at the moment the tool
+      // places this object — re-measure once it's confirmed loaded.
+      ensureFontMeasured(text, fabricCache);
 
       pushHistoryRef.current?.();
       canvas.renderAll();
