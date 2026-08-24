@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { buildTicks } from './mmRuler';
+import { buildTicks } from './rulerTicks';
 
 const THICKNESS = 22; // px, matches the CSS grid track
 

@@ -1,4 +1,4 @@
-import { chooseTickStepMm, buildTicks } from '../../../shared/js/mmRuler';
+import { chooseTickStepMm, buildTicks } from '../../../shared/js/rulerTicks';
 
 describe('chooseTickStepMm', () => {
   it('uses 1mm steps when a millimetre is comfortably wide on screen', () => {
