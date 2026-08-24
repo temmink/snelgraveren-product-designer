@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { buildTicks } from './rulerTicks';
 
 const THICKNESS = 22; // px, matches the CSS grid track
@@ -21,54 +21,90 @@ const THICKNESS = 22; // px, matches the CSS grid track
  * `canvasRef.current` inside the effect works because effects run after the
  * DOM commit, by which point the canvas element is attached.
  *
+ * The canvas element is not flush against the strips' own origin — both
+ * apps' `.pf-canvas-scroll` pane can pad and/or centre the canvas inside
+ * itself (and may be mid-scroll), so a strip drawn from its own (0,0) would
+ * measure the wrong thing entirely. Each strip therefore carries its own
+ * ref too, and ticks are offset by the live gap between the canvas's
+ * bounding rect and that strip's bounding rect — recomputed on canvas
+ * resize AND on scroll of the nearest `.pf-canvas-scroll` ancestor.
+ *
+ * Each strip's SVG viewport spans its own grid cell (not the canvas width),
+ * so ticks pushed right/down by a positive offset are not clipped before
+ * they reach the strip's visible edge.
+ *
  * Renders nothing when widthMm is 0 — a millimetre scale derived from no
  * physical size would be a lie.
  */
 export default function MmRuler({ canvasRef, widthMm, canvasWidth, canvasHeight }) {
+  const topStripRef = useRef(null);
+  const leftStripRef = useRef(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const canvasEl = canvasRef?.current;
     if (!canvasEl) return undefined;
+
     const measure = () => {
-      const r = canvasEl.getBoundingClientRect();
-      setSize({ w: r.width, h: r.height });
+      const canvasRect = canvasEl.getBoundingClientRect();
+      setSize({ w: canvasRect.width, h: canvasRect.height });
+
+      const topRect = topStripRef.current?.getBoundingClientRect();
+      const leftRect = leftStripRef.current?.getBoundingClientRect();
+      setOffset({
+        x: topRect ? canvasRect.left - topRect.left : 0,
+        y: leftRect ? canvasRect.top - leftRect.top : 0,
+      });
     };
+
     const ro = new ResizeObserver(measure);
     ro.observe(canvasEl);
     measure();
-    return () => ro.disconnect();
+
+    // .pf-canvas-scroll pads/centres the canvas and can overflow-scroll it,
+    // so the gap between the strips and the canvas shifts on scroll too —
+    // not just on resize.
+    const scrollParent = canvasEl.closest('.pf-canvas-scroll') || canvasEl.parentElement;
+    scrollParent?.addEventListener('scroll', measure, { passive: true });
+
+    return () => {
+      ro.disconnect();
+      scrollParent?.removeEventListener('scroll', measure);
+    };
   }, [canvasRef]);
 
-  if (!(widthMm > 0) || !(canvasWidth > 0) || !(size.w > 0)) return null;
+  if (!(widthMm > 0) || !(canvasWidth > 0)) return null;
 
-  const mmPerPx = widthMm / size.w;
-  const hTicks = buildTicks({ lengthPx: size.w, mmPerPx });
-  const vTicks = buildTicks({ lengthPx: size.h, mmPerPx });
-  if (!hTicks.length) return null;
+  const mmPerPx = size.w > 0 ? widthMm / size.w : 0;
+  const hTicks = size.w > 0 ? buildTicks({ lengthPx: size.w, mmPerPx }) : [];
+  const vTicks = size.h > 0 ? buildTicks({ lengthPx: size.h, mmPerPx }) : [];
 
   const strip = (ticks, horizontal) => (
     <svg
+      ref={horizontal ? topStripRef : leftStripRef}
       className={`pf-ruler pf-ruler--${horizontal ? 'top' : 'left'}`}
-      width={horizontal ? size.w : THICKNESS}
-      height={horizontal ? THICKNESS : size.h}
+      width={horizontal ? '100%' : THICKNESS}
+      height={horizontal ? THICKNESS : '100%'}
       aria-hidden="true"
     >
       {ticks.map((t, i) => {
         const len = t.major ? THICKNESS * 0.5 : THICKNESS * 0.25;
+        const pos = horizontal ? offset.x + t.px : offset.y + t.px;
         return horizontal ? (
-          <line key={i} x1={t.px} y1={THICKNESS - len} x2={t.px} y2={THICKNESS} className="pf-ruler__tick" />
+          <line key={i} x1={pos} y1={THICKNESS - len} x2={pos} y2={THICKNESS} className="pf-ruler__tick" />
         ) : (
-          <line key={i} x1={THICKNESS - len} y1={t.px} x2={THICKNESS} y2={t.px} className="pf-ruler__tick" />
+          <line key={i} x1={THICKNESS - len} y1={pos} x2={THICKNESS} y2={pos} className="pf-ruler__tick" />
         );
       })}
-      {ticks.filter((t) => t.major).map((t, i) => (
-        horizontal ? (
-          <text key={i} x={t.px + 2} y={9} className="pf-ruler__label">{t.mm}</text>
+      {ticks.filter((t) => t.major).map((t, i) => {
+        const pos = horizontal ? offset.x + t.px : offset.y + t.px;
+        return horizontal ? (
+          <text key={i} x={pos + 2} y={9} className="pf-ruler__label">{t.mm}</text>
         ) : (
-          <text key={i} x={2} y={t.px - 2} className="pf-ruler__label">{t.mm}</text>
-        )
-      ))}
+          <text key={i} x={2} y={pos - 2} className="pf-ruler__label">{t.mm}</text>
+        );
+      })}
     </svg>
   );
 
