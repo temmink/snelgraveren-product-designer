@@ -586,6 +586,19 @@ function LayerDetail({ layer, onChange }) {
           <img src={layer.src} alt={ __( 'Preview', 'snelgraveren-product-designer' ) } style={{ maxWidth: '100%', maxHeight: 60, borderRadius: 4 }} />
         </div>
       )}
+      <label>
+        { __( 'Opacity', 'snelgraveren-product-designer' ) }
+        <input
+          type="range"
+          min="0"
+          max="100"
+          value={Math.round((layer.opacity ?? 1) * 100)}
+          onChange={(e) => onChange({ opacity: (parseInt(e.target.value, 10) || 0) / 100 })}
+        />
+        <span style={{ fontSize: 11, opacity: 0.7 }}>
+          {Math.round((layer.opacity ?? 1) * 100)}%
+        </span>
+      </label>
       <div className="pf-tree-panel__coord-row">
         <label>
           { __( 'X', 'snelgraveren-product-designer' ) }
