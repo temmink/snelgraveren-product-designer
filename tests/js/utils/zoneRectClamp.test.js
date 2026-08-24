@@ -55,34 +55,62 @@ describe('clampRectToZone — object wider than the zone (the reported bug)', ()
     expect(d.left).toBeGreaterThanOrEqual(c.left);
   });
 
-  it('still covers the zone at both extremes of its travel', () => {
-    // Far left drag: object's right edge must not retreat past the zone's left edge,
-    // and far right drag: object's left edge must not advance past the zone's right edge.
-    const farLeft = clampRectToZone({ objLeft: -1000, objTop: 40, bound: boundAt(-1000), zone });
-    const farRight = clampRectToZone({ objLeft: 1000, objTop: 40, bound: boundAt(1000), zone });
-
-    // bound.left == objLeft here (no offset), so we can reason directly in bound space.
-    expect(farLeft.left).toBeLessThanOrEqual(zone.x); // left edge still at/left of zone start
-    expect(farLeft.left + 120).toBeGreaterThanOrEqual(zone.x + zone.width); // still covers full zone width... actually right edge must be >= zone.x (covering)
-    expect(farRight.left).toBeGreaterThanOrEqual(zone.x + zone.width - 120);
+  it('does not clamp the oversized axis at all — the object stays free to move', () => {
+    // An object that cannot fit inside the zone on this axis has no valid
+    // clamped position, so forcing one (e.g. "must keep covering the zone")
+    // only traps it. The axis must pass the requested position through
+    // untouched, across a range including far outside the zone, so the
+    // merchant/customer can actually drag it back to safety.
+    const positions = [-1000, -10, -5, 0, 5, 50, 100, 200, 390, 1000];
+    for (const left of positions) {
+      const result = clampRectToZone({ objLeft: left, objTop: 40, bound: boundAt(left), zone });
+      expect(result.left).toBe(left);
+    }
   });
 });
 
 describe('clampRectToZone — mixed axes: taller but not wider', () => {
   const zone = { x: 0, y: 0, width: 100, height: 100 };
 
-  it('horizontal axis clamps normally while vertical axis uses the oversized rule', () => {
+  it('horizontal axis clamps normally while the oversized vertical axis is left free', () => {
     // bound: width 20 (fits), height 150 (oversized)
     const bound = { left: -50, top: -30, width: 20, height: 150 };
     const result = clampRectToZone({ objLeft: -50, objTop: -30, bound, zone });
 
-    // Horizontal: normal clamp to left edge (bound.left < zone.x)
+    // Horizontal: the fitting axis still clamps exactly (bound.left < zone.x).
     expect(result.left).toBe(0);
+    // Vertical: the oversized axis is not clamped at all.
+    expect(result.top).toBe(-30);
 
-    // Vertical: oversized rule — dragging further down should not reverse direction.
+    // Dragging further down on the oversized axis must keep tracking the input.
     const boundLower = { left: -50, top: -20, width: 20, height: 150 };
     const resultLower = clampRectToZone({ objLeft: -50, objTop: -20, bound: boundLower, zone });
-    expect(resultLower.top).toBeGreaterThanOrEqual(result.top);
+    expect(resultLower.top).toBe(-20);
+  });
+});
+
+describe('clampRectToZone — the exact reported case: 20×20 zone, ~100×40 object', () => {
+  // Shop owner's report: a newly-added boundary defaults to 20×20; text
+  // dropped into it is far larger on both axes and used to be pinned to 0
+  // on every rightward drag.
+  const zone = { x: 0, y: 0, width: 20, height: 20 };
+
+  function boundAt(left, top) {
+    return { left, top, width: 100, height: 40 };
+  }
+
+  it('dragging right actually moves the object right on both axes, never collapsing to 0', () => {
+    const positions = [0, 50, 100, 200, 390];
+    for (const pos of positions) {
+      const result = clampRectToZone({
+        objLeft: pos,
+        objTop: pos,
+        bound: boundAt(pos, pos),
+        zone,
+      });
+      expect(result.left).toBe(pos);
+      expect(result.top).toBe(pos);
+    }
   });
 });
 

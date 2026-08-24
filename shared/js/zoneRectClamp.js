@@ -22,16 +22,29 @@
  * ordered [lo, hi] pair rather than applying two independent corrections.
  * For an object that fits (bound size <= zone size) the natural range
  *   [zone.pos, zone.pos + zone.size - bound.size]
- * is already ascending. For an oversized object (bound size > zone size)
- * that same expression is descending — `zone.pos + zone.size - bound.size`
- * is less than `zone.pos`. Reordering it into an ascending [lo, hi] via
- * Math.min/Math.max yields exactly the range that keeps the object COVERING
- * the zone (its near edge at or past the zone's far edge on one side, and
- * vice versa on the other) — the sane reading of "restrict" for an
- * oversized object: the overhang can slide, but the object can never
- * uncover the zone or reflect direction. Clamping (a monotonic operation)
- * into that ordered range means dragging further in one direction can never
- * move the clamped result backwards.
+ * is already ascending, and clamping into it holds the object inside the
+ * zone exactly as before.
+ *
+ * For an oversized object (bound size > zone size) there is no position on
+ * that axis that satisfies "stay inside the zone" — every candidate range
+ * is empty or degenerate. An earlier version of this fix reordered the
+ * descending expression into an ascending [lo, hi] via Math.min/Math.max
+ * and clamped into THAT, which keeps the object covering the zone — but
+ * "covering" collapses every position to a single point (typically the
+ * zone's origin), so the object gets pinned there and can never be dragged
+ * anywhere. Reported symptom: a zone 20 wide with a 100-wide text object
+ * clamped every rightward drag straight back to 0 — the object looked
+ * stuck. The trigger in practice is the default 20×20 size of a newly
+ * added boundary: any real text dropped into it is oversized on both axes
+ * before the merchant has a chance to resize anything.
+ *
+ * An object that cannot fit on an axis has no valid clamped position there,
+ * so this fix does not clamp that axis at all — it passes the requested
+ * position through untouched, leaving the object free to move so the
+ * merchant/customer can actually fix the mismatch (resize the object,
+ * resize the zone, or reposition it). Each axis is decided independently:
+ * an object can be oversized on one axis and fitting on the other, and the
+ * fitting axis must keep clamping normally.
  *
  * Pure, no Fabric objects — takes/returns plain numbers so it is trivially
  * testable and identical between the template builder and the frontend
@@ -60,15 +73,17 @@ export function clampRectToZone({ objLeft, objTop, bound, zone }) {
  * callers can set `obj.left`/`obj.top` directly.
  */
 function clampAxis(objPos, boundPos, boundSize, zonePos, zoneSize) {
+  // Oversized on this axis: no position keeps the object inside the zone,
+  // so don't force one — leave the axis free rather than trapping the
+  // object at a single point.
+  if (boundSize > zoneSize) return objPos;
+
   const offset = objPos - boundPos;
 
-  // Natural (fits) range: [zonePos, zonePos + zoneSize - boundSize].
-  // When boundSize > zoneSize this is descending — reordering into [lo, hi]
-  // turns it into the "must keep covering the zone" range instead.
-  const a = zonePos;
-  const b = zonePos + zoneSize - boundSize;
-  const lo = Math.min(a, b);
-  const hi = Math.max(a, b);
+  // Fits range: [zonePos, zonePos + zoneSize - boundSize], always ascending
+  // here since boundSize <= zoneSize.
+  const lo = zonePos;
+  const hi = zonePos + zoneSize - boundSize;
 
   const clampedBound = Math.min(Math.max(boundPos, lo), hi);
   return clampedBound + offset;
