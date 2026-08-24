@@ -9,8 +9,8 @@ import useCanvasScale from '../hooks/useCanvasScale';
 import useIsMobile from '../hooks/useIsMobile';
 import useCanvasHistory from '../hooks/useCanvasHistory';
 import { filterFabricJson } from '../utils/fabricJson';
-import { zoneShapePath, objectSamplePoints, pointsInsideZoneShape, fitInsideZoneShape } from '../../../../../shared/js/zoneContainment';
-import { clampRectToZone } from '../../../../../shared/js/zoneRectClamp';
+import { fitInsideZoneShape } from '../../../../../shared/js/zoneContainment';
+import { clampObjectDuringMove, settleObjectInZone, zoneContainmentShape } from '../../../../../shared/js/zoneClamp';
 import { minFontSizePx, textMinScaleLimit } from '../../../../../shared/js/fontSizeLimits';
 import { isLayerLockedForCustomer } from '../../../../../shared/js/layerLockForCustomer';
 import MmRuler from '../../../../../shared/js/MmRuler.jsx';
@@ -22,17 +22,19 @@ import { installTextPlaceholders, isTextPlaceholder } from '../../../../../share
 import { inferElementType, reapplyPostRestoreState } from '../utils/postRestoreState';
 
 // Shape-aware initial placement for a newly-added image/clipart object.
-// Mirrors clampToZone's exact conditions for when a zone is truly shape-
-// -tested (behavior 'restrict' + inline svg boundary, no rotation) — placing
-// blind at the bbox centre and letting clampToZone reject it afterwards would
-// leave the object stuck outside a concave/off-centre contour. Returns true
-// (and mutates `img`'s left/top/scaleX/scaleY) when it placed the object via
-// the shape fit; false means the caller should fall back to the existing
-// bbox-centred placement unchanged.
+// Uses zoneContainmentShape() — the same test the clamp and the settle use —
+// so all three agree about which zones are enforced against their outline.
+// Placing blind at the bbox centre would leave the object outside a concave or
+// off-centre contour. Returns true (and mutates `img`'s left/top/scaleX/scaleY)
+// when it placed the object via the shape fit; false means the caller should
+// fall back to the existing bbox-centred placement unchanged.
+// Unlike the settle, this one MAY scale the object down: it is choosing an
+// initial size for something the customer has not sized yet, not overriding a
+// size they chose.
 function placeInsideZoneShape(img, zone) {
-  if (!zone || zone.behavior !== 'restrict') return false;
-  if (zone.boundary_type !== 'svg' || !zone.svg_markup || zone.svg_rotation) return false;
-  const shape = zoneShapePath(zone);
+  // One shared answer to "is this zone enforced against its outline?" — the
+  // clamp, the settle and this placement must never disagree about that.
+  const shape = zoneContainmentShape(zone);
   if (!shape) return false;
   // Same cap as the existing scaleToWidth(Math.min(img.width, zone.width * 0.8))
   // call it replaces: never upscale past the source's natural pixel size.
@@ -61,6 +63,7 @@ export default function DesignerCanvas() {
   // Stable refs for callbacks used in canvas event handlers to avoid stale closures.
   const clampToZoneRef     = useRef(null);
   const clampScaleRef      = useRef(null);
+  const settleRef          = useRef(null);
   const clampEngravingTextRef = useRef(null);
   const snapToGridRef      = useRef(null);
   const snapshotViewRef    = useRef(null);
@@ -236,45 +239,35 @@ export default function DesignerCanvas() {
 
   // ── Clamp object inside its assigned zone ─────────────────────────────────
 
-  const clampToZone = useCallback((obj) => {
-    const zi = obj.data?.zoneIndex;
-    if (zi == null || zi < 0 || !zones[zi] || zones[zi].behavior !== 'restrict') return;
-
-    const zone = zones[zi];
-
-    // True shape containment for inline svg boundaries — the rect clamp below
-    // only holds the zone's bounding box, which for a non-rectangular contour
-    // is far larger than the visible outline (restrict would feel like clip).
-    // Mirrors the template builder's clampToZone.
-    if (zone.boundary_type === 'svg' && zone.svg_markup && !zone.svg_rotation) {
-      const shape = zoneShapePath(zone);
-      if (shape) {
-        const pts = objectSamplePoints(obj.getCoords());
-        if (pts.length && pointsInsideZoneShape(shape, zone, pts)) {
-          obj._sgpdLastValid = { left: obj.left, top: obj.top };
-          return;
-        }
-        if (obj._sgpdLastValid) {
-          obj.set(obj._sgpdLastValid);
-          obj.setCoords();
-          return;
-        }
-        // No valid anchor yet (object placed outside the shape) → rect clamp.
-      }
-    }
-
-    const bound = obj.getBoundingRect();
-    const { left, top } = clampRectToZone({ objLeft: obj.left, objTop: obj.top, bound, zone });
-
-    obj.set({ left, top });
-    obj.setCoords();
+  const zoneOf = useCallback((obj) => {
+    const zi = obj?.data?.zoneIndex;
+    if (zi == null || zi < 0 || !zones[zi] || zones[zi].behavior !== 'restrict') return null;
+    return zones[zi];
   }, [zones]);
 
-  const clampScaleToZone = useCallback((obj) => {
-    const zi = obj.data?.zoneIndex;
-    if (zi == null || zi < 0 || !zones[zi] || zones[zi].behavior !== 'restrict') return;
+  // Live clamp, run on EVERY frame of a drag/scale: bounding box only. The
+  // outline is deliberately NOT enforced here — see shared/js/zoneClamp.js for
+  // why enforcing it mid-drag made the object fight the pointer and read as
+  // frozen. Identical decision to the template builder's, from one module.
+  const clampToZone = useCallback((obj) => {
+    const zone = zoneOf(obj);
+    if (!zone) return;
+    clampObjectDuringMove(obj, zone);
+  }, [zoneOf]);
 
-    const zone  = zones[zi];
+  // End-of-gesture enforcement: hold the object inside the real svg outline,
+  // or — when nothing fits at its current size — leave it exactly where the
+  // customer put it, still selectable and still movable.
+  const settleIntoZone = useCallback((obj) => {
+    const zone = zoneOf(obj);
+    if (!zone) return;
+    settleObjectInZone(obj, zone);
+  }, [zoneOf]);
+
+  const clampScaleToZone = useCallback((obj) => {
+    const zone = zoneOf(obj);
+    if (!zone) return;
+
     const perms = permissions[obj.data?.elementType] || {};
     const bound = obj.getBoundingRect();
 
@@ -297,8 +290,12 @@ export default function DesignerCanvas() {
     }
 
     obj.setCoords();
+    // Live scaling gets the LENIENT clamp only, for the same reason dragging
+    // does: enforcing the outline while the handle is held snaps the object
+    // back on every frame and it can no longer be resized. The outline is
+    // enforced once on object:modified, when the handle is released.
     clampToZone(obj);
-  }, [zones, permissions, clampToZone]);
+  }, [zoneOf, permissions, clampToZone]);
 
   // ── Clamp engraving-text scaling to the template minimum font size ───────
   // Engraving text (single-stroke Hershey Path, data.elementType ===
@@ -345,6 +342,7 @@ export default function DesignerCanvas() {
   // ── Sync refs so canvas event handlers always use the latest callbacks ───
   clampToZoneRef.current      = clampToZone;
   clampScaleRef.current       = clampScaleToZone;
+  settleRef.current           = settleIntoZone;
   clampEngravingTextRef.current = clampEngravingTextScale;
   snapToGridRef.current       = snapToGrid;
   snapshotViewRef.current     = snapshotView;
@@ -592,6 +590,10 @@ export default function DesignerCanvas() {
           canvas.add(text);
           if (!locked) {
             applyPermissions(text, 'text');
+            // Template-authored layers get the LENIENT clamp, not the outline
+            // settle: this is what the merchant positioned, and load time is
+            // not a customer gesture. Moving their layout on render would be a
+            // surprise; the outline is enforced the moment the customer drags.
             if (zone.behavior === 'restrict') clampToZone(text);
           }
           // Template text renders before its custom font may have finished
@@ -638,7 +640,6 @@ export default function DesignerCanvas() {
               canvas.add(group);
               if (!locked) {
                 applyPermissions(group, 'svg');
-                group._sgpdLastValid = { left: group.left, top: group.top };
                 if (zone.behavior === 'restrict') clampToZone(group);
               }
               group.setCoords();
@@ -810,6 +811,10 @@ export default function DesignerCanvas() {
     });
 
     canvas.on('object:modified', (e) => {
+      // The gesture is over: NOW enforce the zone's real outline, once, before
+      // anything snapshots the object's position. Never from object:moving —
+      // see shared/js/zoneClamp.js.
+      settleRef.current?.(e.target);
       // Backstop in case a path bypasses the live object:scaling event.
       clampEngravingTextRef.current?.(e.target);
       if (!disposed) {
@@ -1034,12 +1039,11 @@ export default function DesignerCanvas() {
     if (zoneIdx >= 0) applyZoneClip(text, zoneIdx);
     canvas.add(text);
     canvas.setActiveObject(text);
-    // Seed the containment anchor at the centre — the most interior point of
-    // the zone — so the very first drag has a valid position to fall back to.
-    // Without this the object has no anchor and every drag inside a shaped
-    // boundary snaps it back to nowhere.
-    text._sgpdLastValid = { left: text.left, top: text.top };
-    if (zoneIdx >= 0) clampToZone(text);
+    // One-shot placement, so the strict settle applies: the zone's bounding-box
+    // centre this text was just placed at can fall OUTSIDE a concave outline,
+    // and the settle walks it to the nearest spot that actually fits. No anchor
+    // is seeded any more — nothing snaps back to a remembered position.
+    if (zoneIdx >= 0) settleIntoZone(text);
     // The zone's default font may still be loading at the moment the tool
     // places this object — re-measure once it's confirmed loaded.
     ensureFontMeasured(text, fabricCache);
@@ -1049,7 +1053,7 @@ export default function DesignerCanvas() {
     snapshotView(currentViewIndex, canvas.toObject(['data']));
     setActiveTool('select');
   }, [activeTool, currentViewIndex, zones, permissions, canvasWidth, canvasHeight,
-      widthMm, findFirstZoneForType, applyPermissions, applyZoneClip, clampToZone, snapshotView, setActiveTool]);
+      widthMm, findFirstZoneForType, applyPermissions, applyZoneClip, settleIntoZone, snapshotView, setActiveTool]);
 
   // ── Tool: add-curved-text on canvas click ─────────────────────────────────
 
@@ -1092,10 +1096,8 @@ export default function DesignerCanvas() {
       if (zoneIdx >= 0) applyZoneClip(text, zoneIdx);
       canvas.add(text);
       canvas.setActiveObject(text);
-      // Seed the containment anchor at the centre — the most interior point of
-      // the zone — so the very first drag has a valid position to fall back to.
-      text._sgpdLastValid = { left: text.left, top: text.top };
-      if (zoneIdx >= 0) clampToZone(text);
+      // One-shot placement → strict settle (see the add-text tool above).
+      if (zoneIdx >= 0) settleIntoZone(text);
       // The zone's default font may still be loading at the moment the tool
       // places this object — re-measure once it's confirmed loaded.
       ensureFontMeasured(text, fabricCache);
@@ -1111,7 +1113,7 @@ export default function DesignerCanvas() {
       canvas.off('mouse:down', onClick);
       canvas.defaultCursor = 'default';
     };
-  }, [activeTool, currentViewIndex, zones, canvasWidth, canvasHeight, findZoneForPoint, applyPermissions, applyZoneClip, clampToZone, snapshotView, setActiveTool]);
+  }, [activeTool, currentViewIndex, zones, canvasWidth, canvasHeight, findZoneForPoint, applyPermissions, applyZoneClip, settleIntoZone, snapshotView, setActiveTool]);
 
   // ── Tool: add-engraving-text on canvas click ────────────────────────────────
   useEffect(() => {
@@ -1152,7 +1154,8 @@ export default function DesignerCanvas() {
       if (zoneIdx >= 0) applyZoneClip(path, zoneIdx);
       canvas.add(path);
       canvas.setActiveObject(path);
-      if (zoneIdx >= 0) clampToZone(path);
+      // One-shot placement → strict settle (see the add-text tool above).
+      if (zoneIdx >= 0) settleIntoZone(path);
       pushHistoryRef.current?.();
       canvas.renderAll();
       snapshotView(currentViewIndex, canvas.toObject(['data']));
@@ -1164,7 +1167,7 @@ export default function DesignerCanvas() {
       canvas.off('mouse:down', onClick);
       canvas.defaultCursor = 'default';
     };
-  }, [activeTool, currentViewIndex, findZoneForPoint, applyPermissions, applyZoneClip, clampToZone, snapshotView, setActiveTool]);
+  }, [activeTool, currentViewIndex, findZoneForPoint, applyPermissions, applyZoneClip, settleIntoZone, snapshotView, setActiveTool]);
 
   // ── Tool: add-image / add-svg via file input ──────────────────────────────
 
@@ -1209,7 +1212,8 @@ export default function DesignerCanvas() {
       canvas.add(img);
       canvas.setActiveObject(img);
 
-      if (zoneIdx >= 0) clampToZone(img);
+      // One-shot placement → strict settle (see the add-text tool above).
+      if (zoneIdx >= 0) settleIntoZone(img);
 
       canvas.renderAll();
       snapshotView(currentViewIndex, canvas.toObject(['data']));
@@ -1218,7 +1222,7 @@ export default function DesignerCanvas() {
     }
 
     setActiveTool('select');
-  }, [findFirstZoneForType, zones, template, applyPermissions, applyZoneClip, clampToZone, snapshotView, currentViewIndex, setActiveTool, setError]);
+  }, [findFirstZoneForType, zones, template, applyPermissions, applyZoneClip, settleIntoZone, snapshotView, currentViewIndex, setActiveTool, setError]);
 
   const addClipartToCanvas = useCallback(async (svgUrl) => {
     try {
@@ -1286,14 +1290,15 @@ export default function DesignerCanvas() {
       canvas.add(img);
       canvas.setActiveObject(img);
 
-      if (zoneIdx >= 0) clampToZone(img);
+      // One-shot placement → strict settle (see the add-text tool above).
+      if (zoneIdx >= 0) settleIntoZone(img);
 
       canvas.renderAll();
       snapshotView(currentViewIndex, canvas.toObject(['data']));
     } catch (err) {
       setError(err.message);
     }
-  }, [findFirstZoneForType, zones, template, applyPermissions, applyZoneClip, clampToZone, snapshotView, currentViewIndex, setError]);
+  }, [findFirstZoneForType, zones, template, applyPermissions, applyZoneClip, settleIntoZone, snapshotView, currentViewIndex, setError]);
 
   // ── Tool: draw (PencilBrush) ───────────────────────────────────────────────
 

@@ -101,12 +101,19 @@ export function pointsInsideZoneShape(path, zone, points) {
  * @param {number}   opts.height    the object's unscaled height in canvas px
  * @param {number}   [opts.maxScale] largest scale to consider (default 1)
  * @param {number}   [opts.minScale] give up below this (default 0.05)
+ * @param {{x:number,y:number}} [opts.prefer] centre to stay as close to as the
+ *   contour allows, instead of the zone's bounding-box centre. Used when an
+ *   object is settled after a drag: it should land at the nearest placement
+ *   that fits, not be flung back to the middle of the zone. When given, the
+ *   coarse grid anchor is refined by a line search back toward this point, so
+ *   the result is "just far enough in", not a grid step away.
  * @param {Function} [opts.isInside] containment predicate, injected for tests
  * @returns {{left:number, top:number, scale:number}|null} null when nothing fits
  */
 export function fitInsideZoneShape({
   shape, zone, width, height,
   maxScale = 1, minScale = 0.05,
+  prefer = null,
   isInside = pointsInsideZoneShape,
 }) {
   if (!shape || !zone || !(width > 0) || !(height > 0)) return null;
@@ -121,11 +128,11 @@ export function fitInsideZoneShape({
     return isInside(shape, zone, objectSamplePoints(corners));
   };
 
-  // 1. Anchor: the bounding-box centre when the contour allows it, otherwise the
+  // 1. Anchor: the desired centre when the contour allows it, otherwise the
   //    inside grid point closest to it. A coarse grid is enough — we only need a
   //    foothold, step 2 does the real work.
-  const cx0 = zone.x + zone.width / 2;
-  const cy0 = zone.y + zone.height / 2;
+  const cx0 = prefer ? prefer.x : zone.x + zone.width / 2;
+  const cy0 = prefer ? prefer.y : zone.y + zone.height / 2;
   let anchor = fits(cx0, cy0, minScale) ? [cx0, cy0] : null;
   if (!anchor) {
     const N = 15;
@@ -138,6 +145,24 @@ export function fitInsideZoneShape({
         const d = (x - cx0) ** 2 + (y - cy0) ** 2;
         if (d < bestD) { bestD = d; anchor = [x, y]; }
       }
+    }
+
+    // 1b. The grid is coarse (a fifteenth of the zone), which is fine for
+    //     "somewhere sensible" but not for "nearest to where the user let go".
+    //     Slide from the grid anchor back toward the requested centre for as
+    //     long as the SAME predicate still says it fits. `lo` always holds a
+    //     fitting fraction, so a contour that dips out and back in along the
+    //     way still yields a valid point, never an invalid one.
+    if (anchor && prefer) {
+      const [ix, iy] = anchor;
+      let lo = 0;
+      let hi = 1;
+      for (let k = 0; k < 14; k++) {
+        const mid = (lo + hi) / 2;
+        if (fits(ix + (cx0 - ix) * mid, iy + (cy0 - iy) * mid, minScale)) lo = mid;
+        else hi = mid;
+      }
+      anchor = [ix + (cx0 - ix) * lo, iy + (cy0 - iy) * lo];
     }
   }
   if (!anchor) return null;

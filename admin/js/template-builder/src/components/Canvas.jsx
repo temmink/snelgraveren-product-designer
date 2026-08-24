@@ -4,8 +4,7 @@ import { Canvas as FabricCanvas, Rect, FabricImage, IText, FabricText, loadSVGFr
 import useTemplateStore from '../store/useTemplateStore';
 import { parseSvgToFabric } from '../utils/svgPathUtils';
 import { alignElement } from '../../../../../shared/js/alignElement';
-import { zoneShapePath, objectSamplePoints, pointsInsideZoneShape } from '../../../../../shared/js/zoneContainment';
-import { clampRectToZone } from '../../../../../shared/js/zoneRectClamp';
+import { clampObjectDuringMove, settleObjectInZone } from '../../../../../shared/js/zoneClamp';
 import { mergeLayersToBoundary } from '../utils/mergeLayersToBoundary';
 import MmRuler from '../../../../../shared/js/MmRuler.jsx';
 import { resolveWidthMm } from '../../../../../shared/js/rulerTicks';
@@ -36,6 +35,7 @@ export default function Canvas() {
   // Stable refs for callbacks used in canvas event handlers to avoid stale closures.
   const clampToZoneRef     = useRef(null);
   const clampScaleRef      = useRef(null);
+  const settleRef          = useRef(null);
   const snapToGridRef      = useRef(null);
 
   // Ref for applyZoneClip so async callbacks can use the latest version.
@@ -126,51 +126,38 @@ export default function Canvas() {
     }
   }, [views, currentViewIndex, isFreeMove]);
 
+  const zoneOf = useCallback((obj) => {
+    const zi = obj?.data?.zoneIndex;
+    const zones = views[currentViewIndex]?.zones_config || [];
+    if (zi == null || zi < 0 || !zones[zi] || zones[zi].behavior !== 'restrict') return null;
+    return zones[zi];
+  }, [views, currentViewIndex]);
+
+  // Live clamp, run on EVERY frame of a drag/scale: bounding box only. The
+  // outline is deliberately not enforced here — see shared/js/zoneClamp.js for
+  // why enforcing it mid-drag froze the object against the pointer.
   const clampToZone = useCallback((obj) => {
     if (isFreeMove) return;
-    const zi = obj.data?.zoneIndex;
-    const zones = views[currentViewIndex]?.zones_config || [];
-    if (zi == null || zi < 0 || !zones[zi] || zones[zi].behavior !== 'restrict') return;
+    const zone = zoneOf(obj);
+    if (!zone) return;
+    clampObjectDuringMove(obj, zone);
+  }, [zoneOf, isFreeMove]);
 
-    const zone = zones[zi];
-
-    // True shape containment for inline svg boundaries: the rect clamp below
-    // only holds the zone's BOUNDING BOX, which for a moon/cloud contour is
-    // far larger than the visible outline — restrict then feels like clip.
-    // Test the object's sample points against the actual path and snap back
-    // to the last position that fitted. Rotated or url-only boundaries fall
-    // back to the rect clamp.
-    if (zone.boundary_type === 'svg' && zone.svg_markup && !zone.svg_rotation) {
-      const shape = zoneShapePath(zone);
-      if (shape) {
-        const pts = objectSamplePoints(obj.getCoords());
-        if (pts.length && pointsInsideZoneShape(shape, zone, pts)) {
-          obj._sgpdLastValid = { left: obj.left, top: obj.top };
-          return;
-        }
-        if (obj._sgpdLastValid) {
-          obj.set(obj._sgpdLastValid);
-          obj.setCoords();
-          return;
-        }
-        // No valid anchor yet (object starts outside the shape) → rect clamp.
-      }
-    }
-
-    const bound = obj.getBoundingRect();
-    const { left, top } = clampRectToZone({ objLeft: obj.left, objTop: obj.top, bound, zone });
-
-    obj.set({ left, top });
-    obj.setCoords();
-  }, [views, currentViewIndex, isFreeMove]);
+  // End-of-gesture enforcement: hold the object inside the actual svg outline,
+  // or — when nothing fits at its current size — leave it alone rather than
+  // trap it. Same shared decision the customer designer applies.
+  const settleIntoZone = useCallback((obj) => {
+    if (isFreeMove) return;
+    const zone = zoneOf(obj);
+    if (!zone) return;
+    settleObjectInZone(obj, zone);
+  }, [zoneOf, isFreeMove]);
 
   const clampScaleToZone = useCallback((obj) => {
     if (isFreeMove) return;
-    const zi = obj.data?.zoneIndex;
-    const zones = views[currentViewIndex]?.zones_config || [];
-    if (zi == null || zi < 0 || !zones[zi] || zones[zi].behavior !== 'restrict') return;
+    const zone = zoneOf(obj);
+    if (!zone) return;
 
-    const zone  = zones[zi];
     const perms = permissions[obj.data?.elementType] || {};
     const bound = obj.getBoundingRect();
 
@@ -191,8 +178,12 @@ export default function Canvas() {
     }
 
     obj.setCoords();
+    // Live scaling gets the LENIENT clamp only, for the same reason dragging
+    // does: enforcing the outline while the handle is held snaps the object
+    // back on every frame and the merchant can no longer resize it. The
+    // outline is enforced once on object:modified, when the handle is let go.
     clampToZone(obj);
-  }, [views, currentViewIndex, permissions, clampToZone, isFreeMove]);
+  }, [zoneOf, permissions, clampToZone, isFreeMove]);
 
   const snapToGrid = useCallback((obj) => {
     if (isFreeMove) return;
@@ -209,6 +200,7 @@ export default function Canvas() {
   // Keep refs in sync so canvas event handlers always use the latest callbacks.
   clampToZoneRef.current    = clampToZone;
   clampScaleRef.current     = clampScaleToZone;
+  settleRef.current         = settleIntoZone;
   snapToGridRef.current     = snapToGrid;
   applyZoneClipRef.current  = applyZoneClip;
 
@@ -274,8 +266,13 @@ export default function Canvas() {
 
     // Push history whenever an object is moved/scaled/rotated.
     let disposed = false;
-    const onModified = () => {
+    const onModified = (e) => {
       if (disposed) return;
+      // The gesture is over: NOW enforce the zone's real outline, once. This
+      // must run before the snapshot so history records the settled position,
+      // and this handler is registered first so it also runs before the
+      // layer-persist handler further down reads left/top off the object.
+      if (!e?.target?.data?.isZone) settleRef.current?.(e?.target);
       pushHistory(viewKey, canvas.toObject(['data']));
     };
     canvas.on('object:modified', onModified);
@@ -564,6 +561,11 @@ export default function Canvas() {
       elementType: layer.type,
     });
 
+    // Deliberately the LENIENT clamp, not the outline settle: this runs on the
+    // layer-sync effect, i.e. on any store update (typing in the text field,
+    // nudging a font size). Relocating the merchant's layer to satisfy the
+    // contour there would move things they never dragged. The outline is
+    // enforced on their gestures — drop, scale release, leaving Free Move.
     const applyClipAndClamp = (obj, layer) => {
       const zi = layer._zoneIndex;
       if (zi != null && zi >= 0) {
