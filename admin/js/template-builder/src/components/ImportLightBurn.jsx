@@ -3,6 +3,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import useTemplateStore from '../store/useTemplateStore';
 import { parseLbrn, PX_PER_MM } from '../utils/lbrnParser';
 import { AVAILABLE_FONTS } from '../utils/fonts';
+import { uploadDataUrlToMedia } from '../api/mediaApi';
 
 const isPremium = window.sgpdTemplateBuilder?.isPremium;
 
@@ -47,6 +48,39 @@ export default function ImportLightBurn() {
         return;
       }
 
+      // Bitmaps arrive as base64 from the .lbrn2 file. Upload each one to the
+      // media library and swap in the URL — a multi-hundred-kilobyte data URI
+      // in zones_config would be read on every designer page load, and Fabric
+      // JSON must never carry data URIs.
+      let bitmapNo = 0;
+      const uploaded = [];
+      for (const layer of layers) {
+        if (layer.type !== 'image' || !layer.dataUrl) { uploaded.push(layer); continue; }
+        bitmapNo += 1;
+        try {
+          const src = await uploadDataUrlToMedia(
+            layer.dataUrl,
+            `lightburn-bitmap-${Date.now()}-${bitmapNo}.png`
+          );
+          const { dataUrl, ...rest } = layer;
+          uploaded.push({
+            ...rest,
+            src,
+            name: sprintf( __( 'Bitmap %d', 'snelgraveren-product-designer' ), bitmapNo ),
+            locked: true,          // background reference art, not customer content
+            visible: true,
+            opacity: 1,
+            exclude_from_export: true,
+            template_art: true,    // keeps it out of both price counters
+          });
+        } catch (err) {
+          // Skip this bitmap only — the vector import must still complete.
+          warnings.push(
+            sprintf( __( 'Could not upload a bitmap image: %s', 'snelgraveren-product-designer' ), err.message )
+          );
+        }
+      }
+
       // The parser lays the design out at its physical extent (mm × working
       // resolution) — a 37 mm tag is only ~141 px, tiny on screen. Scale the
       // on-screen pixels so the design's larger side hits a comfortable working
@@ -68,7 +102,7 @@ export default function ImportLightBurn() {
       // own text as the tree label.
       let groupNo = 0;
       let shapeNo = 0;
-      const namedLayers = layers.map((l) => {
+      const namedLayers = uploaded.map((l) => {
         if (l.type !== 'svg') return l;
         if ((l.pathCount || 1) > 1) {
           groupNo += 1;
