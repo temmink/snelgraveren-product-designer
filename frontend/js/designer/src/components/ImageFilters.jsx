@@ -68,7 +68,7 @@ export default function ImageFilters({ fabricObj, allowedFilters, snapshotView, 
     fabricObj.filters = filterList;
     fabricObj.applyFilters();
     fabricObj.canvas?.renderAll();
-    snapshotView(currentViewIndex, fabricObj.canvas?.toJSON(['data']));
+    snapshotView(currentViewIndex, fabricObj.canvas?.toObject(['data']));
   }, [fabricObj, snapshotView, currentViewIndex]);
 
   const visiblePresets = PRESETS.filter((p) => allowedFilters.includes(p.type));

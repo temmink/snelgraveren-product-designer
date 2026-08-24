@@ -14,7 +14,7 @@ export default function useCanvasHistory(fabricCanvasRef, currentViewIndex) {
     clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(() => {
       if (isRestoring.current) return;
-      const json = canvas.toJSON(['data']);
+      const json = canvas.toObject(['data']);
       useDesignerStore.getState().pushHistory(currentViewIndex, json);
     }, 300);
   }, [fabricCanvasRef, currentViewIndex]);
@@ -31,7 +31,7 @@ export default function useCanvasHistory(fabricCanvasRef, currentViewIndex) {
           }
         });
         canvas.renderAll();
-        useDesignerStore.getState().snapshotView(currentViewIndex, canvas.toJSON(['data']));
+        useDesignerStore.getState().snapshotView(currentViewIndex, canvas.toObject(['data']));
       })
       .finally(() => {
         isRestoring.current = false;
@@ -46,7 +46,7 @@ export default function useCanvasHistory(fabricCanvasRef, currentViewIndex) {
     if (!vh || vh.undoStack.length === 0) return;
 
     // Save current state to redo before applying undo
-    const currentJson = canvas.toJSON(['data']);
+    const currentJson = canvas.toObject(['data']);
     const undoStack = [...vh.undoStack];
     const snapshot = undoStack.pop();
 
@@ -70,7 +70,7 @@ export default function useCanvasHistory(fabricCanvasRef, currentViewIndex) {
     const vh = store.historyByView[currentViewIndex];
     if (!vh || vh.redoStack.length === 0) return;
 
-    const currentJson = canvas.toJSON(['data']);
+    const currentJson = canvas.toObject(['data']);
     const redoStack = [...vh.redoStack];
     const snapshot = redoStack.pop();
 

@@ -148,7 +148,7 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
       });
     }
     fabricObj.canvas?.renderAll();
-    snapshotView(currentViewIndex, fabricObj.canvas?.toJSON(['data']));
+    snapshotView(currentViewIndex, fabricObj.canvas?.toObject(['data']));
   }, [fabricObj, snapshotView, currentViewIndex, sizeFloor, perms]);
 
   // Sync state when selected object changes
@@ -323,7 +323,7 @@ function AlignmentButtons({ fabricObj, template, currentViewIndex, snapshotView 
 
     alignElement(obj, dir, bounds);
     canvas?.renderAll();
-    snapshotView(currentViewIndex, canvas?.toJSON(['data']));
+    snapshotView(currentViewIndex, canvas?.toObject(['data']));
   }, [template, currentViewIndex, snapshotView]);
 
   useEffect(() => {
@@ -380,12 +380,12 @@ function ImageProperties({ fabricObj, type, perms, globalConfig, snapshotView, c
       }
       fabricObj.applyFilters();
       fabricObj.canvas?.renderAll();
-      snapshotView(currentViewIndex, fabricObj.canvas?.toJSON(['data']));
+      snapshotView(currentViewIndex, fabricObj.canvas?.toObject(['data']));
     } catch {
       // Fallback: just set fill (works for some SVG types)
       fabricObj.set({ fill: color });
       fabricObj.canvas?.renderAll();
-      snapshotView(currentViewIndex, fabricObj.canvas?.toJSON(['data']));
+      snapshotView(currentViewIndex, fabricObj.canvas?.toObject(['data']));
     }
   }, [fabricObj, snapshotView, currentViewIndex]);
 
@@ -466,7 +466,7 @@ function ZoneFillSection({ zones, editableZones, globalConfig, fabricCanvasRef, 
       }
     });
     canvas.renderAll();
-    snapshotView(currentViewIndex, canvas.toJSON(['data']));
+    snapshotView(currentViewIndex, canvas.toObject(['data']));
 
     setZoneFillColor(zoneIndex, color);
 
@@ -585,7 +585,7 @@ function EngravingTextProperties({ fabricObj, snapshotView, currentViewIndex, si
     });
     fabricObj.setCoords();
     fabricObj.canvas?.renderAll();
-    snapshotView(currentViewIndex, fabricObj.canvas?.toJSON(['data']));
+    snapshotView(currentViewIndex, fabricObj.canvas?.toObject(['data']));
   }, [fabricObj, snapshotView, currentViewIndex]);
 
   return (

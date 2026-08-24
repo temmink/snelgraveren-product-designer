@@ -35,7 +35,7 @@ export default function CurvedTextProperties({ fabricObj, snapshotView, currentV
     fabricObj.initDimensions();
     fabricObj.setCoords();
     fabricObj.canvas?.renderAll();
-    snapshotView(currentViewIndex, fabricObj.canvas?.toJSON(['data']));
+    snapshotView(currentViewIndex, fabricObj.canvas?.toObject(['data']));
   }, [fabricObj, snapshotView, currentViewIndex]);
 
   return (
@@ -73,7 +73,7 @@ export default function CurvedTextProperties({ fabricObj, snapshotView, currentV
             setLetterSpacing(val);
             fabricObj.set({ charSpacing: val });
             fabricObj.canvas?.renderAll();
-            snapshotView(currentViewIndex, fabricObj.canvas?.toJSON(['data']));
+            snapshotView(currentViewIndex, fabricObj.canvas?.toObject(['data']));
           }}
         />
       </label>

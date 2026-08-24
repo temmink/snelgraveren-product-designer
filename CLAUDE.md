@@ -53,7 +53,7 @@ npm run build                           # Production build → dist/
 - **React 18** with functional components and hooks
 - **Zustand** for state management (not Redux, not Context)
 - **CSS scoping:** All frontend classes use `pf-` prefix with BEM naming. Designer wrapper uses `all: initial` to isolate from theme styles. Always set explicit `color` on buttons/inputs to prevent theme overrides.
-- **Fabric.js JSON serialization:** Always use `canvas.toJSON(['data'])` — never bare `toJSON()` — to preserve custom `data` properties (e.g. `elementType`, `zoneIndex`)
+- **Fabric.js JSON serialization:** Always use `canvas.toObject(['data'])` — never `canvas.toJSON(['data'])`. In Fabric 6, `Canvas.prototype.toJSON()` takes no arguments and just calls `this.toObject()` with no arguments internally, so a `propertiesToInclude` array passed to `toJSON()` is silently dropped and custom `data` properties (e.g. `elementType`, `zoneIndex`) never make it into the snapshot. `toObject(['data'])` returns the identical plain-object shape `loadFromJSON` accepts, so it's a drop-in fix.
 - **Fabric.js JSON validation:** Whitelist allowed object types before `loadFromJSON`
 - **Fabric.js 6.x type names:** Runtime types are lowercase hyphenated (`'i-text'`, `'image'`, `'path'`), but JSON serialization uses PascalCase (`'IText'`, `'Image'`). Use case-insensitive comparison when matching types at runtime.
 - **No `stopPropagation` on `#pf-designer-root`:** The designer renders inside a WooCommerce product tab via the `[sgpd_designer]` shortcode. Never add blanket `stopPropagation` on the designer root — it blocks Fabric.js's `document`-level `pointerup` listener, causing dragged objects to stick to the cursor.

@@ -50,7 +50,7 @@ export default function DesignTemplates({ templateId, allowedIds }) {
 
     canvas.discardActiveObject();
     canvas.renderAll();
-    snapshotView(currentViewIndex, canvas.toJSON(['data']));
+    snapshotView(currentViewIndex, canvas.toObject(['data']));
   };
 
   if (loading) {

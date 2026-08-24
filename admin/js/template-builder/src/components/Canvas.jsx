@@ -243,7 +243,7 @@ export default function Canvas() {
     let disposed = false;
     const onModified = () => {
       if (disposed) return;
-      pushHistory(viewKey, canvas.toJSON(['data']));
+      pushHistory(viewKey, canvas.toObject(['data']));
     };
     canvas.on('object:modified', onModified);
 
@@ -305,17 +305,17 @@ export default function Canvas() {
           }
           canvas.backgroundImage = img;
           canvas.renderAll();
-          pushHistory(viewKey, canvas.toJSON(['data']));
+          pushHistory(viewKey, canvas.toObject(['data']));
         })
         .catch((err) => {
           if (disposed) return;
           console.warn('Background load failed:', err);
           // Background load failure is non-fatal; seed history without background.
-          pushHistory(viewKey, canvas.toJSON(['data']));
+          pushHistory(viewKey, canvas.toObject(['data']));
         });
     } else {
       canvas.renderAll();
-      pushHistory(viewKey, canvas.toJSON(['data']));
+      pushHistory(viewKey, canvas.toObject(['data']));
     }
 
     // Intentionally omit currentView/pushHistory from deps: we only want to
@@ -904,7 +904,7 @@ export default function Canvas() {
       if (obj.data?.isZone || obj.data?.isZoneOverlay) return;
       obj.clipPath = undefined;
     });
-    pushHistory(viewKey, canvas.toJSON(['data']));
+    pushHistory(viewKey, canvas.toObject(['data']));
     canvas.renderAll();
   }, [setFreeMove, pushHistory, viewKey]);
 
@@ -919,7 +919,7 @@ export default function Canvas() {
         clampToZone(obj);
       }
     });
-    pushHistory(viewKey, canvas.toJSON(['data']));
+    pushHistory(viewKey, canvas.toObject(['data']));
     canvas.renderAll();
   }, [setFreeMove, applyZoneClip, clampToZone, pushHistory, viewKey]);
 
@@ -978,7 +978,7 @@ export default function Canvas() {
             img.scaleToWidth(canvas.width);
             canvas.backgroundImage = img;
             canvas.renderAll();
-            pushHistory(viewKey, canvas.toJSON(['data']));
+            pushHistory(viewKey, canvas.toObject(['data']));
           });
       }
     });
@@ -994,7 +994,7 @@ export default function Canvas() {
       if (bgObjectRef.current) { canvas.remove(bgObjectRef.current); bgObjectRef.current = null; }
       canvas.backgroundImage = undefined;
       canvas.renderAll();
-      pushHistory(viewKey, canvas.toJSON(['data']));
+      pushHistory(viewKey, canvas.toObject(['data']));
     }
   }, [currentViewIndex, updateView, pushHistory, editingBg]);
 
@@ -1051,7 +1051,7 @@ export default function Canvas() {
         img.set(transform);
         canvas.backgroundImage = img;
         canvas.renderAll();
-        pushHistory(viewKey, canvas.toJSON(['data']));
+        pushHistory(viewKey, canvas.toObject(['data']));
       });
 
     // Save transform to view config
@@ -1113,7 +1113,7 @@ export default function Canvas() {
     canvas.setActiveObject(obj);
     canvas.renderAll();
     setHasSelection(true);
-    pushHistory(viewKey, canvas.toJSON(['data']));
+    pushHistory(viewKey, canvas.toObject(['data']));
   }, [views, currentViewIndex, currentView, updateLayer, pushHistory, viewKey]);
 
   const isPremium = window.sgpdTemplateBuilder?.isPremium;

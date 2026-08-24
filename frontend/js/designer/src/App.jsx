@@ -593,7 +593,7 @@ export default function App() {
             // from a load race); other views use their stored snapshot.
             let json = snapJson;
             if (idx === store.currentViewIndex && store.fabricCanvasRef) {
-              try { json = store.fabricCanvasRef.toJSON(['data']); } catch (_) { json = snapJson; }
+              try { json = store.fabricCanvasRef.toObject(['data']); } catch (_) { json = snapJson; }
             }
             // Never overwrite a saved view with an empty (0-object) canvas.
             if (!json || !Array.isArray(json.objects) || json.objects.length === 0) continue;
@@ -749,7 +749,7 @@ export default function App() {
         // wipe the design. Other views use their stored snapshot.
         let json = snapJson;
         if (idx === activeViewIndex && fabricCanvasRef) {
-          try { json = fabricCanvasRef.toJSON(['data']); } catch (_) { json = snapJson; }
+          try { json = fabricCanvasRef.toObject(['data']); } catch (_) { json = snapJson; }
         }
         // Never overwrite a saved view with an empty canvas (0 objects). A real
         // design always has at least a zone overlay; 0 objects means the canvas
