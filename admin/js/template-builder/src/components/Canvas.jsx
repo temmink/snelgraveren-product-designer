@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { __, sprintf } from '@wordpress/i18n';
-import { Canvas as FabricCanvas, Rect, FabricImage, Textbox, FabricText, loadSVGFromString, util, cache as fabricCache } from 'fabric';
+import { Canvas as FabricCanvas, Rect, FabricImage, IText, FabricText, loadSVGFromString, util, cache as fabricCache } from 'fabric';
 import useTemplateStore from '../store/useTemplateStore';
 import { parseSvgToFabric } from '../utils/svgPathUtils';
 import { alignElement } from '../../../../../shared/js/alignElement';
@@ -529,6 +529,30 @@ export default function Canvas() {
       }
     };
 
+    // Compatibility anchor for text layers. New layers set originX/originY
+    // explicitly ('center') and left/top IS that anchor point — used as-is.
+    // Layers saved before this change have neither: they were authored as a
+    // wide Textbox + textAlign, where `left` meant the BOX's left edge, not
+    // where the glyphs sit. An auto-width IText anchored raw at that `left`
+    // would shift text that was centered/right-aligned in its old box (this
+    // is the "compatibility trap" — mirrors the same calc in the customer
+    // designer's DesignerCanvas.jsx so old templates render identically).
+    const textAnchor = (layer) => {
+      let originX = layer.originX;
+      const originY = layer.originY || 'top';
+      let left = layer.left ?? 100;
+      const top = layer.top ?? 100;
+      if (!originX) {
+        const align = layer.textAlign || 'left';
+        const parentZone = zones[layer._zoneIndex];
+        const boxWidth = layer.width || (parentZone ? parentZone.width - 20 : 200);
+        originX = 'left';
+        if (align === 'center')      { originX = 'center'; left += boxWidth / 2; }
+        else if (align === 'right')  { originX = 'right';  left += boxWidth; }
+      }
+      return { left, top, originX, originY };
+    };
+
     layers.forEach((layer) => {
       const existing = existingByKey[layer._key];
       handledKeys.add(layer._key);
@@ -541,16 +565,18 @@ export default function Canvas() {
 
         const fontFamily = layer.fontFamily || 'Arial';
 
+        const anchor = textAnchor(layer);
+
         if (existing) {
           if (existing.fontFamily !== fontFamily) {
             fabricCache.clearFontCache(fontFamily);
           }
-          const parentZone = zones[layer._zoneIndex];
           existing.set({
             text:       layer.text,
-            left:       layer.left       ?? 100,
-            top:        layer.top        ?? 100,
-            width:      layer.width || (parentZone ? parentZone.width - 20 : existing.width),
+            left:       anchor.left,
+            top:        anchor.top,
+            originX:    anchor.originX,
+            originY:    anchor.originY,
             fontSize:   layer.fontSize   || 24,
             fontFamily,
             fill:       layer.fill       || '#000000',
@@ -568,18 +594,17 @@ export default function Canvas() {
           applyClipAndClamp(existing, layer);
         } else {
           fabricCache.clearFontCache(fontFamily);
-          const parentZone = zones[layer._zoneIndex];
-          const textWidth = layer.width || (parentZone ? parentZone.width - 20 : 200);
-          const text = new Textbox(layer.text, {
-            left:       layer.left       ?? 100,
-            top:        layer.top        ?? 100,
-            width:      textWidth,
+          const text = new IText(layer.text, {
+            left:       anchor.left,
+            top:        anchor.top,
+            originX:    anchor.originX,
+            originY:    anchor.originY,
             fontSize:   layer.fontSize   || 24,
             fontFamily,
             fill:       layer.fill       || '#000000',
             textAlign:  layer.textAlign  || 'left',
+            opacity:    layer.opacity    ?? 1,
             visible:    layer.visible !== false,
-            opacity:    layer.opacity ?? 1,
             selectable: !layer.locked,
             evented:    !layer.locked,
             data:       layerData(layer),

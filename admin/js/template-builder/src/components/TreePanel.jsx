@@ -315,7 +315,22 @@ function AddLayerPanel({ zone, onAdd, onCancel }) {
   };
 
   const handleText = () => {
-    onAdd({ name: __('Text', 'snelgraveren-product-designer'), type: 'text', locked: false, visible: true, text: __('Text', 'snelgraveren-product-designer'), fontSize: 24, fontFamily: 'Arial', fill: '#000000', left: zone.x + 20, top: zone.y + 20 });
+    onAdd({
+      name: __('Text', 'snelgraveren-product-designer'),
+      type: 'text',
+      locked: false,
+      visible: true,
+      text: __('Text', 'snelgraveren-product-designer'),
+      fontSize: 24,
+      fontFamily: 'Arial',
+      fill: '#000000',
+      // Centre anchor: left/top are the CENTRE, not the box's top-left. Layers
+      // without originX/originY predate this and keep the old top-left meaning.
+      originX: 'center',
+      originY: 'center',
+      left: zone.x + (zone.width || 200) / 2,
+      top:  zone.y + (zone.height || 200) / 2,
+    });
   };
 
   const handleMedia = (mediaType) => {
@@ -554,20 +569,6 @@ function LayerDetail({ layer, onChange }) {
             <option value="right">{ __( 'Right', 'snelgraveren-product-designer' ) }</option>
           </select>
         </label>
-        <label>
-          { __( 'Width', 'snelgraveren-product-designer' ) }
-          <input type="number" min="20" value={layer.width || 200} onChange={(e) => onChange({ width: parseInt(e.target.value, 10) || 200 })} />
-        </label>
-        <div className="pf-tree-panel__coord-row">
-          <label>
-            { __( 'X', 'snelgraveren-product-designer' ) }
-            <input type="number" value={layer.left || 0} onChange={(e) => onChange({ left: parseInt(e.target.value, 10) || 0 })} />
-          </label>
-          <label>
-            { __( 'Y', 'snelgraveren-product-designer' ) }
-            <input type="number" value={layer.top || 0} onChange={(e) => onChange({ top: parseInt(e.target.value, 10) || 0 })} />
-          </label>
-        </div>
       </div>
     );
   }
