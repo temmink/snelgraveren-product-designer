@@ -49,6 +49,32 @@
   background: #f9fafb;
 }
 
+.pf-canvas-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+}
+
+.pf-canvas-grid--ruler {
+  grid-template-columns: 22px 1fr;
+  grid-template-rows: 22px 1fr;
+}
+
+.pf-ruler__corner {
+  font-size: 9px;
+  line-height: 22px;
+  text-align: center;
+  color: #888;
+  user-select: none;
+}
+
+.pf-ruler--top  { grid-column: 2; grid-row: 1; }
+.pf-ruler--left { grid-column: 1; grid-row: 2; }
+.pf-canvas-grid--ruler .pf-canvas-cell { grid-column: 2; grid-row: 2; }
+
+.pf-ruler__tick  { stroke: #999; stroke-width: 1; }
+.pf-ruler__label { font-size: 8px; fill: #666; user-select: none; }
+
 .pf-designer__sidebar-wrap {
   width: 280px;
   flex-shrink: 0;

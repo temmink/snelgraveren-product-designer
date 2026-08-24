@@ -10,6 +10,7 @@ import useIsMobile from '../hooks/useIsMobile';
 import useCanvasHistory from '../hooks/useCanvasHistory';
 import { filterFabricJson } from '../utils/fabricJson';
 import { zoneShapePath, objectSamplePoints, pointsInsideZoneShape } from '../../../../../shared/js/zoneContainment';
+import MmRuler from '../../../../../shared/js/MmRuler.jsx';
 
 // Infer element type from Fabric object type when data.elementType is missing
 // (e.g. designs saved before data serialisation was added).
@@ -64,6 +65,9 @@ export default function DesignerCanvas() {
   const canvasWidth = currentView?.canvas_width || 800;
   const canvasHeight = currentView?.canvas_height || 600;
   const { containerRef: scaleContainerRef } = useCanvasScale(canvasWidth, canvasHeight, fabricRef);
+
+  const widthMm = Number(currentView?.width_mm) || 0;
+  const showRuler = widthMm > 0 && !isMobile;
 
   // Pass fabricRef (the ref object) so useCanvasHistory always reads .current at call time,
   // avoiding stale closures from null captured at mount.
@@ -1193,9 +1197,22 @@ export default function DesignerCanvas() {
   }, [addClipartToCanvas, setAddClipart]);
 
   return (
-    <div className="pf-canvas-wrap" ref={scaleContainerRef}>
-      <div className="pf-canvas-scroll">
-        <canvas ref={canvasEl} />
+    <div className="pf-canvas-wrap">
+      <div className={`pf-canvas-grid${showRuler ? ' pf-canvas-grid--ruler' : ''}`}>
+        {showRuler && (
+          <MmRuler
+            key={currentViewIndex}
+            canvasRef={canvasEl}
+            widthMm={widthMm}
+            canvasWidth={canvasWidth}
+            canvasHeight={canvasHeight}
+          />
+        )}
+        <div className="pf-canvas-cell" ref={scaleContainerRef}>
+          <div className="pf-canvas-scroll">
+            <canvas ref={canvasEl} />
+          </div>
+        </div>
       </div>
       <input
         id="pf-upload-image"
