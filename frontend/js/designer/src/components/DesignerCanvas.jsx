@@ -43,6 +43,7 @@ export default function DesignerCanvas() {
   // Stable refs for callbacks used in canvas event handlers to avoid stale closures.
   const clampToZoneRef     = useRef(null);
   const clampScaleRef      = useRef(null);
+  const clampEngravingTextRef = useRef(null);
   const snapToGridRef      = useRef(null);
   const snapshotViewRef    = useRef(null);
   const pushHistoryRef     = useRef(null);
@@ -283,6 +284,35 @@ export default function DesignerCanvas() {
     clampToZone(obj);
   }, [zones, permissions, clampToZone]);
 
+  // ── Clamp engraving-text scaling to the template minimum font size ───────
+  // Engraving text (single-stroke Hershey Path, data.elementType ===
+  // 'engraving-text') has no fontSize property — its size lives in
+  // data.engravingFontSize — so minScaleLimit (a ratio against fontSize, set
+  // in applyPermissions above) has nothing to hook into for this object
+  // type. The corner handles are otherwise a second, open lever below the
+  // template minimum. Reuses the SAME minFontSizePx floor as applyPermissions
+  // and the size input in ElementTab.jsx — one source, two entry points,
+  // never a second formula for this object shape.
+  const clampEngravingTextScale = useCallback((obj) => {
+    if (!obj || obj.data?.elementType !== 'engraving-text') return;
+
+    const minPx = minFontSizePx({
+      minFontSizeMm: permissions.text?.min_font_size_mm,
+      canvasWidth,
+      widthMm,
+    });
+    if (minPx <= 0) return;
+
+    const baseSize = obj.data?.engravingFontSize;
+    if (!baseSize || baseSize <= 0) return;
+
+    const minScale = minPx / baseSize;
+    let changed = false;
+    if (obj.scaleY < minScale) { obj.set({ scaleY: minScale }); changed = true; }
+    if (obj.scaleX < minScale) { obj.set({ scaleX: minScale }); changed = true; }
+    if (changed) obj.setCoords();
+  }, [permissions, canvasWidth, widthMm]);
+
   // ── Snap to grid ──────────────────────────────────────────────────────────
 
   const snapToGrid = useCallback((obj) => {
@@ -299,6 +329,7 @@ export default function DesignerCanvas() {
   // ── Sync refs so canvas event handlers always use the latest callbacks ───
   clampToZoneRef.current      = clampToZone;
   clampScaleRef.current       = clampScaleToZone;
+  clampEngravingTextRef.current = clampEngravingTextScale;
   snapToGridRef.current       = snapToGrid;
   snapshotViewRef.current     = snapshotView;
   pushHistoryRef.current      = pushHistory;
@@ -710,9 +741,14 @@ export default function DesignerCanvas() {
 
     canvas.on('object:scaling', (e) => {
       clampScaleRef.current?.(e.target);
+      // Live guard so the handle stops at the floor while dragging, not
+      // only after release (R14 — same rule as the fontSize input clamp).
+      clampEngravingTextRef.current?.(e.target);
     });
 
-    canvas.on('object:modified', () => {
+    canvas.on('object:modified', (e) => {
+      // Backstop in case a path bypasses the live object:scaling event.
+      clampEngravingTextRef.current?.(e.target);
       if (!disposed) {
         snapshotViewRef.current?.(currentViewIndexRef.current, canvas.toJSON(['data']));
         pushHistoryRef.current?.();
