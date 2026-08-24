@@ -9,6 +9,7 @@ import TreeNode from './TreeNode';
 import ZoneForm from './ZoneForm';
 import { AVAILABLE_FONTS, mergeCustomFonts } from '../utils/fonts';
 import { clipartApi } from '../api/templateApi';
+import { isLayerLockedForCustomer } from '../../../../../shared/js/layerLockForCustomer';
 
 export default function TreePanel() {
   const {
@@ -535,10 +536,20 @@ function LayerDetail({ layer, onChange }) {
     ? allowedFonts
     : allFonts.map((f) => f.family);
 
+  // R22: the padlock now also governs whether customers can move this layer
+  // on the product page (isLayerLockedForCustomer — same helper the customer
+  // designer uses). The padlock icon itself keeps its builder-only meaning
+  // (movable/locked HERE), so spell the customer-facing consequence out.
+  const customerLocked = isLayerLockedForCustomer(layer);
+  const customerLockNote = customerLocked
+    ? __( 'Customers cannot move this layer.', 'snelgraveren-product-designer' )
+    : __( 'Customers can move this layer.', 'snelgraveren-product-designer' );
+
   if (layer.type === 'text') {
     return (
       <div className="pf-tree-panel__layer-detail">
         <h4>{ __( 'Text Properties', 'snelgraveren-product-designer' ) }</h4>
+        <p style={{ fontSize: 11, opacity: 0.7 }}>{ customerLockNote }</p>
         <label>
           { __( 'Text', 'snelgraveren-product-designer' ) }
           <input type="text" value={layer.text || ''} onChange={(e) => onChange({ text: e.target.value })} />
@@ -578,6 +589,7 @@ function LayerDetail({ layer, onChange }) {
     <div className="pf-tree-panel__layer-detail">
       {/* translators: %s is the layer type (e.g. Image, SVG) */}
       <h4>{ `${typeLabel} ${ __( 'Properties', 'snelgraveren-product-designer' ) }` }</h4>
+      <p style={{ fontSize: 11, opacity: 0.7 }}>{ customerLockNote }</p>
       <label>
         { __( 'Name', 'snelgraveren-product-designer' ) }
         <input type="text" value={layer.name || ''} onChange={(e) => onChange({ name: e.target.value })} />

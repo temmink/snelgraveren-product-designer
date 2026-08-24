@@ -11,6 +11,7 @@ import useCanvasHistory from '../hooks/useCanvasHistory';
 import { filterFabricJson } from '../utils/fabricJson';
 import { zoneShapePath, objectSamplePoints, pointsInsideZoneShape, fitInsideZoneShape } from '../../../../../shared/js/zoneContainment';
 import { minFontSizePx } from '../../../../../shared/js/fontSizeLimits';
+import { isLayerLockedForCustomer } from '../../../../../shared/js/layerLockForCustomer';
 import MmRuler from '../../../../../shared/js/MmRuler.jsx';
 import { resolveWidthMm } from '../../../../../shared/js/rulerTicks';
 
@@ -569,6 +570,10 @@ export default function DesignerCanvas() {
             else if (align === 'right') { originX = 'right';  anchorLeft = baseLeft + boxWidth; }
           }
 
+          // R21: the padlock now governs the customer side too — text default
+          // stays movable (locked only when the merchant explicitly locks it).
+          const locked = isLayerLockedForCustomer(layer);
+
           const text = new IText(layer.text, {
             left:       anchorLeft,
             top:        layer.top ?? (zone.y + 20),
@@ -579,15 +584,28 @@ export default function DesignerCanvas() {
             fill:       layer.fill       || '#000000',
             textAlign:  align,
             opacity:    layer.opacity ?? 1,
-            data:       { elementType: 'text', zoneIndex: zoneIdx },
+            // evented:false (locked case) is what lets clicks fall through to
+            // any layer above/below this one. data.templateLocked is
+            // persisted via canvas.toJSON(['data']) and re-enforced on
+            // snapshot restore, since selectable/evented never serialize.
+            ...(locked
+              ? { selectable: false, evented: false, hasControls: false, lockMovementX: true, lockMovementY: true }
+              : {}),
+            data:       { elementType: 'text', zoneIndex: zoneIdx, templateLocked: locked },
           });
-          applyPermissions(text, 'text');
           if (zoneClips(zone)) applyZoneClip(text, zoneIdx);
           canvas.add(text);
-          if (zone.behavior === 'restrict') clampToZone(text);
+          if (!locked) {
+            applyPermissions(text, 'text');
+            if (zone.behavior === 'restrict') clampToZone(text);
+          }
         }
 
         if (!hasSnapshotForView && layer.type === 'svg' && (layer.svg_markup || layer.src)) {
+          // R21: the padlock now governs the customer side too — svg defaults
+          // to locked (matches what every unset-padlock layer already did)
+          // and is released only when the merchant explicitly unlocks it.
+          const locked = isLayerLockedForCustomer(layer);
           const markupPromise = layer.svg_markup
             ? Promise.resolve(layer.svg_markup)
             : fetch(layer.src).then((r) => r.text());
@@ -607,17 +625,22 @@ export default function DesignerCanvas() {
                 angle:         layer.angle  || 0,
                 opacity:       layer.opacity ?? 1,
                 strokeUniform: true,
-                // Template artwork is customer-movable: the lock toggle governs
-                // the boundary in the Template Builder, not layers here.
-                selectable:    true,
-                evented:       true,
-                data:          { elementType: 'svg', zoneIndex: zoneIdx },
+                // evented:false (locked case) is what lets clicks fall through
+                // to text sitting above/below this layer. data.templateLocked
+                // is persisted via canvas.toJSON(['data']) and re-enforced on
+                // snapshot restore, since selectable/evented never serialize.
+                ...(locked
+                  ? { selectable: false, evented: false, hasControls: false, lockMovementX: true, lockMovementY: true }
+                  : { selectable: true, evented: true }),
+                data:          { elementType: 'svg', zoneIndex: zoneIdx, templateLocked: locked },
               });
               if (zoneClips(zone)) applyZoneClip(group, zoneIdx);
               canvas.add(group);
-              applyPermissions(group, 'svg');
-              group._sgpdLastValid = { left: group.left, top: group.top };
-              if (zone.behavior === 'restrict') clampToZone(group);
+              if (!locked) {
+                applyPermissions(group, 'svg');
+                group._sgpdLastValid = { left: group.left, top: group.top };
+                if (zone.behavior === 'restrict') clampToZone(group);
+              }
               group.setCoords();
               // Template art loads async and lands ON TOP of the synchronously
               // added text layers; a group's hit-area is its bounding box, so
@@ -633,6 +656,13 @@ export default function DesignerCanvas() {
         }
 
         if (!hasSnapshotForView && layer.type === 'image' && layer.src) {
+          // R21: the bitmap background (template_art, default true — the
+          // LightBurn-imported reference bitmap) stays locked regardless of
+          // the padlock, per fe3b5d9. Any other image layer (template_art:
+          // false — none exist on live templates today) follows the same
+          // padlock rule as svg: locked unless explicitly unlocked.
+          const isBackgroundArt = layer.template_art !== false;
+          const locked = isBackgroundArt || isLayerLockedForCustomer(layer);
           FabricImage.fromURL(layer.src, { crossOrigin: 'anonymous' })
             .then((img) => {
               if (disposed) return;
@@ -646,18 +676,17 @@ export default function DesignerCanvas() {
                 angle:         layer.angle  || 0,
                 opacity:       layer.opacity ?? 1,
                 visible:       layer.visible !== false,
-                // Background reference art: never selectable, never movable.
-                // evented:false is what lets clicks fall through to the text
-                // and logos above it.
-                selectable:    false,
-                evented:       false,
-                hasControls:   false,
-                lockMovementX: true,
-                lockMovementY: true,
+                // evented:false (locked case) is what lets clicks fall through
+                // to the text and logos above it. data.templateLocked is
+                // persisted via canvas.toJSON(['data']) and re-enforced on
+                // snapshot restore, since selectable/evented never serialize.
+                ...(locked
+                  ? { selectable: false, evented: false, hasControls: false, lockMovementX: true, lockMovementY: true }
+                  : {}),
                 data: {
                   elementType:       'image',
                   zoneIndex:         zoneIdx,
-                  templateLocked:    true,
+                  templateLocked:    locked,
                   // Kept out of every export render (App.jsx) and out of both
                   // price counters (priceCounts.js / PriceCalculator).
                   excludeFromExport: layer.exclude_from_export !== false,
@@ -666,7 +695,12 @@ export default function DesignerCanvas() {
               });
               if (zoneClips(zone)) applyZoneClip(img, zoneIdx);
               canvas.add(img);
-              canvas.sendObjectToBack(img);
+              if (isBackgroundArt) {
+                canvas.sendObjectToBack(img);
+              } else if (!locked) {
+                applyPermissions(img, 'image');
+                if (zone.behavior === 'restrict') clampToZone(img);
+              }
               img.setCoords();
               canvas.renderAll();
             })
@@ -688,14 +722,21 @@ export default function DesignerCanvas() {
           const latestSolidColor = useDesignerStore.getState().solidFillColor;
           const isSolidProduct = globalConfig.solid_color;
 
-          // Only background art (data.templateArt, set solely by the bitmap
-          // background branch) stays locked on restore. Template svg layers no
-          // longer carry data.templateLocked going forward; if an object still
-          // has it, normalize it to movable rather than re-freezing it.
+          // Re-enforce the lock state on restore: selectable/evented/etc. are
+          // never part of canvas.toJSON(['data']), so loadFromJSON always
+          // hands objects back with Fabric's interactive defaults regardless
+          // of how they were added. data.templateLocked (set per-layer via
+          // isLayerLockedForCustomer, R21) IS included — it lives under
+          // `data` — so it survives the round trip and is the source of
+          // truth here. Background art (data.templateArt, set solely by the
+          // bitmap background branch) stays locked regardless, same as
+          // fe3b5d9. An object with no templateLocked at all (a design saved
+          // while every layer was unconditionally movable) is left exactly
+          // as loadFromJSON restored it — never retro-locked.
           canvas.getObjects().forEach((obj) => {
-            if (obj.data?.templateArt) {
+            if (obj.data?.templateArt || obj.data?.templateLocked === true) {
               obj.set({ selectable: false, evented: false, hasControls: false, lockMovementX: true, lockMovementY: true });
-            } else if (obj.data?.templateLocked) {
+            } else if (obj.data?.templateLocked === false) {
               obj.set({ selectable: true, evented: true, hasControls: true, lockMovementX: false, lockMovementY: false });
             }
           });
