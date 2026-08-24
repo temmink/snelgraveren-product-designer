@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.7.8
+Stable tag: 1.8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -132,6 +132,18 @@ No other external services are used. Design exports (PDF/PNG/SVG) are rendered e
 4. Production dashboard: every order with a design, filtered by status and period, ready to download as one ZIP.
 
 == Changelog ==
+
+= 1.8.0 =
+* New: LightBurn imports now bring in embedded bitmap images as a locked background layer instead of skipping them, with an opacity slider and the existing visibility toggle. The bitmap is shown to the customer and in the cart thumbnail, but is left out of every production export and is never billed as a design element.
+* New: a millimetre ruler along the top and left edges of the design canvas, in both the Template Builder and the customer designer. It appears when the view has a physical width; a view without one inherits the width from another view of the same template.
+* New: a minimum font size per template, set in millimetres so it means the same thing on a 38 mm tag as on a 280 mm board. It is enforced both when a size is typed and when a corner handle is dragged, including for single-stroke engraving text.
+* New: text added by a customer is placed centred in the boundary with a box that hugs the letters, instead of requiring a click and spanning the whole zone.
+* New: images and clip art added inside a non-rectangular boundary are now placed to fit the actual outline, shrinking if needed rather than landing outside it.
+* Change: the per-layer padlock in the Template Builder now also decides what customers may move. Text layers stay movable by default and artwork layers stay locked by default, so existing templates behave exactly as before until the padlock is changed.
+* Fix: custom object data was silently dropped when a design was saved, because Fabric 6's canvas toJSON() ignores its arguments. This affected element type, zone index and lock state on every saved design.
+* Fix: text layers in the Template Builder could shift by half the zone width each time they were dragged or aligned, because the anchor was recalculated on every load without being stored.
+* Fix: the minimum font size and the layer lock state were lost after an undo, a view switch, or reopening a design from the cart.
+* Fix: layers excluded from the export were still present in the SVG file, flagged as hidden rather than removed.
 
 = 1.7.8 =
 * Fix: starter templates with an SVG-shaped design zone (dog tags, keychain, name plate, T-shirt, round, heart) now import with the zone exactly aligned to the product background. Previously the zone outline was shifted to the top-left corner and the background could appear oversized. Existing templates are not affected.
