@@ -17,6 +17,7 @@ import MmRuler from '../../../../../shared/js/MmRuler.jsx';
 import { resolveWidthMm } from '../../../../../shared/js/rulerTicks';
 import { resolveTextAnchor } from '../../../../../shared/js/textAnchor';
 import { ensureFontMeasured } from '../../../../../shared/js/ensureFontMeasured';
+import { onFontFamilyLoaded } from '../../../../../shared/js/googleFontLoader';
 import { inferElementType, reapplyPostRestoreState } from '../utils/postRestoreState';
 
 // Shape-aware initial placement for a newly-added image/clipart object.
@@ -910,7 +911,15 @@ export default function DesignerCanvas() {
   // Responsive zoom is handled directly by useCanvasScale via ResizeObserver
   // (no React state in the loop — instant, no visible grow/shrink animation)
 
-  // ── Re-measure text objects after fonts load ────────────────────────────
+  // ── Re-measure text objects after fonts load (secondary safety net) ─────
+  // NOTE: this only fires for genuine document.fonts loading-state
+  // transitions (custom uploaded @font-face files, the css2 <link>
+  // fallback for canonical Google Font names). It does NOT reliably fire
+  // for a non-canonical alias ("BebasNeue") registered via the proxy-
+  // FontFace path in shared/js/googleFontLoader.js, because that FontFace
+  // is already `loaded` before it's added to the set — see the
+  // onFontFamilyLoaded effect below, which is the authoritative mechanism
+  // for that case.
   useEffect(() => {
     const canvas = fabricRef.current;
     if (!canvas) return;
@@ -929,6 +938,32 @@ export default function DesignerCanvas() {
     document.fonts.ready.then(onFontLoad);
     document.fonts.addEventListener('loadingdone', onFontLoad);
     return () => document.fonts.removeEventListener('loadingdone', onFontLoad);
+  }, []);
+
+  // ── Re-measure text objects when an exact-alias Google Font resolves ────
+  // Authoritative for the proxy-registered-alias case (see comment above
+  // and shared/js/googleFontLoader.js): driven directly from the loader's
+  // own completion, not from a document.fonts event, so it fires exactly
+  // when the family actually becomes available — including for text
+  // objects that were created/measured against a fallback font before this
+  // resolved. Reads fabricRef.current at call time (not captured at effect
+  // setup) so it stays correct across the view-switch dispose/recreate
+  // cycle (this component's fabric canvas is torn down and rebuilt by a
+  // separate effect keyed on [currentViewIndex, template], while this
+  // subscription effect itself only runs once).
+  useEffect(() => {
+    return onFontFamilyLoaded((family) => {
+      const canvas = fabricRef.current;
+      if (!canvas) return;
+      fabricCache.clearFontCache(family);
+      canvas.getObjects().forEach((obj) => {
+        if ((obj.type === 'text' || obj.type === 'i-text') && obj.fontFamily === family) {
+          obj.initDimensions();
+          obj.setCoords();
+        }
+      });
+      canvas.renderAll();
+    });
   }, []);
 
   // ── Tool: add-text, placed immediately centred in the boundary ─────────────

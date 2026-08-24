@@ -27,6 +27,42 @@
 // Google families already registered via the TTF proxy this session.
 const _proxyRegistered = new Set();
 
+/**
+ * Subscribers notified once a family's exact-alias FontFace has actually
+ * been added to `document.fonts` by `registerViaProxy` below.
+ *
+ * This exists because `document.fonts`' own `'loadingdone'` event is NOT a
+ * reliable signal for this path: the FontFace here is constructed from
+ * proxy-fetched bytes and `await face.load()`d BEFORE it is `add()`ed to
+ * the set, so by the time the set sees it, it's already in the `loaded`
+ * state — the set never observes an unloaded->loading->loaded transition
+ * for it, and per the CSS Font Loading spec that's what drives
+ * `'loadingdone'`. So callers that need to know exactly when an alias
+ * becomes available (to re-measure text objects created before it
+ * resolved) must subscribe here instead of listening for that event.
+ */
+const _familyLoadListeners = new Set();
+
+/**
+ * Subscribe to be notified (with the family name) every time
+ * `registerViaProxy` successfully adds a FontFace for that family. Returns
+ * an unsubscribe function.
+ */
+export function onFontFamilyLoaded(callback) {
+  _familyLoadListeners.add(callback);
+  return () => _familyLoadListeners.delete(callback);
+}
+
+function notifyFamilyLoaded(family) {
+  _familyLoadListeners.forEach((cb) => {
+    try {
+      cb(family);
+    } catch (_) {
+      // A subscriber's own error must not break other subscribers.
+    }
+  });
+}
+
 function base64ToArrayBuffer(b64) {
   const bin = atob(b64);
   const bytes = new Uint8Array(bin.length);
@@ -62,6 +98,7 @@ async function registerViaProxy(family, restUrl) {
   if (_proxyRegistered.has(family)) return;
   _proxyRegistered.add(family);
   const base = restUrl.replace(/\/$/, '');
+  let loadedAny = false;
   for (const weight of [400, 700]) {
     try {
       const res = await fetch(
@@ -76,10 +113,16 @@ async function registerViaProxy(family, restUrl) {
       });
       await face.load();
       document.fonts.add(face);
+      loadedAny = true;
     } catch (_) {
       // Proxy unreachable / unparseable — the css2 <link> below is the fallback.
     }
   }
+  // Notify once the family has at least one usable weight registered, so
+  // callers can re-measure any text objects that were created/measured
+  // before this resolved (see the doc comment on _familyLoadListeners for
+  // why this can't be done via a document.fonts event instead).
+  if (loadedAny) notifyFamilyLoaded(family);
 }
 
 /**

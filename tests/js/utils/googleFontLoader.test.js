@@ -3,6 +3,7 @@ import {
   cssEscape,
   loadGoogleFontFamilies,
   injectCustomFontFaces,
+  onFontFamilyLoaded,
 } from '../../../shared/js/googleFontLoader';
 
 describe('normalizeGoogleName', () => {
@@ -127,5 +128,72 @@ describe('loadGoogleFontFamilies', () => {
     expect(global.FontFace).toHaveBeenCalledWith('BebasNeue', expect.anything(), { weight: '400' });
     expect(global.FontFace).toHaveBeenCalledWith('BebasNeue', expect.anything(), { weight: '700' });
     expect(document.fonts.add).toHaveBeenCalled();
+  });
+
+  it('notifies onFontFamilyLoaded subscribers with the family name once the proxy FontFace is added', async () => {
+    const b64 = btoa('fake-ttf-bytes');
+    global.fetch = jest.fn(() =>
+      Promise.resolve({ ok: true, json: () => Promise.resolve({ data: b64 }) })
+    );
+    const fakeFace = { load: jest.fn().mockResolvedValue(undefined) };
+    global.FontFace = jest.fn(() => fakeFace);
+    document.fonts = { add: jest.fn() };
+
+    const heard = [];
+    const unsubscribe = onFontFamilyLoaded((family) => heard.push(family));
+
+    // Distinct family name — _proxyRegistered is a module-level Set shared
+    // across tests in this file.
+    loadGoogleFontFamilies(['NotifyTestFont'], 'https://example.com/wp-json/pf/v1');
+
+    for (let i = 0; i < 20; i++) {
+      // eslint-disable-next-line no-await-in-loop
+      await Promise.resolve();
+    }
+
+    expect(heard).toEqual(['NotifyTestFont']);
+    unsubscribe();
+  });
+
+  it('does NOT notify when every proxy fetch for the family fails', async () => {
+    global.fetch = jest.fn(() => Promise.reject(new Error('network down')));
+    global.FontFace = jest.fn();
+    document.fonts = { add: jest.fn() };
+
+    const heard = [];
+    const unsubscribe = onFontFamilyLoaded((family) => heard.push(family));
+
+    loadGoogleFontFamilies(['NotifyFailFont'], 'https://example.com/wp-json/pf/v1');
+
+    for (let i = 0; i < 20; i++) {
+      // eslint-disable-next-line no-await-in-loop
+      await Promise.resolve();
+    }
+
+    expect(heard).toEqual([]);
+    unsubscribe();
+  });
+
+  it('stops notifying a subscriber after it unsubscribes', async () => {
+    const b64 = btoa('fake-ttf-bytes');
+    global.fetch = jest.fn(() =>
+      Promise.resolve({ ok: true, json: () => Promise.resolve({ data: b64 }) })
+    );
+    const fakeFace = { load: jest.fn().mockResolvedValue(undefined) };
+    global.FontFace = jest.fn(() => fakeFace);
+    document.fonts = { add: jest.fn() };
+
+    const heard = [];
+    const unsubscribe = onFontFamilyLoaded((family) => heard.push(family));
+    unsubscribe();
+
+    loadGoogleFontFamilies(['NotifyUnsubFont'], 'https://example.com/wp-json/pf/v1');
+
+    for (let i = 0; i < 20; i++) {
+      // eslint-disable-next-line no-await-in-loop
+      await Promise.resolve();
+    }
+
+    expect(heard).toEqual([]);
   });
 });
