@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 import { __ } from '@wordpress/i18n';
-import { Canvas as FabricCanvas, Rect, Textbox, IText, FabricImage, Path as FabricPath, PencilBrush, loadSVGFromString, util, cache as fabricCache } from 'fabric';
+import { Canvas as FabricCanvas, Rect, IText, FabricImage, Path as FabricPath, PencilBrush, loadSVGFromString, util, cache as fabricCache } from 'fabric';
 import { archUpPath } from '../utils/curvePresets';
 import { renderHersheyText, ENGRAVING_FONTS } from '../utils/hersheyFonts';
 import useDesignerStore from '../store/useDesignerStore';
@@ -825,7 +825,7 @@ export default function DesignerCanvas() {
     // Place immediately, centred in the boundary — no click step. The customer
     // drags it into position afterwards, which is the interaction that actually
     // reads as "put the text where I want it".
-    const zoneIdx = zones.findIndex((z) => (z.allowed_types || ['text', 'image', 'svg']).includes('text'));
+    const zoneIdx = findFirstZoneForType('text');
     const zone = zoneIdx >= 0 ? zones[zoneIdx] : null;
     const defaultFont = zone?.defaultFontFamily || 'Arial';
 
@@ -865,7 +865,7 @@ export default function DesignerCanvas() {
     snapshotView(currentViewIndex, canvas.toJSON(['data']));
     setActiveTool('select');
   }, [activeTool, currentViewIndex, zones, permissions, canvasWidth, canvasHeight,
-      currentView, applyPermissions, applyZoneClip, clampToZone, snapshotView, setActiveTool]);
+      currentView, findFirstZoneForType, applyPermissions, applyZoneClip, clampToZone, snapshotView, setActiveTool]);
 
   // ── Tool: add-curved-text on canvas click ─────────────────────────────────
 
