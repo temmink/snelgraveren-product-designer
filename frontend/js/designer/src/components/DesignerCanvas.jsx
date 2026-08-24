@@ -10,6 +10,7 @@ import useIsMobile from '../hooks/useIsMobile';
 import useCanvasHistory from '../hooks/useCanvasHistory';
 import { filterFabricJson } from '../utils/fabricJson';
 import { zoneShapePath, objectSamplePoints, pointsInsideZoneShape } from '../../../../../shared/js/zoneContainment';
+import { minFontSizePx } from '../../../../../shared/js/fontSizeLimits';
 import MmRuler from '../../../../../shared/js/MmRuler.jsx';
 
 // Infer element type from Fabric object type when data.elementType is missing
@@ -45,6 +46,7 @@ export default function DesignerCanvas() {
   const snapshotViewRef    = useRef(null);
   const pushHistoryRef     = useRef(null);
   const currentViewIndexRef = useRef(0);
+  const addTextGuardRef    = useRef(false);
 
   const isMobile = useIsMobile();
   const isMobileRef = useRef(isMobile);
@@ -804,53 +806,66 @@ export default function DesignerCanvas() {
     return () => document.fonts.removeEventListener('loadingdone', onFontLoad);
   }, []);
 
-  // ── Tool: add-text on canvas click ────────────────────────────────────────
+  // ── Tool: add-text, placed immediately centred in the boundary ─────────────
+
+  useEffect(() => {
+    if (activeTool !== 'add-text') addTextGuardRef.current = false;
+  }, [activeTool]);
 
   useEffect(() => {
     const canvas = fabricRef.current;
     if (!canvas || activeTool !== 'add-text') return;
 
-    canvas.defaultCursor = 'crosshair';
+    // setActiveTool('select') below is async with respect to this effect, so a
+    // dependency change in the same tick could re-enter and add a second copy.
+    // The ref makes the placement idempotent for one activation of the tool.
+    if (addTextGuardRef.current) return;
+    addTextGuardRef.current = true;
 
-    const onClick = (opt) => {
-      const ptr = canvas.getPointer(opt.e);
-      const zoneIdx = findZoneForPoint(ptr.x, ptr.y, 'text');
+    // Place immediately, centred in the boundary — no click step. The customer
+    // drags it into position afterwards, which is the interaction that actually
+    // reads as "put the text where I want it".
+    const zoneIdx = zones.findIndex((z) => (z.allowed_types || ['text', 'image', 'svg']).includes('text'));
+    const zone = zoneIdx >= 0 ? zones[zoneIdx] : null;
+    const defaultFont = zone?.defaultFontFamily || 'Arial';
 
-      const zone = zoneIdx >= 0 ? zones[zoneIdx] : null;
-      const defaultFont = zone?.defaultFontFamily || 'Arial';
+    const minPx = minFontSizePx({
+      minFontSizeMm: permissions.text?.min_font_size_mm,
+      canvasWidth,
+      widthMm: Number(currentView?.width_mm) || 0,
+    });
 
-      const textWidth = zone ? zone.width - 20 : 200;
-      const text = new Textbox(__('Your text here', 'snelgraveren-product-designer'), {
-        left: ptr.x,
-        top: ptr.y,
-        width: textWidth,
-        fontFamily: defaultFont,
-        fontSize: 24,
-        fill: '#000000',
-        data: {
-          elementType: 'text',
-          zoneIndex: zoneIdx,
-        },
-      });
+    const text = new IText(__('Your text here', 'snelgraveren-product-designer'), {
+      left:       zone ? zone.x + zone.width / 2  : canvasWidth / 2,
+      top:        zone ? zone.y + zone.height / 2 : canvasHeight / 2,
+      originX:    'center',
+      originY:    'center',
+      fontFamily: defaultFont,
+      fontSize:   Math.max(24, Math.ceil(minPx)),
+      fill:       '#000000',
+      data: {
+        elementType: 'text',
+        zoneIndex:   zoneIdx,
+      },
+    });
 
-      applyPermissions(text, 'text');
-      if (zoneIdx >= 0) applyZoneClip(text, zoneIdx);
-      canvas.add(text);
-      canvas.setActiveObject(text);
+    applyPermissions(text, 'text');
+    if (zoneIdx >= 0) applyZoneClip(text, zoneIdx);
+    canvas.add(text);
+    canvas.setActiveObject(text);
+    // Seed the containment anchor at the centre — the most interior point of
+    // the zone — so the very first drag has a valid position to fall back to.
+    // Without this the object has no anchor and every drag inside a shaped
+    // boundary snaps it back to nowhere.
+    text._sgpdLastValid = { left: text.left, top: text.top };
+    if (zoneIdx >= 0) clampToZone(text);
 
-      if (zoneIdx >= 0) clampToZone(text);
-
-      canvas.renderAll();
-      snapshotView(currentViewIndex, canvas.toJSON(['data']));
-      setActiveTool('select');
-    };
-
-    canvas.on('mouse:down', onClick);
-    return () => {
-      canvas.off('mouse:down', onClick);
-      canvas.defaultCursor = 'default';
-    };
-  }, [activeTool, currentViewIndex, findZoneForPoint, applyPermissions, applyZoneClip, clampToZone, snapshotView, setActiveTool]);
+    pushHistoryRef.current?.();
+    canvas.renderAll();
+    snapshotView(currentViewIndex, canvas.toJSON(['data']));
+    setActiveTool('select');
+  }, [activeTool, currentViewIndex, zones, permissions, canvasWidth, canvasHeight,
+      currentView, applyPermissions, applyZoneClip, clampToZone, snapshotView, setActiveTool]);
 
   // ── Tool: add-curved-text on canvas click ─────────────────────────────────
 
@@ -873,8 +888,10 @@ export default function DesignerCanvas() {
       const pathObj = new FabricPath(pathStr, { visible: false });
 
       const text = new IText(defaultText, {
-        left: ptr.x,
-        top: ptr.y,
+        left:       zone ? zone.x + zone.width / 2  : canvasWidth / 2,
+        top:        zone ? zone.y + zone.height / 2 : canvasHeight / 2,
+        originX:    'center',
+        originY:    'center',
         fontFamily: defaultFont,
         fontSize: 24,
         fill: '#000000',
@@ -891,7 +908,9 @@ export default function DesignerCanvas() {
       if (zoneIdx >= 0) applyZoneClip(text, zoneIdx);
       canvas.add(text);
       canvas.setActiveObject(text);
-
+      // Seed the containment anchor at the centre — the most interior point of
+      // the zone — so the very first drag has a valid position to fall back to.
+      text._sgpdLastValid = { left: text.left, top: text.top };
       if (zoneIdx >= 0) clampToZone(text);
 
       pushHistoryRef.current?.();
@@ -905,7 +924,7 @@ export default function DesignerCanvas() {
       canvas.off('mouse:down', onClick);
       canvas.defaultCursor = 'default';
     };
-  }, [activeTool, currentViewIndex, zones, findZoneForPoint, applyPermissions, applyZoneClip, clampToZone, snapshotView, setActiveTool]);
+  }, [activeTool, currentViewIndex, zones, canvasWidth, canvasHeight, findZoneForPoint, applyPermissions, applyZoneClip, clampToZone, snapshotView, setActiveTool]);
 
   // ── Tool: add-engraving-text on canvas click ────────────────────────────────
   useEffect(() => {
