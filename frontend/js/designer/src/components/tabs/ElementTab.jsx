@@ -125,7 +125,7 @@ export default function ElementTab() {
 }
 
 function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentViewIndex, sizeFloor }) {
-  const [fontSize, setFontSize] = useState(fabricObj.fontSize || 24);
+  const [fontSizeText, setFontSizeText] = useState(String(fabricObj.fontSize || 24));
   const [fill, setFill]         = useState(fabricObj.fill || '#000000');
   const [bold, setBold]         = useState(fabricObj.fontWeight === 'bold');
   const [italic, setItalic]     = useState(fabricObj.fontStyle === 'italic');
@@ -153,7 +153,7 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
 
   // Sync state when selected object changes
   useEffect(() => {
-    setFontSize(fabricObj.fontSize || 24);
+    setFontSizeText(String(fabricObj.fontSize || 24));
     setFill(fabricObj.fill || '#000000');
     setBold(fabricObj.fontWeight === 'bold');
     setItalic(fabricObj.fontStyle === 'italic');
@@ -195,11 +195,30 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
           type="number"
           min={sizeFloor}
           max="200"
-          value={fontSize}
+          value={fontSizeText}
           onChange={(e) => {
-            const v = Math.max(sizeFloor, parseInt(e.target.value, 10) || 24);
-            setFontSize(v);
-            update({ fontSize: v });
+            const raw = e.target.value;
+            setFontSizeText(raw);
+            // Commit live while the string is a usable number; sizeFloor/max
+            // clamping happens on blur so a transient value (e.g. while
+            // typing a two-digit size below the floor) never gets forced
+            // back into the field and mangles what the user is typing.
+            const parsed = parseInt(raw, 10);
+            if (raw !== '' && Number.isFinite(parsed) && parsed > 0) {
+              update({ fontSize: parsed });
+            }
+          }}
+          onBlur={(e) => {
+            const parsed = parseInt(e.target.value, 10);
+            const usable = (Number.isFinite(parsed) && parsed > 0) ? parsed : (fabricObj.fontSize || sizeFloor);
+            const clamped = Math.min(200, Math.max(sizeFloor, usable));
+            setFontSizeText(String(clamped));
+            update({ fontSize: clamped });
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.target.blur();
+            }
           }}
         />
       </label>
@@ -537,14 +556,14 @@ function EngravingTextProperties({ fabricObj, snapshotView, currentViewIndex, si
   const data = fabricObj.data || {};
   const [text, setText] = useState(data.engravingText || 'Your text');
   const [fontId, setFontId] = useState(data.engravingFontId || 'hershey-simplex');
-  const [fontSize, setFontSize] = useState(data.engravingFontSize || 24);
+  const [fontSizeText, setFontSizeText] = useState(String(data.engravingFontSize || 24));
   const [stroke, setStroke] = useState(fabricObj.stroke || '#000000');
 
   useEffect(() => {
     const d = fabricObj.data || {};
     setText(d.engravingText || 'Your text');
     setFontId(d.engravingFontId || 'hershey-simplex');
-    setFontSize(d.engravingFontSize || 24);
+    setFontSizeText(String(d.engravingFontSize || 24));
     setStroke(fabricObj.stroke || '#000000');
   }, [fabricObj]);
 
@@ -597,7 +616,7 @@ function EngravingTextProperties({ fabricObj, snapshotView, currentViewIndex, si
         value={text}
         onChange={(e) => {
           setText(e.target.value);
-          rerender(e.target.value, fontId, fontSize, stroke);
+          rerender(e.target.value, fontId, fabricObj.data?.engravingFontSize || 24, stroke);
         }}
       />
 
@@ -609,7 +628,7 @@ function EngravingTextProperties({ fabricObj, snapshotView, currentViewIndex, si
             <button
               type="button"
               key={f.id}
-              onClick={() => { setFontId(f.id); rerender(text, f.id, fontSize, stroke); }}
+              onClick={() => { setFontId(f.id); rerender(text, f.id, fabricObj.data?.engravingFontSize || 24, stroke); }}
               style={{
                 display: 'flex', alignItems: 'center', gap: '8px',
                 padding: '6px 8px', border: fontId === f.id ? '2px solid #2271b1' : '1px solid #ddd',
@@ -635,13 +654,30 @@ function EngravingTextProperties({ fabricObj, snapshotView, currentViewIndex, si
       <input
         type="number"
         className="pf-element__input pf-element__input--short"
-        value={fontSize}
+        value={fontSizeText}
         min={sizeFloor}
         max={120}
         onChange={(e) => {
-          const v = Math.max(sizeFloor, parseInt(e.target.value, 10) || 24);
-          setFontSize(v);
-          rerender(text, fontId, v, stroke);
+          const raw = e.target.value;
+          setFontSizeText(raw);
+          // Commit live while usable; clamp to sizeFloor/max on blur only —
+          // see the matching comment on the text-element size field above.
+          const parsed = parseInt(raw, 10);
+          if (raw !== '' && Number.isFinite(parsed) && parsed > 0) {
+            rerender(text, fontId, parsed, stroke);
+          }
+        }}
+        onBlur={(e) => {
+          const parsed = parseInt(e.target.value, 10);
+          const usable = (Number.isFinite(parsed) && parsed > 0) ? parsed : (fabricObj.data?.engravingFontSize || sizeFloor);
+          const clamped = Math.min(120, Math.max(sizeFloor, usable));
+          setFontSizeText(String(clamped));
+          rerender(text, fontId, clamped, stroke);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.target.blur();
+          }
         }}
       />
 
@@ -652,7 +688,7 @@ function EngravingTextProperties({ fabricObj, snapshotView, currentViewIndex, si
         value={stroke}
         onChange={(e) => {
           setStroke(e.target.value);
-          rerender(text, fontId, fontSize, e.target.value);
+          rerender(text, fontId, fabricObj.data?.engravingFontSize || 24, e.target.value);
         }}
       />
     </div>
