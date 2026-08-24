@@ -7,6 +7,7 @@ import ImageFilters from '../ImageFilters';
 import CurvedTextProperties from '../CurvedTextProperties';
 import { renderHersheyText, ENGRAVING_FONTS } from '../../utils/hersheyFonts';
 import { getImageQuality } from '../../utils/imageQuality';
+import { minFontSizePx } from '../../../../../../shared/js/fontSizeLimits';
 
 export default function ElementTab() {
   const { selectedObject, template, snapshotView, currentViewIndex, fabricCanvasRef, zoneFillColors, setZoneFillColor } = useDesignerStore();
@@ -17,6 +18,11 @@ export default function ElementTab() {
   const currentView = views[currentViewIndex];
   const zones = currentView?.zones_config || [];
   const editableZones = zones.filter((z) => z.boundary_type === 'svg' && z.svg_url && z.svg_fill_editable);
+  const sizeFloor = Math.max(8, Math.ceil(minFontSizePx({
+    minFontSizeMm: permissions.text?.min_font_size_mm,
+    canvasWidth: currentView?.canvas_width || 0,
+    widthMm: Number(currentView?.width_mm) || 0,
+  })));
 
   const { type, fabricObj } = selectedObject || {};
   const perms = type ? (permissions[type] || {}) : {};
@@ -51,6 +57,7 @@ export default function ElementTab() {
               globalConfig={globalConfig}
               snapshotView={snapshotView}
               currentViewIndex={currentViewIndex}
+              sizeFloor={sizeFloor}
             />
           )}
 
@@ -67,6 +74,7 @@ export default function ElementTab() {
                 globalConfig={globalConfig}
                 snapshotView={snapshotView}
                 currentViewIndex={currentViewIndex}
+                sizeFloor={sizeFloor}
               />
             </>
           )}
@@ -76,6 +84,7 @@ export default function ElementTab() {
               fabricObj={fabricObj}
               snapshotView={snapshotView}
               currentViewIndex={currentViewIndex}
+              sizeFloor={sizeFloor}
             />
           )}
           {(type === 'image' || type === 'svg') && (
@@ -113,7 +122,7 @@ export default function ElementTab() {
   );
 }
 
-function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentViewIndex }) {
+function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentViewIndex, sizeFloor }) {
   const [fontSize, setFontSize] = useState(fabricObj.fontSize || 24);
   const [fill, setFill]         = useState(fabricObj.fill || '#000000');
   const [bold, setBold]         = useState(fabricObj.fontWeight === 'bold');
@@ -130,9 +139,15 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
       fabricObj.initDimensions();
       fabricObj.setCoords();
     }
+    // The handle guard is a ratio against fontSize, so it must move with it.
+    if ('fontSize' in props && sizeFloor > 8 && fabricObj.fontSize > 0) {
+      fabricObj.set({
+        minScaleLimit: Math.max(perms.min_scale ?? 0, sizeFloor / fabricObj.fontSize),
+      });
+    }
     fabricObj.canvas?.renderAll();
     snapshotView(currentViewIndex, fabricObj.canvas?.toJSON(['data']));
-  }, [fabricObj, snapshotView, currentViewIndex]);
+  }, [fabricObj, snapshotView, currentViewIndex, sizeFloor, perms]);
 
   // Sync state when selected object changes
   useEffect(() => {
@@ -176,11 +191,11 @@ function TextProperties({ fabricObj, perms, globalConfig, snapshotView, currentV
         <span>{__('Size', 'snelgraveren-product-designer')}</span>
         <input
           type="number"
-          min="8"
+          min={sizeFloor}
           max="200"
           value={fontSize}
           onChange={(e) => {
-            const v = parseInt(e.target.value, 10) || 24;
+            const v = Math.max(sizeFloor, parseInt(e.target.value, 10) || 24);
             setFontSize(v);
             update({ fontSize: v });
           }}
@@ -516,7 +531,7 @@ function ZoneFillSection({ zones, editableZones, globalConfig, fabricCanvasRef, 
   );
 }
 
-function EngravingTextProperties({ fabricObj, snapshotView, currentViewIndex }) {
+function EngravingTextProperties({ fabricObj, snapshotView, currentViewIndex, sizeFloor }) {
   const data = fabricObj.data || {};
   const [text, setText] = useState(data.engravingText || 'Your text');
   const [fontId, setFontId] = useState(data.engravingFontId || 'hershey-simplex');
@@ -619,10 +634,10 @@ function EngravingTextProperties({ fabricObj, snapshotView, currentViewIndex }) 
         type="number"
         className="pf-element__input pf-element__input--short"
         value={fontSize}
-        min={8}
+        min={sizeFloor}
         max={120}
         onChange={(e) => {
-          const v = parseInt(e.target.value, 10) || 24;
+          const v = Math.max(sizeFloor, parseInt(e.target.value, 10) || 24);
           setFontSize(v);
           rerender(text, fontId, v, stroke);
         }}

@@ -188,7 +188,19 @@ export default function DesignerCanvas() {
     if (perms.min_scale != null) {
       obj.set({ minScaleLimit: perms.min_scale });
     }
-  }, [permissions]);
+
+    // Corner handles change scaleY, not fontSize, so the effective size is
+    // fontSize * scaleY. Clamping the size input alone leaves the handles as an
+    // open door under the template's engraving minimum.
+    const minPx = minFontSizePx({
+      minFontSizeMm: permissions.text?.min_font_size_mm,
+      canvasWidth,
+      widthMm: Number(currentView?.width_mm) || 0,
+    });
+    if (minPx > 0 && obj.fontSize > 0) {
+      obj.set({ minScaleLimit: Math.max(perms.min_scale ?? 0, minPx / obj.fontSize) });
+    }
+  }, [permissions, canvasWidth, currentView]);
 
   // ── Clamp object inside its assigned zone ─────────────────────────────────
 
