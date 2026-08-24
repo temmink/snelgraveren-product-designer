@@ -39,6 +39,34 @@ async function ensureFontsAndRemeasure(canvas) {
 }
 
 /**
+ * Run `fn` with every object flagged data.excludeFromExport hidden, then
+ * restore. Used for the production export renders only — thumbnails keep those
+ * objects, because a thumbnail should look like what the customer designed.
+ *
+ * The restore lives in `finally` on purpose: two call sites operate on the
+ * customer's LIVE on-screen canvas, so a throwing render must never leave a
+ * layer hidden in front of them.
+ */
+function withoutExcludedObjects(canvas, fn) {
+  const hidden = [];
+  try {
+    canvas.getObjects().forEach((o) => {
+      if (o.data?.excludeFromExport && o.visible !== false) {
+        hidden.push(o);
+        o.visible = false;
+      }
+    });
+    if (hidden.length) canvas.renderAll();
+    return fn();
+  } finally {
+    if (hidden.length) {
+      hidden.forEach((o) => { o.visible = true; });
+      canvas.renderAll();
+    }
+  }
+}
+
+/**
  * Render a thumbnail from canvas JSON using an offscreen Fabric canvas.
  * Returns a data URL (PNG) or empty string on failure.
  */
@@ -77,7 +105,9 @@ async function renderOffscreenExportPng(canvasJson, width, height) {
     await offscreen.loadFromJSON(canvasJson);
     await ensureFontsAndRemeasure(offscreen);
     offscreen.renderAll();
-    const dataUrl = offscreen.toDataURL({ format: 'png', multiplier: 3 });
+    const dataUrl = withoutExcludedObjects(offscreen, () =>
+      offscreen.toDataURL({ format: 'png', multiplier: 3 })
+    );
     offscreen.dispose();
     return dataUrl;
   } catch (err) {
@@ -108,7 +138,7 @@ async function renderOffscreenExportSvg(canvasJson, width, height) {
     await offscreen.loadFromJSON(canvasJson);
     await ensureFontsAndRemeasure(offscreen);
     offscreen.renderAll();
-    const svg = offscreen.toSVG();
+    const svg = withoutExcludedObjects(offscreen, () => offscreen.toSVG());
     offscreen.dispose();
     return svg;
   } catch (err) {
@@ -563,7 +593,9 @@ export default function App() {
                 thumbnail = store.fabricCanvasRef.toDataURL({ format: 'png', multiplier: 0.5 });
               } catch (_) { /* ignore */ }
               try {
-                exportSvg = store.fabricCanvasRef.toDataURL({ format: 'png', multiplier: 3 });
+                exportSvg = withoutExcludedObjects(store.fabricCanvasRef, () =>
+                  store.fabricCanvasRef.toDataURL({ format: 'png', multiplier: 3 })
+                );
               } catch (_) { /* ignore */ }
             } else {
               thumbnail = await renderOffscreenThumbnail(json, w, h);
@@ -720,7 +752,9 @@ export default function App() {
             thumbnail = fabricCanvasRef.toDataURL({ format: 'png', multiplier: 0.5 });
           } catch (_) { /* ignore */ }
           try {
-            exportSvg = fabricCanvasRef.toDataURL({ format: 'png', multiplier: 3 });
+            exportSvg = withoutExcludedObjects(fabricCanvasRef, () =>
+              fabricCanvasRef.toDataURL({ format: 'png', multiplier: 3 })
+            );
           } catch (_) { /* ignore */ }
         } else {
           // Non-active view: render offscreen
