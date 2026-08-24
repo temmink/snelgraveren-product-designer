@@ -423,7 +423,7 @@ export default function DesignerCanvas() {
               data:        { zoneIndex: index, isZoneOverlay: true, svgFillEditable: !!zone.svg_fill_editable },
             });
             // Fabric.js 6.x Group.toObject doesn't serialize custom properties like `data`.
-            // Override toObject to ensure `data` is included in canvas.toJSON(['data']).
+            // Override toObject to ensure `data` is included in canvas.toObject(['data']).
             const _origToObject = group.toObject.bind(group);
             group.toObject = function(propertiesToInclude) {
               const obj = _origToObject(propertiesToInclude);
@@ -586,7 +586,7 @@ export default function DesignerCanvas() {
             opacity:    layer.opacity ?? 1,
             // evented:false (locked case) is what lets clicks fall through to
             // any layer above/below this one. data.templateLocked is
-            // persisted via canvas.toJSON(['data']) and re-enforced on
+            // persisted via canvas.toObject(['data']) and re-enforced on
             // snapshot restore, since selectable/evented never serialize.
             ...(locked
               ? { selectable: false, evented: false, hasControls: false, lockMovementX: true, lockMovementY: true }
@@ -627,7 +627,7 @@ export default function DesignerCanvas() {
                 strokeUniform: true,
                 // evented:false (locked case) is what lets clicks fall through
                 // to text sitting above/below this layer. data.templateLocked
-                // is persisted via canvas.toJSON(['data']) and re-enforced on
+                // is persisted via canvas.toObject(['data']) and re-enforced on
                 // snapshot restore, since selectable/evented never serialize.
                 ...(locked
                   ? { selectable: false, evented: false, hasControls: false, lockMovementX: true, lockMovementY: true }
@@ -678,7 +678,7 @@ export default function DesignerCanvas() {
                 visible:       layer.visible !== false,
                 // evented:false (locked case) is what lets clicks fall through
                 // to the text and logos above it. data.templateLocked is
-                // persisted via canvas.toJSON(['data']) and re-enforced on
+                // persisted via canvas.toObject(['data']) and re-enforced on
                 // snapshot restore, since selectable/evented never serialize.
                 ...(locked
                   ? { selectable: false, evented: false, hasControls: false, lockMovementX: true, lockMovementY: true }
@@ -722,8 +722,39 @@ export default function DesignerCanvas() {
           const latestSolidColor = useDesignerStore.getState().solidFillColor;
           const isSolidProduct = globalConfig.solid_color;
 
+          // Re-apply permission/interactivity state — minScaleLimit,
+          // hasControls, mtr-control visibility — that loadFromJSON cannot
+          // restore. Fabric 6 never serializes minScaleLimit (it lives only
+          // in interactiveObjectDefaultValues, not in toObject output), so
+          // every restore (view switch, undo, ?pf_design=HASH reload)
+          // silently reopened the corner-handle floor even though the
+          // number-input floor (ElementTab, recomputed from the template on
+          // every render) stayed intact — the exact creation-vs-restore
+          // divergence R14/R15 closed for the other entry points, back via
+          // this one. Reuses the SAME applyPermissions the creation paths
+          // call — never a second formula for the floor. Only sets
+          // interactivity flags (hasControls / control visibility /
+          // minScaleLimit); it never touches left/top/scaleX/scaleY/angle/
+          // fontSize, so an already-too-small saved object is never
+          // retroactively resized — only its handles are re-floored for the
+          // next drag. Skips locked/template-art layers: the creation paths
+          // never call applyPermissions on them either (guarded by `if
+          // (!locked)` above), and the lock-enforcement loop right below is
+          // the final authority over their interactivity — it runs AFTER
+          // this loop so a locked layer can never end up with controls
+          // handed back to it.
+          canvas.getObjects().forEach((obj) => {
+            if (obj.data?.templateArt || obj.data?.templateLocked === true) return;
+            const et = obj.data?.elementType;
+            if (et === 'text' || et === 'curved-text' || et === 'engraving-text') {
+              applyPermissions(obj, 'text');
+            } else if (et === 'svg' || et === 'image') {
+              applyPermissions(obj, et);
+            }
+          });
+
           // Re-enforce the lock state on restore: selectable/evented/etc. are
-          // never part of canvas.toJSON(['data']), so loadFromJSON always
+          // never part of canvas.toObject(['data']), so loadFromJSON always
           // hands objects back with Fabric's interactive defaults regardless
           // of how they were added. data.templateLocked (set per-layer via
           // isLayerLockedForCustomer, R21) IS included — it lives under
@@ -732,7 +763,8 @@ export default function DesignerCanvas() {
           // bitmap background branch) stays locked regardless, same as
           // fe3b5d9. An object with no templateLocked at all (a design saved
           // while every layer was unconditionally movable) is left exactly
-          // as loadFromJSON restored it — never retro-locked.
+          // as loadFromJSON restored it — never retro-locked. Runs LAST so
+          // lock state always wins over the permissions re-apply above.
           canvas.getObjects().forEach((obj) => {
             if (obj.data?.templateArt || obj.data?.templateLocked === true) {
               obj.set({ selectable: false, evented: false, hasControls: false, lockMovementX: true, lockMovementY: true });
@@ -817,7 +849,23 @@ export default function DesignerCanvas() {
       // Backstop in case a path bypasses the live object:scaling event.
       clampEngravingTextRef.current?.(e.target);
       if (!disposed) {
-        snapshotViewRef.current?.(currentViewIndexRef.current, canvas.toJSON(['data']));
+        // Every snapshot in this file uses canvas.toObject(['data']), never
+        // canvas.toJSON(['data']) — Fabric 6.9.1's Canvas.prototype.toJSON()
+        // takes NO parameters and internally calls this.toObject() with no
+        // arguments, so a propertiesToInclude argument passed to toJSON is
+        // silently dropped (see node_modules/fabric/dist/index.mjs, the
+        // `toJSON() { return this.toObject(); }` override). That made
+        // `canvas.toJSON(['data'])` throughout this file equivalent to a bare
+        // `canvas.toJSON()` for every object except the zone-boundary Group
+        // above, which patches its own toObject() to inject `data`
+        // unconditionally — real objects (IText/Image/Path) silently lost
+        // `data.elementType`/`data.zoneIndex`/`data.templateLocked` on every
+        // snapshot, breaking both the lock re-enforcement below and any
+        // restore-time permission re-apply. canvas.toObject(['data'])
+        // forwards propertiesToInclude correctly and returns the identical
+        // plain-object shape loadFromJSON already accepts — a safe drop-in
+        // fix, not a behavior change for anything that already worked.
+        snapshotViewRef.current?.(currentViewIndexRef.current, canvas.toObject(['data']));
         pushHistoryRef.current?.();
       }
     });
@@ -837,7 +885,7 @@ export default function DesignerCanvas() {
 
     canvas.on('object:removed', () => {
       if (!disposed) {
-        snapshotViewRef.current?.(currentViewIndexRef.current, canvas.toJSON(['data']));
+        snapshotViewRef.current?.(currentViewIndexRef.current, canvas.toObject(['data']));
         pushHistoryRef.current?.();
       }
     });
@@ -894,7 +942,7 @@ export default function DesignerCanvas() {
       // during fast view switching or a load race (which would wipe the design).
       if (!disposed && canvasReady && fabricRef.current
           && fabricRef.current.getObjects().length > 0) {
-        snapshotView(currentViewIndex, fabricRef.current.toJSON(['data']));
+        snapshotView(currentViewIndex, fabricRef.current.toObject(['data']));
       }
       disposed = true;
       document.removeEventListener('keydown', onKeyDown);
@@ -983,7 +1031,7 @@ export default function DesignerCanvas() {
 
     pushHistoryRef.current?.();
     canvas.renderAll();
-    snapshotView(currentViewIndex, canvas.toJSON(['data']));
+    snapshotView(currentViewIndex, canvas.toObject(['data']));
     setActiveTool('select');
   }, [activeTool, currentViewIndex, zones, permissions, canvasWidth, canvasHeight,
       widthMm, findFirstZoneForType, applyPermissions, applyZoneClip, clampToZone, snapshotView, setActiveTool]);
@@ -1036,7 +1084,7 @@ export default function DesignerCanvas() {
 
       pushHistoryRef.current?.();
       canvas.renderAll();
-      snapshotView(currentViewIndex, canvas.toJSON(['data']));
+      snapshotView(currentViewIndex, canvas.toObject(['data']));
       setActiveTool('select');
     };
 
@@ -1089,7 +1137,7 @@ export default function DesignerCanvas() {
       if (zoneIdx >= 0) clampToZone(path);
       pushHistoryRef.current?.();
       canvas.renderAll();
-      snapshotView(currentViewIndex, canvas.toJSON(['data']));
+      snapshotView(currentViewIndex, canvas.toObject(['data']));
       setActiveTool('select');
     };
 
@@ -1146,7 +1194,7 @@ export default function DesignerCanvas() {
       if (zoneIdx >= 0) clampToZone(img);
 
       canvas.renderAll();
-      snapshotView(currentViewIndex, canvas.toJSON(['data']));
+      snapshotView(currentViewIndex, canvas.toObject(['data']));
     } catch (err) {
       setError(err.message);
     }
@@ -1223,7 +1271,7 @@ export default function DesignerCanvas() {
       if (zoneIdx >= 0) clampToZone(img);
 
       canvas.renderAll();
-      snapshotView(currentViewIndex, canvas.toJSON(['data']));
+      snapshotView(currentViewIndex, canvas.toObject(['data']));
     } catch (err) {
       setError(err.message);
     }
@@ -1268,7 +1316,7 @@ export default function DesignerCanvas() {
       }
 
       pushHistoryRef.current?.();
-      snapshotViewRef.current?.(currentViewIndexRef.current, canvas.toJSON(['data']));
+      snapshotViewRef.current?.(currentViewIndexRef.current, canvas.toObject(['data']));
     };
 
     canvas.on('path:created', onPathCreated);
@@ -1306,7 +1354,7 @@ export default function DesignerCanvas() {
         pushHistoryRef.current?.();
         canvas.remove(target);
         canvas.renderAll();
-        snapshotViewRef.current?.(currentViewIndexRef.current, canvas.toJSON(['data']));
+        snapshotViewRef.current?.(currentViewIndexRef.current, canvas.toObject(['data']));
         hoveredPath = null;
       }
     };
