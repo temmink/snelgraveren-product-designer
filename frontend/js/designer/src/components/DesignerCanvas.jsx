@@ -607,20 +607,17 @@ export default function DesignerCanvas() {
                 angle:         layer.angle  || 0,
                 opacity:       layer.opacity ?? 1,
                 strokeUniform: true,
-                // Pre-placed template artwork is locked for the customer:
-                // non-selectable art they can't move, resize, rotate or delete.
-                // Only text layers stay editable. Customer-added SVGs (clipart)
-                // go through a different add path and remain interactive.
-                // data.templateLocked is re-enforced on snapshot restore.
-                selectable:    false,
-                evented:       false,
-                hasControls:   false,
-                lockMovementX: true,
-                lockMovementY: true,
-                data:          { elementType: 'svg', zoneIndex: zoneIdx, templateLocked: true },
+                // Template artwork is customer-movable: the lock toggle governs
+                // the boundary in the Template Builder, not layers here.
+                selectable:    true,
+                evented:       true,
+                data:          { elementType: 'svg', zoneIndex: zoneIdx },
               });
               if (zoneClips(zone)) applyZoneClip(group, zoneIdx);
               canvas.add(group);
+              applyPermissions(group, 'svg');
+              group._sgpdLastValid = { left: group.left, top: group.top };
+              if (zone.behavior === 'restrict') clampToZone(group);
               group.setCoords();
               // Template art loads async and lands ON TOP of the synchronously
               // added text layers; a group's hit-area is its bounding box, so
@@ -691,13 +688,15 @@ export default function DesignerCanvas() {
           const latestSolidColor = useDesignerStore.getState().solidFillColor;
           const isSolidProduct = globalConfig.solid_color;
 
-          // Re-lock pre-placed template artwork after a snapshot restore:
-          // loadFromJSON reinstates whatever selectable/evented was serialized,
-          // which for designs saved before locking (or by a future edit) could
-          // be interactive. Keep template SVGs non-interactive for customers.
+          // Only background art (data.templateArt, set solely by the bitmap
+          // background branch) stays locked on restore. Template svg layers no
+          // longer carry data.templateLocked going forward; if an object still
+          // has it, normalize it to movable rather than re-freezing it.
           canvas.getObjects().forEach((obj) => {
-            if (obj.data?.templateLocked) {
+            if (obj.data?.templateArt) {
               obj.set({ selectable: false, evented: false, hasControls: false, lockMovementX: true, lockMovementY: true });
+            } else if (obj.data?.templateLocked) {
+              obj.set({ selectable: true, evented: true, hasControls: true, lockMovementX: false, lockMovementY: false });
             }
           });
 
