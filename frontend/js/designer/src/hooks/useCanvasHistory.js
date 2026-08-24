@@ -1,8 +1,14 @@
 import { useCallback, useRef } from 'react';
 import useDesignerStore from '../store/useDesignerStore';
 import { filterFabricJson } from '../utils/fabricJson';
+import { reapplyPostRestoreState } from '../utils/postRestoreState';
 
-export default function useCanvasHistory(fabricCanvasRef, currentViewIndex) {
+// `applyPermissionsRef` is DesignerCanvas's applyPermissions callback, handed
+// over by ref (it's defined further down in that component, after this hook
+// is called — see the comment at the DesignerCanvas call site). Read via
+// .current at restore time, never captured by value, so this hook always
+// uses the latest permissions/canvasWidth/widthMm closure.
+export default function useCanvasHistory(fabricCanvasRef, currentViewIndex, applyPermissionsRef) {
   const debounceTimer = useRef(null);
   const isRestoring = useRef(false);
 
@@ -30,13 +36,25 @@ export default function useCanvasHistory(fabricCanvasRef, currentViewIndex) {
             obj.set({ selectable: false, evented: false });
           }
         });
+        // Undo/redo runs its own loadFromJSON on this same canvas, so it needs
+        // the exact same post-restore treatment as DesignerCanvas's own restore
+        // path (view switch / ?pf_design=HASH reload) — otherwise Ctrl+Z drops
+        // the drag-handle floor (minScaleLimit isn't serialized) and unlocks
+        // template-locked layers (selectable/evented aren't serialized either).
+        // Shared implementation in utils/postRestoreState.js; see there for the
+        // ordering rationale (lock enforcement must run last) and the
+        // interactivity-only guarantee (never touches left/top/scaleX/scaleY/
+        // angle/fontSize).
+        if (applyPermissionsRef?.current) {
+          reapplyPostRestoreState(canvas, applyPermissionsRef.current);
+        }
         canvas.renderAll();
         useDesignerStore.getState().snapshotView(currentViewIndex, canvas.toObject(['data']));
       })
       .finally(() => {
         isRestoring.current = false;
       });
-  }, [fabricCanvasRef, currentViewIndex]);
+  }, [fabricCanvasRef, currentViewIndex, applyPermissionsRef]);
 
   const undo = useCallback(() => {
     const store = useDesignerStore.getState();

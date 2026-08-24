@@ -32,6 +32,18 @@ const useDesignerStore = create((set) => ({
   // Canvas ref (set by DesignerCanvas, used by App for thumbnails)
   fabricCanvasRef: null,
 
+  // Stable ref object (set ONCE by DesignerCanvas, .current kept in sync on
+  // every render) holding DesignerCanvas's applyPermissions callback. Toolbar
+  // renders as a sibling of DesignerCanvas and instantiates its own
+  // useCanvasHistory() for the undo/redo buttons (DesignerCanvas's own
+  // undo/redo, from its own useCanvasHistory() call, back only the Ctrl+Z
+  // keyboard shortcut) — both need the SAME applyPermissions so a restore
+  // triggered from either one re-floors minScaleLimit and re-enforces lock
+  // state identically. Store the REF OBJECT (not the function) so re-renders
+  // never change its identity — only .current changes, read live at restore
+  // time, exactly like every other *Ref pattern in DesignerCanvas.
+  applyPermissionsRef: null,
+
   // Actions
   loadTemplate: (data) => set({ template: data, currentViewIndex: 0 }),
 
@@ -58,6 +70,8 @@ const useDesignerStore = create((set) => ({
     })),
 
   setFabricCanvasRef: (ref) => set({ fabricCanvasRef: ref }),
+
+  setApplyPermissionsRef: (ref) => set({ applyPermissionsRef: ref }),
 
   clipartCollections: [],
   setClipartCollections: (collections) => set({ clipartCollections: collections }),

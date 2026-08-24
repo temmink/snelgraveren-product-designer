@@ -15,17 +15,7 @@ import { isLayerLockedForCustomer } from '../../../../../shared/js/layerLockForC
 import MmRuler from '../../../../../shared/js/MmRuler.jsx';
 import { resolveWidthMm } from '../../../../../shared/js/rulerTicks';
 import { resolveTextAnchor } from '../../../../../shared/js/textAnchor';
-
-// Infer element type from Fabric object type when data.elementType is missing
-// (e.g. designs saved before data serialisation was added).
-function inferElementType(obj) {
-  if (obj.data?.elementType) return obj.data.elementType;
-  const t = (obj.type || '').toLowerCase();
-  if (t === 'textbox' || t === 'itext' || t === 'i-text') return 'text';
-  if (t === 'image') return 'image';
-  if (t === 'path' || t === 'group') return 'svg';
-  return 'unknown';
-}
+import { inferElementType, reapplyPostRestoreState } from '../utils/postRestoreState';
 
 // Shape-aware initial placement for a newly-added image/clipart object.
 // Mirrors clampToZone's exact conditions for when a zone is truly shape-
@@ -73,6 +63,7 @@ export default function DesignerCanvas() {
   const pushHistoryRef     = useRef(null);
   const currentViewIndexRef = useRef(0);
   const addTextGuardRef    = useRef(false);
+  const applyPermissionsRef = useRef(null);
 
   const isMobile = useIsMobile();
   const isMobileRef = useRef(isMobile);
@@ -82,6 +73,7 @@ export default function DesignerCanvas() {
     template, currentViewIndex, activeTool,
     canvasSnapshots, snapshotView, setActiveTool,
     setSelectedObject, setError, setFabricCanvasRef,
+    setApplyPermissionsRef,
     drawingStrokeColor, drawingStrokeWidth,
   } = useDesignerStore();
 
@@ -103,8 +95,11 @@ export default function DesignerCanvas() {
   const showRuler = widthMm > 0 && !isMobile;
 
   // Pass fabricRef (the ref object) so useCanvasHistory always reads .current at call time,
-  // avoiding stale closures from null captured at mount.
-  const { pushHistory, undo, redo } = useCanvasHistory(fabricRef, currentViewIndex);
+  // avoiding stale closures from null captured at mount. applyPermissionsRef is the same
+  // pattern: applyPermissions is defined further down (it depends on `permissions`,
+  // `canvasWidth`, `widthMm`), so useCanvasHistory reads it via ref at undo/redo time
+  // rather than needing it in scope here.
+  const { pushHistory, undo, redo } = useCanvasHistory(fabricRef, currentViewIndex, applyPermissionsRef);
 
   // ── Keyboard shortcut: undo/redo ──────────────────────────────────────────
 
@@ -358,6 +353,7 @@ export default function DesignerCanvas() {
   snapshotViewRef.current     = snapshotView;
   pushHistoryRef.current      = pushHistory;
   currentViewIndexRef.current = currentViewIndex;
+  applyPermissionsRef.current = applyPermissions;
 
   // ── Canvas init ───────────────────────────────────────────────────────────
 
@@ -376,6 +372,12 @@ export default function DesignerCanvas() {
     });
     fabricRef.current = canvas;
     setFabricCanvasRef(canvas);
+    // Publish the STABLE applyPermissionsRef object (identity never changes,
+    // only .current does — see the store comment) so Toolbar's sibling
+    // useCanvasHistory() instance (the one actually wired to the visible
+    // undo/redo buttons) can re-apply permissions/lock state on its own
+    // restores too, not just the Ctrl+Z keyboard path below.
+    setApplyPermissionsRef(applyPermissionsRef);
 
     // Disable multi-select on mobile (too error-prone with touch)
     if (isMobileRef.current) {
@@ -715,55 +717,19 @@ export default function DesignerCanvas() {
           const isSolidProduct = globalConfig.solid_color;
 
           // Re-apply permission/interactivity state — minScaleLimit,
-          // hasControls, mtr-control visibility — that loadFromJSON cannot
-          // restore. Fabric 6 never serializes minScaleLimit (it lives only
-          // in interactiveObjectDefaultValues, not in toObject output), so
-          // every restore (view switch, undo, ?pf_design=HASH reload)
-          // silently reopened the corner-handle floor even though the
-          // number-input floor (ElementTab, recomputed from the template on
-          // every render) stayed intact — the exact creation-vs-restore
-          // divergence R14/R15 closed for the other entry points, back via
-          // this one. Reuses the SAME applyPermissions the creation paths
-          // call — never a second formula for the floor. Only sets
-          // interactivity flags (hasControls / control visibility /
-          // minScaleLimit); it never touches left/top/scaleX/scaleY/angle/
-          // fontSize, so an already-too-small saved object is never
-          // retroactively resized — only its handles are re-floored for the
-          // next drag. Skips locked/template-art layers: the creation paths
-          // never call applyPermissions on them either (guarded by `if
-          // (!locked)` above), and the lock-enforcement loop right below is
-          // the final authority over their interactivity — it runs AFTER
-          // this loop so a locked layer can never end up with controls
-          // handed back to it.
-          canvas.getObjects().forEach((obj) => {
-            if (obj.data?.templateArt || obj.data?.templateLocked === true) return;
-            const et = obj.data?.elementType;
-            if (et === 'text' || et === 'curved-text' || et === 'engraving-text') {
-              applyPermissions(obj, 'text');
-            } else if (et === 'svg' || et === 'image') {
-              applyPermissions(obj, et);
-            }
-          });
-
-          // Re-enforce the lock state on restore: selectable/evented/etc. are
-          // never part of canvas.toObject(['data']), so loadFromJSON always
-          // hands objects back with Fabric's interactive defaults regardless
-          // of how they were added. data.templateLocked (set per-layer via
-          // isLayerLockedForCustomer, R21) IS included — it lives under
-          // `data` — so it survives the round trip and is the source of
-          // truth here. Background art (data.templateArt, set solely by the
-          // bitmap background branch) stays locked regardless, same as
-          // fe3b5d9. An object with no templateLocked at all (a design saved
-          // while every layer was unconditionally movable) is left exactly
-          // as loadFromJSON restored it — never retro-locked. Runs LAST so
-          // lock state always wins over the permissions re-apply above.
-          canvas.getObjects().forEach((obj) => {
-            if (obj.data?.templateArt || obj.data?.templateLocked === true) {
-              obj.set({ selectable: false, evented: false, hasControls: false, lockMovementX: true, lockMovementY: true });
-            } else if (obj.data?.templateLocked === false) {
-              obj.set({ selectable: true, evented: true, hasControls: true, lockMovementX: false, lockMovementY: false });
-            }
-          });
+          // hasControls, mtr-control visibility — plus lock state, that
+          // loadFromJSON cannot restore. Fabric 6 never serializes
+          // minScaleLimit (it lives only in interactiveObjectDefaultValues,
+          // not in toObject output), so every restore (view switch, undo,
+          // ?pf_design=HASH reload) silently reopened the corner-handle
+          // floor even though the number-input floor (ElementTab,
+          // recomputed from the template on every render) stayed intact —
+          // the exact creation-vs-restore divergence R14/R15 closed for the
+          // other entry points, back via this one. Shared with
+          // useCanvasHistory's undo/redo restore (same defect, same fix) —
+          // see utils/postRestoreState.js for the full ordering rationale
+          // and the geometry-never-touched guarantee.
+          reapplyPostRestoreState(canvas, applyPermissions);
 
           // Sync zone fill colors from restored zone overlay objects.
           // Zone overlays may have `data.isZoneOverlay` (new saves) or may be

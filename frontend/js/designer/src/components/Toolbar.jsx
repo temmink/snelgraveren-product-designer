@@ -7,11 +7,19 @@ export default function Toolbar() {
   const {
     activeTool, setActiveTool, template, fabricCanvasRef, currentViewIndex, historyByView,
     drawingStrokeWidth, drawingStrokeColor, setDrawingStrokeWidth, setDrawingStrokeColor,
+    applyPermissionsRef,
   } = useDesignerStore();
   // Wrap the store canvas value in a ref so useCanvasHistory can read .current at call time.
   const canvasRef = useRef(null);
   canvasRef.current = fabricCanvasRef;
-  const { undo, redo } = useCanvasHistory(canvasRef, currentViewIndex);
+  // applyPermissionsRef comes from DesignerCanvas (published once via the
+  // store — see its comment there): this Toolbar instance is a SIBLING of
+  // DesignerCanvas with its own independent useCanvasHistory() call, and its
+  // undo/redo buttons are what customers actually click (DesignerCanvas's
+  // own undo/redo only back the Ctrl+Z keyboard shortcut). Without this,
+  // clicking Undo/Redo here would skip the minScaleLimit/lock-state
+  // re-apply entirely — the exact gap this fix closes.
+  const { undo, redo } = useCanvasHistory(canvasRef, currentViewIndex, applyPermissionsRef);
   const vh = historyByView[currentViewIndex];
   const canUndo = vh?.undoStack?.length > 0;
   const canRedo = vh?.redoStack?.length > 0;
