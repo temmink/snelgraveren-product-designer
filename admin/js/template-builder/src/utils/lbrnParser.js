@@ -179,6 +179,34 @@ export function qtFontToFamily(fontString) {
   return { family, weight };
 }
 
+/**
+ * Read a PNG's pixel dimensions from the IHDR header of its base64 payload.
+ * Bytes 0-7 are the PNG signature, 16-19 the width and 20-23 the height, all
+ * big-endian — so the first 24 decoded bytes are enough and we never decode a
+ * multi-megabyte image just to learn how big it is.
+ * Returns null for anything that is not a PNG (LightBurn can embed other
+ * formats; without dimensions we cannot scale, so those are skipped upstream).
+ */
+export function decodePngSize(base64) {
+  const head = String(base64 || '').slice(0, 48); // 48 base64 chars → 36 bytes
+  if (head.length < 32) return null;
+  let bin;
+  try {
+    bin = atob(head);
+  } catch (_) {
+    return null; // not valid base64
+  }
+  if (bin.length < 24) return null;
+  if (bin.slice(0, 8) !== '\x89PNG\r\n\x1a\n') return null;
+  const be32 = (o) => (
+    (bin.charCodeAt(o) << 24) | (bin.charCodeAt(o + 1) << 16)
+    | (bin.charCodeAt(o + 2) << 8) | bin.charCodeAt(o + 3)
+  ) >>> 0;
+  const width = be32(16);
+  const height = be32(20);
+  return width > 0 && height > 0 ? { width, height } : null;
+}
+
 /** Parse an `<XForm>` text node "a b c d e f" → 6-number affine (identity default). */
 function parseXform(text) {
   const p = String(text || '').trim().split(/\s+/).map(Number);
@@ -313,6 +341,7 @@ export function parseLbrn(xmlString, opts = {}) {
   // 1) Collect raw shapes with machine-space geometry.
   const paths = []; // { d(local), xform, cutIndex, mpts:[[mx,my]...] }
   const texts = []; // { text, family, fontSize, xform, cutIndex, originMx, originMy }
+  const bitmaps = []; // { data, pngW, pngH, wMm, hMm, corners, centre, angle }
 
   const pushPath = (vert, prim, xform, cutIndex, groupKey) => {
     const localD = vertPrimToPathData(vert, prim);
@@ -348,7 +377,36 @@ export function parseLbrn(xmlString, opts = {}) {
         }
       }
     } else if (type === 'Bitmap') {
-      warnings.push('Skipped a bitmap image (not supported).');
+      const data = el.getAttribute('Data') || '';
+      const wMm  = parseFloat(el.getAttribute('W') || '0') || 0;
+      const hMm  = parseFloat(el.getAttribute('H') || '0') || 0;
+      const size = data ? decodePngSize(data) : null;
+      if (!data || wMm <= 0 || hMm <= 0) {
+        warnings.push('Skipped a bitmap image with no usable size.');
+      } else if (!size) {
+        warnings.push('Skipped a bitmap image: only PNG images are supported.');
+      } else {
+        // W/H are the FINAL millimetre size; the XForm translation is the
+        // image CENTRE. Divide by the XForm's own scale to recover the local
+        // box, then map its corners so a scaled or rotated bitmap still
+        // contributes its true extent to the union bbox.
+        const sx = Math.hypot(xform[0], xform[1]) || 1;
+        const sy = Math.hypot(xform[2], xform[3]) || 1;
+        const halfW = wMm / (2 * sx);
+        const halfH = hMm / (2 * sy);
+        const corners = [[-halfW, -halfH], [halfW, -halfH], [halfW, halfH], [-halfW, halfH]]
+          .map(([lx, ly]) => applyXform(xform, lx, ly));
+        bitmaps.push({
+          data,
+          pngW: size.width,
+          pngH: size.height,
+          wMm,
+          hMm,
+          corners,
+          centre: applyXform(xform, 0, 0),
+          angle: Math.atan2(xform[1], xform[0]) * 180 / Math.PI,
+        });
+      }
     } else if (type && type !== 'Group') {
       warnings.push(`Skipped unsupported shape type "${type}".`);
     }
@@ -359,11 +417,32 @@ export function parseLbrn(xmlString, opts = {}) {
   const acc = (x, y) => { if (x < minX) minX = x; if (y < minY) minY = y; if (x > maxX) maxX = x; if (y > maxY) maxY = y; };
   paths.forEach((p) => p.mpts.forEach(([x, y]) => acc(x, y)));
   texts.forEach((t) => acc(t.originMx, t.originMy));
+  bitmaps.forEach((b) => b.corners.forEach(([x, y]) => acc(x, y)));
   if (!Number.isFinite(minX)) { return { layers: [], widthMm: 0, heightMm: 0, warnings }; }
 
   const widthMm = maxX - minX;
   const heightMm = maxY - minY;
   const layers = [];
+
+  // Bitmaps first so they sit at the bottom of the layer list. Anchored on
+  // their centre (originX/originY) rather than a bbox corner: Fabric rotates
+  // around the origin, so a centre anchor keeps a rotated bitmap exact without
+  // any bounding-box correction.
+  bitmaps.forEach((b) => {
+    layers.push({
+      type: 'image',
+      dataUrl: `data:image/png;base64,${b.data}`,
+      pngWidth: b.pngW,
+      pngHeight: b.pngH,
+      originX: 'center',
+      originY: 'center',
+      left: n((b.centre[0] - minX) * PX_PER_MM),
+      top:  n((b.centre[1] - minY) * PX_PER_MM),
+      scaleX: n((b.wMm * PX_PER_MM) / b.pngW),
+      scaleY: n((b.hMm * PX_PER_MM) / b.pngH),
+      angle: n(b.angle),
+    });
+  });
 
   // 3) Path → inline svg layer. Bake a shape-local px path; position the layer
   //    at the shape's design-canvas top-left. LightBurn stores Y downward for

@@ -71,7 +71,7 @@ describe('layerColor', () => {
 
 import fs from 'fs';
 import path from 'path';
-import { parseLbrn } from '../../../admin/js/template-builder/src/utils/lbrnParser';
+import { parseLbrn, decodePngSize, PX_PER_MM } from '../../../admin/js/template-builder/src/utils/lbrnParser';
 
 const FIXTURE = fs.readFileSync(
   path.join(__dirname, '../fixtures/test_svg_import.lbrn2'), 'utf8'
@@ -379,5 +379,123 @@ describe('parseLbrn (grouped + shared geometry)', () => {
     // Group (100,0) composed onto the 2nd shape → design spans x 0..110, not 0..10.
     expect(widthMm).toBe(110);
     expect(warnings.length).toBe(0);
+  });
+});
+
+describe('decodePngSize', () => {
+  // A 1x1 transparent PNG. Bytes 16-23 of a PNG are the IHDR width and height.
+  const PNG_1X1 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+
+  it('reads width and height from the PNG IHDR header', () => {
+    expect(decodePngSize(PNG_1X1)).toEqual({ width: 1, height: 1 });
+  });
+
+  it('returns null for a non-PNG payload', () => {
+    // JPEG magic bytes FFD8FF, padded to a valid base64 length.
+    expect(decodePngSize('/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJ')).toBeNull();
+  });
+
+  it('returns null for garbage', () => {
+    expect(decodePngSize('not base64 at all!!')).toBeNull();
+  });
+
+  it('returns null for an empty string', () => {
+    expect(decodePngSize('')).toBeNull();
+  });
+});
+
+describe('parseLbrn (bitmap shapes)', () => {
+  const PNG_1X1 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+
+  const wrap = (inner) => `<?xml version="1.0" encoding="UTF-8"?>
+<LightBurnProject AppVersion="2.1.03">
+${inner}
+</LightBurnProject>`;
+
+  // A 20mm x 10mm bitmap centred at machine (100, 50), unrotated and unscaled.
+  const BITMAP = (attrs = '', xform = '1 0 0 1 100 50') =>
+    `  <Shape Type="Bitmap" CutIndex="0" W="20" H="10" Data="${PNG_1X1}"${attrs}>
+    <XForm>${xform}</XForm>
+  </Shape>`;
+
+  // A 40mm x 20mm rect spanning machine x 80..120, y 40..60 — same centre as BITMAP.
+  const RECT = `  <Shape Type="Path" CutIndex="0">
+    <XForm>1 0 0 1 80 40</XForm>
+    <VertList>V0 0V40 0V40 20V0 20</VertList>
+    <PrimList>LineClosed</PrimList>
+  </Shape>`;
+
+  it('imports a bitmap as an image layer instead of warning', () => {
+    const { layers, warnings } = parseLbrn(wrap(BITMAP()), { availableFonts: [] });
+    expect(warnings).toEqual([]);
+    const img = layers.find((l) => l.type === 'image');
+    expect(img).toBeTruthy();
+    expect(img.dataUrl).toBe(`data:image/png;base64,${PNG_1X1}`);
+    expect(img.pngWidth).toBe(1);
+    expect(img.pngHeight).toBe(1);
+  });
+
+  it('anchors the image on its centre, not its corner', () => {
+    const { layers } = parseLbrn(wrap(BITMAP()), { availableFonts: [] });
+    const img = layers.find((l) => l.type === 'image');
+    expect(img.originX).toBe('center');
+    expect(img.originY).toBe('center');
+    // Alone on the canvas the union bbox is the bitmap itself: 20x10 mm, so
+    // the centre sits at half of each side, in pixels.
+    expect(img.left).toBeCloseTo(10 * PX_PER_MM, 1);
+    expect(img.top).toBeCloseTo(5 * PX_PER_MM, 1);
+  });
+
+  it('scales the 1px PNG up to its physical millimetre size', () => {
+    const { layers } = parseLbrn(wrap(BITMAP()), { availableFonts: [] });
+    const img = layers.find((l) => l.type === 'image');
+    expect(img.scaleX).toBeCloseTo(20 * PX_PER_MM, 1); // 20mm across 1 source pixel
+    expect(img.scaleY).toBeCloseTo(10 * PX_PER_MM, 1);
+  });
+
+  it('divides the physical size by the XForm scale to find the local box', () => {
+    // XForm scale 2 means the local half-extent is W/(2*2) = 5, so the corners
+    // land at machine 100 +/- 10 — the physical size is unchanged at 20mm.
+    const { widthMm } = parseLbrn(wrap(BITMAP('', '2 0 0 2 100 50')), { availableFonts: [] });
+    expect(widthMm).toBeCloseTo(20, 3);
+  });
+
+  it('reports the rotation from the XForm', () => {
+    // 90 degrees: [a,b,c,d] = [0,1,-1,0].
+    const { layers } = parseLbrn(wrap(BITMAP('', '0 1 -1 0 100 50')), { availableFonts: [] });
+    const img = layers.find((l) => l.type === 'image');
+    expect(img.angle).toBeCloseTo(90, 3);
+  });
+
+  it('widens the union bbox when the bitmap extends past the vectors', () => {
+    // A 60mm-wide bitmap centred on a 40mm-wide rect must win the union.
+    const wide = `  <Shape Type="Bitmap" CutIndex="0" W="60" H="10" Data="${PNG_1X1}">
+    <XForm>1 0 0 1 100 50</XForm>
+  </Shape>`;
+    const { widthMm } = parseLbrn(wrap(RECT + '\n' + wide), { availableFonts: [] });
+    expect(widthMm).toBeCloseTo(60, 3);
+  });
+
+  it('places the bitmap layer before the vector layers', () => {
+    const { layers } = parseLbrn(wrap(RECT + '\n' + BITMAP()), { availableFonts: [] });
+    expect(layers[0].type).toBe('image');
+  });
+
+  it('warns and skips a non-PNG bitmap', () => {
+    const jpeg = `  <Shape Type="Bitmap" CutIndex="0" W="20" H="10" Data="/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJ">
+    <XForm>1 0 0 1 100 50</XForm>
+  </Shape>`;
+    const { layers, warnings } = parseLbrn(wrap(jpeg), { availableFonts: [] });
+    expect(layers.some((l) => l.type === 'image')).toBe(false);
+    expect(warnings.join(' ')).toMatch(/only PNG/i);
+  });
+
+  it('warns and skips a bitmap with no physical size', () => {
+    const zero = `  <Shape Type="Bitmap" CutIndex="0" W="0" H="0" Data="${PNG_1X1}">
+    <XForm>1 0 0 1 100 50</XForm>
+  </Shape>`;
+    const { layers, warnings } = parseLbrn(wrap(zero), { availableFonts: [] });
+    expect(layers.some((l) => l.type === 'image')).toBe(false);
+    expect(warnings.join(' ')).toMatch(/size/i);
   });
 });
