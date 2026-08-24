@@ -8,6 +8,7 @@ import CurvedTextProperties from '../CurvedTextProperties';
 import { renderHersheyText, ENGRAVING_FONTS } from '../../utils/hersheyFonts';
 import { getImageQuality } from '../../utils/imageQuality';
 import { minFontSizePx } from '../../../../../../shared/js/fontSizeLimits';
+import { resolveWidthMm } from '../../../../../../shared/js/rulerTicks';
 
 export default function ElementTab() {
   const { selectedObject, template, snapshotView, currentViewIndex, fabricCanvasRef, zoneFillColors, setZoneFillColor } = useDesignerStore();
@@ -18,10 +19,11 @@ export default function ElementTab() {
   const currentView = views[currentViewIndex];
   const zones = currentView?.zones_config || [];
   const editableZones = zones.filter((z) => z.boundary_type === 'svg' && z.svg_url && z.svg_fill_editable);
+  const { widthMm } = resolveWidthMm(views, currentViewIndex);
   const sizeFloor = Math.max(8, Math.ceil(minFontSizePx({
     minFontSizeMm: permissions.text?.min_font_size_mm,
     canvasWidth: currentView?.canvas_width || 0,
-    widthMm: Number(currentView?.width_mm) || 0,
+    widthMm,
   })));
 
   const { type, fabricObj } = selectedObject || {};
