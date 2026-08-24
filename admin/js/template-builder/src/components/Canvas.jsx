@@ -7,6 +7,7 @@ import { alignElement } from '../../../../../shared/js/alignElement';
 import { zoneShapePath, objectSamplePoints, pointsInsideZoneShape } from '../../../../../shared/js/zoneContainment';
 import { mergeLayersToBoundary } from '../utils/mergeLayersToBoundary';
 import MmRuler from '../../../../../shared/js/MmRuler.jsx';
+import { resolveWidthMm } from '../../../../../shared/js/rulerTicks';
 
 const ALLOWED_FABRIC_TYPES = new Set([
   'IText', 'Textbox', 'Image', 'Rect', 'Path', 'Group', 'FabricText',
@@ -53,7 +54,9 @@ export default function Canvas() {
 
   const currentView = views[currentViewIndex];
   const viewKey = currentView?._clientId || currentViewIndex;
-  const widthMm = Number(currentView?.width_mm) || 0;
+  // Ruler physical width: falls back to a sibling view's width_mm when this
+  // view has none set (R13 — front/back of one physical object share it).
+  const { widthMm } = resolveWidthMm(views, currentViewIndex);
 
   // ── Zone enforcement helpers ─────────────────────────────────────────────
 

@@ -12,6 +12,7 @@ import { filterFabricJson } from '../utils/fabricJson';
 import { zoneShapePath, objectSamplePoints, pointsInsideZoneShape } from '../../../../../shared/js/zoneContainment';
 import { minFontSizePx } from '../../../../../shared/js/fontSizeLimits';
 import MmRuler from '../../../../../shared/js/MmRuler.jsx';
+import { resolveWidthMm } from '../../../../../shared/js/rulerTicks';
 
 // Infer element type from Fabric object type when data.elementType is missing
 // (e.g. designs saved before data serialisation was added).
@@ -68,7 +69,12 @@ export default function DesignerCanvas() {
   const canvasHeight = currentView?.canvas_height || 600;
   const { containerRef: scaleContainerRef } = useCanvasScale(canvasWidth, canvasHeight, fabricRef);
 
-  const widthMm = Number(currentView?.width_mm) || 0;
+  // Physical width (mm) for this view: falls back to a sibling view's
+  // width_mm when this view has none set (R13 — front/back of one physical
+  // object share it). Single derived value reused by the ruler AND by
+  // minFontSizePx below (R15) — one physical width per view, read one way,
+  // so the ruler and the minimum-font-size enforcement never disagree.
+  const { widthMm } = resolveWidthMm(template?.views, currentViewIndex);
   const showRuler = widthMm > 0 && !isMobile;
 
   // Pass fabricRef (the ref object) so useCanvasHistory always reads .current at call time,
@@ -195,12 +201,12 @@ export default function DesignerCanvas() {
     const minPx = minFontSizePx({
       minFontSizeMm: permissions.text?.min_font_size_mm,
       canvasWidth,
-      widthMm: Number(currentView?.width_mm) || 0,
+      widthMm,
     });
     if (minPx > 0 && obj.fontSize > 0) {
       obj.set({ minScaleLimit: Math.max(perms.min_scale ?? 0, minPx / obj.fontSize) });
     }
-  }, [permissions, canvasWidth, currentView]);
+  }, [permissions, canvasWidth, widthMm]);
 
   // ── Clamp object inside its assigned zone ─────────────────────────────────
 
@@ -844,7 +850,7 @@ export default function DesignerCanvas() {
     const minPx = minFontSizePx({
       minFontSizeMm: permissions.text?.min_font_size_mm,
       canvasWidth,
-      widthMm: Number(currentView?.width_mm) || 0,
+      widthMm,
     });
 
     const text = new IText(__('Your text here', 'snelgraveren-product-designer'), {
@@ -877,7 +883,7 @@ export default function DesignerCanvas() {
     snapshotView(currentViewIndex, canvas.toJSON(['data']));
     setActiveTool('select');
   }, [activeTool, currentViewIndex, zones, permissions, canvasWidth, canvasHeight,
-      currentView, findFirstZoneForType, applyPermissions, applyZoneClip, clampToZone, snapshotView, setActiveTool]);
+      widthMm, findFirstZoneForType, applyPermissions, applyZoneClip, clampToZone, snapshotView, setActiveTool]);
 
   // ── Tool: add-curved-text on canvas click ─────────────────────────────────
 

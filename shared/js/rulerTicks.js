@@ -48,3 +48,31 @@ export function buildTicks({ lengthPx, mmPerPx, minLabelSpacingPx = 40 }) {
   }
   return ticks;
 }
+
+/**
+ * Physical width (mm) for the view at `index`, inheriting the raw millimetre
+ * value from a sibling view when the current view has none set.
+ *
+ * Views of one template are the front/back of ONE physical object, so the
+ * physical width carries over as-is even when the canvas pixel size differs
+ * between views — this deliberately inherits the raw mm number, NOT a
+ * mm-per-pixel ratio. Display-time fallback only: never write the inherited
+ * value back to the view.
+ *
+ * @param {Array<{width_mm?: number|string}>} [views]
+ * @param {number} index
+ * @returns {{widthMm: number, inherited: boolean}}
+ */
+export function resolveWidthMm(views, index) {
+  const list = Array.isArray(views) ? views : [];
+
+  const own = Number(list[index]?.width_mm) || 0;
+  if (own > 0) return { widthMm: own, inherited: false };
+
+  for (const view of list) {
+    const mm = Number(view?.width_mm) || 0;
+    if (mm > 0) return { widthMm: mm, inherited: true };
+  }
+
+  return { widthMm: 0, inherited: false };
+}

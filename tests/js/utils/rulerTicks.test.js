@@ -1,4 +1,4 @@
-import { chooseTickStepMm, buildTicks } from '../../../shared/js/rulerTicks';
+import { chooseTickStepMm, buildTicks, resolveWidthMm } from '../../../shared/js/rulerTicks';
 
 describe('chooseTickStepMm', () => {
   it('uses 1mm steps when a millimetre is comfortably wide on screen', () => {
@@ -70,5 +70,63 @@ describe('buildTicks', () => {
 
   it('returns nothing for a zero-length ruler', () => {
     expect(buildTicks({ lengthPx: 0, mmPerPx: 1 / 50 })).toEqual([]);
+  });
+});
+
+describe('resolveWidthMm', () => {
+  it('uses the current view\'s own width_mm when it is set', () => {
+    const views = [{ width_mm: 38 }, { width_mm: 0 }];
+    expect(resolveWidthMm(views, 0)).toEqual({ widthMm: 38, inherited: false });
+  });
+
+  it('inherits the raw mm value from the first sibling view that has one', () => {
+    // Dog-Tags: Front = 38mm, Back = 0. Both 800px wide.
+    const views = [{ name: 'Front', width_mm: 38, canvas_width: 800 }, { name: 'Back', width_mm: 0, canvas_width: 800 }];
+    expect(resolveWidthMm(views, 1)).toEqual({ widthMm: 38, inherited: true });
+  });
+
+  it('inherits the RAW mm number, not a ratio, even when pixel sizes differ', () => {
+    // Back view is a different pixel width, but the physical object is the
+    // same, so the raw 38mm carries over unconverted.
+    const views = [{ width_mm: 38, canvas_width: 800 }, { width_mm: 0, canvas_width: 400 }];
+    expect(resolveWidthMm(views, 1)).toEqual({ widthMm: 38, inherited: true });
+  });
+
+  it('picks the first view in array order with a set width_mm, not the nearest', () => {
+    const views = [{ width_mm: 0 }, { width_mm: 12 }, { width_mm: 99 }];
+    expect(resolveWidthMm(views, 0)).toEqual({ widthMm: 12, inherited: true });
+  });
+
+  it('returns zero/not-inherited when no view has a width_mm', () => {
+    const views = [{ width_mm: 0 }, { width_mm: null }, {}];
+    expect(resolveWidthMm(views, 2)).toEqual({ widthMm: 0, inherited: false });
+  });
+
+  it('treats a negative width_mm as unset', () => {
+    const views = [{ width_mm: -5 }, { width_mm: 0 }];
+    expect(resolveWidthMm(views, 1)).toEqual({ widthMm: 0, inherited: false });
+  });
+
+  it('coerces string width_mm values (as returned by the DB through some paths)', () => {
+    const views = [{ width_mm: '38.00' }, { width_mm: '0.00' }];
+    expect(resolveWidthMm(views, 1)).toEqual({ widthMm: 38, inherited: true });
+    expect(resolveWidthMm(views, 0)).toEqual({ widthMm: 38, inherited: false });
+  });
+
+  it('tolerates an undefined/empty views array without throwing', () => {
+    expect(resolveWidthMm(undefined, 0)).toEqual({ widthMm: 0, inherited: false });
+    expect(resolveWidthMm([], 0)).toEqual({ widthMm: 0, inherited: false });
+    expect(resolveWidthMm(null, 3)).toEqual({ widthMm: 0, inherited: false });
+  });
+
+  it('tolerates an out-of-range index without throwing', () => {
+    const views = [{ width_mm: 38 }];
+    expect(resolveWidthMm(views, 5)).toEqual({ widthMm: 38, inherited: true });
+    expect(resolveWidthMm(views, -1)).toEqual({ widthMm: 38, inherited: true });
+  });
+
+  it('does not mark the current view as inherited when it is the only one with a value', () => {
+    const views = [{ width_mm: 38 }, { width_mm: 0 }, { width_mm: 0 }];
+    expect(resolveWidthMm(views, 0)).toEqual({ widthMm: 38, inherited: false });
   });
 });

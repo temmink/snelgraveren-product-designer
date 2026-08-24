@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import useTemplateStore from '../store/useTemplateStore';
 import ImportLightBurn from './ImportLightBurn';
+import { resolveWidthMm } from '../../../../../shared/js/rulerTicks';
 
 const isPremium = window.sgpdTemplateBuilder?.isPremium;
 
@@ -55,6 +56,10 @@ export default function ViewTabs() {
   // (export falls back to the 96-DPI pixel assumption).
   const currentView = views[currentViewIndex];
   const widthMm = Number(currentView?.width_mm) || 0;
+  // Inherited value (R13): shown only as a hint below the field. The input
+  // itself always reflects this view's OWN stored width_mm (above), never
+  // the inherited fallback — typing here saves to this view only.
+  const { widthMm: resolvedWidthMm, inherited: widthMmInherited } = resolveWidthMm(views, currentViewIndex);
   const canvasW = currentView?.canvas_width || 800;
   const canvasH = currentView?.canvas_height || 600;
   const derivedHeightMm = widthMm > 0
@@ -150,6 +155,12 @@ export default function ViewTabs() {
         <span style={{ fontSize: 11, opacity: 0.7, marginLeft: 6 }}>
           { __( 'Physical width. Fill this in to show the millimetre ruler and to enable the minimum font size.', 'snelgraveren-product-designer' ) }
         </span>
+        {widthMmInherited && (
+          <span style={{ fontSize: 11, color: '#2271b1', marginLeft: 6 }}>
+            {/* translators: %s is the millimetre value inherited from another view */}
+            {sprintf( __( 'Using %s mm from another view — type a value here to override it for this view only.', 'snelgraveren-product-designer' ), resolvedWidthMm )}
+          </span>
+        )}
         <span style={{ fontSize: 12, color: '#757575' }}>
           {widthMm > 0
             /* translators: %s is the derived height in millimetres */
