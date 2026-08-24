@@ -67,6 +67,18 @@ export default function PermissionsPanel() {
                   className="pf-permissions__number"
                 />
               </label>
+              {key === 'text' && (
+                <label>
+                  { __( 'Min font size (mm)', 'snelgraveren-product-designer' ) }
+                  <input
+                    type="number" step="0.5" min="0"
+                    value={perm.min_font_size_mm ?? 0}
+                    onChange={(e) => updatePerm(key, 'min_font_size_mm', parseFloat(e.target.value) || 0)}
+                    className="pf-permissions__number"
+                    title={ __( '0 disables the minimum. Requires the view to have a physical width.', 'snelgraveren-product-designer' ) }
+                  />
+                </label>
+              )}
               {perm.snap_to_grid && (
                 <label>
                   { __( 'Grid size (px)', 'snelgraveren-product-designer' ) }
