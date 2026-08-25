@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.8.5
+Stable tag: 1.8.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -132,6 +132,12 @@ No other external services are used. Design exports (PDF/PNG/SVG) are rendered e
 4. Production dashboard: every order with a design, filtered by status and period, ready to download as one ZIP.
 
 == Changelog ==
+
+= 1.8.6 =
+* Fix: an image added to a template in the Template Builder was shown to the customer locked behind everything else, could not be selected, and was left out of the production file altogether. Only the reference bitmap from a LightBurn import is meant to behave that way. An image the merchant adds is now an ordinary template layer: it follows the padlock like every other layer and it is included in the export.
+* Fix: an empty text field was charged as an added text element on products priced per element. A layer the merchant leaves empty for the customer to fill in, and a text the customer clears again, are no longer counted.
+* Fix: a bitmap from a LightBurn import could be placed at a slightly wrong size on large designs, because its scale was rounded more coarsely than the cut lines were. The bitmap and the cut lines could end up not lining up, which is the one thing the imported bitmap is there for.
+* Fix: adding a design zone while a LightBurn import was still uploading its images could leave a second, full-canvas zone stacked on top of the new one.
 
 = 1.8.5 =
 * Fix: clip art, uploaded images, uploaded logos and customer-added text ignored the design boundary on templates built from a LightBurn import. The import created a full-canvas container zone for the imported artwork and offered it as a place customers may add elements, so everything bound to that zone instead of the merchant's boundary. New imports no longer claim customer element types. Existing templates keep their current setting: untick text, image and svg on the imported zone to correct them.
