@@ -12,6 +12,7 @@ import { outlineSvgText, embedFontsInSvg } from './utils/textOutline';
 import { countPriceableElements } from './utils/priceCounts';
 import useIsMobile from './hooks/useIsMobile';
 import { withoutTextPlaceholders } from '../../../../shared/js/textPlaceholder';
+import atLogicalCanvasSize from '../../../../shared/js/atLogicalCanvasSize';
 
 /**
  * Ensure every text object's font is loaded and re-measured before an offscreen
@@ -606,16 +607,23 @@ export default function App() {
 
             if (idx === store.currentViewIndex && store.fabricCanvasRef) {
               try {
-                // toDataURL rasterises the live canvas, so neither
+                // atLogicalCanvasSize: the live canvas is zoomed to fit the
+                // window, and toDataURL bakes that zoom into the pixel size —
+                // capture at the view's own size so the window can't decide it.
+                // toDataURL also rasterises what is on screen, so neither
                 // excludeFromExport flag can keep an empty-text placeholder box
                 // out of it — hide the chrome for the duration of the render.
-                thumbnail = withoutTextPlaceholders(store.fabricCanvasRef, () =>
-                  store.fabricCanvasRef.toDataURL({ format: 'png', multiplier: 0.5 })
+                thumbnail = atLogicalCanvasSize(store.fabricCanvasRef, w, h, () =>
+                  withoutTextPlaceholders(store.fabricCanvasRef, () =>
+                    store.fabricCanvasRef.toDataURL({ format: 'png', multiplier: 0.5 })
+                  )
                 );
               } catch (_) { /* ignore */ }
               try {
-                exportSvg = withoutExcludedObjects(store.fabricCanvasRef, () =>
-                  store.fabricCanvasRef.toDataURL({ format: 'png', multiplier: 3 })
+                exportSvg = atLogicalCanvasSize(store.fabricCanvasRef, w, h, () =>
+                  withoutExcludedObjects(store.fabricCanvasRef, () =>
+                    store.fabricCanvasRef.toDataURL({ format: 'png', multiplier: 3 })
+                  )
                 );
               } catch (_) { /* ignore */ }
             } else {
@@ -771,13 +779,17 @@ export default function App() {
           // Active view: capture directly from the live canvas
           try {
             // See the matching comment in the add-to-cart save path above.
-            thumbnail = withoutTextPlaceholders(fabricCanvasRef, () =>
-              fabricCanvasRef.toDataURL({ format: 'png', multiplier: 0.5 })
+            thumbnail = atLogicalCanvasSize(fabricCanvasRef, w, h, () =>
+              withoutTextPlaceholders(fabricCanvasRef, () =>
+                fabricCanvasRef.toDataURL({ format: 'png', multiplier: 0.5 })
+              )
             );
           } catch (_) { /* ignore */ }
           try {
-            exportSvg = withoutExcludedObjects(fabricCanvasRef, () =>
-              fabricCanvasRef.toDataURL({ format: 'png', multiplier: 3 })
+            exportSvg = atLogicalCanvasSize(fabricCanvasRef, w, h, () =>
+              withoutExcludedObjects(fabricCanvasRef, () =>
+                fabricCanvasRef.toDataURL({ format: 'png', multiplier: 3 })
+              )
             );
           } catch (_) { /* ignore */ }
         } else {
