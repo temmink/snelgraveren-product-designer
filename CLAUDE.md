@@ -22,6 +22,11 @@ A WooCommerce plugin that lets customers design text, images, and SVGs onto prod
 - **Export:** Local only — browser-rendered source (Fabric.js `toDataURL` at 3× PNG, or `toSVG`) is captured client-side during save and stored in `wp_pf_design_views.export_svg`. Server then emits PDF (TCPDF), PNG (direct or `rsvg-convert`/Imagick from SVG), or SVG. Multi-view exports stream as ZIP.
 - **PHP autoloading:** PSR-4 via custom autoloader. Namespace `Snelgraveren\ProductDesigner\` maps to `includes/`. (Renamed from `ProductForge\` in v1.7.6 for the wp.org review — the reviewer's tool flagged `product_forge` as a non-distinctive prefix; the main class `ProductForge` became `Plugin`.)
 - **LightBurn import (Pro):** `admin/js/template-builder/src/utils/lbrnParser.js` parses a `.lbrn2` (plain XML) into editable text/`svg` layer descriptors; `ImportLightBurn.jsx` is the button. Geometry uses shared VertList/PrimID pools + composed Group XForms; the "double image" is design-inherent, not a bug (memory `project_lightburn_double_image`).
+- **LightBurn bitmap sizing:** a `<Shape Type="Bitmap" W H>` stores its **local** size; the
+  `<XForm>` carries the scale. The real size is `W * sx`, never `W / sx` — on a real file
+  `211.64021 * 1.89 = 400.000 mm` exactly, and the round number is the giveaway. Getting this
+  backwards imported bitmaps at 53% (fixed 1.8.5). The parser keeps `localWMm`/`localHMm` and
+  `finalWMm`/`finalHMm` as separate fields precisely because one name for two meanings caused it.
 - **SVG-shape boundaries:** a zone with `boundary_type: 'svg'` renders its outline from an uploaded media `svg_url` **or** inline `svg_markup`. Merchants build inline boundaries from existing vector layers — the canvas "Use as Boundary" toolbar action (`Canvas.jsx`) and the ZoneForm "From layers" source — via the pure `utils/mergeLayersToBoundary.js` (bakes each layer's translate+scale into the path `d`, so the merged group renders at `scaleX:1`; a `<g transform>` would be hoisted then clobbered by the render). Zone/layer `svg_markup` is admin-authored but served to customers, so it MUST be sanitised on view save (`RestTemplates::sanitize_zone_layers`, which cleans both layer-level and zone-level markup, dropping it when the Sanitizer class is absent).
 
 ## Development Environment
@@ -53,6 +58,26 @@ npm run build                           # Production build → dist/
 - **Prices always calculated server-side** — never trust client-sent price values
 - **Design IDs are hashes** — public-facing design identifiers use `bin2hex(random_bytes(16))`, never sequential IDs
 
+### Shared browser modules (`shared/js/`)
+
+Rules the Template Builder and the customer designer must agree on live here and are imported by
+BOTH — never copied. Ten duplications were consolidated in the 1.8.x cycle after each copy drifted
+from its twin; an eleventh is a defect, not a shortcut.
+
+| Module | Rule it owns |
+|--------|--------------|
+| `zoneRectClamp.js` | bounding-box clamp. **An object that does not fit an axis is NOT clamped on it** — a constraint with no valid position only traps the user (1.8.1) |
+| `zoneClamp.js` | which zone enforces what: lenient rect clamp while dragging, true outline enforced on `object:modified`, nothing enforced when nothing fits. `keepInsideRect` keeps a zone-less object on the canvas |
+| `zoneSelection.js` | `findFirstZoneForType` / `findZoneForPoint` — **first clipping zone that allows the type wins**, so zone ORDER decides where new customer elements land |
+| `zoneContainment.js` | SVG-outline containment + shape-aware placement |
+| `atLogicalCanvasSize.js` | every live-canvas capture renders at zoom 1 and the view's logical size, so the customer's window cannot decide the export resolution |
+| `textPlaceholder.js` | an emptied text layer stays as a dashed, never-exported placeholder |
+| `textAnchor.js`, `fontSizeLimits.js`, `layerLockForCustomer.js`, `MmRuler.jsx`, `rulerTicks.js`, `ensureFontMeasured.js`, `googleFontLoader.js` | text anchoring, the mm font floor, the padlock's meaning for customers, the ruler, font measurement |
+
+**Governing rule for every constraint in this codebase:** a constraint that leaves the user no way
+to correct their situation is worse than no constraint. Both clamp bugs (`0d4c69b`, `9921cda`) were
+constraints that pinned an object to a single position; both were design decisions, not slips.
+
 ### JavaScript
 - **React 18** with functional components and hooks
 - **Zustand** for state management (not Redux, not Context)
@@ -63,6 +88,17 @@ npm run build                           # Production build → dist/
 - **No `stopPropagation` on `#pf-designer-root`:** The designer renders inside a WooCommerce product tab via the `[sgpd_designer]` shortcode. Never add blanket `stopPropagation` on the designer root — it blocks Fabric.js's `document`-level `pointerup` listener, causing dragged objects to stick to the cursor.
 - **Verify hook imports:** When adding React components that use hooks (`useRef`, `useState`, etc.), always verify the hook is imported. Missing hook imports cause `ReferenceError` that crashes the entire React tree with no visible error on the page.
 - **Fabric.js canvas scaling:** Use `canvas.setZoom(scale)` + `canvas.setDimensions({ width, height })` (NOT `cssOnly: true`). Using `cssOnly` causes double-scaling: zoom shrinks objects in the backing buffer, then CSS shrinks the buffer again. Always change backing canvas dimensions alongside zoom.
+- **Canvas scale ceiling:** `useCanvasScale` caps at `MAX_SCALE = 2` (was a hard `1`, which meant
+  the designer never rendered larger than the template's own size). Template background photos are
+  ~800px wide, so past 2x a big blurry plank looks worse than a smaller sharp one. On the live shop
+  Astra caps the product-tab column at ~790px, so 2x is only reachable in the modal display mode.
+  `.pf-canvas-cell`/`.pf-canvas-grid` need `min-width: 0` — a grid item's automatic minimum is its
+  min-content, so without it the container reports MORE room after each pass and the canvas creeps
+  to the ceiling on every window size.
+- **Builder canvas resize:** the Fabric canvas is created in an effect keyed on `[currentViewIndex]`,
+  so a change to `canvas_width`/`canvas_height` for the SAME view (what a LightBurn import does) does
+  NOT rebuild it. A separate effect calls `setDimensions()`. Never widen the init effect's deps to
+  include the sizes — recreating the canvas drops objects, undo history and selection.
 - **Mobile detection:** Use `matchMedia` (not `window.innerWidth`) for breakpoint detection. Safari iOS briefly reports `innerWidth` as 980px before viewport meta tag is applied. Use `screen.width` as fallback for initial state. Never evaluate `matchMedia` at module level — Safari can misreport before DOM ready.
 - **CSS delivery:** Build outputs CSS as both JS-injected (via Vite bundle) and separate `dist/frontend-designer.css` file (via `cp` in build script). Safari has issues with media queries in JS-injected `<style>` tags. The PHP already enqueues the CSS file via `<link>` tag if it exists.
 - **Zustand stale closures:** In async handlers or callbacks that run later (e.g. `handleSave`), always read Zustand state fresh via `useDesignerStore.getState()` instead of using closure variables from the React component. Closure variables capture state at render time and go stale by the time the callback executes.
@@ -80,6 +116,24 @@ npm run build                           # Production build → dist/
 - `grant_template_cap` filter lives in `Plugin` main class (not Admin) so it applies in REST API context too
 - List endpoints support pagination (`per_page`, `page`) with `X-WP-Total` headers
 - Clipart and font GET endpoints are intentionally public (`__return_true`) — guest customers need them in the frontend designer. The SVG files are public uploads anyway. Mutation endpoints require `edit_pf_templates` + premium feature gate.
+
+## Zones and where customer elements land
+
+`findFirstZoneForType` (in `shared/js/zoneSelection.js`) returns the **first** zone that clips or
+restricts AND lists the element type in `allowed_types`. Zone ORDER therefore decides where a
+customer's clip art, upload or new text is placed.
+
+The LightBurn import creates a container zone named `Imported` spanning the whole canvas. Until
+1.8.5 it was created with `allowed_types: ['text','image','svg']`, so it always won over the
+merchant's real boundary and every customer element was effectively unconstrained. It now claims
+nothing (`allowed_types: []`, `admin/js/template-builder/src/utils/importedZone.js`).
+
+**Templates imported before 1.8.5 are NOT migrated** — deliberately, since zone config is the
+merchant's own setup. Fix by hand: open the `Imported` zone and untick text/image/svg.
+
+`behavior: 'clip'` only MASKS what falls outside the shape; it does not stop the customer moving an
+element out. Only `restrict` constrains movement. A zone meant as a real engraving boundary must be
+`restrict`.
 
 ## Security Rules (Critical)
 
@@ -181,6 +235,13 @@ Other renames: Freemius helper `pf_fs()` → `sgpd_fs()`, global `$pf_fs` → `$
 
 - **Live site:** snelgraveren.nl (LiteSpeed Cache — flush after deploy). LiteSpeed on this host is aggressive: it caused the shop-category 404 (rewrite flush, above) AND caused customers to see the wrong/default design (see next bullet). Debug caching **as a guest** (`fetch(url, {credentials:'omit'})`, twice, to catch a HIT) — logged-in admins are never cached, so the bug is invisible when you're logged in.
 - **Designer pages must NEVER be full-page cached.** They embed a per-session WordPress nonce and load/save session-specific designs over REST; a cached copy freezes one visitor's nonce for everyone (breaks saves → default image) and leaks one customer's design to another (also breaks the return-from-cart design reload). `Frontend::enqueue_assets()` calls `prevent_page_cache()` (`DONOTCACHEPAGE` + `litespeed_control_set_nocache`) on every page where the designer renders. Do not remove it. (Full symptom map in memory `feedback_designer_page_nocache`.)
+- **Two plugin folders exist on the live site** (checked 2026-08-25): `productforge/` is the ACTIVE
+  one, `snelgraveren-product-designer/` sits next to it inactive. `bin/package.sh` builds a ZIP whose
+  folder is `snelgraveren-product-designer`, so an upload can land in the dormant folder and change
+  nothing — exactly how the site once sat on 1.7.5 while 1.7.7 slept beside it. After every upload,
+  check on `plugins.php` which row shows "Deactiveren" and what version it reports. Deleting the
+  dormant folder is safe only while `sgpd_delete_data_on_uninstall` is 0 (it was, 2026-08-25) — see
+  the shared-table hazard below.
 - **Plugin ZIP:** run `bash bin/package.sh` (does `npm run build` + `composer install --no-dev` + stages + zips to `snelgraveren-product-designer-<version>.zip` in the project dir). Manual ZIP must include: main plugin file, `freemius-init.php`, `includes/`, `dist/`, `vendor/`, `freemius/`, `blocks/`, `templates/`, `readme.txt` (NOT `node_modules/`, `.git/`, `frontend/js/*/src/`, `languages/`). Deploy = WP-admin → Plugins → Upload → "Huidige vervangen door de geüploade", then LiteSpeed Purge All. Always upload the ZIP from the project dir (folder `snelgraveren-product-designer`); the ZIP downloaded from Freemius is named `…-premium.zip`, so WordPress installs it as a SECOND folder instead of updating the live one — that is how the site sat on 1.7.5 while 1.7.7 lay dormant next to it. Check the active row on `plugins.php` before assuming which version is live. Bump the version in `snelgraveren-product-designer.php` (header + `SGPD_VERSION`) AND `readme.txt` Stable tag + changelog.
 - **JS cache busting (hash in filename, not `?ver=`):** `Frontend::enqueue_assets()` copies `dist/frontend-designer.js` to `uploads/pf-cache/frontend-designer.<md5>.js` on the first pageview after a build and enqueues the hashed URL. **Never written inside the plugin directory** — wp.org disallows plugins writing to their own directory, and `uploads/` is also the correct place for runtime-generated files anyway. The copy is written via temp file + atomic `$wp_filesystem->move()` (WP_Filesystem initialized on demand; a concurrent request must never serve a half-written bundle — Safari would cache it for a year). The **previous build's hashed copy is kept** (only older copies are deleted, via `wp_delete_file()`): LiteSpeed page-cached HTML still references the old hashed URL until the cache is flushed, and deleting it would 404 the bundle on every cached page. The md5 hash is cached in the `pf_frontend_js_hash` option keyed on `filemtime`, so the full bundle isn't hashed on every pageview. **Why not `?ver=<hash>` alone:** LiteSpeed's Delay JS feature strips query strings from `<script>` tags it marks with `data-deferred="1"`, so Safari (which caches JS with `max-age=31557600` ≈ 1 year) keeps serving stale bundles after deploys. Changing the path itself is the only reliable invalidator. If `uploads/pf-cache/` is not writable (`wp_is_writable()` check), we fall back to the un-hashed `dist/` URL. `Admin\SystemStatus` checks `uploads/pf-cache/` writability under check id `dir_pf_cache` (warning-level, not critical). **LiteSpeed JS-optimize exclude must stay hash-agnostic:** the filter excludes the substring `frontend-designer.` (with trailing dot, no `.js`) so it matches both the plain and the hashed filename — excluding the literal `frontend-designer.js` would NOT match the hashed copy and LiteSpeed would concatenate the React bundle, breaking it.
 - **wordpress.org release (approved 2026-08, slug `snelgraveren-product-designer`):** SVN `https://plugins.svn.wordpress.org/snelgraveren-product-designer`, listing `https://wordpress.org/plugins/snelgraveren-product-designer/`. Published 2026-08-20 as r3657251 (1.7.8); listing, banner/icon/screenshots and readme all verified. Run `bash bin/wporg-release.sh` (`--dry-run` to stage only) on the Mac: it runs `package.sh` + `free-build.sh`, sanity-checks the FREE zip (no premium paths, no gettext files, gatekeeper stripped, `is_premium => false`), syncs it into `trunk/`, copies `wporg-assets/` (icon/banner/`screenshot-N.png`) into SVN `assets/`, copies `trunk` → `tags/<version>/` and commits. Checkout lives in `.svn-wporg/` (git-ignored). wp.org gets the **free** build only; the premium zip still goes to Freemius → Deployment. Tags are immutable — bump the version for any fix, never re-tag. SVN username = wordpress.org username (`snelgraveren`, now the script's default), password = the separate SVN password from the wp.org profile. **Run it in a real terminal, one at a time** — it needs a tty for the confirmation + password, and refuses a second concurrent run via a `.svn-wporg.lock` mkdir lock (two parallel runs interleave their prompts and finish neither). macOS ships bash 3.2, so the release path must stay free of empty-array expansion under `set -u` and of `cmd | head` under `set -o pipefail` — both silently killed this script mid-run before.
