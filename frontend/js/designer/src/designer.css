@@ -55,6 +55,28 @@
   grid-template-rows: 1fr;
 }
 
+/* The canvas cell must be allowed to be NARROWER than the canvas inside it.
+   A grid/flex item's automatic minimum size is its min-content — here the
+   canvas's own current width — so without this the width useCanvasScale
+   measures is a floor set by the canvas itself: it can never shrink to fit a
+   narrow window, and it reports slightly more room after every pass, which
+   with a scale ceiling above 1 walks the canvas up to MAX_SCALE on any window
+   at all. Same reason .pf-canvas-wrap already carries min-width: 0. */
+.pf-canvas-grid,
+.pf-canvas-cell {
+  min-width: 0;
+}
+
+/* Fabric leaves its lower canvas display:inline, so the line box adds a
+   descender's worth of height (6 px at this line-height) below a canvas that
+   is otherwise exactly as tall as its box. Harmless while the canvas was
+   always smaller than the room it had; now that it fills the room, those 6 px
+   raise a vertical scrollbar, which eats 15 px of width and raises a
+   horizontal one too — two scrollbars around a design that fits. */
+.pf-canvas-scroll canvas {
+  display: block;
+}
+
 .pf-canvas-grid--ruler {
   grid-template-columns: 22px 1fr;
   grid-template-rows: 22px 1fr;
