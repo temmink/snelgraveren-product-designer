@@ -780,13 +780,17 @@
   align-items: center;
   gap: 1px;
   flex-shrink: 0;
+}
+/* The row's actions stay hidden until it is hovered or selected. The fade sits
+   on the individual buttons, NOT on the group: a locked layer must keep its
+   padlock visible at rest, and a child cannot override a faded parent's
+   opacity. Without this you have to hover every row one by one to discover
+   which layers are locked. */
+.pf-tree-node__action {
   opacity: 0;
-  transition: opacity 0.12s;
 }
-.pf-tree-node:hover .pf-tree-node__actions {
-  opacity: 1;
-}
-.pf-tree-node--selected .pf-tree-node__actions {
+.pf-tree-node:hover .pf-tree-node__action,
+.pf-tree-node--selected .pf-tree-node__action {
   opacity: 1;
 }
 
@@ -814,6 +818,19 @@
   color: #135e96;
 }
 .pf-tree-node__action--danger:hover {
+  background: #fcecec;
+  color: #d63638;
+}
+
+/* A locked layer reads at a glance: the padlock stays visible without hover and
+   turns the same red the rest of the builder uses for "this is not ordinary".
+   The locked and unlocked glyphs differ only by the shackle, which is far too
+   subtle to spot in a long layer tree. */
+.pf-tree-node__action--locked {
+  opacity: 1;
+  color: #d63638;
+}
+.pf-tree-node__action--locked:hover {
   background: #fcecec;
   color: #d63638;
 }

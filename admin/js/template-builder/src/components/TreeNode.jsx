@@ -214,7 +214,7 @@ export default function TreeNode({ node, nodeType, isSelected, isExpanded, onSel
             title={ node.visible === false ? __( 'Show', 'snelgraveren-product-designer' ) : __( 'Hide', 'snelgraveren-product-designer' ) }
           >{node.visible === false ? Icons.eyeClosed : Icons.eyeOpen}</button>
           <button
-            className="pf-tree-node__action"
+            className={`pf-tree-node__action${node.locked ? ' pf-tree-node__action--locked' : ''}`}
             onClick={(e) => { e.stopPropagation(); onAction('toggle-lock', node); }}
             aria-label={ node.locked ? __( 'Unlock', 'snelgraveren-product-designer' ) : __( 'Lock', 'snelgraveren-product-designer' ) }
             title={ node.locked ? __( 'Unlock', 'snelgraveren-product-designer' ) : __( 'Lock', 'snelgraveren-product-designer' ) }
