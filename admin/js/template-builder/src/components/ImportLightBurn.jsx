@@ -3,6 +3,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import useTemplateStore from '../store/useTemplateStore';
 import { parseLbrn, PX_PER_MM } from '../utils/lbrnParser';
 import { AVAILABLE_FONTS } from '../utils/fonts';
+import { displayCanvasSize } from '../utils/displayCanvasSize';
 import { uploadDataUrlToMedia } from '../api/mediaApi';
 
 const isPremium = window.sgpdTemplateBuilder?.isPremium;
@@ -87,14 +88,15 @@ export default function ImportLightBurn() {
       // size (fit-to-target: enlarges small designs, shrinks oversized ones).
       // width_mm keeps the TRUE physical size, so the export stays true-scale —
       // only the editor/preview pixels change.
-      const DISPLAY_TARGET_PX = 600;
+      //
+      // displayCanvasSize picks the integer pixel pair, because the canvas
+      // ASPECT RATIO is what the export turns back into millimetres of height
+      // (height_mm = width_mm × h_px / w_px). Rounding a fixed 600 px long
+      // edge reported this file's true 193.00 mm as 193.33 mm.
       const natW = Math.max(1, widthMm * PX_PER_MM);
       const natH = Math.max(1, heightMm * PX_PER_MM);
-      const fit = DISPLAY_TARGET_PX / Math.max(natW, natH);
+      const { width: canvasW, height: canvasH, scale: fit } = displayCanvasSize(natW, natH);
       const r = (v) => Math.round(v * 100) / 100;
-
-      const canvasW = Math.max(1, Math.round(natW * fit));
-      const canvasH = Math.max(1, Math.round(natH * fit));
 
       // Name svg layers so the tree panel is navigable (a 40-shape import
       // otherwise reads "svg, svg, svg…"): merged LightBurn groups become

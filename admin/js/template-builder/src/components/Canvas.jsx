@@ -63,10 +63,13 @@ export default function Canvas() {
   // Ruler physical width: falls back to a sibling view's width_mm when this
   // view has none set (R13 — front/back of one physical object share it).
   const { widthMm } = resolveWidthMm(views, currentViewIndex);
-  // Same default the Fabric canvas is initialised with below. Paired with
-  // widthMm this is the mm→px scale used for the minimum-font-size floor, so
-  // the floor and the ruler always read the view the same way.
-  const canvasWidth = currentView?.canvas_width || 800;
+  // Same defaults the Fabric canvas is initialised with below. Paired with
+  // widthMm, canvasWidth is the mm→px scale used for the minimum-font-size
+  // floor, so the floor and the ruler always read the view the same way.
+  // Every consumer of the canvas size in this component derives from these two
+  // so they cannot disagree after a resize (see the live-resize effect below).
+  const canvasWidth  = currentView?.canvas_width  || 800;
+  const canvasHeight = currentView?.canvas_height || 600;
 
   // ── Zone enforcement helpers ─────────────────────────────────────────────
 
@@ -252,6 +255,10 @@ export default function Canvas() {
 
     const width  = currentView?.canvas_width  || 800;
     const height = currentView?.canvas_height || 600;
+    // Same values as canvasWidth/canvasHeight above, re-read here because this
+    // effect deliberately runs only on a view change and must not close over
+    // a size that changed since. The live-resize effect below keeps the
+    // already-created canvas in step with later changes.
 
     const canvas = new FabricCanvas(canvasEl.current, {
       width,
@@ -367,6 +374,45 @@ export default function Canvas() {
       fabricRef.current = null;
     };
   }, [currentViewIndex]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Live canvas resize ───────────────────────────────────────────────────
+  // The Fabric canvas is created once per VIEW (effect above, deps
+  // [currentViewIndex]). The view's canvas_width/canvas_height are DATA, not a
+  // settings field, and an import rewrites them for the view that is already
+  // open — ImportLightBurn sizes the view to the design it just parsed. The
+  // init effect never re-runs for that, so the <canvas> ELEMENT kept the size
+  // it was created with. MmRuler derives mm-per-pixel by MEASURING that
+  // element, so every millimetre reading was wrong by the stale/true ratio
+  // until the merchant switched views or reloaded — an 800×600 element holding
+  // a 600×290 design reported a 400 mm design as 300 mm.
+  //
+  // Resize the existing canvas rather than widening the init effect's
+  // dependency array: re-creating the Fabric canvas would throw away the
+  // objects, the undo history and the selection.
+  //
+  // No pushHistory here, deliberately. setDimensions() fires no object events,
+  // so it cannot pollute the undo stack through the loadFromJSON/isRestoring
+  // path; and the resize belongs to the import's own snapshot, not to a
+  // separate undo step the merchant would have to step past.
+  useEffect(() => {
+    const canvas = fabricRef.current;
+    if (!canvas || canvas.__sgpdDisposed) return;
+    if (canvas.getWidth() === canvasWidth && canvas.getHeight() === canvasHeight) return;
+
+    canvas.setDimensions({ width: canvasWidth, height: canvasHeight });
+
+    // A background that was auto-fitted to the OLD width (init effect:
+    // scaleToWidth) no longer covers the canvas. One the merchant positioned
+    // by hand (background_transform) is left exactly where they put it, and
+    // mid-background-edit there is no backgroundImage at all — the image is a
+    // regular selectable object then, so this is a no-op.
+    const view = useTemplateStore.getState().views[currentViewIndex];
+    if (canvas.backgroundImage && !view?.background_transform?.scaleX) {
+      canvas.backgroundImage.scaleToWidth(canvasWidth);
+    }
+
+    canvas.requestRenderAll();
+  }, [canvasWidth, canvasHeight, currentViewIndex]);
 
   // ── Real-time zone sync ─────────────────────────────────────────────────
   // When zones_config changes in the store (add/edit/delete), update the
@@ -1205,7 +1251,7 @@ export default function Canvas() {
     if (!bounds) {
       const zones = views[currentViewIndex]?.zones_config || [];
       const zone = (zi != null && zones[zi]) ? zones[zi] : null;
-      bounds = zone || { x: 0, y: 0, width: currentView?.canvas_width || 800, height: currentView?.canvas_height || 600 };
+      bounds = zone || { x: 0, y: 0, width: canvasWidth, height: canvasHeight };
     }
 
     alignElement(obj, dir, bounds);
@@ -1231,7 +1277,7 @@ export default function Canvas() {
     canvas.renderAll();
     setHasSelection(true);
     pushHistory(viewKey, canvas.toObject(['data']));
-  }, [views, currentViewIndex, currentView, updateLayer, pushHistory, viewKey]);
+  }, [views, currentViewIndex, canvasWidth, canvasHeight, updateLayer, pushHistory, viewKey]);
 
   const isPremium = window.sgpdTemplateBuilder?.isPremium;
 
@@ -1371,8 +1417,8 @@ export default function Canvas() {
             key={currentViewIndex}
             canvasRef={canvasEl}
             widthMm={widthMm}
-            canvasWidth={currentView?.canvas_width || 800}
-            canvasHeight={currentView?.canvas_height || 600}
+            canvasWidth={canvasWidth}
+            canvasHeight={canvasHeight}
           />
         )}
         <div className="pf-canvas-cell">
