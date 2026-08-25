@@ -54,6 +54,19 @@ class PriceCalculatorTest extends TestCase {
         $this->assertSame('image', $this->classify(['type' => 'Image']));
     }
 
+    public function test_bills_a_filled_text_element(): void {
+        $this->assertSame('text', $this->classify(['type' => 'IText', 'text' => 'Martin']));
+    }
+
+    public function test_does_not_bill_an_empty_text_element(): void {
+        // A template may author an empty "Your name here" layer, and the
+        // designer keeps a text the customer cleared on the canvas as a
+        // placeholder. Neither engraves anything, so neither is billable.
+        $this->assertNull($this->classify(['type' => 'IText', 'text' => '']));
+        $this->assertNull($this->classify(['type' => 'IText', 'text' => '   ']));
+        $this->assertNull($this->classify(['type' => 'Textbox']));
+    }
+
     public function test_does_not_bill_template_background_art(): void {
         $this->assertNull($this->classify([
             'type' => 'Image',

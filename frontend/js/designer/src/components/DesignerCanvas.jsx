@@ -655,12 +655,14 @@ export default function DesignerCanvas() {
         }
 
         if (!hasSnapshotForView && layer.type === 'image' && layer.src) {
-          // R21: the bitmap background (template_art, default true — the
-          // LightBurn-imported reference bitmap) stays locked regardless of
-          // the padlock, per fe3b5d9. Any other image layer (template_art:
-          // false — none exist on live templates today) follows the same
-          // padlock rule as svg: locked unless explicitly unlocked.
-          const isBackgroundArt = layer.template_art !== false;
+          // R21: the bitmap background (the LightBurn-imported reference
+          // bitmap) stays locked regardless of the padlock, per fe3b5d9.
+          // Opt-IN, never a default: only ImportLightBurn writes template_art,
+          // and it writes true. A merchant-added image layer (Add Layer →
+          // Image, TreePanel#addFromUrl) carries neither key, and defaulting it
+          // to background art forced it behind everything, made it
+          // unselectable AND dropped it from every export render.
+          const isBackgroundArt = layer.template_art === true;
           const locked = isBackgroundArt || isLayerLockedForCustomer(layer);
           FabricImage.fromURL(layer.src, { crossOrigin: 'anonymous' })
             .then((img) => {
@@ -688,8 +690,8 @@ export default function DesignerCanvas() {
                   templateLocked:    locked,
                   // Kept out of every export render (App.jsx) and out of both
                   // price counters (priceCounts.js / PriceCalculator).
-                  excludeFromExport: layer.exclude_from_export !== false,
-                  templateArt:       layer.template_art !== false,
+                  excludeFromExport: layer.exclude_from_export === true,
+                  templateArt:       layer.template_art === true,
                 },
               });
               if (zoneClips(zone)) applyZoneClip(img, zoneIdx);

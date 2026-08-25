@@ -130,9 +130,14 @@ class PriceCalculator {
 
         $fabric_type = $obj['type'] ?? '';
 
-        // Text types
+        // Text types. An EMPTY text object is not a paid element: a template
+        // may author a layer empty for the customer to fill in, and the
+        // designer keeps a text the customer cleared on the canvas as a
+        // placeholder (shared/js/textPlaceholder.js) rather than deleting it.
+        // Neither engraves anything. Whitespace-only counts as empty too.
+        // Mirrored in priceCounts.js#isEmptyText.
         if (in_array($fabric_type, ['IText', 'Textbox', 'Text', 'i-text', 'textbox'], true)) {
-            return 'text';
+            return trim((string) ($obj['text'] ?? '')) === '' ? null : 'text';
         }
 
         // Image type
