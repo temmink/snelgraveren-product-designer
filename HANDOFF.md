@@ -6,7 +6,9 @@ _Last updated: 2026-08-26._
 
 - **Live site runs 1.8.5** (snelgraveren.nl), installed by Martin and verified: the served
   `frontend-designer` JS and CSS are byte-identical to the local build.
-- **1.8.6 is built and handed over, NOT yet uploaded.** Four fixes from a `/code-review ultra` over
+- **1.9.0 supersedes 1.8.6 — upload 1.9.0.** It contains everything 1.8.6 had plus the Designs
+  page. The 1.8.6 ZIP is only worth keeping until 1.9.0 is confirmed live.
+- **1.8.6 was built and handed over, NOT yet uploaded.** Four fixes from a `/code-review ultra` over
   `master...HEAD`; two of them cost something real (a merchant-added image never reached the
   production file; an empty text field was billed). Verified inside the ZIP itself, not by name or
   date. Uploading it is Martin's next action — check which folder row on `plugins.php` says
@@ -16,9 +18,9 @@ _Last updated: 2026-08-26._
 - **wordpress.org still has 1.7.8** (r3657251, published 2026-08-20). Everything since is Freemius /
   direct-upload only. If a wp.org release is wanted, run `bash bin/wporg-release.sh` in a real
   terminal — see the release rules in CLAUDE.md.
-- ZIPs in the project dir: `…-1.8.6.zip` (**upload this one**) and `…-1.8.5.zip` (the version now
-  live, kept deliberately so a rollback is one upload away). Older 1.8.x ZIPs were deleted on
-  purpose so the wrong one cannot be uploaded — prune 1.8.5 once 1.8.6 is confirmed live.
+- ZIPs in the project dir: `…-1.9.0.zip` (**upload this one**), `…-1.8.6.zip` and `…-1.8.5.zip`
+  (the version now live, kept so a rollback is one upload away). Older 1.8.x ZIPs were deleted on
+  purpose so the wrong one cannot be uploaded — prune 1.8.5 and 1.8.6 once 1.9.0 is confirmed live.
 
 ## What shipped in the 1.8.x cycle
 

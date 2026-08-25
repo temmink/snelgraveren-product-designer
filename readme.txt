@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.8.6
+Stable tag: 1.9.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -132,6 +132,9 @@ No other external services are used. Design exports (PDF/PNG/SVG) are rendered e
 4. Production dashboard: every order with a design, filtered by status and period, ready to download as one ZIP.
 
 == Changelog ==
+
+= 1.9.0 =
+* New: design something for a customer yourself and hand it to them. Product Designer → Designs lists every saved design and assigns one to a customer account by ID, e-mail address or username; the row carries the link that reopens the design for them. Until now an admin-made design belonged to the admin, so the customer could not see it and adding it to the cart silently dropped the design. Note: the customer must be logged in before opening the link, and they can still change the design before ordering.
 
 = 1.8.6 =
 * Fix: an image added to a template in the Template Builder was shown to the customer locked behind everything else, could not be selected, and was left out of the production file altogether. Only the reference bitmap from a LightBurn import is meant to behave that way. An image the merchant adds is now an ordinary template layer: it follows the padlock like every other layer and it is included in the export.
