@@ -453,11 +453,28 @@ ${inner}
     expect(img.scaleY).toBeCloseTo(10 * PX_PER_MM, 1);
   });
 
-  it('divides the physical size by the XForm scale to find the local box', () => {
-    // XForm scale 2 means the local half-extent is W/(2*2) = 5, so the corners
-    // land at machine 100 +/- 10 — the physical size is unchanged at 20mm.
-    const { widthMm } = parseLbrn(wrap(BITMAP('', '2 0 0 2 100 50')), { availableFonts: [] });
+  it('multiplies W/H by the XForm scale to find the final size', () => {
+    // W/H are the LOCAL size. XForm scale 2 doubles them, so a W=20 bitmap is
+    // 40mm wide on the machine: corners at 100 +/- 20, and the image layer
+    // must be scaled to 40mm, not 20 (and certainly not 10).
+    const { layers, widthMm, heightMm } = parseLbrn(wrap(BITMAP('', '2 0 0 2 100 50')), { availableFonts: [] });
+    expect(widthMm).toBeCloseTo(40, 3);
+    expect(heightMm).toBeCloseTo(20, 3);
+    const img = layers.find((l) => l.type === 'image');
+    expect(img.scaleX).toBeCloseTo(40 * PX_PER_MM, 1); // 40mm across 1 source pixel
+    expect(img.scaleY).toBeCloseTo(20 * PX_PER_MM, 1);
+  });
+
+  it('keeps the scale magnitude when the XForm also rotates', () => {
+    // 90 degrees at scale 2: [a,b,c,d] = [0,2,-2,0]. Final size is still
+    // 40 x 20 mm, but rotated, so the bbox is 20 wide and 40 tall.
+    const { layers, widthMm, heightMm } = parseLbrn(wrap(BITMAP('', '0 2 -2 0 100 50')), { availableFonts: [] });
     expect(widthMm).toBeCloseTo(20, 3);
+    expect(heightMm).toBeCloseTo(40, 3);
+    const img = layers.find((l) => l.type === 'image');
+    expect(img.angle).toBeCloseTo(90, 3);
+    expect(img.scaleX).toBeCloseTo(40 * PX_PER_MM, 1);
+    expect(img.scaleY).toBeCloseTo(20 * PX_PER_MM, 1);
   });
 
   it('reports the rotation from the XForm', () => {
@@ -497,5 +514,58 @@ ${inner}
     const { layers, warnings } = parseLbrn(wrap(zero), { availableFonts: [] });
     expect(layers.some((l) => l.type === 'image')).toBe(false);
     expect(warnings.join(' ')).toMatch(/size/i);
+  });
+});
+
+// The user's own file: a 800x386 PNG placed on a plank outline. Its Bitmap
+// shape carries W="211.64021" H="102.1164" with an XForm scale of 1.89 —
+// 211.64021 x 1.89 = 400.000 mm exactly, which is what LightBurn shows.
+describe('parseLbrn (arcacia.lbrn2 — real LightBurn file)', () => {
+  const ARCACIA = fs.readFileSync(
+    path.join(__dirname, '../fixtures/arcacia.lbrn2'), 'utf8'
+  );
+  const parsed = () => parseLbrn(ARCACIA, { availableFonts: [] });
+
+  it('renders the bitmap at the 400.00 x 193.00 mm LightBurn shows, not its unscaled 211 mm W', () => {
+    const { layers, warnings } = parsed();
+    expect(warnings).toEqual([]);
+    const img = layers.find((l) => l.type === 'image');
+    expect(img.pngWidth).toBe(800);
+    expect(img.pngHeight).toBe(386);
+    // The rendered size is scale x source pixels, back into millimetres.
+    expect((img.scaleX * img.pngWidth) / PX_PER_MM).toBeCloseTo(400.00, 1);
+    expect((img.scaleY * img.pngHeight) / PX_PER_MM).toBeCloseTo(193.00, 1);
+    expect(img.scaleX).toBeCloseTo((400 * PX_PER_MM) / 800, 2); // 1.88975
+    expect(img.angle).toBeCloseTo(0, 6);
+  });
+
+  it('reports the design extent as the bitmap 400.00 x 193.00, which overhangs the plank', () => {
+    // The bitmap is centred at (354.068, 464.939), so it spans X 154.068..554.068
+    // — wider than the paths' 157.37..551.61. The overhang is real, not an error:
+    // before the fix this read 395.63 x 190.39.
+    const { widthMm, heightMm } = parsed();
+    expect(widthMm).toBeCloseTo(400.00, 2);
+    expect(heightMm).toBeCloseTo(193.00, 2);
+  });
+
+  it('leaves the three path layers at their own size and relative position', () => {
+    const svgs = parsed().layers.filter((l) => l.type === 'svg');
+    expect(svgs).toHaveLength(3);
+    const dims = svgs.map((l) => {
+      const m = /width="([\d.]+)" height="([\d.]+)"/.exec(l.svg_markup);
+      return [parseFloat(m[1]), parseFloat(m[2])];
+    });
+    expect(dims[0][0]).toBeCloseTo(52.2, 2);
+    expect(dims[0][1]).toBeCloseTo(62.352, 2);
+    expect(dims[1][0]).toBeCloseTo(1495.265, 2);
+    expect(dims[1][1]).toBeCloseTo(719.58, 2);
+    expect(dims[2][0]).toBeCloseTo(947.95, 2);
+    expect(dims[2][1]).toBeCloseTo(492.831, 2);
+    // Positions relative to each other are untouched by the bitmap fix (only
+    // the shared origin moved, because the bitmap now widens the union bbox).
+    expect(svgs[1].left - svgs[0].left).toBeCloseTo(-1366.945, 2);
+    expect(svgs[1].top - svgs[0].top).toBeCloseTo(-471.954, 2);
+    expect(svgs[2].left - svgs[1].left).toBeCloseTo(113.349, 2);
+    expect(svgs[2].top - svgs[1].top).toBeCloseTo(113.347, 2);
   });
 });

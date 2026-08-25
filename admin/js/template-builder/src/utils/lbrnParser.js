@@ -4,6 +4,15 @@ function n(v) {
 }
 
 /**
+ * Round a unitless scale factor. 6 decimals, not `n`'s 3: a scale multiplies
+ * the source pixel count, so 3 decimals on a 1.89x factor over an 800px PNG
+ * already costs 0.1mm of physical size — and more on a larger source image.
+ */
+function nScale(v) {
+  return parseFloat(Number(v).toFixed(6));
+}
+
+/**
  * Parse a LightBurn VertList: `V{x} {y}` optionally followed by control-handle
  * tokens `c0x{v}` `c0y{v}` `c1x{v}` `c1y{v}`. A missing handle component
  * defaults to the vertex coordinate. c0 = outgoing handle (toward the next
@@ -341,7 +350,7 @@ export function parseLbrn(xmlString, opts = {}) {
   // 1) Collect raw shapes with machine-space geometry.
   const paths = []; // { d(local), xform, cutIndex, mpts:[[mx,my]...] }
   const texts = []; // { text, family, fontSize, xform, cutIndex, originMx, originMy }
-  const bitmaps = []; // { data, pngW, pngH, wMm, hMm, corners, centre, angle }
+  const bitmaps = []; // { data, pngW, pngH, localWMm, localHMm, finalWMm, finalHMm, corners, centre, angle }
 
   const pushPath = (vert, prim, xform, cutIndex, groupKey) => {
     const localD = vertPrimToPathData(vert, prim);
@@ -378,30 +387,37 @@ export function parseLbrn(xmlString, opts = {}) {
       }
     } else if (type === 'Bitmap') {
       const data = el.getAttribute('Data') || '';
-      const wMm  = parseFloat(el.getAttribute('W') || '0') || 0;
-      const hMm  = parseFloat(el.getAttribute('H') || '0') || 0;
+      // W/H are the shape-LOCAL size in mm; the XForm scales them (see below).
+      const localWMm = parseFloat(el.getAttribute('W') || '0') || 0;
+      const localHMm = parseFloat(el.getAttribute('H') || '0') || 0;
       const size = data ? decodePngSize(data) : null;
-      if (!data || wMm <= 0 || hMm <= 0) {
+      if (!data || localWMm <= 0 || localHMm <= 0) {
         warnings.push('Skipped a bitmap image with no usable size.');
       } else if (!size) {
         warnings.push('Skipped a bitmap image: only PNG images are supported.');
       } else {
-        // W/H are the FINAL millimetre size; the XForm translation is the
-        // image CENTRE. Divide by the XForm's own scale to recover the local
-        // box, then map its corners so a scaled or rotated bitmap still
-        // contributes its true extent to the union bbox.
+        // W/H are the LOCAL (unscaled) millimetre size; the XForm carries the
+        // real one — its scale factors AND, in its translation, the image
+        // CENTRE. So the final size is W/H MULTIPLIED by the XForm scale
+        // (LightBurn's own size readout), never divided by it. The local box is
+        // simply W/2 x H/2 around the origin; mapping its corners through the
+        // matrix applies the scale (and any rotation) so a scaled or rotated
+        // bitmap contributes its true extent to the union bbox.
+        // `Math.hypot` recovers each axis' scale magnitude even when rotated.
         const sx = Math.hypot(xform[0], xform[1]) || 1;
         const sy = Math.hypot(xform[2], xform[3]) || 1;
-        const halfW = wMm / (2 * sx);
-        const halfH = hMm / (2 * sy);
+        const halfW = localWMm / 2;
+        const halfH = localHMm / 2;
         const corners = [[-halfW, -halfH], [halfW, -halfH], [halfW, halfH], [-halfW, halfH]]
           .map(([lx, ly]) => applyXform(xform, lx, ly));
         bitmaps.push({
           data,
           pngW: size.width,
           pngH: size.height,
-          wMm,
-          hMm,
+          localWMm,
+          localHMm,
+          finalWMm: localWMm * sx,
+          finalHMm: localHMm * sy,
           corners,
           centre: applyXform(xform, 0, 0),
           angle: Math.atan2(xform[1], xform[0]) * 180 / Math.PI,
@@ -438,8 +454,8 @@ export function parseLbrn(xmlString, opts = {}) {
       originY: 'center',
       left: n((b.centre[0] - minX) * PX_PER_MM),
       top:  n((b.centre[1] - minY) * PX_PER_MM),
-      scaleX: n((b.wMm * PX_PER_MM) / b.pngW),
-      scaleY: n((b.hMm * PX_PER_MM) / b.pngH),
+      scaleX: nScale((b.finalWMm * PX_PER_MM) / b.pngW),
+      scaleY: nScale((b.finalHMm * PX_PER_MM) / b.pngH),
       angle: n(b.angle),
     });
   });
