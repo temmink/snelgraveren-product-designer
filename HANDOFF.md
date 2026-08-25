@@ -1,23 +1,31 @@
 # Handoff
 
-_Last updated: 2026-08-25._
+_Last updated: 2026-08-26._
 
 ## Where things stand
 
 - **Live site runs 1.8.5** (snelgraveren.nl), installed by Martin and verified: the served
   `frontend-designer` JS and CSS are byte-identical to the local build.
-- **Branch `feature/bitmap-ruler-text` is 53 commits ahead of `master` and NOT merged.** Master is
+- **1.8.6 is built and handed over, NOT yet uploaded.** Four fixes from a `/code-review ultra` over
+  `master...HEAD`; two of them cost something real (a merchant-added image never reached the
+  production file; an empty text field was billed). Verified inside the ZIP itself, not by name or
+  date. Uploading it is Martin's next action — check which folder row on `plugins.php` says
+  "Deactiveren" afterwards.
+- **Branch `feature/bitmap-ruler-text` is 58 commits ahead of `master` and NOT merged.** Master is
   behind by nothing, so a merge would be a clean fast-forward. That is Martin's call.
 - **wordpress.org still has 1.7.8** (r3657251, published 2026-08-20). Everything since is Freemius /
   direct-upload only. If a wp.org release is wanted, run `bash bin/wporg-release.sh` in a real
   terminal — see the release rules in CLAUDE.md.
-- Current ZIP in the project dir: `snelgraveren-product-designer-1.8.5.zip`. Older 1.8.x ZIPs were
-  deleted on purpose so the wrong one cannot be uploaded.
+- ZIPs in the project dir: `…-1.8.6.zip` (**upload this one**) and `…-1.8.5.zip` (the version now
+  live, kept deliberately so a rollback is one upload away). Older 1.8.x ZIPs were deleted on
+  purpose so the wrong one cannot be uploaded — prune 1.8.5 once 1.8.6 is confirmed live.
 
 ## What shipped in the 1.8.x cycle
 
-Ten defects, every one of them found by Martin using the tool — none by the test suite or by the
-branch review, which had declared the branch ready. Three were design decisions of mine, not slips.
+Ten defects through 1.8.5, every one of them found by Martin using the tool — none by the test
+suite or by the branch review, which had declared the branch ready. Three were design decisions of
+mine, not slips. 1.8.6 breaks that pattern: its four came from a deeper review pass, before a
+customer hit them.
 
 | Version | Change |
 |---------|--------|
@@ -27,6 +35,7 @@ branch review, which had declared the branch ready. Three were design decisions 
 | 1.8.3 | designer fills the room it is given (up to 2x); export pinned to the logical canvas so the customer's window no longer decides the production resolution |
 | 1.8.4 | LightBurn bitmaps at the size LightBurn shows; builder canvas takes the import's size without a view switch; locked layers show a red padlock that stays visible |
 | 1.8.5 | the imported container zone no longer claims customer element types; an element belonging to no zone is kept on the canvas |
+| 1.8.6 | a merchant-added image is customer content again (was locked behind the canvas and stripped from every export); empty text is no longer billed; imported bitmap scale keeps 6 decimals so it still registers with the cut lines; the import reads the store after its uploads, not before |
 
 ## Open — needs Martin, not code
 
