@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.8.3
+Stable tag: 1.8.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -132,6 +132,12 @@ No other external services are used. Design exports (PDF/PNG/SVG) are rendered e
 4. Production dashboard: every order with a design, filtered by status and period, ready to download as one ZIP.
 
 == Changelog ==
+
+= 1.8.4 =
+* Fix: bitmap images from a LightBurn file were imported at the wrong size. Their size is stored unscaled in the file, with the scale held separately, and the scale was being divided out instead of applied. A bitmap LightBurn shows at 400 mm was imported at 212 mm.
+* Fix: the Template Builder canvas kept the size it was opened with after a LightBurn import, so the millimetre ruler measured the old canvas and reported a design as roughly three quarters of its real size. The stored template was correct; only the display was stale, and switching views or reloading hid the problem.
+* Fix: rounding the imported design to whole canvas pixels could shift the reported height by a fraction of a millimetre, which carried through to the export height.
+* Change: a locked layer in the Template Builder now shows a red padlock that stays visible without hovering the row. The locked and unlocked icons differ only by the shackle, and the row's buttons only appeared on hover, so finding out which layers were locked meant pointing at each row in turn.
 
 = 1.8.3 =
 * New: the design canvas now grows to fill the space it is given instead of never rendering larger than the template's own size, up to twice that size. Text, artwork, the design zones and the millimetre rulers all scale with it, so a small design area on a wide screen is no longer wasted space.
