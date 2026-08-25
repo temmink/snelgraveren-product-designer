@@ -38,10 +38,6 @@ export default function ImportLightBurn() {
     setStatus( __( 'Importing…', 'snelgraveren-product-designer' ) );
     try {
       const xml = await file.text();
-      // Read fresh — this handler is async, so render-time closure values for
-      // views/currentViewIndex can be stale by the time the file is read
-      // (documented Zustand gotcha; see handleUseAsBoundary in Canvas.jsx).
-      const { views, currentViewIndex } = useTemplateStore.getState();
       const { layers, widthMm, heightMm, warnings } = parseLbrn(xml, {
         availableFonts: AVAILABLE_FONTS.map((f) => f.family),
       });
@@ -99,6 +95,13 @@ export default function ImportLightBurn() {
       const natH = Math.max(1, heightMm * PX_PER_MM);
       const { width: canvasW, height: canvasH, scale: fit } = displayCanvasSize(natW, natH);
       const r = (v) => Math.round(v * 100) / 100;
+      // Scales get 6 decimals, not r()'s 2 — same reasoning as nScale() in
+      // lbrnParser: a scale MULTIPLIES the source pixel count, so its absolute
+      // error grows with the image. On a 400 mm design from a 2400 px PNG the
+      // composed factor is ~0.3333; storing 0.33 renders it at ~396 mm, and
+      // the vector layers (which round independently) then no longer register
+      // with the bitmap they are supposed to align to.
+      const rScale = (v) => parseFloat(Number(v).toFixed(6));
 
       // Name svg layers so the tree panel is navigable (a 40-shape import
       // otherwise reads "svg, svg, svg…"): merged LightBurn groups become
@@ -122,8 +125,17 @@ export default function ImportLightBurn() {
         l.type === 'text'
           ? { ...l, left: r(l.left * fit), top: r(l.top * fit), fontSize: r(l.fontSize * fit) }
           : { ...l, left: r(l.left * fit), top: r(l.top * fit),
-              scaleX: r((l.scaleX || 1) * fit), scaleY: r((l.scaleY || 1) * fit) }
+              scaleX: rScale((l.scaleX || 1) * fit), scaleY: rScale((l.scaleY || 1) * fit) }
       ));
+
+      // Read the store fresh HERE, not at the top of the handler: everything
+      // above this point awaits (file read, one media upload per bitmap —
+      // seconds on a multi-MB PNG), and a snapshot taken before an await goes
+      // stale just as surely as a render-time closure value does (documented
+      // Zustand gotcha; see handleUseAsBoundary in Canvas.jsx). A merchant who
+      // adds a zone while a bitmap uploads would otherwise get a second
+      // full-canvas Imported zone stacked on the one they just made.
+      const { views, currentViewIndex } = useTemplateStore.getState();
 
       // Target the current view's first zone. Create a design-sized container
       // zone only if the view has none yet — existing zones (with their own
