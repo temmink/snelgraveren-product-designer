@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.8.2
+Stable tag: 1.8.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -132,6 +132,11 @@ No other external services are used. Design exports (PDF/PNG/SVG) are rendered e
 4. Production dashboard: every order with a design, filtered by status and period, ready to download as one ZIP.
 
 == Changelog ==
+
+= 1.8.3 =
+* New: the design canvas now grows to fill the space it is given instead of never rendering larger than the template's own size, up to twice that size. Text, artwork, the design zones and the millimetre rulers all scale with it, so a small design area on a wide screen is no longer wasted space.
+* Fix: the resolution of the production export depended on how wide the customer's browser window was, because the export was captured from the on-screen canvas at its current zoom. Two customers saving the same design on a phone and on a large monitor produced different files, and a wide enough window could push the export past the 10 MB limit where the save is rejected. Exports are now always rendered at the template's own size.
+* Fix: the design canvas could overflow its column instead of shrinking to fit it, on themes that place the designer in a grid.
 
 = 1.8.2 =
 * Fix: an element could not be dragged any more once it touched an SVG-shaped design zone. The element was teleported back to a remembered position on every frame of the drag, which broke the link between the pointer and the element and made it fight the mouse. Dragging is now unconstrained inside the zone's bounding box and the outline is applied once, when the element is released.
