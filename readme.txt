@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.8.4
+Stable tag: 1.8.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -132,6 +132,10 @@ No other external services are used. Design exports (PDF/PNG/SVG) are rendered e
 4. Production dashboard: every order with a design, filtered by status and period, ready to download as one ZIP.
 
 == Changelog ==
+
+= 1.8.5 =
+* Fix: clip art, uploaded images, uploaded logos and customer-added text ignored the design boundary on templates built from a LightBurn import. The import created a full-canvas container zone for the imported artwork and offered it as a place customers may add elements, so everything bound to that zone instead of the merchant's boundary. New imports no longer claim customer element types. Existing templates keep their current setting: untick text, image and svg on the imported zone to correct them.
+* Fix: an element that belongs to no design zone is now kept on the canvas instead of being draggable off the design entirely. As everywhere else, an element too large to fit stays movable rather than being pinned.
 
 = 1.8.4 =
 * Fix: bitmap images from a LightBurn file were imported at the wrong size. Their size is stored unscaled in the file, with the scale held separately, and the scale was being divided out instead of applied. A bitmap LightBurn shows at 400 mm was imported at 212 mm.
