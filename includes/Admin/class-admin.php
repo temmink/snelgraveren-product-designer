@@ -7,6 +7,7 @@ class Admin {
 
     private SettingsPage $settings_page;
     private ExportDashboard $export_dashboard;
+    private DesignsPage $designs_page;
 
     /**
      * Admin page hook suffixes captured from add_menu_page/add_submenu_page.
@@ -33,6 +34,9 @@ class Admin {
 
         $this->export_dashboard = new ExportDashboard();
         $this->export_dashboard->init();
+
+        $this->designs_page = new DesignsPage();
+        $this->designs_page->init();
 
         new ProductIntegration();
     }
@@ -83,6 +87,8 @@ class Admin {
             'sgpd-clipart',
             [$this, 'render_clipart_page']
         );
+
+        $this->designs_page->register_menu();
 
         $this->export_dashboard->register_menu();
 

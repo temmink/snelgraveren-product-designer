@@ -113,6 +113,100 @@ class DesignRepository {
         return $result !== false;
     }
 
+    /**
+     * Put a design on a customer's name. This is what makes "design it for the
+     * customer, then hand it over" work at all: ownership decides whether the
+     * design shows up under My Designs, whether the reopen link resolves, and
+     * whether add-to-cart keeps the hash (Frontend::add_cart_item_data drops it
+     * SILENTLY when it does not, so the product lands in the cart with no
+     * design and no error).
+     *
+     * session_id is cleared, deliberately. Ownership is "customer_id matches OR
+     * session_id matches" (RestDesigns::owns_design, mirrored in Frontend), so
+     * leaving the guest session behind would keep the design reachable by
+     * whoever still holds that cookie — including the browser it was drawn in.
+     * One design, one owner.
+     */
+    public function assign_customer(int $id, int $customer_id): bool {
+        global $wpdb;
+        $hash = $wpdb->get_var($wpdb->prepare("SELECT design_hash FROM {$this->table} WHERE id = %d", $id));
+        if (!$hash) {
+            return false;
+        }
+        $result = $wpdb->update(
+            $this->table,
+            ['customer_id' => $customer_id, 'session_id' => ''],
+            ['id' => $id],
+            ['%d', '%s'],
+            ['%d']
+        );
+        $this->invalidate_cache((string) $hash);
+        // 0 affected rows means the design already had this owner — a success.
+        return $result !== false;
+    }
+
+    /**
+     * WHERE clause + bind values shared by list_for_admin/count_for_admin, so
+     * the two can never disagree about what the filter means.
+     *
+     * @return array{0: string, 1: array}
+     */
+    private function admin_filter_sql(array $filters): array {
+        global $wpdb;
+        $where  = ['1=1'];
+        $params = [];
+
+        if (isset($filters['status']) && $filters['status'] !== '') {
+            $where[]  = 'status = %s';
+            $params[] = (string) $filters['status'];
+        }
+        if (!empty($filters['customer_id'])) {
+            $where[]  = 'customer_id = %d';
+            $params[] = (int) $filters['customer_id'];
+        }
+        if (isset($filters['search']) && $filters['search'] !== '') {
+            // Hash prefix search: the admin has just made a design and knows the
+            // first few characters from the reopen link.
+            $where[]  = 'design_hash LIKE %s';
+            $params[] = $wpdb->esc_like((string) $filters['search']) . '%';
+        }
+
+        return [implode(' AND ', $where), $params];
+    }
+
+    /**
+     * Designs for the admin overview: newest first, with the first view's
+     * thumbnail so the list is scannable by picture rather than by hash.
+     */
+    public function list_for_admin(int $per_page = 20, int $page = 1, array $filters = []): array {
+        global $wpdb;
+        [$where, $params] = $this->admin_filter_sql($filters);
+        $params[] = max(1, $per_page);
+        $params[] = (max(1, $page) - 1) * max(1, $per_page);
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names are class properties; $where is built from literals only
+        return $wpdb->get_results($wpdb->prepare(
+            "SELECT d.*,
+                    (SELECT v.thumbnail FROM {$this->views_table} v WHERE v.design_id = d.id ORDER BY v.id ASC LIMIT 1) AS thumbnail
+             FROM {$this->table} d
+             WHERE {$where}
+             ORDER BY d.updated_at DESC
+             LIMIT %d OFFSET %d",
+            $params
+        ), ARRAY_A) ?: [];
+    }
+
+    public function count_for_admin(array $filters = []): int {
+        global $wpdb;
+        [$where, $params] = $this->admin_filter_sql($filters);
+        if (!$params) {
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is internal, $where is literal
+            return (int) $wpdb->get_var("SELECT COUNT(*) FROM {$this->table} WHERE {$where}");
+        }
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is internal; $where is built from literals only
+        return (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$this->table} WHERE {$where}", $params));
+    }
+
     public function update_price(int $id, float $price): bool {
         global $wpdb;
         return (bool) $wpdb->update($this->table, ['total_price' => $price], ['id' => $id], ['%f'], ['%d']);

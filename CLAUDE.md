@@ -141,6 +141,35 @@ merchant's own setup. Fix by hand: open the `Imported` zone and untick text/imag
 element out. Only `restrict` constrains movement. A zone meant as a real engraving boundary must be
 `restrict`.
 
+## Handing a design to a customer
+
+The shop owner designs something FOR a customer, then hands it over. Ownership is the whole
+mechanism, and it is checked in two mirrored places — `RestDesigns::owns_design()` and
+`Frontend::owns_design()`: the design's `customer_id` matches the logged-in user, OR its
+`session_id` matches the guest cookie, OR the requester has `edit_sgpd_templates`.
+
+`RestDesigns::create_design` stamps `customer_id = get_current_user_id()`, so an admin-drawn design
+belongs to the ADMIN. Until it is reassigned the customer cannot see it under My designs
+(`list_by_customer` filters on `customer_id`) and — the part that bites — **`add_cart_item_data`
+drops the hash SILENTLY** when ownership fails, so the product lands in the cart with no design and
+no error at all.
+
+`Admin\DesignsPage` (`includes/Admin/class-designs-page.php`) is the route: assign by user ID,
+e-mail or username, and copy the `?pf_design=HASH` reopen link from the row.
+`DesignRepository::assign_customer()` also CLEARS `session_id` — ownership is customer OR session,
+so leaving the guest session behind would keep the design reachable from the browser it was drawn
+in. One design, one owner.
+
+Two things this does NOT do, deliberately: the customer must be logged in before opening the link
+(the REST fetch 403s otherwise and they see an empty default design, which reads as a failure), and
+the designer is an EDITOR, not a proof — the customer can change the design before ordering. A
+read-only "approve this proof" flow is open work, not a bug.
+
+**Result reporting is on the row, not in an admin notice.** Notice-collector plugins (this shop runs
+Admin Site Enhancements) sweep every `.notice` in `.wrap` into a hidden drawer — including
+`notice-error`, which their selector list does not exempt even with `.inline` — so a mistyped
+address would look like nothing happened. Do not "fix" this back to `add_settings_error`.
+
 ## Security Rules (Critical)
 
 These exist because FPD had CVE-2024-51919 (arbitrary file upload → RCE) and CVE-2024-51818 (SQL injection):
@@ -209,6 +238,7 @@ Other renames: Freemius helper `pf_fs()` → `sgpd_fs()`, global `$pf_fs` → `$
 | Add New | `pf-template-builder` | Template builder React app (canvas, zones, layers, permissions, pricing) |
 | Design Templates | `pf-design-templates` | Design template CRUD React app (list, create, edit, delete, import/export JSON) |
 | Clipart | `pf-clipart` | Clipart manager React app (collections CRUD, bulk SVG upload, drag & drop) |
+| Designs | `sgpd-designs` | `Admin\DesignsPage` — every saved design, newest first, with the one action WP admin had no route for: **assigning a design to a customer**. See "Handing a design to a customer" below |
 | Settings | `pf-settings` | Export options (`pf_export_trigger_status`, `pf_export_default_format`), `pf_delete_data_on_uninstall` toggle, guest design retention (`pf_guest_design_retention_days`), health e-mail alert toggle (`pf_health_email_alerts`), a design-statistics panel (saved/ordered/conversion, last 30 days), and system status checks (`Admin\SystemStatus`: PHP ≥ 8.1, finfo, rsvg-convert/Imagick-SVG, writable `pf-thumbnails`/`pf-exports`/`pf-fonts`/`pf-clipart`/`pf-cache`, DB tables, LiteSpeed detection). Critical failures also show as an admin notice on every ProductForge screen (cached 5 min in the `pf_system_status_critical` transient) |
 | Production | `pf-export-dashboard` | `Admin\ExportDashboard` — lists recent orders (filterable by status/days) that contain designs, flags designs containing raster images via `DesignInspector::contains_raster()`, and bulk-downloads the selection as one ZIP via `admin_post_pf_bulk_export` |
 

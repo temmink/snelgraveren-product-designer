@@ -37,6 +37,24 @@ customer hit them.
 | 1.8.5 | the imported container zone no longer claims customer element types; an element belonging to no zone is kept on the canvas |
 | 1.8.6 | a merchant-added image is customer content again (was locked behind the canvas and stripped from every export); empty text is no longer billed; imported bitmap scale keeps 6 decimals so it still registers with the cut lines; the import reads the store after its uploads, not before |
 
+## Handing a design to a customer (new in 1.9.0)
+
+Product Designer → **Designs** lists every saved design and assigns one to a customer account by ID,
+e-mail or username; the row carries the `?pf_design=HASH` link to mail them. Verified end to end on
+the local copy: assign → customer logs in → design appears under My account → My designs → opens in
+the designer → lands in the cart with its thumbnail and hash attached.
+
+Two known limits, both deliberate:
+
+- The customer must be **logged in before** opening the link. Logged out, the REST fetch 403s and
+  they see an empty default design — which reads as "it is broken", not as "please log in".
+- The designer is an **editor, not a proof**. Nothing stops the customer changing the design before
+  ordering; what ships is whatever is on the canvas at checkout.
+
+The read-only proof/quote flow Martin asked about — you set it up, the customer only views and
+approves — is NOT built. It needs a view-only mode plus an approve action, and a decision about what
+happens when the customer does want a change.
+
 ## Open — needs Martin, not code
 
 1. **Five live templates still have the claiming `Imported` zone**: tpl 22 acacia (2630), tpl 7
