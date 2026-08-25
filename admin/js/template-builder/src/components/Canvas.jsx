@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback, useState } from 'react';
+import React, { useRef, useEffect, useCallback, useState, useMemo } from 'react';
 import { __, sprintf } from '@wordpress/i18n';
 import { Canvas as FabricCanvas, Rect, FabricImage, IText, FabricText, loadSVGFromString, util, cache as fabricCache } from 'fabric';
 import useTemplateStore from '../store/useTemplateStore';
@@ -129,6 +129,20 @@ export default function Canvas() {
     }
   }, [views, currentViewIndex, isFreeMove]);
 
+  // The temporary object the background-edit mode puts on the canvas
+  // (enterBgEdit below). A background is MEANT to bleed past the canvas edge,
+  // so it is the one movable object the canvas fallback must not touch.
+  const isBackgroundObject = (obj) => obj?.data?.elementType === '_background';
+
+  // The whole canvas, as the fallback keep-inside rect for a layer that belongs
+  // to no restrict zone (shared/js/zoneClamp.js#keepInsideRect). Memoised so it
+  // does not destabilise the callbacks that depend on it. Free move still
+  // switches every clamp off, so the merchant keeps a way out.
+  const canvasRect = useMemo(
+    () => ({ width: canvasWidth, height: canvasHeight }),
+    [canvasWidth, canvasHeight]
+  );
+
   const zoneOf = useCallback((obj) => {
     const zi = obj?.data?.zoneIndex;
     const zones = views[currentViewIndex]?.zones_config || [];
@@ -141,25 +155,25 @@ export default function Canvas() {
   // why enforcing it mid-drag froze the object against the pointer.
   const clampToZone = useCallback((obj) => {
     if (isFreeMove) return;
-    const zone = zoneOf(obj);
-    if (!zone) return;
-    clampObjectDuringMove(obj, zone);
-  }, [zoneOf, isFreeMove]);
+    if (isBackgroundObject(obj)) return;
+    clampObjectDuringMove(obj, zoneOf(obj), { canvas: canvasRect });
+  }, [zoneOf, isFreeMove, canvasRect]);
 
   // End-of-gesture enforcement: hold the object inside the actual svg outline,
   // or — when nothing fits at its current size — leave it alone rather than
   // trap it. Same shared decision the customer designer applies.
   const settleIntoZone = useCallback((obj) => {
     if (isFreeMove) return;
-    const zone = zoneOf(obj);
-    if (!zone) return;
-    settleObjectInZone(obj, zone);
-  }, [zoneOf, isFreeMove]);
+    if (isBackgroundObject(obj)) return;
+    settleObjectInZone(obj, zoneOf(obj), { canvas: canvasRect });
+  }, [zoneOf, isFreeMove, canvasRect]);
 
   const clampScaleToZone = useCallback((obj) => {
     if (isFreeMove) return;
     const zone = zoneOf(obj);
-    if (!zone) return;
+    // No zone: never resize the layer to fit anything — just keep its position
+    // honest against the canvas fallback while the handle is held.
+    if (!zone) { clampToZone(obj); return; }
 
     const perms = permissions[obj.data?.elementType] || {};
     const bound = obj.getBoundingRect();

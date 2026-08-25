@@ -2,6 +2,7 @@ import {
   clampObjectDuringMove,
   settleObjectInZone,
   zoneContainmentShape,
+  keepInsideRect,
 } from '../../../shared/js/zoneClamp';
 
 /**
@@ -96,7 +97,7 @@ function dragBy(obj, zone, dx, dy, steps = 10, deps = DEPS) {
   const positions = [];
   for (let i = 1; i <= steps; i++) {
     obj.set({ left: startLeft + (dx * i) / steps, top: startTop + (dy * i) / steps });
-    clampObjectDuringMove(obj, zone);
+    clampObjectDuringMove(obj, zone, deps);
     positions.push([obj.left, obj.top]);
   }
   settleObjectInZone(obj, zone, deps);
@@ -238,7 +239,7 @@ describe('zones that are not shape-enforced still behave exactly as before', () 
     expect(obj.left).toBe(80);
   });
 
-  it('a non-restrict zone is not enforced at all', () => {
+  it('a non-restrict zone enforces nothing of its own, and with no canvas given nothing at all', () => {
     const clipZone = { ...ZONE, behavior: 'clip' };
     const obj = makeObject({ left: -500, top: -500, width: 20, height: 20 });
     expect(clampObjectDuringMove(obj, clipZone)).toBe(false);
@@ -259,5 +260,147 @@ describe('zones that are not shape-enforced still behave exactly as before', () 
     const obj = makeObject({ left: 390, top: 10, width: 40, height: 20 });
     expect(settleObjectInZone(obj, ZONE, { getShape: () => null, isInside: insideCircle })).toBe('rect');
     expect(obj.left).toBe(360);
+  });
+});
+
+
+/**
+ * R4  An element that belongs to no restrict zone is still kept ON THE CANVAS.
+ * R5  ...but never more strictly than a zone would keep it: an element too
+ *     large for the canvas stays movable, exactly as R1 demands inside a zone.
+ *
+ * Why this exists: a template with no restrict zone has always let customers
+ * drag content clean off the design, and the LightBurn import's container zone
+ * used to hide that by claiming the whole canvas as a customer drop target.
+ * With the claim gone, the canvas fallback is what keeps strays on the design.
+ */
+describe('R4 — an element with no zone is kept on the canvas', () => {
+  // The reported template's canvas.
+  const CANVAS = { width: 600, height: 289 };
+  const OPTS = { canvas: CANVAS };
+
+  it('cannot be dragged off the right or bottom edge', () => {
+    const obj = makeObject({ left: 0, top: 0, width: 100, height: 50 });
+    obj.set({ left: 5000, top: 5000 });
+    clampObjectDuringMove(obj, null, OPTS);
+    expect(obj.left).toBe(500);  // 600 - 100
+    expect(obj.top).toBe(239);   // 289 - 50
+  });
+
+  it('cannot be dragged off the left or top edge', () => {
+    const obj = makeObject({ left: 0, top: 0, width: 100, height: 50 });
+    obj.set({ left: -5000, top: -5000 });
+    clampObjectDuringMove(obj, null, OPTS);
+    expect(obj.left).toBe(0);
+    expect(obj.top).toBe(0);
+  });
+
+  it('is left exactly where it is while it is on the canvas', () => {
+    const obj = makeObject({ left: 120, top: 40, width: 100, height: 50 });
+    expect(clampObjectDuringMove(obj, null, OPTS)).toBe(false);
+    expect({ left: obj.left, top: obj.top }).toEqual({ left: 120, top: 40 });
+  });
+
+  it('is held on the canvas when its zone only clips, rather than restricts', () => {
+    // A 'clip' zone never clamped movement; the element could still be dragged
+    // into nowhere. The canvas — not the clip zone's box — catches it.
+    const clipZone = { behavior: 'clip', boundary_type: 'rect', x: 45, y: 45, width: 379, height: 197 };
+    const obj = makeObject({ left: 5000, top: 5000, width: 100, height: 50 });
+    clampObjectDuringMove(obj, clipZone, OPTS);
+    expect(obj.left).toBe(500);
+    expect(obj.top).toBe(239);
+  });
+
+  it('is held on the canvas at the end of the gesture too, with no outline applied', () => {
+    const obj = makeObject({ left: 5000, top: 5000, width: 100, height: 50 });
+    // DEPS_IMPOSSIBLE would refuse every point if an outline were consulted;
+    // the canvas has none, so the object simply lands inside the canvas box.
+    expect(settleObjectInZone(obj, null, { ...DEPS_IMPOSSIBLE, canvas: CANVAS })).toBe('rect');
+    expect(obj.left).toBe(500);
+    expect(obj.top).toBe(239);
+  });
+
+  it('survives a full drag: every frame stays on the canvas and tracks the pointer', () => {
+    const obj = makeObject({ left: 250, top: 100, width: 100, height: 50 });
+    const frames = dragBy(obj, null, 600, 0, 10, { ...DEPS, canvas: CANVAS });
+    for (const [left] of frames) {
+      expect(left).toBeGreaterThanOrEqual(0);
+      expect(left + 100).toBeLessThanOrEqual(CANVAS.width);
+    }
+    // Monotonic: the clamp never reverses the drag direction.
+    const xs = frames.map((f) => f[0]);
+    for (let i = 1; i < xs.length; i++) expect(xs[i]).toBeGreaterThanOrEqual(xs[i - 1]);
+    expect(obj.left).toBe(500);
+  });
+
+  it('a real restrict zone still wins over the canvas', () => {
+    const zone = { behavior: 'restrict', boundary_type: 'rect', x: 45, y: 45, width: 379, height: 197 };
+    const obj = makeObject({ left: 5000, top: 5000, width: 100, height: 50 });
+    clampObjectDuringMove(obj, zone, OPTS);
+    expect(obj.left).toBe(45 + 379 - 100);
+    expect(obj.top).toBe(45 + 197 - 50);
+  });
+
+  it('enforces nothing when there is no canvas size to fall back to', () => {
+    const obj = makeObject({ left: -5000, top: -5000, width: 10, height: 10 });
+    expect(clampObjectDuringMove(obj, null)).toBe(false);
+    expect(clampObjectDuringMove(obj, null, { canvas: { width: 0, height: 0 } })).toBe(false);
+    expect(settleObjectInZone(obj, null, DEPS)).toBe('skipped');
+    expect(obj.left).toBe(-5000);
+  });
+});
+
+describe('R5 — the canvas fallback is never stricter than a zone', () => {
+  const CANVAS = { width: 600, height: 289 };
+  const OPTS = { canvas: CANVAS };
+
+  it('an element larger than the canvas can still be moved, in both directions', () => {
+    // 900x400 on a 600x289 canvas: oversized on BOTH axes. Trapping it would be
+    // the very failure 0d4c69b and 9921cda were about — the customer would have
+    // no way to drag it back to something they can work with.
+    const obj = makeObject({ left: 0, top: 0, width: 900, height: 400 });
+    const seen = [];
+    for (const pos of [-400, -100, 0, 120, 400]) {
+      obj.set({ left: pos, top: pos });
+      clampObjectDuringMove(obj, null, OPTS);
+      seen.push([obj.left, obj.top]);
+    }
+    expect(seen).toEqual([[-400, -400], [-100, -100], [0, 0], [120, 120], [400, 400]]);
+  });
+
+  it('an element too wide but not too tall keeps the vertical clamp', () => {
+    const obj = makeObject({ left: -300, top: 5000, width: 900, height: 50 });
+    clampObjectDuringMove(obj, null, OPTS);
+    expect(obj.left).toBe(-300);  // oversized axis: free
+    expect(obj.top).toBe(239);    // fitting axis: clamped
+  });
+
+  it('an oversized element is never resized to make it fit', () => {
+    const obj = makeObject({ left: -400, top: -400, width: 900, height: 400 });
+    settleObjectInZone(obj, null, { ...DEPS, canvas: CANVAS });
+    expect(obj.width).toBe(900);
+    expect(obj.height).toBe(400);
+  });
+});
+
+describe('keepInsideRect — which rectangle is enforced', () => {
+  const CANVAS = { width: 600, height: 289 };
+
+  it('is the zone for a restrict zone', () => {
+    const zone = { behavior: 'restrict', x: 45, y: 45, width: 379, height: 197 };
+    expect(keepInsideRect(zone, CANVAS)).toEqual({ x: 45, y: 45, width: 379, height: 197 });
+  });
+
+  it('is the canvas for no zone, a clip zone, or a zone that enforces nothing', () => {
+    const canvasBox = { x: 0, y: 0, width: 600, height: 289 };
+    expect(keepInsideRect(null, CANVAS)).toEqual(canvasBox);
+    expect(keepInsideRect({ behavior: 'clip', x: 1, y: 1, width: 2, height: 2 }, CANVAS)).toEqual(canvasBox);
+    expect(keepInsideRect({ behavior: 'none', x: 1, y: 1, width: 2, height: 2 }, CANVAS)).toEqual(canvasBox);
+  });
+
+  it('is nothing at all without a zone and without a usable canvas size', () => {
+    expect(keepInsideRect(null, undefined)).toBeNull();
+    expect(keepInsideRect(null, { width: 0, height: 100 })).toBeNull();
+    expect(keepInsideRect({ behavior: 'clip' }, { width: NaN, height: 100 })).toBeNull();
   });
 });

@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useMemo } from 'react';
 import { __ } from '@wordpress/i18n';
 import { Canvas as FabricCanvas, Rect, IText, FabricImage, Path as FabricPath, PencilBrush, loadSVGFromString, util, cache as fabricCache } from 'fabric';
 import { archUpPath } from '../utils/curvePresets';
@@ -11,6 +11,7 @@ import useCanvasHistory from '../hooks/useCanvasHistory';
 import { filterFabricJson } from '../utils/fabricJson';
 import { fitInsideZoneShape } from '../../../../../shared/js/zoneContainment';
 import { clampObjectDuringMove, settleObjectInZone, zoneContainmentShape } from '../../../../../shared/js/zoneClamp';
+import { zoneClips, firstZoneForCustomerType, zoneAtPointForCustomerType } from '../../../../../shared/js/zoneSelection';
 import { minFontSizePx, textMinScaleLimit } from '../../../../../shared/js/fontSizeLimits';
 import { isLayerLockedForCustomer } from '../../../../../shared/js/layerLockForCustomer';
 import MmRuler from '../../../../../shared/js/MmRuler.jsx';
@@ -131,10 +132,17 @@ export default function DesignerCanvas() {
 
   // ── Zone helpers ──────────────────────────────────────────────────────────
 
-  // A zone that visually clips its elements: 'restrict' also clamps movement
-  // inside the boundary, 'clip' lets elements move freely but cuts them off
-  // at the boundary. Every other behavior enforces nothing.
-  const zoneClips = (z) => !!z && (z.behavior === 'restrict' || z.behavior === 'clip');
+  // The whole canvas, as the fallback keep-inside rect for an element that
+  // belongs to no restrict zone (shared/js/zoneClamp.js#keepInsideRect).
+  // Memoised: an inline object literal would be a new reference every render
+  // and would destabilise every useCallback that depends on it.
+  const canvasRect = useMemo(
+    () => ({ width: canvasWidth, height: canvasHeight }),
+    [canvasWidth, canvasHeight]
+  );
+
+  // zoneClips / the two "which zone accepts this?" walks live in
+  // shared/js/zoneSelection.js — one rule, one place.
 
   const findZoneForObject = useCallback((obj) => {
     const bound = obj.getBoundingRect();
@@ -150,26 +158,15 @@ export default function DesignerCanvas() {
     return null;
   }, [zones]);
 
-  const findZoneForPoint = useCallback((x, y, elementType) => {
-    for (let i = 0; i < zones.length; i++) {
-      const z = zones[i];
-      if (!zoneClips(z)) continue;
-      if (!(z.allowed_types || []).includes(elementType)) continue;
-      if (x >= z.x && x <= z.x + z.width && y >= z.y && y <= z.y + z.height) {
-        return i;
-      }
-    }
-    return -1;
-  }, [zones]);
+  const findZoneForPoint = useCallback(
+    (x, y, elementType) => zoneAtPointForCustomerType(zones, x, y, elementType),
+    [zones]
+  );
 
-  const findFirstZoneForType = useCallback((elementType) => {
-    for (let i = 0; i < zones.length; i++) {
-      const z = zones[i];
-      if (!zoneClips(z)) continue;
-      if ((z.allowed_types || []).includes(elementType)) return i;
-    }
-    return -1;
-  }, [zones]);
+  const findFirstZoneForType = useCallback(
+    (elementType) => firstZoneForCustomerType(zones, elementType),
+    [zones]
+  );
 
   // ── Clip object to its zone ───────────────────────────────────────────────
 
@@ -249,24 +246,25 @@ export default function DesignerCanvas() {
   // outline is deliberately NOT enforced here — see shared/js/zoneClamp.js for
   // why enforcing it mid-drag made the object fight the pointer and read as
   // frozen. Identical decision to the template builder's, from one module.
+  // No zone (or a zone that only clips) falls back to the canvas, so nothing
+  // the customer adds can be dragged off the design.
   const clampToZone = useCallback((obj) => {
-    const zone = zoneOf(obj);
-    if (!zone) return;
-    clampObjectDuringMove(obj, zone);
-  }, [zoneOf]);
+    clampObjectDuringMove(obj, zoneOf(obj), { canvas: canvasRect });
+  }, [zoneOf, canvasRect]);
 
   // End-of-gesture enforcement: hold the object inside the real svg outline,
   // or — when nothing fits at its current size — leave it exactly where the
-  // customer put it, still selectable and still movable.
+  // customer put it, still selectable and still movable. Zoneless objects get
+  // the canvas fallback here too, and never an outline.
   const settleIntoZone = useCallback((obj) => {
-    const zone = zoneOf(obj);
-    if (!zone) return;
-    settleObjectInZone(obj, zone);
-  }, [zoneOf]);
+    settleObjectInZone(obj, zoneOf(obj), { canvas: canvasRect });
+  }, [zoneOf, canvasRect]);
 
   const clampScaleToZone = useCallback((obj) => {
     const zone = zoneOf(obj);
-    if (!zone) return;
+    // No zone: never resize the object to fit anything — just keep its
+    // position honest against the canvas fallback while the handle is held.
+    if (!zone) { clampToZone(obj); return; }
 
     const perms = permissions[obj.data?.elementType] || {};
     const bound = obj.getBoundingRect();
@@ -1043,7 +1041,9 @@ export default function DesignerCanvas() {
     // centre this text was just placed at can fall OUTSIDE a concave outline,
     // and the settle walks it to the nearest spot that actually fits. No anchor
     // is seeded any more — nothing snaps back to a remembered position.
-    if (zoneIdx >= 0) settleIntoZone(text);
+    // Called unconditionally: with no zone the settle falls back to the canvas
+    // rect, so even an unzoned element lands on the design.
+    settleIntoZone(text);
     // The zone's default font may still be loading at the moment the tool
     // places this object — re-measure once it's confirmed loaded.
     ensureFontMeasured(text, fabricCache);
@@ -1097,7 +1097,7 @@ export default function DesignerCanvas() {
       canvas.add(text);
       canvas.setActiveObject(text);
       // One-shot placement → strict settle (see the add-text tool above).
-      if (zoneIdx >= 0) settleIntoZone(text);
+      settleIntoZone(text);
       // The zone's default font may still be loading at the moment the tool
       // places this object — re-measure once it's confirmed loaded.
       ensureFontMeasured(text, fabricCache);
@@ -1155,7 +1155,7 @@ export default function DesignerCanvas() {
       canvas.add(path);
       canvas.setActiveObject(path);
       // One-shot placement → strict settle (see the add-text tool above).
-      if (zoneIdx >= 0) settleIntoZone(path);
+      settleIntoZone(path);
       pushHistoryRef.current?.();
       canvas.renderAll();
       snapshotView(currentViewIndex, canvas.toObject(['data']));
@@ -1213,7 +1213,7 @@ export default function DesignerCanvas() {
       canvas.setActiveObject(img);
 
       // One-shot placement → strict settle (see the add-text tool above).
-      if (zoneIdx >= 0) settleIntoZone(img);
+      settleIntoZone(img);
 
       canvas.renderAll();
       snapshotView(currentViewIndex, canvas.toObject(['data']));
@@ -1291,7 +1291,7 @@ export default function DesignerCanvas() {
       canvas.setActiveObject(img);
 
       // One-shot placement → strict settle (see the add-text tool above).
-      if (zoneIdx >= 0) settleIntoZone(img);
+      settleIntoZone(img);
 
       canvas.renderAll();
       snapshotView(currentViewIndex, canvas.toObject(['data']));

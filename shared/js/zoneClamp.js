@@ -52,6 +52,22 @@
  *
  * `_sgpdLastValid` is gone. Nothing remembers a "last good" position any more,
  * because there is no longer a code path that would teleport back to one.
+ *
+ * ── The canvas fallback ───────────────────────────────────────────────────
+ *
+ * An object that belongs to no 'restrict' zone used to be clamped by NOTHING,
+ * so it could be dragged clean off the design and lost. Two ways to reach it:
+ *
+ * - a template with no restrict zone at all — true since forever;
+ * - a view where the merchant imported LightBurn artwork and published without
+ *   adding a design zone. The import's container zone used to claim
+ *   ['text','image','svg'] and so at least clamped strays to the whole canvas;
+ *   now that it (correctly) claims nothing, that accidental safety net is gone.
+ *
+ * So when there is no restrict zone, the CANVAS is the rectangle the object is
+ * held inside — see `keepInsideRect`. It is enforced with the same lenient
+ * clamp a zone gets and never a stricter one, so an object too large for the
+ * canvas stays fully movable.
  */
 
 import {
@@ -82,19 +98,61 @@ export function zoneContainmentShape(zone, getShape = defaultZoneShapePath) {
 }
 
 /**
+ * The rectangle an object's position is actually held inside.
+ *
+ * The object's zone when that zone is a 'restrict' zone. Otherwise — no zone
+ * at all, or a zone that enforces nothing / only clips — the CANVAS, so an
+ * element that belongs to no zone is still kept on the design instead of being
+ * draggable into nowhere.
+ *
+ * Deliberately NOT stricter than the zone case: the same `clampRectToZone`
+ * runs against it, which leaves an axis the object cannot fit on completely
+ * free. An element larger than the canvas therefore stays movable. The
+ * governing rule on this branch (commits 0d4c69b, then 9921cda) is that a
+ * constraint leaving the user no way to correct their situation is worse than
+ * no constraint — a canvas-sized cage around an oversized object would be
+ * exactly that.
+ *
+ * The canvas has no svg outline, so an object falling back to it is only ever
+ * bounding-box clamped; the shape settle applies to real zones only.
+ *
+ * @param {object} zone the object's zone, if any
+ * @param {{width:number, height:number}} [canvas] logical canvas size
+ * @returns {{x:number,y:number,width:number,height:number}|null} null when
+ *   there is neither a restrict zone nor a usable canvas size — then nothing
+ *   is enforced, exactly as before.
+ */
+export function keepInsideRect(zone, canvas) {
+  if (zone && zone.behavior === 'restrict') {
+    return { x: zone.x, y: zone.y, width: zone.width, height: zone.height };
+  }
+  const width = Number(canvas?.width);
+  const height = Number(canvas?.height);
+  if (!(width > 0) || !(height > 0)) return null;
+  return { x: 0, y: 0, width, height };
+}
+
+/**
  * Lenient clamp, safe to run on every frame of a drag or scale.
  *
- * Holds the object inside the zone's BOUNDING BOX only — never against the
- * outline, and never by restoring a remembered position. `clampRectToZone`
- * already leaves an axis the object cannot fit on completely free (see its
- * docblock), so an oversized object is never pinned here either.
+ * Holds the object inside the BOUNDING BOX of its keep-inside rect — the zone
+ * when it has one, the canvas otherwise — never against an outline, and never
+ * by restoring a remembered position. `clampRectToZone` already leaves an axis
+ * the object cannot fit on completely free (see its docblock), so an oversized
+ * object is never pinned here either.
  *
  * @param {object} obj  Fabric object (needs left/top/getBoundingRect/set/setCoords)
- * @param {object} zone the object's zone
+ * @param {object} zone the object's zone, or null/undefined when it has none
+ * @param {object} [options]
+ * @param {{width:number, height:number}} [options.canvas] logical canvas size,
+ *   used as the fallback rect. Omit it and a zoneless object is left alone,
+ *   which is the pre-fallback behaviour.
  * @returns {boolean} whether the object was moved
  */
-export function clampObjectDuringMove(obj, zone) {
-  if (!obj || !zone || zone.behavior !== 'restrict') return false;
+export function clampObjectDuringMove(obj, zone, options = {}) {
+  if (!obj) return false;
+  const rect = keepInsideRect(zone, options.canvas);
+  if (!rect) return false;
 
   // Fabric writes `left`/`top` on every drag frame but only refreshes the
   // cached corner coords when the transform ENDS, so getBoundingRect() here
@@ -105,7 +163,7 @@ export function clampObjectDuringMove(obj, zone) {
   // edge before the drop pulled it back).
   obj.setCoords();
   const bound = obj.getBoundingRect();
-  const { left, top } = clampRectToZone({ objLeft: obj.left, objTop: obj.top, bound, zone });
+  const { left, top } = clampRectToZone({ objLeft: obj.left, objTop: obj.top, bound, zone: rect });
   if (left === obj.left && top === obj.top) return false;
 
   obj.set({ left, top });
@@ -119,7 +177,8 @@ export function clampObjectDuringMove(obj, zone) {
  * `object:moving` — enforcing the outline mid-drag is the whole bug.
  *
  * Order of business:
- *   1. the lenient bounding-box clamp (this is all a rectangular zone gets);
+ *   1. the lenient bounding-box clamp against the keep-inside rect (this is
+ *      all a rectangular zone — or the canvas fallback — ever gets);
  *   2. for a shape-tested zone, if the object is already inside the outline,
  *      leave it exactly where it is;
  *   3. otherwise move it — WITHOUT resizing it — to the placement nearest its
@@ -127,14 +186,15 @@ export function clampObjectDuringMove(obj, zone) {
  *   4. if no such placement exists, do nothing at all and leave it movable.
  *
  * @param {object} obj  Fabric object (needs left/top/getBoundingRect/getCoords/set/setCoords)
- * @param {object} zone the object's zone
- * @param {object} [deps] injection seam for tests: { getShape, isInside }
+ * @param {object} zone the object's zone, or null/undefined when it has none
+ * @param {object} [deps] { canvas } for the fallback rect, plus the injection
+ *   seam for tests: { getShape, isInside }
  * @returns {'skipped'|'rect'|'inside'|'moved'|'nofit'} what was decided, for tests
  */
 export function settleObjectInZone(obj, zone, deps = {}) {
-  if (!obj || !zone || zone.behavior !== 'restrict') return 'skipped';
+  if (!obj || !keepInsideRect(zone, deps.canvas)) return 'skipped';
 
-  clampObjectDuringMove(obj, zone);
+  clampObjectDuringMove(obj, zone, deps);
 
   const isInside = deps.isInside || pointsInsideZoneShape;
   const shape = zoneContainmentShape(zone, deps.getShape || defaultZoneShapePath);

@@ -4,6 +4,7 @@ import useTemplateStore from '../store/useTemplateStore';
 import { parseLbrn, PX_PER_MM } from '../utils/lbrnParser';
 import { AVAILABLE_FONTS } from '../utils/fonts';
 import { displayCanvasSize } from '../utils/displayCanvasSize';
+import { importedContainerZone } from '../utils/importedZone';
 import { uploadDataUrlToMedia } from '../api/mediaApi';
 
 const isPremium = window.sgpdTemplateBuilder?.isPremium;
@@ -13,8 +14,9 @@ const isPremium = window.sgpdTemplateBuilder?.isPremium;
  *
  * Parses a .lbrn/.lbrn2 project file client-side (utils/lbrnParser.js) and pushes
  * the resulting text/svg layer descriptors into the currently selected view. A
- * full-canvas zone is created only when the view has none yet; existing zones
- * are left untouched. The view's width_mm is set from the parsed physical width
+ * full-canvas container zone is created only when the view has none yet, and it
+ * claims no customer element types (utils/importedZone.js explains why);
+ * existing zones are left untouched. The view's width_mm is set from the parsed physical width
  * so the export pipeline (SVG mm units / PDF page size) renders at true scale.
  */
 export default function ImportLightBurn() {
@@ -123,23 +125,15 @@ export default function ImportLightBurn() {
               scaleX: r((l.scaleX || 1) * fit), scaleY: r((l.scaleY || 1) * fit) }
       ));
 
-      // Target the current view's first zone. Create a design-sized zone only if
-      // the view has none yet — existing zones (with their own allowed_types /
-      // permissions) are left as the admin configured them.
+      // Target the current view's first zone. Create a design-sized container
+      // zone only if the view has none yet — existing zones (with their own
+      // allowed_types / permissions) are left as the admin configured them.
+      // The container holds the artwork and claims NO customer element types;
+      // see utils/importedZone.js for the bug that taught us why.
       const view = views[currentViewIndex];
       const zoneIndex = 0;
       if (!view.zones_config || view.zones_config.length === 0) {
-        addZone(currentViewIndex, {
-          name: __( 'Imported', 'snelgraveren-product-designer' ),
-          type: 'safe_area',
-          behavior: 'restrict',
-          boundary_type: 'rect',
-          x: 0,
-          y: 0,
-          width: canvasW,
-          height: canvasH,
-          allowed_types: ['text', 'image', 'svg'],
-        });
+        addZone(currentViewIndex, importedContainerZone({ width: canvasW, height: canvasH }));
       }
 
       scaledLayers.forEach((layer) => addLayer(currentViewIndex, zoneIndex, layer));
