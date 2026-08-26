@@ -73,6 +73,16 @@ class ProofWorkflowTest extends TestCase {
         $this->assertSame('De naam mag groter', $design['proof_note']);
     }
 
+    public function test_note_longer_than_max_is_truncated(): void {
+        $id    = $this->make_design();
+        $token = $this->flow->send($id);
+        $long  = str_repeat('x', ProofWorkflow::MAX_NOTE + 50);
+
+        $design = $this->flow->request_changes($token, $long);
+
+        $this->assertSame(ProofWorkflow::MAX_NOTE, strlen($design['proof_note']));
+    }
+
     public function test_request_changes_is_refused_once_approved(): void {
         $id    = $this->make_design();
         $token = $this->flow->send($id);
@@ -80,6 +90,46 @@ class ProofWorkflowTest extends TestCase {
 
         $this->expectException(\RuntimeException::class);
         $this->flow->request_changes($token, 'Toch anders');
+    }
+
+    public function test_approve_is_refused_from_none(): void {
+        $id    = $this->make_design();
+        $token = $this->flow->send($id);
+        // Force the design back to 'none' while keeping the issued token, to
+        // exercise the guard directly through approve() itself: this state is
+        // otherwise unreachable with a live token, since withdraw() wipes the
+        // token too.
+        $this->repo->update_proof($id, ['proof_status' => 'none']);
+
+        $this->expectException(\RuntimeException::class);
+        $this->flow->approve($token);
+    }
+
+    public function test_request_changes_is_refused_from_none(): void {
+        $id    = $this->make_design();
+        $token = $this->flow->send($id);
+        $this->repo->update_proof($id, ['proof_status' => 'none']);
+
+        $this->expectException(\RuntimeException::class);
+        $this->flow->request_changes($token, 'Toch anders');
+    }
+
+    public function test_approve_is_refused_from_changes_requested(): void {
+        $id    = $this->make_design();
+        $token = $this->flow->send($id);
+        $this->flow->request_changes($token, 'Groter graag');
+
+        $this->expectException(\RuntimeException::class);
+        $this->flow->approve($token);
+    }
+
+    public function test_request_changes_is_refused_from_changes_requested(): void {
+        $id    = $this->make_design();
+        $token = $this->flow->send($id);
+        $this->flow->request_changes($token, 'Groter graag');
+
+        $this->expectException(\RuntimeException::class);
+        $this->flow->request_changes($token, 'Nog een keer');
     }
 
     public function test_withdraw_kills_the_link(): void {
@@ -91,14 +141,42 @@ class ProofWorkflowTest extends TestCase {
         $this->assertSame('none', $this->repo->get($id)['proof_status']);
     }
 
+    public function test_withdraw_from_none_is_a_noop_success(): void {
+        $id = $this->make_design();
+
+        $this->assertTrue($this->flow->withdraw($id));
+        $this->assertSame('none', $this->repo->get($id)['proof_status']);
+    }
+
+    public function test_withdraw_from_approved(): void {
+        $id    = $this->make_design();
+        $token = $this->flow->send($id);
+        $this->flow->approve($token);
+
+        $this->assertTrue($this->flow->withdraw($id));
+        $this->assertNull($this->repo->get_by_proof_token($token));
+        $this->assertSame('none', $this->repo->get($id)['proof_status']);
+    }
+
+    public function test_withdraw_on_nonexistent_design_throws(): void {
+        $this->expectException(\RuntimeException::class);
+        $this->flow->withdraw(999999999);
+    }
+
     public function test_an_unknown_token_is_refused(): void {
         $this->expectException(\RuntimeException::class);
         $this->flow->approve(str_repeat('f', 32));
     }
 
+    public function test_request_changes_with_unknown_token_is_refused(): void {
+        $this->expectException(\RuntimeException::class);
+        $this->flow->request_changes(str_repeat('f', 32), 'note');
+    }
+
     public function test_allows_matches_the_transition_table(): void {
         $this->assertTrue(ProofWorkflow::allows('none', 'send'));
         $this->assertTrue(ProofWorkflow::allows('changes_requested', 'send'));
+        $this->assertTrue(ProofWorkflow::allows('sent', 'send'));
         $this->assertTrue(ProofWorkflow::allows('approved', 'send'));
         $this->assertTrue(ProofWorkflow::allows('sent', 'approve'));
         $this->assertTrue(ProofWorkflow::allows('sent', 'request_changes'));

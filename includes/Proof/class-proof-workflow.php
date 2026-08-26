@@ -46,6 +46,11 @@ class ProofWorkflow {
      *
      * An existing token is REUSED: the customer already has the first link in
      * their mailbox, and sending them a new version must not kill it.
+     *
+     * proof_note is deliberately left untouched here: the note survives a
+     * resend on purpose, so the merchant can still see what was asked while
+     * amending the design. The admin screen only displays it in the
+     * changes_requested state, so it cannot show as current feedback.
      */
     public function send(int $design_id): string {
         $design = $this->repo->get($design_id);
@@ -106,6 +111,12 @@ class ProofWorkflow {
 
     /** Kill the link. The token is wiped, so the URL resolves to nothing. */
     public function withdraw(int $design_id): bool {
+        $design = $this->repo->get($design_id);
+        if (!$design) {
+            throw new \RuntimeException('Design not found.', 404);
+        }
+        $this->assert($design['proof_status'], 'withdraw');
+
         return $this->repo->update_proof($design_id, [
             'proof_status' => 'none',
             'proof_token'  => '',
