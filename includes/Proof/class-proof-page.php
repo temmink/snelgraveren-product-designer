@@ -30,6 +30,20 @@ class ProofPage {
 
     public const ACTION_APPROVE = 'approve';
 
+    /**
+     * Marks the request that wants the RAW render bytes rather than a page.
+     *
+     * `&sgpd_view=N` alone renders a full-size PAGE; adding `&sgpd_raw=1`
+     * streams the image itself, which is what that page's <img> points at.
+     * They were one URL until a customer pointed out where the old one left
+     * them: a bare PNG in a fresh tab, with no way back to the proof and no
+     * way to approve — a new tab has no history, so the back button is not
+     * an escape either. The split also makes the bytes SAFER, because an SVG
+     * inside an <img> can never run script, while navigating to one directly
+     * makes it a document that can.
+     */
+    public const RAW_VAR = 'sgpd_raw';
+
     public const ACTION_CHANGES = 'changes';
 
     /** Change requests allowed per token per hour. */
@@ -44,6 +58,16 @@ class ProofPage {
 
     public static function url(string $token): string {
         return add_query_arg(self::QUERY_VAR, $token, home_url('/'));
+    }
+
+    /** The full-size PAGE for one view: the render, a way back, and approve. */
+    public static function view_url(string $token, int $index): string {
+        return add_query_arg('sgpd_view', $index, self::url($token));
+    }
+
+    /** The render BYTES for one view — what view_url()'s page points its <img> at. */
+    public static function raw_view_url(string $token, int $index): string {
+        return add_query_arg(self::RAW_VAR, 1, self::view_url($token, $index));
     }
 
     /** The token from the URL, or '' when it is absent or malformed. */
@@ -83,7 +107,26 @@ class ProofPage {
 
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only view selector; the token is the credential
         if ($design && isset($_GET['sgpd_view'])) {
-            $this->stream_view($design, (int) $_GET['sgpd_view']);
+            $view_index = (int) $_GET['sgpd_view'];
+
+            // The bytes, for the <img> on the page below.
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only flag; the token is the credential
+            if (isset($_GET[self::RAW_VAR])) {
+                $this->stream_view($design, $view_index);
+            }
+
+            // The page. A missing view is a 404 here too — showing a frame
+            // around nothing would be worse than saying it is not there.
+            if (!isset($design['views'][$view_index])) {
+                status_header(404);
+                nocache_headers();
+                exit;
+            }
+
+            status_header(200);
+            nocache_headers();
+            include SGPD_PLUGIN_DIR . 'templates/proof/proof-view.php';
+            exit;
         }
 
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only status flag set by our own redirect; the token is the credential

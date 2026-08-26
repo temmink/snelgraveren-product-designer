@@ -52,6 +52,26 @@ class ProofPageTest extends TestCase {
         $this->assertSame('', ProofPage::token_from_request());
     }
 
+    public function test_view_url_points_at_the_page_not_the_bytes(): void {
+        $token = str_repeat('a', 32);
+        $url   = ProofPage::view_url($token, 2);
+
+        $this->assertStringContainsString('sgpd_proof=' . $token, $url);
+        $this->assertStringContainsString('sgpd_view=2', $url);
+        // The page link must NEVER carry the raw marker: that is what used to
+        // drop the customer on a bare image with no way back and no way to
+        // approve. If this ever flips, the dead end is back.
+        $this->assertStringNotContainsString(ProofPage::RAW_VAR, $url);
+    }
+
+    public function test_raw_view_url_asks_for_the_bytes(): void {
+        $token = str_repeat('a', 32);
+        $url   = ProofPage::raw_view_url($token, 0);
+
+        $this->assertStringContainsString('sgpd_view=0', $url);
+        $this->assertStringContainsString(ProofPage::RAW_VAR . '=1', $url);
+    }
+
     public function test_decode_export_blob_reads_a_png_data_url(): void {
         // 1x1 transparante PNG
         $b64  = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';

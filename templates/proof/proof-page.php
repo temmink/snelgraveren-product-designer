@@ -51,7 +51,10 @@ $product = $design ? wc_get_product((int) $design['product_id']) : null;
                 <img class="pf-proof__view" src="<?php echo esc_url($view['thumbnail']); ?>"
                      alt="<?php esc_attr_e('Proof preview', 'snelgraveren-product-designer'); ?>" />
                 <p>
-                    <a href="<?php echo esc_url(add_query_arg('sgpd_view', $index, ProofPage::url($token))); ?>" target="_blank" rel="noopener">
+                    <?php // Same tab, deliberately: the full-size page has its own way back,
+                          // and staying in one tab keeps the browser's back button working too.
+                          // It used to open a raw image in a new tab, which had neither. ?>
+                    <a href="<?php echo esc_url(ProofPage::view_url($token, $index)); ?>">
                         <?php esc_html_e('View at full size', 'snelgraveren-product-designer'); ?>
                     </a>
                 </p>
