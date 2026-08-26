@@ -200,10 +200,16 @@ class DesignsPage {
             exit;
         }
 
-        $submitted = isset($_POST['proof_email']) ? sanitize_email(wp_unslash($_POST['proof_email'])) : '';
+        // Judge the RAW value first: sanitize_email() already collapses anything
+        // that would fail is_email() down to '', so checking is_email() on the
+        // SANITIZED value can never tell "typo" apart from "left blank" — a
+        // merchant who mistypes an address would be told to enter one, which
+        // sends them looking in the wrong place.
+        $raw = isset($_POST['proof_email']) ? trim(wp_unslash($_POST['proof_email'])) : '';
 
-        if ($submitted !== '') {
-            if (!is_email($submitted)) {
+        if ($raw !== '') {
+            $submitted = sanitize_email($raw);
+            if ($submitted === '' || !is_email($submitted)) {
                 wp_safe_redirect(add_query_arg(['sgpd_msg' => 'proof_bad_email', 'sgpd_row' => $id], $back));
                 exit;
             }
@@ -414,7 +420,7 @@ class DesignsPage {
                                 <?php endif; ?>
                             </form>
                             <?php if ($msg_row === $design_id && $msg !== '') : ?>
-                                <p style="margin:4px 0 0;color:<?php echo $msg === 'assigned' || $msg === 'cleared' ? '#008a20' : '#d63638'; ?>;">
+                                <p style="margin:4px 0 0;color:<?php echo in_array($msg, ['assigned', 'cleared', 'proof_sent', 'proof_withdrawn'], true) ? '#008a20' : '#d63638'; ?>;">
                                     <?php echo esc_html($this->row_message($msg)); ?>
                                 </p>
                             <?php endif; ?>
