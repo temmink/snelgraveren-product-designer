@@ -162,13 +162,52 @@ in. One design, one owner.
 
 Two things this does NOT do, deliberately: the customer must be logged in before opening the link
 (the REST fetch 403s otherwise and they see an empty default design, which reads as a failure), and
-the designer is an EDITOR, not a proof — the customer can change the design before ordering. A
-read-only "approve this proof" flow is open work, not a bug.
+the designer itself is still an EDITOR — reopening a design via `?pf_design=HASH` lets the customer
+change it before ordering, proof or no proof. The proof flow below (Pro) is the read-only path; the
+editor hand-off above is still the only path when there is no proof.
 
 **Result reporting is on the row, not in an admin notice.** Notice-collector plugins (this shop runs
 Admin Site Enhancements) sweep every `.notice` in `.wrap` into a hidden drawer — including
 `notice-error`, which their selector list does not exempt even with `.inline` — so a mistyped
 address would look like nothing happened. Do not "fix" this back to `add_settings_error`.
+
+### Proof and approval flow (Pro, 1.10.0)
+
+A proof is a read-only alternative to handing over the editor: the merchant sends a link to the
+saved render, the customer approves it (or asks for a change) without ever touching Fabric. Full
+design in `docs/superpowers/specs/2026-08-26-proof-approval-flow-design.md`.
+
+- **Every transition lives in `Proof\ProofWorkflow`.** Send, resend, withdraw, approve, request
+  changes — one state machine, one place that has an opinion about what's allowed. The REST layer,
+  the proof page, and `Admin\DesignsPage` all call into it; none of them contain their own `if`
+  chains over `proof_status`. If a rule about proofs needs to change, it changes in one file.
+- **`proof_token` is generated separately from `design_hash`** (same `bin2hex(random_bytes(16))`
+  source, different value) because `design_hash` leaks into cart URLs and order item meta — a value
+  that already leaks that widely must never also grant access to anything.
+- **`Frontend::owns_design()` has one clause its REST mirror deliberately does not:** a hash the
+  visitor approved in this WooCommerce session (`sgpd_proof_approved[]`) AND the design's own
+  `proof_status` is still `'approved'`. Both halves are required — the session proves this visitor
+  is the one who clicked approve; the column proves the merchant hasn't withdrawn the proof since.
+  Session alone would mean withdrawing a proof does nothing for someone who already approved it.
+  `RestDesigns::owns_design()` does NOT get this clause — the proof page is rendered server-side and
+  never touches the REST layer, so REST ownership stays exactly as strict as it always was. This
+  asymmetry is intentional and documented in both methods' docblocks.
+- **The proof page is routed by a query parameter (`?sgpd_proof=<token>`), never a rewrite
+  endpoint.** A rewrite endpoint needs `flush_rewrite_rules()`, and a version-triggered flush has
+  already 404'd this shop's category pages once (see Deployment). A query param needs no rewrite
+  rules and can't repeat that mistake.
+- **`find_stale_guest_drafts()` skips any design with a proof** (`proof_status <> 'none'`). "No
+  account needed" is a stated goal of the proof flow, so a proof sent to someone without an account
+  IS the normal case here, not an edge case — the cleanup cron must not delete the design out from
+  under a customer who still has the link in their inbox.
+- **Approving is not ordering.** The design's `status` column stays `draft` through `sent`,
+  `changes_requested`, and `approved` alike; it only flips to `ordered` when an order item actually
+  carries the hash (`OrderIntegration`). A proof can be approved and then abandoned in the cart.
+- **The full-size render is streamed, not embedded, and it's re-sanitised on the way out.** The
+  proof page shows a thumbnail; "view full size" streams the stored `export_svg` behind a sandbox
+  CSP with remote references stripped. A stored SVG served as a top-level document would otherwise
+  be free to make its own network requests, and any of those would carry the proof token in the
+  `Referer` header — the one thing this whole token design exists to keep contained.
 
 ## Security Rules (Critical)
 
@@ -188,7 +227,7 @@ These exist because FPD had CVE-2024-51919 (arbitrary file upload → RCE) and C
 |-------|---------|
 | `wp_pf_templates` | Template definitions (title, slug, status, global config) |
 | `wp_pf_template_views` | Per-view config: canvas size, background, zones, layers, permissions. Columns use `name` (not `view_name`) and `background_url` (not `background_image_url`) |
-| `wp_pf_designs` | Customer designs: hash ID, product/template link, status, price |
+| `wp_pf_designs` | Customer designs: hash ID, product/template link, status, price. Also carries proof state (Pro, 1.10.0): `proof_status`, `proof_token`, `proof_sent_at`, `proof_note`, `proof_email` — see "Proof and approval flow" below |
 | `wp_pf_design_views` | Per-view Fabric.js canvas JSON + thumbnail + `export_svg` (browser-rendered PNG data URL or SVG markup, used by export pipeline) |
 | `wp_pf_design_templates` | Pre-made design templates that customers can apply in the designer |
 | `wp_pf_design_template_views` | Per-view Fabric.js canvas JSON for design templates |
@@ -238,7 +277,7 @@ Other renames: Freemius helper `pf_fs()` → `sgpd_fs()`, global `$pf_fs` → `$
 | Add New | `pf-template-builder` | Template builder React app (canvas, zones, layers, permissions, pricing) |
 | Design Templates | `pf-design-templates` | Design template CRUD React app (list, create, edit, delete, import/export JSON) |
 | Clipart | `pf-clipart` | Clipart manager React app (collections CRUD, bulk SVG upload, drag & drop) |
-| Designs | `sgpd-designs` | `Admin\DesignsPage` — every saved design, newest first, with the one action WP admin had no route for: **assigning a design to a customer**. See "Handing a design to a customer" below |
+| Designs | `sgpd-designs` | `Admin\DesignsPage` — every saved design, newest first, with the one action WP admin had no route for: **assigning a design to a customer**. Also **send, resend and withdraw a proof** (Pro, 1.10.0) — see "Handing a design to a customer" below |
 | Settings | `pf-settings` | Export options (`pf_export_trigger_status`, `pf_export_default_format`), `pf_delete_data_on_uninstall` toggle, guest design retention (`pf_guest_design_retention_days`), health e-mail alert toggle (`pf_health_email_alerts`), a design-statistics panel (saved/ordered/conversion, last 30 days), and system status checks (`Admin\SystemStatus`: PHP ≥ 8.1, finfo, rsvg-convert/Imagick-SVG, writable `pf-thumbnails`/`pf-exports`/`pf-fonts`/`pf-clipart`/`pf-cache`, DB tables, LiteSpeed detection). Critical failures also show as an admin notice on every ProductForge screen (cached 5 min in the `pf_system_status_critical` transient) |
 | Production | `pf-export-dashboard` | `Admin\ExportDashboard` — lists recent orders (filterable by status/days) that contain designs, flags designs containing raster images via `DesignInspector::contains_raster()`, and bulk-downloads the selection as one ZIP via `admin_post_pf_bulk_export` |
 
@@ -282,6 +321,7 @@ Other renames: Freemius helper `pf_fs()` → `sgpd_fs()`, global `$pf_fs` → `$
 - **JS cache busting (hash in filename, not `?ver=`):** `Frontend::enqueue_assets()` copies `dist/frontend-designer.js` to `uploads/pf-cache/frontend-designer.<md5>.js` on the first pageview after a build and enqueues the hashed URL. **Never written inside the plugin directory** — wp.org disallows plugins writing to their own directory, and `uploads/` is also the correct place for runtime-generated files anyway. The copy is written via temp file + atomic `$wp_filesystem->move()` (WP_Filesystem initialized on demand; a concurrent request must never serve a half-written bundle — Safari would cache it for a year). The **previous build's hashed copy is kept** (only older copies are deleted, via `wp_delete_file()`): LiteSpeed page-cached HTML still references the old hashed URL until the cache is flushed, and deleting it would 404 the bundle on every cached page. The md5 hash is cached in the `pf_frontend_js_hash` option keyed on `filemtime`, so the full bundle isn't hashed on every pageview. **Why not `?ver=<hash>` alone:** LiteSpeed's Delay JS feature strips query strings from `<script>` tags it marks with `data-deferred="1"`, so Safari (which caches JS with `max-age=31557600` ≈ 1 year) keeps serving stale bundles after deploys. Changing the path itself is the only reliable invalidator. If `uploads/pf-cache/` is not writable (`wp_is_writable()` check), we fall back to the un-hashed `dist/` URL. `Admin\SystemStatus` checks `uploads/pf-cache/` writability under check id `dir_pf_cache` (warning-level, not critical). **LiteSpeed JS-optimize exclude must stay hash-agnostic:** the filter excludes the substring `frontend-designer.` (with trailing dot, no `.js`) so it matches both the plain and the hashed filename — excluding the literal `frontend-designer.js` would NOT match the hashed copy and LiteSpeed would concatenate the React bundle, breaking it.
 - **wordpress.org release (approved 2026-08, slug `snelgraveren-product-designer`):** SVN `https://plugins.svn.wordpress.org/snelgraveren-product-designer`, listing `https://wordpress.org/plugins/snelgraveren-product-designer/`. Published 2026-08-20 as r3657251 (1.7.8); listing, banner/icon/screenshots and readme all verified. Run `bash bin/wporg-release.sh` (`--dry-run` to stage only) on the Mac: it runs `package.sh` + `free-build.sh`, sanity-checks the FREE zip (no premium paths, no gettext files, gatekeeper stripped, `is_premium => false`), syncs it into `trunk/`, copies `wporg-assets/` (icon/banner/`screenshot-N.png`) into SVN `assets/`, copies `trunk` → `tags/<version>/` and commits. Checkout lives in `.svn-wporg/` (git-ignored). wp.org gets the **free** build only; the premium zip still goes to Freemius → Deployment. Tags are immutable — bump the version for any fix, never re-tag. SVN username = wordpress.org username (`snelgraveren`, now the script's default), password = the separate SVN password from the wp.org profile. **Run it in a real terminal, one at a time** — it needs a tty for the confirmation + password, and refuses a second concurrent run via a `.svn-wporg.lock` mkdir lock (two parallel runs interleave their prompts and finish neither). macOS ships bash 3.2, so the release path must stay free of empty-array expansion under `set -u` and of `cmd | head` under `set -o pipefail` — both silently killed this script mid-run before.
 - **Deleting an old plugin folder can drop the live data:** every copy of this plugin shares the `wp_pf_*` tables, and WordPress runs the uninstall routine of whichever folder you delete. `Uninstaller::uninstall()` drops all 11 tables when its opt-in flag is set — `sgpd_delete_data_on_uninstall` (readable in Settings) for current folders, the pre-rename `pf_delete_data_on_uninstall` (readable nowhere) for v1.0.x ones. Verify the flag first; for a pre-rename folder, blank its `includes/class-uninstaller.php` via the plugin file editor before deleting. Confirm afterwards via Settings → System status ("All 11 tables present").
+- **`bin/free-build.sh` has its own hardcoded strip list — the `@fs_premium_only` header comment in `snelgraveren-product-designer.php` does NOT drive it.** The header is read by Freemius's own deployment processor when the PREMIUM zip goes through Freemius → Deployment; the wp.org build in `bin/wporg-release.sh` goes through `bin/free-build.sh` instead, which greps nothing from the header and just runs its own `rm -f`/`rm -rf` list. Adding a path to the `@fs_premium_only` comment alone strips it from the Freemius-served free build but does **nothing** to the wp.org build — the two lists must be edited together, by hand, every time. They drifted apart silently once during this project: `includes/Proof/`, `includes/Emails/` and `templates/proof/`+`templates/emails/proof-*.php` were added to the header but not to `free-build.sh`, and the entire Pro proof feature would have shipped inside the free wordpress.org build if a strip test hadn't caught it before release. Never assume the header is authoritative for both builds — check `bin/free-build.sh`'s "Premium-only paths" block directly.
 - **Freemius SDK guard:** `productforge.php` conditionally loads `freemius-init.php` only if the file exists. The plugin works fine without Freemius — all premium gates gracefully degrade.
 - **SVG→PNG conversion:** Export pipeline prefers `/usr/bin/rsvg-convert`; falls back to Imagick with SVG support. Host must have at least one of the two — the ProductForge → Settings system status page shows which one is active. Dev Docker image installs `librsvg2-bin` (rebuild with `docker compose build wordpress` if the check reports it missing); the live server (snelgraveren.nl) has no rsvg-convert and uses Imagick.
 

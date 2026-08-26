@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.9.0
+Stable tag: 1.10.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -75,6 +75,7 @@ Pro adds:
 * Automatic export on order status
 * Upload restrictions (vector-only engraving)
 * LightBurn (.lbrn2) import
+* Send a design as a proof for customer approval
 
 Learn more and compare plans on the product page linked from this listing.
 
@@ -132,6 +133,11 @@ No other external services are used. Design exports (PDF/PNG/SVG) are rendered e
 4. Production dashboard: every order with a design, filtered by status and period, ready to download as one ZIP.
 
 == Changelog ==
+
+= 1.10.0 =
+* New (Pro): send a design to a customer as a proof for approval instead of handing over the full editor. The customer gets an e-mailed link to a read-only page showing exactly what was saved — no login needed — with a button to approve and go straight to checkout, or to request a change with a short note. Approving adds the design to their cart automatically.
+* New (Pro): Product Designer → Designs shows the status of every proof you have sent, and lets you resend it after making changes or withdraw it to make the link stop working.
+* New (Pro): you are notified by e-mail when a customer approves a proof or asks for a change, and the customer is notified when you send or resend one.
 
 = 1.9.0 =
 * New: design something for a customer yourself and hand it to them. Product Designer → Designs lists every saved design and assigns one to a customer account by ID, e-mail address or username; the row carries the link that reopens the design for them. Until now an admin-made design belonged to the admin, so the customer could not see it and adding it to the cart silently dropped the design. Note: the customer must be logged in before opening the link, and they can still change the design before ordering.

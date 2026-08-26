@@ -39,23 +39,50 @@ customer hit them.
 | 1.8.5 | the imported container zone no longer claims customer element types; an element belonging to no zone is kept on the canvas |
 | 1.8.6 | a merchant-added image is customer content again (was locked behind the canvas and stripped from every export); empty text is no longer billed; imported bitmap scale keeps 6 decimals so it still registers with the cut lines; the import reads the store after its uploads, not before |
 
-## Handing a design to a customer (new in 1.9.0)
+## Handing a design to a customer (assign flow, since 1.9.0; proof flow, new in 1.10.0)
 
-Product Designer → **Designs** lists every saved design and assigns one to a customer account by ID,
-e-mail or username; the row carries the `?pf_design=HASH` link to mail them. Verified end to end on
-the local copy: assign → customer logs in → design appears under My account → My designs → opens in
-the designer → lands in the cart with its thumbnail and hash attached.
+Product Designer → **Designs** lists every saved design. Two ways to hand one to a customer now:
 
-Two known limits, both deliberate:
+**Assign** (1.9.0): assigns a design to a customer account by ID, e-mail or username; the row
+carries the `?pf_design=HASH` link to mail them. This hands over the full **editor** — the customer
+can change anything before ordering.
 
-- The customer must be **logged in before** opening the link. Logged out, the REST fetch 403s and
-  they see an empty default design — which reads as "it is broken", not as "please log in".
-- The designer is an **editor, not a proof**. Nothing stops the customer changing the design before
-  ordering; what ships is whatever is on the canvas at checkout.
+**Proof** (1.10.0, Pro only): the merchant clicks **Send proof**; the customer gets a mailed link to
+a read-only page (`?sgpd_proof=<token>`, no login required) showing the exact saved render — not a
+re-render in their browser — with **Approve and order** and **Request a change** buttons. Approving
+adds the design to their cart and sends them to checkout; requesting a change notifies the merchant
+with the customer's note and locks the design until the merchant sends a new version. Every state
+transition (`none → sent → approved`/`changes_requested`, and withdraw back to `none`) lives in
+`Proof\ProofWorkflow` — one class, no duplicated rules elsewhere. Full design in
+`docs/superpowers/specs/2026-08-26-proof-approval-flow-design.md`; the "why" for the trickier
+decisions (separate token, the one asymmetric ownership clause, query-param routing, the cleanup-cron
+exception) is written up in `CLAUDE.md` → "Proof and approval flow".
 
-The read-only proof/quote flow Martin asked about — you set it up, the customer only views and
-approves — is NOT built. It needs a view-only mode plus an approve action, and a decision about what
-happens when the customer does want a change.
+Status: **PHPUnit-verified only** (111 tests / 262 assertions green, including the proof state
+machine, the token, and the ownership asymmetry) — nobody has yet run the full browser route (send →
+open the link in a logged-out window → request a change → merchant resends → approve → checkout →
+confirm the export matches the approved proof) on the local copy. That's the first thing to do before
+trusting this on the live site.
+
+Limits still true, both deliberate, both carried over from the assign flow and NOT closed by the
+proof flow:
+
+- The customer must be **logged in before** opening an assign (`?pf_design=HASH`) link. Logged out,
+  the REST fetch 403s and they see an empty default design — which reads as "it is broken", not as
+  "please log in". The proof link (`?sgpd_proof=<token>`) does NOT have this problem — that's the
+  point of it.
+- **A design on the customer's own account can still be reopened and changed after approval**, via
+  the ordinary `?pf_design=HASH` editor link — approving a proof does not lock the underlying design
+  row, only the proof page's own flow. This only applies to a customer with an account; the token
+  route (someone with no account) has no editor to fall back to. Spec calls this out explicitly as
+  open work: closing it — e.g. a design read-only until the merchant releases it again — is a
+  separate decision, not yet made.
+- **`bin/free-build.sh` and the `@fs_premium_only` header can drift apart again.** They already did
+  once during this feature (Task 11 caught it with a strip test before it shipped): the header
+  listed `includes/Proof/`, `includes/Emails/` and the proof templates, `free-build.sh`'s own
+  hardcoded `rm` list didn't. Nothing enforces the "keep in sync" comment sitting above that list —
+  it's a comment, not a check. Any future Pro-only addition needs both edited by hand, and a strip
+  test re-run before it ships to wp.org.
 
 ## Open — needs Martin, not code
 
