@@ -394,7 +394,10 @@ class DesignsPage {
         if ($search !== '') {
             $filters['search'] = $search;
         }
-        if (in_array($proof, \Snelgraveren\ProductDesigner\Proof\ProofWorkflow::STATES, true)) {
+        $proof_states = class_exists(\Snelgraveren\ProductDesigner\Proof\ProofWorkflow::class)
+            ? \Snelgraveren\ProductDesigner\Proof\ProofWorkflow::STATES
+            : [];
+        if (in_array($proof, $proof_states, true)) {
             $filters['proof_status'] = $proof;
         }
 
@@ -422,6 +425,8 @@ class DesignsPage {
                         <option value="<?php echo esc_attr($key); ?>" <?php selected($status, $key); ?>><?php echo esc_html($label); ?></option>
                     <?php endforeach; ?>
                 </select>
+                <?php if (\Snelgraveren\ProductDesigner\Plugin::has_feature('proofs')
+                    && class_exists(\Snelgraveren\ProductDesigner\Proof\ProofWorkflow::class)) : ?>
                 <select name="sgpd_proof">
                     <?php
                     $proof_filters = [
@@ -435,6 +440,7 @@ class DesignsPage {
                         <option value="<?php echo esc_attr($key); ?>" <?php selected($proof, $key); ?>><?php echo esc_html($label); ?></option>
                     <?php endforeach; ?>
                 </select>
+                <?php endif; ?>
                 <input type="search" name="s" value="<?php echo esc_attr($search); ?>"
                        placeholder="<?php esc_attr_e('Start of the design code', 'snelgraveren-product-designer'); ?>" />
                 <?php submit_button(__('Filter', 'snelgraveren-product-designer'), 'secondary', '', false); ?>
