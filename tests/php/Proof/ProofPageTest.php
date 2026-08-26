@@ -167,6 +167,20 @@ class ProofPageTest extends TestCase {
         $this->assertSame(1, $cart_item['quantity'], 'a replayed approve must not bump the quantity');
     }
 
+    public function test_rate_limit_blocks_the_sixth_request_within_an_hour(): void {
+        $token = str_repeat('d', 32);
+        delete_transient('sgpd_proof_note_' . md5($token));
+
+        for ($i = 0; $i < ProofPage::RATE_LIMIT; $i++) {
+            $this->assertFalse(ProofPage::rate_limited($token), "request {$i} should pass");
+        }
+        // The page needs no login, so the change-request form must not be
+        // usable as a spam channel.
+        $this->assertTrue(ProofPage::rate_limited($token));
+
+        delete_transient('sgpd_proof_note_' . md5($token));
+    }
+
     /**
      * A product that cannot actually be added (trashed, unpublished, or
      * vetoed by another plugin) must be reported as a failure, not silently

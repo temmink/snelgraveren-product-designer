@@ -85,6 +85,22 @@ $product = $design ? wc_get_product((int) $design['product_id']) : null;
                 <button type="submit"><?php esc_html_e('Approve and order', 'snelgraveren-product-designer'); ?></button>
             </form>
         <?php endif; ?>
+
+        <?php if (!empty($notice)) : ?>
+            <p style="color:#d63638;"><?php echo esc_html($notice); ?></p>
+        <?php endif; ?>
+
+        <?php if ($design['proof_status'] === 'changes_requested') : ?>
+            <p><?php esc_html_e('We have received your request and will send you a new proof.', 'snelgraveren-product-designer'); ?></p>
+            <p><em><?php echo esc_html((string) $design['proof_note']); ?></em></p>
+        <?php elseif ($design['proof_status'] !== 'approved') : ?>
+            <form method="post">
+                <input type="hidden" name="sgpd_action" value="<?php echo esc_attr(ProofPage::ACTION_CHANGES); ?>" />
+                <label for="sgpd_note"><?php esc_html_e('Would you like something changed?', 'snelgraveren-product-designer'); ?></label><br />
+                <textarea id="sgpd_note" name="sgpd_note" rows="4" maxlength="1000" style="width:100%;"></textarea><br />
+                <button type="submit"><?php esc_html_e('Request a change', 'snelgraveren-product-designer'); ?></button>
+            </form>
+        <?php endif; ?>
 <?php endif; ?>
 
 </div>

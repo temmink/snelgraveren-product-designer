@@ -25,6 +25,11 @@ class ProofPage {
 
     public const ACTION_APPROVE = 'approve';
 
+    public const ACTION_CHANGES = 'changes';
+
+    /** Change requests allowed per token per hour. */
+    public const RATE_LIMIT = 5;
+
     public function init(): void {
         // Priority 5, and maybe_render() exits: a matched token bypasses everything
         // else on this hook, including WooCommerce's coming-soon gating. That is
@@ -65,6 +70,12 @@ class ProofPage {
             $this->handle_approve($token);
         }
 
+        $notice = '';
+        if ($design && ($_POST['sgpd_action'] ?? '') === self::ACTION_CHANGES) {
+            $notice = $this->handle_changes($design, $token);
+            $design = (new DesignRepository())->get_by_proof_token($token);
+        }
+
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only view selector; the token is the credential
         if ($design && isset($_GET['sgpd_view'])) {
             $this->stream_view($design, (int) $_GET['sgpd_view']);
@@ -78,6 +89,45 @@ class ProofPage {
 
         include SGPD_PLUGIN_DIR . 'templates/proof/proof-page.php';
         exit;
+    }
+
+    /**
+     * Same shape as UploadValidator's limiter. The proof page is reachable
+     * without logging in, so this form must not be usable as a spam channel.
+     * Counts, then reports — the caller decides what to show.
+     */
+    public static function rate_limited(string $token): bool {
+        $key   = 'sgpd_proof_note_' . md5($token);
+        $count = (int) get_transient($key);
+        if ($count >= self::RATE_LIMIT) {
+            return true;
+        }
+        set_transient($key, $count + 1, HOUR_IN_SECONDS);
+        return false;
+    }
+
+    /**
+     * Handle a change-request POST. Returns a user-facing notice string, or
+     * '' on success (the caller re-fetches $design to feed the template the
+     * new state).
+     */
+    private function handle_changes(array $design, string $token): string {
+        if (self::rate_limited($token)) {
+            return __('Too many requests. Please try again later.', 'snelgraveren-product-designer');
+        }
+
+        $note = isset($_POST['sgpd_note']) ? (string) wp_unslash($_POST['sgpd_note']) : '';
+        if (trim($note) === '') {
+            return __('Please describe what you would like changed.', 'snelgraveren-product-designer');
+        }
+
+        try {
+            (new ProofWorkflow())->request_changes($token, $note);
+        } catch (\RuntimeException $e) {
+            return __('This proof can no longer be changed.', 'snelgraveren-product-designer');
+        }
+
+        return '';
     }
 
     /**
