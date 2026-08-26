@@ -59,6 +59,10 @@ $product = $design ? wc_get_product((int) $design['product_id']) : null;
         <?php endforeach; ?>
     </div>
 
+        <?php if (!empty($notice)) : ?>
+            <p style="color:#d63638;"><?php echo esc_html($notice); ?></p>
+        <?php endif; ?>
+
         <?php if ($design['proof_status'] === 'approved' && $cart_failed) : ?>
             <p><strong><?php esc_html_e('Your design was approved, but we could not add it to your cart just now.', 'snelgraveren-product-designer'); ?></strong></p>
             <p><?php esc_html_e('This can happen when the product briefly went unavailable. Please try again — approving again is safe and will not create a duplicate.', 'snelgraveren-product-designer'); ?></p>
@@ -70,11 +74,11 @@ $product = $design ? wc_get_product((int) $design['product_id']) : null;
             <p><strong><?php esc_html_e('You have already approved this design.', 'snelgraveren-product-designer'); ?></strong></p>
             <p><a href="<?php echo esc_url(wc_get_cart_url()); ?>"><?php esc_html_e('Go to your cart', 'snelgraveren-product-designer'); ?></a></p>
         <?php elseif ($design['proof_status'] === 'changes_requested') : ?>
-            <p><strong><?php esc_html_e('You asked for a change to this design.', 'snelgraveren-product-designer'); ?></strong></p>
+            <p><strong><?php esc_html_e('We have received your request and will send you a new proof.', 'snelgraveren-product-designer'); ?></strong></p>
             <?php if (!empty($design['proof_note'])) : ?>
-                <p><?php echo esc_html($design['proof_note']); ?></p>
+                <blockquote><?php echo esc_html((string) $design['proof_note']); ?></blockquote>
             <?php endif; ?>
-            <p><?php esc_html_e('We will send you a new proof once it has been updated. If you have changed your mind and this version is fine as it is, you can approve it now instead of waiting.', 'snelgraveren-product-designer'); ?></p>
+            <p><?php esc_html_e('If you have changed your mind and this version is fine as it is, you can approve it now instead of waiting.', 'snelgraveren-product-designer'); ?></p>
             <form method="post">
                 <input type="hidden" name="sgpd_action" value="<?php echo esc_attr(ProofPage::ACTION_APPROVE); ?>" />
                 <button type="submit"><?php esc_html_e('Approve this version', 'snelgraveren-product-designer'); ?></button>
@@ -84,16 +88,7 @@ $product = $design ? wc_get_product((int) $design['product_id']) : null;
                 <input type="hidden" name="sgpd_action" value="<?php echo esc_attr(ProofPage::ACTION_APPROVE); ?>" />
                 <button type="submit"><?php esc_html_e('Approve and order', 'snelgraveren-product-designer'); ?></button>
             </form>
-        <?php endif; ?>
 
-        <?php if (!empty($notice)) : ?>
-            <p style="color:#d63638;"><?php echo esc_html($notice); ?></p>
-        <?php endif; ?>
-
-        <?php if ($design['proof_status'] === 'changes_requested') : ?>
-            <p><?php esc_html_e('We have received your request and will send you a new proof.', 'snelgraveren-product-designer'); ?></p>
-            <p><em><?php echo esc_html((string) $design['proof_note']); ?></em></p>
-        <?php elseif ($design['proof_status'] !== 'approved') : ?>
             <form method="post">
                 <input type="hidden" name="sgpd_action" value="<?php echo esc_attr(ProofPage::ACTION_CHANGES); ?>" />
                 <label for="sgpd_note"><?php esc_html_e('Would you like something changed?', 'snelgraveren-product-designer'); ?></label><br />
