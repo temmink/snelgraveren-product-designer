@@ -188,6 +188,38 @@ class DesignRepositoryTest extends TestCase {
         $this->assertNull($this->repo->get_by_proof_token(''));
     }
 
+    public function test_stale_guest_drafts_skips_a_design_with_a_proof(): void {
+        global $wpdb;
+
+        $with    = $this->make_stale_guest_draft();
+        $without = $this->make_stale_guest_draft();
+        $this->repo->update_proof($with, [
+            'proof_status' => 'sent',
+            'proof_token'  => bin2hex(random_bytes(16)),
+        ]);
+
+        $ids = array_map('intval', array_column($this->repo->find_stale_guest_drafts(30), 'id'));
+
+        $this->assertContains((int) $without, $ids, 'a plain stale guest draft is still collected');
+        $this->assertNotContains((int) $with, $ids, 'a design with a proof must survive the cron');
+    }
+
+    /** A guest draft old enough for the cleanup cron to collect. */
+    private function make_stale_guest_draft(): int {
+        global $wpdb;
+        $id = $this->repo->create([
+            'template_id' => 1, 'product_id' => 1, 'customer_id' => 0,
+            'session_id'  => 'stale-' . uniqid(),
+        ]);
+        $this->created_ids[] = $id;
+        // updated_at is ON UPDATE CURRENT_TIMESTAMP, so age it explicitly.
+        $wpdb->query($wpdb->prepare(
+            "UPDATE {$wpdb->prefix}pf_designs SET updated_at = DATE_SUB(NOW(), INTERVAL 90 DAY) WHERE id = %d",
+            $id
+        ));
+        return $id;
+    }
+
     protected function tearDown(): void {
         foreach ($this->created_ids as $id) {
             $this->repo->delete($id);

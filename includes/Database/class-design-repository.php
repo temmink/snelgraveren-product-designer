@@ -311,6 +311,10 @@ class DesignRepository {
      * Defensively re-excludes anything referenced by an order item or that
      * already has an export record, in case status somehow lagged behind
      * (belt-and-braces alongside the 'ordered' status backfill/flip).
+     *
+     * Designs with a proof are excluded regardless of age: a proof sent to
+     * someone WITHOUT an account is exactly a customer_id = 0 guest draft, and
+     * deleting it would kill the link still sitting in their mailbox.
      */
     public function find_stale_guest_drafts(int $days, int $limit = 200): array {
         global $wpdb;
@@ -318,6 +322,7 @@ class DesignRepository {
         return $wpdb->get_results($wpdb->prepare(
             "SELECT d.id, d.design_hash FROM {$this->table} d
              WHERE d.customer_id = 0 AND d.status = 'draft'
+               AND d.proof_status = 'none'
                AND d.updated_at < DATE_SUB(NOW(), INTERVAL %d DAY)
                AND NOT EXISTS (
                    SELECT 1 FROM {$wpdb->prefix}woocommerce_order_itemmeta m
