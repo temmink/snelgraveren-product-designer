@@ -32,8 +32,22 @@ class ProofReadyEmail extends \WC_Email {
     public function trigger(array $design, string $token): void {
         $this->setup_locale();
 
-        $customer = (int) $design['customer_id'] > 0 ? get_user_by('id', (int) $design['customer_id']) : null;
-        $this->recipient = $customer ? $customer->user_email : ($design['proof_email'] ?? '');
+        // The merchant's typed address wins over the customer's account
+        // address: they typed it deliberately (a purchasing department, or an
+        // account e-mail that has gone stale), and
+        // DesignsPage::handle_proof_action() always persists the resolved
+        // address to proof_email BEFORE firing this notification — so by the
+        // time trigger() runs, proof_email already IS the address the row
+        // reported the proof as sent to. Falling back to the account e-mail
+        // only covers a design sent with no explicit proof_email at all (an
+        // older row, or a caller that fires this action directly).
+        $proof_email = trim((string) ($design['proof_email'] ?? ''));
+        if ($proof_email !== '') {
+            $this->recipient = $proof_email;
+        } else {
+            $customer         = (int) $design['customer_id'] > 0 ? get_user_by('id', (int) $design['customer_id']) : null;
+            $this->recipient  = $customer ? $customer->user_email : '';
+        }
 
         if ($this->is_enabled() && $this->get_recipient()) {
             $this->object = ['design' => $design, 'url' => ProofPage::url($token)];
@@ -41,6 +55,26 @@ class ProofReadyEmail extends \WC_Email {
         }
 
         $this->restore_locale();
+    }
+
+    /**
+     * Whether the shop owner has this notification switched on in
+     * WooCommerce -> Settings -> E-mails. DesignsPage checks this BEFORE
+     * reporting "Proof sent" on the row: trigger() above still creates the
+     * proof link and persists proof_email regardless (that state change is
+     * legitimate either way), but a disabled e-mail must not be reported as
+     * delivered.
+     */
+    public static function is_mail_enabled(): bool {
+        if (!function_exists('WC') || !WC()->mailer()) {
+            return true;
+        }
+        foreach (WC()->mailer()->get_emails() as $email) {
+            if ($email instanceof self) {
+                return $email->is_enabled();
+            }
+        }
+        return true;
     }
 
     public function get_content_html(): string {

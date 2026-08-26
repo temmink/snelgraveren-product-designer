@@ -111,6 +111,41 @@ class DesignsPage {
         return add_query_arg('pf_design', $design['design_hash'], $permalink);
     }
 
+    /**
+     * The list URL a handler should redirect back to: the page, filters and
+     * pagination the merchant was actually looking at, not a bare reset to
+     * page 1 with every filter cleared.
+     *
+     * wp_nonce_field() already writes a `_wp_http_referer` hidden input with
+     * the exact REQUEST_URI the form was rendered on, so this reads the four
+     * filter/pagination args back out of THAT instead of asking every row
+     * form to carry its own copies. A SUCCESS survives a bare reset (it bumps
+     * updated_at and the default view is newest-first, so the row floats to
+     * the top of page 1 regardless) — but a REFUSAL writes nothing, so
+     * without this the row a merchant just acted on can end up on a page
+     * that never renders it, with the refusal message going nowhere.
+     */
+    private function back_url(): string {
+        $referer = isset($_POST['_wp_http_referer']) && is_string($_POST['_wp_http_referer'])
+            ? wp_unslash($_POST['_wp_http_referer'])
+            : '';
+
+        $query = [];
+        $parts = $referer !== '' ? wp_parse_url($referer) : false;
+        if ($parts && !empty($parts['query'])) {
+            wp_parse_str($parts['query'], $query);
+        }
+
+        $args = [];
+        foreach (['paged', 's', 'sgpd_status', 'sgpd_proof'] as $key) {
+            if (isset($query[$key]) && $query[$key] !== '') {
+                $args[$key] = $query[$key];
+            }
+        }
+
+        return add_query_arg($args, admin_url('admin.php?page=' . self::PAGE_SLUG));
+    }
+
     public function handle_assign(): void {
         if (!current_user_can('edit_sgpd_templates')) {
             wp_die(esc_html__('You do not have permission to do that.', 'snelgraveren-product-designer'));
@@ -120,7 +155,7 @@ class DesignsPage {
         check_admin_referer('sgpd_assign_design_' . $id);
 
         $customer_input = isset($_POST['customer']) ? sanitize_text_field(wp_unslash($_POST['customer'])) : '';
-        $back           = admin_url('admin.php?page=' . self::PAGE_SLUG);
+        $back           = $this->back_url();
 
         // Taking a design back off a customer is its own button, never an empty
         // Assign: a mis-click on an empty field would otherwise remove a design
@@ -168,14 +203,14 @@ class DesignsPage {
      * Send, resend or withdraw a proof.
      *
      * Recipient resolution happens BEFORE any state change. ProofReadyEmail
-     * resolves its recipient from the design's customer_id and falls back to
-     * proof_email — when a design has neither (no account, no address typed
-     * yet), that trigger silently sends nowhere: is_enabled() && recipient
-     * short-circuits false and send() is never called. The merchant would
-     * still see "Proof sent" on the row while the customer never hears
-     * anything. So this handler works out the address FIRST and refuses to
-     * touch ProofWorkflow at all when nothing resolves, exactly like
-     * handle_assign() refuses to touch assign_customer() on an empty or
+     * resolves its recipient from proof_email first, falling back to the
+     * design's customer_id — when a design has neither (no account, no
+     * address typed yet), that trigger silently sends nowhere: is_enabled()
+     * && recipient short-circuits false and send() is never called. The
+     * merchant would still see "Proof sent" on the row while the customer
+     * never hears anything. So this handler works out the address FIRST and
+     * refuses to touch ProofWorkflow at all when nothing resolves, exactly
+     * like handle_assign() refuses to touch assign_customer() on an empty or
      * unresolved customer field.
      */
     public function handle_proof_action(): void {
@@ -185,7 +220,19 @@ class DesignsPage {
         $id = isset($_POST['design_id']) ? (int) $_POST['design_id'] : 0;
         check_admin_referer('sgpd_proof_action_' . $id);
 
-        $back = admin_url('admin.php?page=' . self::PAGE_SLUG);
+        $back = $this->back_url();
+
+        // includes/Proof/ can ship absent from a build (a premium feature the
+        // next task gates out of the free build). The proof cell already
+        // hides its own form behind class_exists() before offering the
+        // button, but this action is registered unconditionally and a
+        // crafted POST reaches it directly — refuse cleanly instead of a
+        // fatal on `new ProofWorkflow()`.
+        if (!class_exists(\Snelgraveren\ProductDesigner\Proof\ProofWorkflow::class)) {
+            wp_safe_redirect(add_query_arg(['sgpd_msg' => 'proof_unavailable', 'sgpd_row' => $id], $back));
+            exit;
+        }
+
         $flow = new \Snelgraveren\ProductDesigner\Proof\ProofWorkflow();
         $repo = new DesignRepository();
 
@@ -204,8 +251,13 @@ class DesignsPage {
         // that would fail is_email() down to '', so checking is_email() on the
         // SANITIZED value can never tell "typo" apart from "left blank" — a
         // merchant who mistypes an address would be told to enter one, which
-        // sends them looking in the wrong place.
-        $raw = isset($_POST['proof_email']) ? trim(wp_unslash($_POST['proof_email'])) : '';
+        // sends them looking in the wrong place. is_string() guards a crafted
+        // proof_email[] POST field: wp_unslash() would happily recurse into an
+        // array, but trim() on the result is a TypeError — an admin-only,
+        // nonce-gated 500, but handle_assign() survives the same shape of
+        // input via sanitize_text_field() and this handler should too.
+        $posted_email = $_POST['proof_email'] ?? '';
+        $raw          = is_string($posted_email) ? trim(wp_unslash($posted_email)) : '';
 
         if ($raw !== '') {
             $submitted = sanitize_email($raw);
@@ -229,8 +281,21 @@ class DesignsPage {
         try {
             $token = $flow->send($id);
             $repo->update_proof($id, ['proof_email' => $email]);
+
+            // The link exists either way — the state change above is
+            // legitimate regardless of mail delivery, so it is never rolled
+            // back here. Only the REPORTED outcome depends on whether the
+            // merchant has this notification switched on in WooCommerce ->
+            // Settings -> E-mails: firing the action when it's disabled is
+            // harmless (ProofReadyEmail::trigger() makes its own is_enabled()
+            // check and no-ops), but reporting "Proof sent" when nothing was
+            // sent is exactly the false-success this task exists to close.
+            $mail_enabled = class_exists(\Snelgraveren\ProductDesigner\Emails\ProofReadyEmail::class)
+                ? \Snelgraveren\ProductDesigner\Emails\ProofReadyEmail::is_mail_enabled()
+                : true;
+
             do_action('sgpd_proof_ready_notification', $repo->get($id), $token);
-            $msg = 'proof_sent';
+            $msg = $mail_enabled ? 'proof_sent' : 'proof_link_only';
         } catch (\RuntimeException $e) {
             $msg = 'proof_failed';
         }
@@ -240,7 +305,8 @@ class DesignsPage {
     }
 
     /**
-     * The outcome of an assign, said next to the field that caused it.
+     * The outcome of an assign or a proof action, said next to the field
+     * that caused it.
      *
      * NOT a WordPress admin notice, deliberately: notice-collector plugins
      * (this shop runs Admin Site Enhancements) sweep every .notice on the page
@@ -248,9 +314,13 @@ class DesignsPage {
      * nothing happened at all. Next to the field it also lands where the eye
      * already is.
      *
-     * The row is always on screen to receive it: assigning touches updated_at
-     * (ON UPDATE CURRENT_TIMESTAMP) and the default view is newest-first
-     * unfiltered, so the design the merchant just acted on sits at the top.
+     * The row is on screen to receive it either way, but for two different
+     * reasons: a SUCCESS touches updated_at (ON UPDATE CURRENT_TIMESTAMP) and
+     * the default view is newest-first unfiltered, so the row floats to the
+     * top regardless of what page the merchant was on; a REFUSAL writes
+     * nothing, so it relies instead on back_url() returning the merchant to
+     * the exact page, filter and search they were looking at, so the row
+     * that was on screen before the click is still there after it.
      */
     private function row_message(string $msg): string {
         switch ($msg) {
@@ -266,6 +336,8 @@ class DesignsPage {
                 return __('Could not update this design.', 'snelgraveren-product-designer');
             case 'proof_sent':
                 return __('Proof sent. The customer can view and approve it from the link in their e-mail.', 'snelgraveren-product-designer');
+            case 'proof_link_only':
+                return __('Proof link created, but the proof e-mail is switched off in WooCommerce → Settings → E-mails, so nothing was sent. Copy the link below to hand it over yourself.', 'snelgraveren-product-designer');
             case 'proof_withdrawn':
                 return __('Proof withdrawn. The link no longer works.', 'snelgraveren-product-designer');
             case 'proof_failed':
@@ -274,6 +346,8 @@ class DesignsPage {
                 return __('Enter an e-mail address for this proof — this design has no customer account to fall back on.', 'snelgraveren-product-designer');
             case 'proof_bad_email':
                 return __('That is not a valid e-mail address.', 'snelgraveren-product-designer');
+            case 'proof_unavailable':
+                return __('The proof feature is not available on this install.', 'snelgraveren-product-designer');
             default:
                 return '';
         }
@@ -419,8 +493,8 @@ class DesignsPage {
                                     </button>
                                 <?php endif; ?>
                             </form>
-                            <?php if ($msg_row === $design_id && $msg !== '') : ?>
-                                <p style="margin:4px 0 0;color:<?php echo in_array($msg, ['assigned', 'cleared', 'proof_sent', 'proof_withdrawn'], true) ? '#008a20' : '#d63638'; ?>;">
+                            <?php if ($msg_row === $design_id && $msg !== '' && strpos($msg, 'proof_') !== 0) : ?>
+                                <p style="margin:4px 0 0;color:<?php echo in_array($msg, ['assigned', 'cleared'], true) ? '#008a20' : '#d63638'; ?>;">
                                     <?php echo esc_html($this->row_message($msg)); ?>
                                 </p>
                             <?php endif; ?>
@@ -463,6 +537,16 @@ class DesignsPage {
                                     </button>
                                 <?php endif; ?>
                             </form>
+                            <?php if ($msg_row === $design_id && $msg !== '' && strpos($msg, 'proof_') === 0) : ?>
+                                <p style="margin:4px 0 0;color:<?php echo in_array($msg, ['proof_sent', 'proof_withdrawn'], true) ? '#008a20' : '#d63638'; ?>;">
+                                    <?php echo esc_html($this->row_message($msg)); ?>
+                                </p>
+                            <?php endif; ?>
+                            <?php if (!empty($design['proof_token']) && class_exists(\Snelgraveren\ProductDesigner\Proof\ProofPage::class)) : ?>
+                                <input type="text" readonly
+                                       value="<?php echo esc_attr(\Snelgraveren\ProductDesigner\Proof\ProofPage::url((string) $design['proof_token'])); ?>"
+                                       onfocus="this.select();" style="width:100%;margin-top:6px;font-size:11px;" />
+                            <?php endif; ?>
                         <?php else : ?>
                             <span class="description"><?php esc_html_e('Pro feature', 'snelgraveren-product-designer'); ?></span>
                         <?php endif; ?>
