@@ -64,6 +64,17 @@ class ProofWorkflowTest extends TestCase {
         $this->assertSame('approved', $design['proof_status']);
     }
 
+    public function test_approve_leaves_the_production_status_alone(): void {
+        // Approving a proof is not ordering. The design stays a draft until an
+        // order item carries its hash — the exports and the stats hang off
+        // that, not off the proof.
+        $id    = $this->make_design();
+        $token = $this->flow->send($id);
+        $this->flow->approve($token);
+
+        $this->assertSame('draft', $this->repo->get($id)['status']);
+    }
+
     public function test_request_changes_stores_the_note(): void {
         $id     = $this->make_design();
         $token  = $this->flow->send($id);

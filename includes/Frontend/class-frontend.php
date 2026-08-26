@@ -217,6 +217,11 @@ class Frontend {
      */
     public function cart_item_permalink(string $permalink, array $cart_item, string $cart_item_key): string {
         if (!empty($cart_item['pf_design_hash']) && !empty($permalink)) {
+            $proof_url = $this->proof_permalink((string) $cart_item['pf_design_hash']);
+            if ($proof_url !== '') {
+                return $proof_url;
+            }
+
             // Use the canonical product permalink to avoid SEO plugin redirects
             // stripping query parameters during URL normalization.
             $product = wc_get_product($cart_item['product_id'] ?? 0);
@@ -224,6 +229,51 @@ class Frontend {
             $permalink = add_query_arg('pf_design', $cart_item['pf_design_hash'], $base);
         }
         return $permalink;
+    }
+
+    /**
+     * When this cart line's owner holds it ONLY through an approved proof —
+     * no account, no matching guest session — `?pf_design=HASH` is the wrong
+     * link: the designer's REST fetch checks ownership too and 403s for this
+     * visitor, which (per this project's own notes on handing a design to a
+     * customer) reads as an empty default design, i.e. "it is broken". Point
+     * the permalink at the proof page instead, whose token IS the credential.
+     *
+     * class_exists() guard: includes/Proof/ is stripped from the free build,
+     * same reasoning as the mirrored clause in owns_design().
+     *
+     * @return string The proof page URL, or '' when the ordinary
+     *                 ?pf_design= link is the right one (owner is logged in,
+     *                 owns the guest session, or the proof grant does not
+     *                 apply).
+     */
+    private function proof_permalink(string $hash): string {
+        if (!class_exists(\Snelgraveren\ProductDesigner\Proof\ProofSession::class)) {
+            return '';
+        }
+
+        $design = $this->design_repo()->get_by_hash($hash);
+        if (!$design) {
+            return '';
+        }
+
+        $user_id = get_current_user_id();
+        if ($user_id && (int) $design['customer_id'] === $user_id) {
+            return '';
+        }
+
+        $session_id = \Snelgraveren\ProductDesigner\Security\CapabilityChecker::current_session_id();
+        if (!empty($session_id) && $design['session_id'] === $session_id) {
+            return '';
+        }
+
+        if (($design['proof_status'] ?? '') === 'approved'
+            && \Snelgraveren\ProductDesigner\Proof\ProofSession::is_approved($hash)
+            && !empty($design['proof_token'])) {
+            return \Snelgraveren\ProductDesigner\Proof\ProofPage::url((string) $design['proof_token']);
+        }
+
+        return '';
     }
 
     /**

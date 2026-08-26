@@ -23,6 +23,8 @@ class ProofPage {
 
     public const QUERY_VAR = 'sgpd_proof';
 
+    public const ACTION_APPROVE = 'approve';
+
     public function init(): void {
         // Priority 5, and maybe_render() exits: a matched token bypasses everything
         // else on this hook, including WooCommerce's coming-soon gating. That is
@@ -59,6 +61,10 @@ class ProofPage {
 
         $design = (new DesignRepository())->get_by_proof_token($token);
 
+        if ($design && ($_POST['sgpd_action'] ?? '') === self::ACTION_APPROVE) {
+            $this->handle_approve($design, $token);
+        }
+
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only view selector; the token is the credential
         if ($design && isset($_GET['sgpd_view'])) {
             $this->stream_view($design, (int) $_GET['sgpd_view']);
@@ -68,6 +74,40 @@ class ProofPage {
         nocache_headers();
 
         include SGPD_PLUGIN_DIR . 'templates/proof/proof-page.php';
+        exit;
+    }
+
+    /**
+     * Approve, then put the design in the cart and send the customer to
+     * checkout.
+     *
+     * No nonce: the token IS the credential and the page is reachable without
+     * a session, so a nonce would only break the link for anyone whose page
+     * sat open. The action is not destructive — approving twice is a no-op —
+     * and it is confined to the one design the token names.
+     */
+    private function handle_approve(array $design, string $token): void {
+        try {
+            $design = (new ProofWorkflow())->approve($token);
+        } catch (\RuntimeException $e) {
+            return; // Fall through to the page, which shows the current state.
+        }
+
+        ProofSession::mark_approved((string) $design['design_hash']);
+
+        if (function_exists('WC') && WC()->cart) {
+            WC()->cart->add_to_cart(
+                (int) $design['product_id'],
+                1,
+                0,
+                [],
+                ['pf_design_hash' => $design['design_hash']]
+            );
+            wp_safe_redirect(wc_get_checkout_url());
+            exit;
+        }
+
+        wp_safe_redirect(self::url($token));
         exit;
     }
 

@@ -56,6 +56,16 @@ $product = $design ? wc_get_product((int) $design['product_id']) : null;
             <?php endif; ?>
         <?php endforeach; ?>
     </div>
+
+        <?php if ($design['proof_status'] === 'approved') : ?>
+            <p><strong><?php esc_html_e('You have already approved this design.', 'snelgraveren-product-designer'); ?></strong></p>
+            <p><a href="<?php echo esc_url(wc_get_cart_url()); ?>"><?php esc_html_e('Go to your cart', 'snelgraveren-product-designer'); ?></a></p>
+        <?php else : ?>
+            <form method="post">
+                <input type="hidden" name="sgpd_action" value="<?php echo esc_attr(ProofPage::ACTION_APPROVE); ?>" />
+                <button type="submit"><?php esc_html_e('Approve and order', 'snelgraveren-product-designer'); ?></button>
+            </form>
+        <?php endif; ?>
 <?php endif; ?>
 
 </div>
