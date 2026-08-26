@@ -46,6 +46,18 @@ class DesignsPageTest extends TestCase {
         ]));
     }
 
+    public function test_proof_label_is_human_readable_for_every_state(): void {
+        foreach (\Snelgraveren\ProductDesigner\Proof\ProofWorkflow::STATES as $state) {
+            $label = DesignsPage::proof_label($state);
+            $this->assertNotSame('', $label, "state {$state} has no label");
+            $this->assertNotSame($state, $label, "state {$state} shows its raw enum value");
+        }
+    }
+
+    public function test_proof_label_of_an_unknown_state_is_empty(): void {
+        $this->assertSame('', DesignsPage::proof_label('nonsense'));
+    }
+
     protected function tearDown(): void {
         require_once ABSPATH . 'wp-admin/includes/user.php';
         foreach ($this->user_ids as $id) {

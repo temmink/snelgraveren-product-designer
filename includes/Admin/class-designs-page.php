@@ -29,6 +29,7 @@ class DesignsPage {
 
     public function init(): void {
         add_action('admin_post_sgpd_assign_design', [$this, 'handle_assign']);
+        add_action('admin_post_sgpd_proof_action', [$this, 'handle_proof_action']);
     }
 
     public function register_menu(): void {
@@ -63,6 +64,38 @@ class DesignsPage {
 
         $user = is_email($input) ? get_user_by('email', $input) : get_user_by('login', $input);
         return $user ? (int) $user->ID : 0;
+    }
+
+    /** Human-readable label for a `proof_status` value. Empty for anything unknown. */
+    public static function proof_label(string $state): string {
+        switch ($state) {
+            case 'none':              return __('Not sent', 'snelgraveren-product-designer');
+            case 'sent':              return __('Waiting for customer', 'snelgraveren-product-designer');
+            case 'changes_requested': return __('Change requested', 'snelgraveren-product-designer');
+            case 'approved':          return __('Approved', 'snelgraveren-product-designer');
+            default:                  return '';
+        }
+    }
+
+    /**
+     * What to show in the proof e-mail field before the merchant types
+     * anything: the address a proof was already sent to, or — the common
+     * case, a design already assigned to a customer — that customer's
+     * account e-mail, so sending a proof is one click instead of a
+     * copy-paste round trip.
+     */
+    private function proof_email_prefill(array $design): string {
+        if (!empty($design['proof_email'])) {
+            return (string) $design['proof_email'];
+        }
+        $customer_id = (int) $design['customer_id'];
+        if ($customer_id > 0) {
+            $user = get_user_by('id', $customer_id);
+            if ($user) {
+                return $user->user_email;
+            }
+        }
+        return '';
     }
 
     /**
@@ -132,6 +165,75 @@ class DesignsPage {
     }
 
     /**
+     * Send, resend or withdraw a proof.
+     *
+     * Recipient resolution happens BEFORE any state change. ProofReadyEmail
+     * resolves its recipient from the design's customer_id and falls back to
+     * proof_email — when a design has neither (no account, no address typed
+     * yet), that trigger silently sends nowhere: is_enabled() && recipient
+     * short-circuits false and send() is never called. The merchant would
+     * still see "Proof sent" on the row while the customer never hears
+     * anything. So this handler works out the address FIRST and refuses to
+     * touch ProofWorkflow at all when nothing resolves, exactly like
+     * handle_assign() refuses to touch assign_customer() on an empty or
+     * unresolved customer field.
+     */
+    public function handle_proof_action(): void {
+        if (!current_user_can('edit_sgpd_templates')) {
+            wp_die(esc_html__('You do not have permission to do that.', 'snelgraveren-product-designer'));
+        }
+        $id = isset($_POST['design_id']) ? (int) $_POST['design_id'] : 0;
+        check_admin_referer('sgpd_proof_action_' . $id);
+
+        $back = admin_url('admin.php?page=' . self::PAGE_SLUG);
+        $flow = new \Snelgraveren\ProductDesigner\Proof\ProofWorkflow();
+        $repo = new DesignRepository();
+
+        if (isset($_POST['withdraw'])) {
+            try {
+                $flow->withdraw($id);
+                $msg = 'proof_withdrawn';
+            } catch (\RuntimeException $e) {
+                $msg = 'proof_failed';
+            }
+            wp_safe_redirect(add_query_arg(['sgpd_msg' => $msg, 'sgpd_row' => $id], $back));
+            exit;
+        }
+
+        $submitted = isset($_POST['proof_email']) ? sanitize_email(wp_unslash($_POST['proof_email'])) : '';
+
+        if ($submitted !== '') {
+            if (!is_email($submitted)) {
+                wp_safe_redirect(add_query_arg(['sgpd_msg' => 'proof_bad_email', 'sgpd_row' => $id], $back));
+                exit;
+            }
+            $email = $submitted;
+        } else {
+            $design      = $repo->get($id);
+            $customer_id = $design ? (int) $design['customer_id'] : 0;
+            $customer    = $customer_id > 0 ? get_user_by('id', $customer_id) : false;
+            $email       = $customer ? $customer->user_email : '';
+        }
+
+        if ($email === '') {
+            wp_safe_redirect(add_query_arg(['sgpd_msg' => 'proof_no_email', 'sgpd_row' => $id], $back));
+            exit;
+        }
+
+        try {
+            $token = $flow->send($id);
+            $repo->update_proof($id, ['proof_email' => $email]);
+            do_action('sgpd_proof_ready_notification', $repo->get($id), $token);
+            $msg = 'proof_sent';
+        } catch (\RuntimeException $e) {
+            $msg = 'proof_failed';
+        }
+
+        wp_safe_redirect(add_query_arg(['sgpd_msg' => $msg, 'sgpd_row' => $id], $back));
+        exit;
+    }
+
+    /**
      * The outcome of an assign, said next to the field that caused it.
      *
      * NOT a WordPress admin notice, deliberately: notice-collector plugins
@@ -156,6 +258,16 @@ class DesignsPage {
                 return __('Type an ID, e-mail address or username first.', 'snelgraveren-product-designer');
             case 'failed':
                 return __('Could not update this design.', 'snelgraveren-product-designer');
+            case 'proof_sent':
+                return __('Proof sent. The customer can view and approve it from the link in their e-mail.', 'snelgraveren-product-designer');
+            case 'proof_withdrawn':
+                return __('Proof withdrawn. The link no longer works.', 'snelgraveren-product-designer');
+            case 'proof_failed':
+                return __('Could not send this proof.', 'snelgraveren-product-designer');
+            case 'proof_no_email':
+                return __('Enter an e-mail address for this proof — this design has no customer account to fall back on.', 'snelgraveren-product-designer');
+            case 'proof_bad_email':
+                return __('That is not a valid e-mail address.', 'snelgraveren-product-designer');
             default:
                 return '';
         }
@@ -186,6 +298,7 @@ class DesignsPage {
 
         // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only filters
         $status   = sanitize_key($_GET['sgpd_status'] ?? '');
+        $proof    = sanitize_key($_GET['sgpd_proof'] ?? '');
         $search   = sanitize_text_field(wp_unslash($_GET['s'] ?? ''));
         $page_num = max(1, (int) ($_GET['paged'] ?? 1));
         // Result of the last assign, reported on the row it belongs to.
@@ -200,6 +313,9 @@ class DesignsPage {
         }
         if ($search !== '') {
             $filters['search'] = $search;
+        }
+        if (in_array($proof, \Snelgraveren\ProductDesigner\Proof\ProofWorkflow::STATES, true)) {
+            $filters['proof_status'] = $proof;
         }
 
         $repo    = new DesignRepository();
@@ -226,6 +342,19 @@ class DesignsPage {
                         <option value="<?php echo esc_attr($key); ?>" <?php selected($status, $key); ?>><?php echo esc_html($label); ?></option>
                     <?php endforeach; ?>
                 </select>
+                <select name="sgpd_proof">
+                    <?php
+                    $proof_filters = [
+                        ''                  => __('Any proof state', 'snelgraveren-product-designer'),
+                        'none'              => __('Not sent', 'snelgraveren-product-designer'),
+                        'sent'              => __('Waiting for customer', 'snelgraveren-product-designer'),
+                        'changes_requested' => __('Change requested', 'snelgraveren-product-designer'),
+                        'approved'          => __('Approved', 'snelgraveren-product-designer'),
+                    ];
+                    foreach ($proof_filters as $key => $label) : ?>
+                        <option value="<?php echo esc_attr($key); ?>" <?php selected($proof, $key); ?>><?php echo esc_html($label); ?></option>
+                    <?php endforeach; ?>
+                </select>
                 <input type="search" name="s" value="<?php echo esc_attr($search); ?>"
                        placeholder="<?php esc_attr_e('Start of the design code', 'snelgraveren-product-designer'); ?>" />
                 <?php submit_button(__('Filter', 'snelgraveren-product-designer'), 'secondary', '', false); ?>
@@ -240,11 +369,12 @@ class DesignsPage {
                         <th style="width:100px;"><?php esc_html_e('Status', 'snelgraveren-product-designer'); ?></th>
                         <th style="width:150px;"><?php esc_html_e('Last edited', 'snelgraveren-product-designer'); ?></th>
                         <th style="width:34%;"><?php esc_html_e('Assign to customer', 'snelgraveren-product-designer'); ?></th>
+                        <th style="width:22%;"><?php esc_html_e('Proof', 'snelgraveren-product-designer'); ?></th>
                     </tr>
                 </thead>
                 <tbody>
                 <?php if (!$designs) : ?>
-                    <tr><td colspan="6"><?php esc_html_e('No designs found.', 'snelgraveren-product-designer'); ?></td></tr>
+                    <tr><td colspan="7"><?php esc_html_e('No designs found.', 'snelgraveren-product-designer'); ?></td></tr>
                 <?php endif; ?>
                 <?php foreach ($designs as $design) :
                     $product   = wc_get_product((int) $design['product_id']);
@@ -292,6 +422,44 @@ class DesignsPage {
                                 <input type="text" readonly value="<?php echo esc_attr($reopen); ?>"
                                        onfocus="this.select();" style="width:100%;margin-top:6px;font-size:11px;" />
                             <?php endif; ?>
+                        </td>
+                        <td>
+                        <?php if (\Snelgraveren\ProductDesigner\Plugin::has_feature('proofs')
+                            && class_exists(\Snelgraveren\ProductDesigner\Proof\ProofWorkflow::class)) : ?>
+                            <?php $proof_state = (string) ($design['proof_status'] ?? 'none'); ?>
+                            <strong><?php echo esc_html(self::proof_label($proof_state)); ?></strong>
+                            <?php if (!empty($design['proof_sent_at'])) : ?>
+                                <br /><span class="description"><?php echo esc_html(mysql2date(get_option('date_format') . ' H:i', $design['proof_sent_at'])); ?></span>
+                            <?php endif; ?>
+
+                            <?php if ($proof_state === 'changes_requested' && !empty($design['proof_note'])) : ?>
+                                <p style="margin:6px 0;padding:6px;background:#fcf9e8;border-left:3px solid #dba617;">
+                                    <?php echo esc_html((string) $design['proof_note']); ?>
+                                </p>
+                            <?php endif; ?>
+
+                            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="margin-top:6px;">
+                                <input type="hidden" name="action" value="sgpd_proof_action" />
+                                <input type="hidden" name="design_id" value="<?php echo esc_attr((string) $design_id); ?>" />
+                                <?php wp_nonce_field('sgpd_proof_action_' . $design_id); ?>
+                                <input type="email" name="proof_email" style="width:100%;margin-bottom:4px;"
+                                       value="<?php echo esc_attr($this->proof_email_prefill($design)); ?>"
+                                       placeholder="<?php esc_attr_e('E-mail address for the proof', 'snelgraveren-product-designer'); ?>" />
+                                <?php submit_button(
+                                    $proof_state === 'none'
+                                        ? __('Send proof', 'snelgraveren-product-designer')
+                                        : __('Send again', 'snelgraveren-product-designer'),
+                                    'secondary', '', false
+                                ); ?>
+                                <?php if ($proof_state !== 'none') : ?>
+                                    <button type="submit" name="withdraw" value="1" class="button-link button-link-delete">
+                                        <?php esc_html_e('Withdraw', 'snelgraveren-product-designer'); ?>
+                                    </button>
+                                <?php endif; ?>
+                            </form>
+                        <?php else : ?>
+                            <span class="description"><?php esc_html_e('Pro feature', 'snelgraveren-product-designer'); ?></span>
+                        <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>

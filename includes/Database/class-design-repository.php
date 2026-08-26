@@ -230,6 +230,10 @@ class DesignRepository {
             $where[]  = 'design_hash LIKE %s';
             $params[] = $wpdb->esc_like((string) $filters['search']) . '%';
         }
+        if (!empty($filters['proof_status'])) {
+            $where[]  = 'proof_status = %s';
+            $params[] = (string) $filters['proof_status'];
+        }
 
         return [implode(' AND ', $where), $params];
     }
