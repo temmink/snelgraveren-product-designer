@@ -79,6 +79,17 @@ class ProofPage {
      * this method hands bytes to a browser with a content-type attached, so
      * "probably an image" is not good enough.
      *
+     * The write path already sanitises SVG markup before it is stored, but
+     * this endpoint does not lean on that as its only barrier — it hands a
+     * browser a content-type of its own, so it re-sanitises on the way out
+     * too, and refuses the branch entirely when the sanitiser class is not
+     * available (mirroring RestDesigns::sanitize_export_blob()'s fail-closed
+     * behaviour). Remote references are stripped here specifically: the
+     * vendored sanitiser has removeRemoteReferences() off by default, so a
+     * stored SVG may legitimately contain `<image href="https://…">`, and
+     * rendered as a top-level document that fires a request that leaks the
+     * proof URL — the credential itself — in the Referer header.
+     *
      * @return array{mime: string, bytes: string}|null
      */
     public static function decode_export_blob(string $blob): ?array {
@@ -87,16 +98,29 @@ class ProofPage {
             return null;
         }
 
+        // Same cap as the write path (RestDesigns::sanitize_export_blob) — a
+        // stored blob was already checked against this on the way in, but this
+        // method must stand on its own, not on trust in the write path.
+        if (strlen($blob) > 10 * 1024 * 1024) {
+            return null;
+        }
+
         if (str_starts_with($blob, 'data:image/png;base64,')) {
             $bytes = base64_decode(substr($blob, strlen('data:image/png;base64,')), true);
-            if ($bytes === false || substr($bytes, 0, 4) !== "\x89PNG") {
+            if ($bytes === false || strlen($bytes) < 8 || substr($bytes, 0, 8) !== "\x89PNG\r\n\x1a\n") {
                 return null;
             }
             return ['mime' => 'image/png', 'bytes' => $bytes];
         }
 
         if (str_starts_with($blob, '<')) {
-            return ['mime' => 'image/svg+xml', 'bytes' => $blob];
+            if (!class_exists(\enshrined\svgSanitize\Sanitizer::class)) {
+                return null;
+            }
+            $sanitizer = new \enshrined\svgSanitize\Sanitizer();
+            $sanitizer->removeRemoteReferences(true);
+            $clean = $sanitizer->sanitize($blob);
+            return $clean === false ? null : ['mime' => 'image/svg+xml', 'bytes' => $clean];
         }
 
         return null;
@@ -117,11 +141,16 @@ class ProofPage {
             exit;
         }
 
+        status_header(200);
         nocache_headers();
         header('Content-Type: ' . $out['mime']);
         header('Content-Length: ' . strlen($out['bytes']));
         header('Content-Disposition: inline');
         header('X-Content-Type-Options: nosniff');
+        // Belt-and-braces alongside the re-sanitisation above: even if a byte
+        // slipped through, a document-level 'none' CSP + sandbox stops it from
+        // fetching, scripting, or navigating anywhere.
+        header("Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; sandbox");
         echo $out['bytes']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- binary image payload
         exit;
     }

@@ -381,7 +381,7 @@ class DesignRepository {
         global $wpdb;
         $rows = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT * FROM {$this->views_table} WHERE design_id = %d",
+                "SELECT * FROM {$this->views_table} WHERE design_id = %d ORDER BY id ASC",
                 $design_id
             ),
             ARRAY_A

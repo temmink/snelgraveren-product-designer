@@ -51,7 +51,9 @@ class ProofPageTest extends TestCase {
     }
 
     public function test_decode_export_blob_refuses_anything_else(): void {
-        // Not a render: never stream it, whatever it claims to be.
+        // Not a render: never stream it, whatever it claims to be. This also
+        // covers a view whose export_svg is empty — stream_view() decodes ''
+        // the same way and 404s on the null.
         $this->assertNull(ProofPage::decode_export_blob(''));
         $this->assertNull(ProofPage::decode_export_blob('data:text/html;base64,PGh0bWw+'));
         $this->assertNull(ProofPage::decode_export_blob('data:image/png;base64,not-base64!!'));
@@ -59,14 +61,20 @@ class ProofPageTest extends TestCase {
     }
 
     /**
-     * stream_view() is private and calls exit(), so it can't be called directly
-     * from a test process without killing PHPUnit. What we CAN assert without
-     * exiting is the piece that decides whether it 404s: a view whose
-     * export_svg is empty must decode to null, same as any other "not a
-     * render" value above.
+     * Real sanitised SVG output (enshrined/svg-sanitize) starts with an
+     * `<?xml version…?>` prologue, not `<svg`. decode_export_blob() must
+     * still recognise and accept it — and since it now re-sanitises on the
+     * way out (with remote references stripped), this also proves that
+     * round trip actually works rather than just the `str_starts_with('<')`
+     * gate.
      */
-    public function test_decode_export_blob_refuses_an_empty_view_export(): void {
-        $this->assertNull(ProofPage::decode_export_blob(''));
+    public function test_decode_export_blob_accepts_the_xml_prologue_the_sanitizer_emits(): void {
+        $svg = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"10\" height=\"10\"><rect width=\"10\" height=\"10\"/></svg>";
+        $out = ProofPage::decode_export_blob($svg);
+
+        $this->assertNotNull($out);
+        $this->assertSame('image/svg+xml', $out['mime']);
+        $this->assertStringStartsWith('<?xml', $out['bytes']);
     }
 
     /**
