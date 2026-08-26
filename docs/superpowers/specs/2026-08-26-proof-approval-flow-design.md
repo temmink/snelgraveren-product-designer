@@ -45,19 +45,23 @@ op een telefoon, en er is geen editor die per ongeluk bewerkbaar kan worden, wan
 
 ## 2. Gegevensmodel
 
-`Database\Migration300` voegt vier kolommen toe aan `wp_pf_designs`:
+`Database\Migration1100` voegt vier kolommen toe (de reeks staat al op 1000) aan `wp_pf_designs`:
 
 ```sql
 proof_status   ENUM('none','sent','changes_requested','approved') NOT NULL DEFAULT 'none',
 proof_token    CHAR(32)  NOT NULL DEFAULT '',
 proof_sent_at  DATETIME  NULL,
 proof_note     TEXT      NULL,
+proof_email    VARCHAR(191) NOT NULL DEFAULT '',
 KEY proof_token (proof_token)
 ```
 
 De bestaande kolom `status` (`draft|final|ordered|archived`) blijft ongemoeid: die beschrijft de
 levenscyclus voor export en statistieken. Een proefdruk is een parallelle toestand, geen fase in
 diezelfde reeks — een goedgekeurde proefdruk is nog steeds een `draft` tot de bestelling binnen is.
+
+`proof_email` is nodig omdat een proefdruk naar iemand **zonder account** kan gaan — dat is een
+uitgangspunt van dit ontwerp — en het adres dan niet uit `customer_id` te herleiden is.
 
 `proof_token` is `bin2hex(random_bytes(16))`, dezelfde bron als `design_hash`. Bewust een aparte
 waarde: de hash lekt in winkelwagen-URL's en ordermeta, en mag daarom geen toegang geven.
@@ -190,11 +194,12 @@ van Pro naar gratis terugvalt met openstaande proefdrukken.
 ## 10. Opruimcron — een valkuil die dit ontwerp introduceert
 
 `Cleanup` verwijdert verlaten gastontwerpen via
-`find_abandoned_guest_designs()`: `customer_id = 0 AND status = 'draft'`, ouder dan de
-retentie-instelling (standaard 30 dagen).
+`DesignRepository::find_stale_guest_drafts()`: `customer_id = 0 AND status = 'draft'`, ouder dan de
+retentie-instelling (standaard 30 dagen). Die query sluit al ontwerpen uit die aan een orderregel of
+een exportrecord hangen; een proefdruk moet daar als derde uitzondering bij.
 
 Een proefdruk naar iemand **zonder account** is exact zo'n rij. Die zou na een maand verdwijnen,
-inclusief de link die de klant nog in zijn mailbox heeft. `find_abandoned_guest_designs()` moet
+inclusief de link die de klant nog in zijn mailbox heeft. `find_stale_guest_drafts()` moet
 daarom alles met `proof_status <> 'none'` overslaan.
 
 Dit is geen randgeval: "geen account nodig" is een uitgangspunt van dit ontwerp, dus dit is het
