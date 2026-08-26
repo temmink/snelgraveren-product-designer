@@ -125,13 +125,17 @@ class ProofWorkflowTest extends TestCase {
         $this->flow->request_changes($token, 'Toch anders');
     }
 
-    public function test_approve_is_refused_from_changes_requested(): void {
+    public function test_approve_succeeds_from_changes_requested(): void {
+        // A customer who asked for a change and then decides the current
+        // version is fine after all presses the same "Approve and order"
+        // button — it must actually do something, not silently no-op.
         $id    = $this->make_design();
         $token = $this->flow->send($id);
         $this->flow->request_changes($token, 'Groter graag');
 
-        $this->expectException(\RuntimeException::class);
-        $this->flow->approve($token);
+        $design = $this->flow->approve($token);
+
+        $this->assertSame('approved', $design['proof_status']);
     }
 
     public function test_request_changes_is_refused_from_changes_requested(): void {
@@ -191,6 +195,7 @@ class ProofWorkflowTest extends TestCase {
         $this->assertTrue(ProofWorkflow::allows('approved', 'send'));
         $this->assertTrue(ProofWorkflow::allows('sent', 'approve'));
         $this->assertTrue(ProofWorkflow::allows('sent', 'request_changes'));
+        $this->assertTrue(ProofWorkflow::allows('changes_requested', 'approve'));
         $this->assertFalse(ProofWorkflow::allows('none', 'approve'));
         $this->assertFalse(ProofWorkflow::allows('none', 'request_changes'));
         $this->assertFalse(ProofWorkflow::allows('approved', 'request_changes'));

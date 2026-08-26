@@ -2,7 +2,9 @@
 /**
  * Proof page template.
  *
- * Available: $design (array|null), $token (string).
+ * Available: $design (array|null), $token (string), $cart_failed (bool) — set
+ * when a redirect from a just-approved-but-not-added attempt sent the
+ * customer back here (see ProofPage::handle_approve()).
  * Standalone document: the customer may not be logged in and may open this on
  * a phone, so it carries its own minimal styling instead of booting the theme.
  */
@@ -57,9 +59,26 @@ $product = $design ? wc_get_product((int) $design['product_id']) : null;
         <?php endforeach; ?>
     </div>
 
-        <?php if ($design['proof_status'] === 'approved') : ?>
+        <?php if ($design['proof_status'] === 'approved' && $cart_failed) : ?>
+            <p><strong><?php esc_html_e('Your design was approved, but we could not add it to your cart just now.', 'snelgraveren-product-designer'); ?></strong></p>
+            <p><?php esc_html_e('This can happen when the product briefly went unavailable. Please try again — approving again is safe and will not create a duplicate.', 'snelgraveren-product-designer'); ?></p>
+            <form method="post">
+                <input type="hidden" name="sgpd_action" value="<?php echo esc_attr(ProofPage::ACTION_APPROVE); ?>" />
+                <button type="submit"><?php esc_html_e('Try again', 'snelgraveren-product-designer'); ?></button>
+            </form>
+        <?php elseif ($design['proof_status'] === 'approved') : ?>
             <p><strong><?php esc_html_e('You have already approved this design.', 'snelgraveren-product-designer'); ?></strong></p>
             <p><a href="<?php echo esc_url(wc_get_cart_url()); ?>"><?php esc_html_e('Go to your cart', 'snelgraveren-product-designer'); ?></a></p>
+        <?php elseif ($design['proof_status'] === 'changes_requested') : ?>
+            <p><strong><?php esc_html_e('You asked for a change to this design.', 'snelgraveren-product-designer'); ?></strong></p>
+            <?php if (!empty($design['proof_note'])) : ?>
+                <p><?php echo esc_html($design['proof_note']); ?></p>
+            <?php endif; ?>
+            <p><?php esc_html_e('We will send you a new proof once it has been updated. If you have changed your mind and this version is fine as it is, you can approve it now instead of waiting.', 'snelgraveren-product-designer'); ?></p>
+            <form method="post">
+                <input type="hidden" name="sgpd_action" value="<?php echo esc_attr(ProofPage::ACTION_APPROVE); ?>" />
+                <button type="submit"><?php esc_html_e('Approve this version', 'snelgraveren-product-designer'); ?></button>
+            </form>
         <?php else : ?>
             <form method="post">
                 <input type="hidden" name="sgpd_action" value="<?php echo esc_attr(ProofPage::ACTION_APPROVE); ?>" />

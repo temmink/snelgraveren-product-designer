@@ -27,7 +27,7 @@ class ProofWorkflow {
     private const TABLE = [
         'none'              => ['send', 'withdraw'],
         'sent'              => ['approve', 'request_changes', 'send', 'withdraw'],
-        'changes_requested' => ['send', 'withdraw'],
+        'changes_requested' => ['approve', 'send', 'withdraw'],
         'approved'          => ['send', 'withdraw'],
     ];
 

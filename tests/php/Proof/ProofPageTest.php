@@ -5,8 +5,26 @@ use Snelgraveren\ProductDesigner\Proof\ProofPage;
 
 class ProofPageTest extends TestCase {
 
+    private array $created_design_ids  = [];
+    private array $created_product_ids = [];
+
     protected function tearDown(): void {
         unset($_GET['sgpd_proof']);
+
+        if (function_exists('WC') && WC()->cart) {
+            WC()->cart->empty_cart();
+        }
+
+        $repo = new DesignRepository();
+        foreach ($this->created_design_ids as $id) {
+            $repo->delete($id);
+        }
+        $this->created_design_ids = [];
+
+        foreach ($this->created_product_ids as $id) {
+            wp_delete_post($id, true);
+        }
+        $this->created_product_ids = [];
     }
 
     public function test_url_carries_the_token(): void {
@@ -88,5 +106,93 @@ class ProofPageTest extends TestCase {
     public function test_a_bogus_token_yields_no_design_so_only_410_is_reachable(): void {
         $repo = new DesignRepository();
         $this->assertNull($repo->get_by_proof_token(str_repeat('a', 32)));
+    }
+
+    /**
+     * add_design_to_cart() is private. handle_approve(), which calls it, exits
+     * on every reachable path (redirect to checkout or back to the proof
+     * page), so it can't be exercised directly here without killing the
+     * PHPUnit process — reflection on the cart-add step itself is the only
+     * way to catch a replay bug, same pattern as
+     * DesignEndpointTest::owns_design() and
+     * PriceCalculatorTest::classify_object().
+     */
+    private function invoke_add_design_to_cart(ProofPage $page, array $design): bool {
+        $method = new \ReflectionMethod(ProofPage::class, 'add_design_to_cart');
+        $method->setAccessible(true);
+        return $method->invoke($page, $design);
+    }
+
+    /**
+     * A replayed approve POST — double-click, F5 "resend", the back button,
+     * or the old open tab the no-nonce design explicitly protects — must not
+     * add the same design to the cart twice. Before the fix, WooCommerce
+     * resolved the second add_to_cart() to the same cart id (same product +
+     * same pf_design_hash) and bumped the quantity instead of refusing.
+     */
+    public function test_a_replayed_approve_does_not_double_the_cart_quantity(): void {
+        if (!function_exists('WC') || !WC()->cart) {
+            $this->markTestSkipped('WooCommerce cart not available in this context.');
+        }
+
+        $product = new \WC_Product_Simple();
+        $product->set_name('PF Proof Test Product');
+        $product->set_regular_price('10');
+        $product->set_status('publish');
+        $product_id = $product->save();
+        $this->created_product_ids[] = $product_id;
+
+        $repo = new DesignRepository();
+        $id   = $repo->create([
+            'template_id' => 1, 'product_id' => $product_id, 'customer_id' => 0,
+            'session_id'  => 'proof-page-test-' . uniqid(),
+        ]);
+        $this->created_design_ids[] = $id;
+        $design = $repo->get($id);
+
+        WC()->cart->empty_cart();
+        $page = new ProofPage();
+
+        $this->assertTrue($this->invoke_add_design_to_cart($page, $design));
+        $this->assertTrue($this->invoke_add_design_to_cart($page, $design));
+
+        $cart_item = null;
+        foreach (WC()->cart->get_cart() as $item) {
+            if (($item['pf_design_hash'] ?? '') === $design['design_hash']) {
+                $cart_item = $item;
+            }
+        }
+
+        $this->assertNotNull($cart_item, 'the design must be in the cart');
+        $this->assertSame(1, $cart_item['quantity'], 'a replayed approve must not bump the quantity');
+    }
+
+    /**
+     * A product that cannot actually be added (trashed, unpublished, or
+     * vetoed by another plugin) must be reported as a failure, not silently
+     * treated as success — handle_approve() relies on this return value to
+     * decide whether it is safe to send the customer to checkout.
+     */
+    public function test_add_design_to_cart_reports_failure_instead_of_pretending_it_worked(): void {
+        if (!function_exists('WC') || !WC()->cart) {
+            $this->markTestSkipped('WooCommerce cart not available in this context.');
+        }
+
+        $repo = new DesignRepository();
+        $id   = $repo->create([
+            'template_id' => 1, 'product_id' => 999999999, 'customer_id' => 0,
+            'session_id'  => 'proof-page-test-' . uniqid(),
+        ]);
+        $this->created_design_ids[] = $id;
+        $design = $repo->get($id);
+
+        WC()->cart->empty_cart();
+        $page = new ProofPage();
+
+        $this->assertFalse(
+            $this->invoke_add_design_to_cart($page, $design),
+            'a product that cannot be added must be reported, not silently accepted'
+        );
+        $this->assertSame(0, WC()->cart->get_cart_contents_count());
     }
 }

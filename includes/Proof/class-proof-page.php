@@ -62,13 +62,16 @@ class ProofPage {
         $design = (new DesignRepository())->get_by_proof_token($token);
 
         if ($design && ($_POST['sgpd_action'] ?? '') === self::ACTION_APPROVE) {
-            $this->handle_approve($design, $token);
+            $this->handle_approve($token);
         }
 
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only view selector; the token is the credential
         if ($design && isset($_GET['sgpd_view'])) {
             $this->stream_view($design, (int) $_GET['sgpd_view']);
         }
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only status flag set by our own redirect; the token is the credential
+        $cart_failed = ($_GET['sgpd_msg'] ?? '') === 'cart_failed';
 
         status_header($design ? 200 : 410);
         nocache_headers();
@@ -86,7 +89,7 @@ class ProofPage {
      * sat open. The action is not destructive — approving twice is a no-op —
      * and it is confined to the one design the token names.
      */
-    private function handle_approve(array $design, string $token): void {
+    private function handle_approve(string $token): void {
         try {
             $design = (new ProofWorkflow())->approve($token);
         } catch (\RuntimeException $e) {
@@ -96,19 +99,57 @@ class ProofPage {
         ProofSession::mark_approved((string) $design['design_hash']);
 
         if (function_exists('WC') && WC()->cart) {
-            WC()->cart->add_to_cart(
-                (int) $design['product_id'],
-                1,
-                0,
-                [],
-                ['pf_design_hash' => $design['design_hash']]
-            );
+            if (!$this->add_design_to_cart($design)) {
+                // Approval is already spent (the state machine above is
+                // correct and stays that way — this is a cart-layer failure:
+                // a trashed/unpublished/out-of-stock product, or another
+                // plugin's woocommerce_add_to_cart_validation veto). Land the
+                // customer back on the proof page with something to act on
+                // instead of an empty cart and no explanation — the retry
+                // there is safe because add_design_to_cart() below is
+                // idempotent.
+                wp_safe_redirect(add_query_arg('sgpd_msg', 'cart_failed', self::url($token)));
+                exit;
+            }
+
             wp_safe_redirect(wc_get_checkout_url());
             exit;
         }
 
         wp_safe_redirect(self::url($token));
         exit;
+    }
+
+    /**
+     * Put the design in the cart, unless it is there already.
+     *
+     * Guards a replayed approve POST — double-click, F5 "resend", the back
+     * button, or the very old-open-tab case the no-nonce design deliberately
+     * allows — from adding the SAME design a second time. Without this,
+     * add_to_cart() resolves to the same WooCommerce cart id (same product +
+     * same pf_design_hash) and WooCommerce bumps the quantity instead of
+     * refusing, so a replay charges the customer for two.
+     *
+     * @return bool Whether the cart holds this design afterward (true = safe
+     *              to send the customer to checkout).
+     */
+    private function add_design_to_cart(array $design): bool {
+        $cart = WC()->cart;
+        $hash = (string) $design['design_hash'];
+
+        foreach ($cart->get_cart() as $item) {
+            if (($item['pf_design_hash'] ?? '') === $hash) {
+                return true;
+            }
+        }
+
+        return $cart->add_to_cart(
+            (int) $design['product_id'],
+            1,
+            0,
+            [],
+            ['pf_design_hash' => $hash]
+        ) !== false;
     }
 
     /**
