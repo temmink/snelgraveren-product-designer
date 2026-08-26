@@ -2,6 +2,7 @@
 use PHPUnit\Framework\TestCase;
 use Snelgraveren\ProductDesigner\Database\DesignRepository;
 use Snelgraveren\ProductDesigner\Proof\ProofPage;
+use Snelgraveren\ProductDesigner\Proof\ProofWorkflow;
 
 class ProofPageTest extends TestCase {
 
@@ -208,5 +209,106 @@ class ProofPageTest extends TestCase {
             'a product that cannot be added must be reported, not silently accepted'
         );
         $this->assertSame(0, WC()->cart->get_cart_contents_count());
+    }
+
+    private function invoke_handle_changes(ProofPage $page, array $design, string $token): string {
+        $method = new \ReflectionMethod(ProofPage::class, 'handle_changes');
+        $method->setAccessible(true);
+        return $method->invoke($page, $design, $token);
+    }
+
+    private function make_sent_design(): array {
+        $repo  = new DesignRepository();
+        $id    = $repo->create([
+            'template_id' => 1, 'product_id' => 1, 'customer_id' => 0,
+            'session_id'  => 'proof-page-test-' . uniqid(),
+        ]);
+        $this->created_design_ids[] = $id;
+
+        $token = (new ProofWorkflow($repo))->send($id);
+        delete_transient('sgpd_proof_note_' . md5($token));
+
+        return [$repo, $id, $token];
+    }
+
+    /**
+     * The message alone is not enough: a handler that returns the right
+     * string while still writing to the database would pass a test that
+     * only checked the notice. Assert both halves for every blank variant.
+     */
+    public function test_handle_changes_refuses_an_empty_or_whitespace_note(): void {
+        [$repo, $id, $token] = $this->make_sent_design();
+        $page = new ProofPage();
+
+        foreach (['', '   ', "\n\t "] as $blank) {
+            $_POST['sgpd_note'] = $blank;
+            $design = $repo->get($id);
+
+            $notice = $this->invoke_handle_changes($page, $design, $token);
+
+            $this->assertSame(
+                'Please describe what you would like changed.',
+                $notice,
+                'blank note must be refused: ' . var_export($blank, true)
+            );
+            $this->assertSame(
+                'sent',
+                $repo->get($id)['proof_status'],
+                'a refused note must not change the proof status'
+            );
+        }
+
+        unset($_POST['sgpd_note']);
+        delete_transient('sgpd_proof_note_' . md5($token));
+    }
+
+    /**
+     * request_changes() is only allowed from 'sent' and 'changes_requested'
+     * (ProofWorkflow::TABLE). Approving first, then requesting a change,
+     * reaches the forbidden transition through the real API rather than by
+     * poking the row directly.
+     */
+    public function test_handle_changes_refuses_a_note_once_the_proof_is_approved(): void {
+        [$repo, $id, $token] = $this->make_sent_design();
+        (new ProofWorkflow($repo))->approve($token);
+
+        $page = new ProofPage();
+        $_POST['sgpd_note'] = 'Please make the text bigger.';
+        $design = $repo->get($id);
+
+        $notice = $this->invoke_handle_changes($page, $design, $token);
+
+        $this->assertSame('This proof can no longer be changed.', $notice);
+        $this->assertNotSame('', $notice, 'a forbidden transition must not be reported as success');
+        $this->assertSame(
+            'approved',
+            $repo->get($id)['proof_status'],
+            'a refused note must not disturb the approved state'
+        );
+
+        unset($_POST['sgpd_note']);
+        delete_transient('sgpd_proof_note_' . md5($token));
+    }
+
+    /**
+     * Positive control: proves the two refusal tests above are not passing
+     * for some unrelated reason (e.g. the method always returning early).
+     */
+    public function test_handle_changes_accepts_a_real_note_and_stores_it(): void {
+        [$repo, $id, $token] = $this->make_sent_design();
+        $page = new ProofPage();
+
+        $_POST['sgpd_note'] = 'Please make the text bigger and move the logo left.';
+        $design = $repo->get($id);
+
+        $notice = $this->invoke_handle_changes($page, $design, $token);
+
+        $this->assertSame('', $notice);
+        $after = $repo->get($id);
+        $this->assertSame('changes_requested', $after['proof_status']);
+        $this->assertSame('Please make the text bigger and move the logo left.', $after['proof_note']);
+
+        unset($_POST['sgpd_note']);
+        delete_transient('sgpd_proof_note_' . md5($token));
     }
 }
