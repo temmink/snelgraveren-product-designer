@@ -127,6 +127,8 @@ class ProofPage {
             return __('This proof can no longer be changed.', 'snelgraveren-product-designer');
         }
 
+        do_action('sgpd_proof_changes_requested_notification', (new DesignRepository())->get_by_proof_token($token), $token);
+
         return '';
     }
 
@@ -147,6 +149,8 @@ class ProofPage {
         }
 
         ProofSession::mark_approved((string) $design['design_hash']);
+
+        do_action('sgpd_proof_approved_notification', $design, $token);
 
         if (function_exists('WC') && WC()->cart) {
             if (!$this->add_design_to_cart($design)) {

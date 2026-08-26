@@ -50,6 +50,10 @@ class Plugin {
         if (class_exists(\Snelgraveren\ProductDesigner\Proof\ProofPage::class)) {
             (new \Snelgraveren\ProductDesigner\Proof\ProofPage())->init();
         }
+
+        if (class_exists(\Snelgraveren\ProductDesigner\Emails\ProofEmails::class)) {
+            (new \Snelgraveren\ProductDesigner\Emails\ProofEmails())->init();
+        }
     }
 
     /**
