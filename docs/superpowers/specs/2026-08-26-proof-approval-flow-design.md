@@ -70,19 +70,29 @@ waarde: de hash lekt in winkelwagen-URL's en ordermeta, en mag daarom geen toega
 
 | Van | Actie | Naar | Bijwerking |
 |-----|-------|------|------------|
-| `none`, `changes_requested`, `approved` | winkelier: **Stuur proefdruk** | `sent` | token aanmaken als leeg; `proof_sent_at` = nu; mail naar klant |
-| `sent` | klant: **Goedkeuren** | `approved` | hash in WC-sessie; in winkelwagen; mail naar winkelier |
+| `none`, `sent`, `changes_requested`, `approved` | winkelier: **Stuur proefdruk** | `sent` | token aanmaken als leeg; `proof_sent_at` = nu; mail naar klant |
+| `sent`, `changes_requested` | klant: **Goedkeuren** | `approved` | hash in WC-sessie; in winkelwagen; mail naar winkelier |
 | `sent` | klant: **Wijziging aanvragen** | `changes_requested` | `proof_note` opslaan; mail naar winkelier |
 | elke | winkelier: **Trek in** | `none` | token wissen — de link is dood |
 
-Elke andere overgang wordt geweigerd. Goedkeuren kan alleen vanuit `sent`; een tweede klik levert
-geen foutmelding op maar de melding "je hebt dit al goedgekeurd" met een knop naar de winkelwagen.
+Goedkeuren mag ook vanuit `changes_requested`: de klant die een wijziging vroeg en zich bedenkt,
+kijkt naar precies wat hij zou krijgen, dus dat alsnog accepteren is legitiem. Verbieden zou hem
+laten vastzitten tot de winkelier iets doet — de governing rule uit CLAUDE.md.
+
+Opnieuw sturen mag ook vanuit `sent` zelf: de winkelier kan het ontwerp aanpassen en opnieuw sturen
+voordat de klant heeft gereageerd. Elke andere overgang wordt geweigerd, behalve één opzettelijke
+uitzondering: `ProofWorkflow::approve()` op een proefdruk die al `approved` is, is een no-op (geen
+fout) — de tweede klik op **Goedkeuren en bestellen** (dubbele klik, F5, de terugknop, of de knop
+"Probeer opnieuw" na een mislukte winkelwagen-toevoeging) stuurt de klant gewoon door naar de kassa,
+idempotent, net als de eerste keer. De melding "je hebt dit al goedgekeurd" met een knop naar de
+winkelwagen is GEEN reactie op die knop — hij verschijnt alleen wanneer de klant de proefdrukpagina
+zelf opnieuw opent (een gewone paginalading, geen POST) nadat al is goedgekeurd.
 Een ingetrokken of onbekend token geeft een nette pagina ("deze proefdruk is niet meer geldig"), geen
 WordPress-404 — de klant moet kunnen zien dát het aan de link ligt.
 
-Alle overgangen leven in één klasse, `Proof\ProofWorkflow`, zodat er geen tweede plek is die zijn
-eigen mening heeft over wat mag. De REST- en pagina-lagen roepen die aan; ze bevatten zelf geen
-`if`-ketens over toestanden.
+Alle overgangen leven in één klasse, `Proof\ProofWorkflow`. Er zijn geen REST-endpoints voor
+proefdrukken — de proefdrukpagina rendert server-side en roept alleen `ProofWorkflow` en
+`Admin\DesignsPage` aan; geen van beide bevat zelf `if`-ketens over toestanden.
 
 ## 4. De proefdrukpagina
 
@@ -120,10 +130,24 @@ De enige plek waar dit ontwerp aan bestaande beveiliging komt.
 
 1. `proof_status = approved`
 2. hash toevoegen aan de WooCommerce-sessie: `sgpd_proof_approved[] = $hash`
-3. `WC()->cart->add_to_cart($product_id, 1, 0, [], ['pf_design_hash' => $hash])`
-4. doorsturen naar de kassa
+3. `WC()->cart->add_to_cart($product_id, 1, 0, [], ['pf_design_hash' => $hash])`, maar alleen als het
+   ontwerp nog niet in de winkelwagen zit — dezelfde hash op hetzelfde product levert dezelfde
+   cart-id, en WooCommerce verhoogt dan de aantallen. Twee keer klikken zou twee keer rekenen.
+4. doorsturen naar de kassa — **alleen als het toevoegen lukte**. Mislukt het (product uit voorraad,
+   in de prullenbak, of een veto van een andere plugin), dan is de proefdruk al goedgekeurd en zou
+   de klant met een lege winkelwagen achterblijven zonder weg terug. Bij mislukking dus terug naar
+   de proefdrukpagina met een leesbare melding en een knop om het opnieuw te proberen.
 
-`Frontend::owns_design()` krijgt één extra clausule: de hash staat in die sessielijst.
+`Frontend::owns_design()` krijgt één extra clausule, met TWEE voorwaarden: de hash staat in die
+sessielijst **én** het ontwerp zelf staat nog op `proof_status = 'approved'`. De sessie bewijst dat
+déze bezoeker heeft goedgekeurd; de kolom bewijst dat de winkelier de proefdruk sindsdien niet heeft
+ingetrokken. Alleen de sessie zou betekenen dat intrekken geen enkel effect heeft op iemand die al
+had goedgekeurd.
+
+Let op wat de WooCommerce-sessie wél is: `WC_Session_Handler` schrijft hem geserialiseerd naar
+`wp_woocommerce_sessions` met standaard 48 uur houdbaarheid en een blijvende cookie. De toekenning
+overleeft dus een browserherstart en staat wel degelijk in de database — er lekt niets naar een
+andere bezoeker, maar "verdwijnt na het bezoek" is onjuist.
 
 **Alleen daar, niet in `RestDesigns::owns_design()`.** De proefdrukpagina wordt serverside
 gerenderd en raakt de REST-laag niet aan, dus die blijft zo strak als hij is. De twee methodes zijn

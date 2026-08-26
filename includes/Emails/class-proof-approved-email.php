@@ -58,7 +58,15 @@ class ProofApprovedEmail extends \WC_Email {
         return wc_get_template_html($this->template_html, [
             'email_heading' => $this->get_heading(),
             'design'        => $this->object['design'],
-            'admin_url'     => admin_url('admin.php?page=sgpd-designs'),
+            // The Designs list search matches on a hash prefix (DesignRepository's
+            // 'search' filter, `design_hash LIKE '<prefix>%'`) — the same 8
+            // characters the row itself shows — so this lands the merchant on the
+            // one row instead of the unfiltered list.
+            'admin_url'     => add_query_arg(
+                's',
+                substr((string) ($this->object['design']['design_hash'] ?? ''), 0, 8),
+                admin_url('admin.php?page=sgpd-designs')
+            ),
             'sent_to_admin' => true,
             'plain_text'    => false,
             'email'         => $this,

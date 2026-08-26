@@ -110,9 +110,18 @@ class RestDesigns {
     /**
      * Mirrored in Frontend::owns_design(), with ONE deliberate difference: the
      * frontend also accepts a design whose proof was approved in this
-     * WooCommerce session. That clause is NOT here. The proof page renders
-     * server-side and never calls this API, so widening it would buy nothing
-     * and cost the strictness this route has.
+     * WooCommerce session (`is_proof_only_owner()` there). That clause is NOT
+     * here, and it does not need to be: `ProofPage::add_design_to_cart()`
+     * hands the hash straight to `WC_Cart::add_to_cart()` as
+     * `$cart_item_data`, so approving a proof never goes through this REST
+     * route or through `Frontend::add_cart_item_data()` at all — the approve
+     * path carries the hash itself. What the frontend clause buys is
+     * elsewhere: it lets a proof-only visitor (no account, no matching guest
+     * session) be recognised as an owner by other server-rendered frontend
+     * code — the gallery thumbnail override, the proof-vs-`?pf_design=`
+     * permalink choice — none of which this API route is involved in. The
+     * proof page itself renders server-side and never calls this API, so
+     * widening it would buy nothing and cost the strictness this route has.
      */
     private function owns_design(array $design): bool {
         $user_id    = get_current_user_id();

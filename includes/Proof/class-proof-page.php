@@ -21,6 +21,11 @@ use Snelgraveren\ProductDesigner\Database\DesignRepository;
  */
 class ProofPage {
 
+    // The `sgpd_proof` name is reused, unrelated, by Admin\DesignsPage's own
+    // `sgpd_proof` GET filter (the proof-state dropdown on the Designs list).
+    // No live collision: `template_redirect` — where this class reads it as a
+    // customer-facing token — never fires in wp-admin, and DesignsPage reads
+    // it only from its own admin screen. Do not "fix" one into the other.
     public const QUERY_VAR = 'sgpd_proof';
 
     public const ACTION_APPROVE = 'approve';
@@ -67,7 +72,7 @@ class ProofPage {
         $design = (new DesignRepository())->get_by_proof_token($token);
 
         if ($design && ($_POST['sgpd_action'] ?? '') === self::ACTION_APPROVE) {
-            $this->handle_approve($token);
+            $this->handle_approve($token, $design['proof_status']);
         }
 
         $notice = '';
@@ -140,8 +145,19 @@ class ProofPage {
      * a session, so a nonce would only break the link for anyone whose page
      * sat open. The action is not destructive — approving twice is a no-op —
      * and it is confined to the one design the token names.
+     *
+     * @param string $status_before proof_status as it was BEFORE this POST,
+     *                              from the row maybe_render() already fetched.
+     *                              ProofWorkflow::approve() itself early-returns
+     *                              (no-ops) when already approved, so it alone
+     *                              cannot tell a real transition from a replay —
+     *                              the back button, F5, or the cart_failed "Try
+     *                              again" button all re-POST the same approve
+     *                              action, and without this comparison each one
+     *                              re-mailed the merchant a fresh "customer
+     *                              approved" notification.
      */
-    private function handle_approve(string $token): void {
+    private function handle_approve(string $token, string $status_before): void {
         try {
             $design = (new ProofWorkflow())->approve($token);
         } catch (\RuntimeException $e) {
@@ -150,7 +166,9 @@ class ProofPage {
 
         ProofSession::mark_approved((string) $design['design_hash']);
 
-        do_action('sgpd_proof_approved_notification', $design, $token);
+        if ($status_before !== 'approved') {
+            do_action('sgpd_proof_approved_notification', $design, $token);
+        }
 
         if (function_exists('WC') && WC()->cart) {
             if (!$this->add_design_to_cart($design)) {

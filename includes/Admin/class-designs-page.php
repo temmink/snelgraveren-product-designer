@@ -378,6 +378,12 @@ class DesignsPage {
 
         // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only filters
         $status   = sanitize_key($_GET['sgpd_status'] ?? '');
+        // `sgpd_proof` here is this screen's own proof-state filter — an admin
+        // GET param, unrelated to Proof\ProofPage::QUERY_VAR, which reuses the
+        // same name for the customer-facing proof token. No live collision:
+        // this code only runs in wp-admin, ProofPage's only on
+        // `template_redirect` (never fired for admin requests). Do not "fix"
+        // one into the other.
         $proof    = sanitize_key($_GET['sgpd_proof'] ?? '');
         $search   = sanitize_text_field(wp_unslash($_GET['s'] ?? ''));
         $page_num = max(1, (int) ($_GET['paged'] ?? 1));
@@ -543,8 +549,20 @@ class DesignsPage {
                                     </button>
                                 <?php endif; ?>
                             </form>
-                            <?php if ($msg_row === $design_id && $msg !== '' && strpos($msg, 'proof_') === 0) : ?>
-                                <p style="margin:4px 0 0;color:<?php echo in_array($msg, ['proof_sent', 'proof_withdrawn'], true) ? '#008a20' : '#d63638'; ?>;">
+                            <?php if ($msg_row === $design_id && $msg !== '' && strpos($msg, 'proof_') === 0) :
+                                // proof_link_only is a PARTIAL success — the link was created, only
+                                // the e-mail didn't go out — so it gets its own amber "done, but read
+                                // this" colour, not the failure red: the link WAS created, and reading
+                                // it as a failure is exactly the "success looks like failure" shape an
+                                // earlier fix (5739a49) already corrected for proof_sent/proof_withdrawn.
+                                $row_colour = '#d63638';
+                                if (in_array($msg, ['proof_sent', 'proof_withdrawn'], true)) {
+                                    $row_colour = '#008a20';
+                                } elseif ($msg === 'proof_link_only') {
+                                    $row_colour = '#996800';
+                                }
+                            ?>
+                                <p style="margin:4px 0 0;color:<?php echo esc_attr($row_colour); ?>;">
                                     <?php echo esc_html($this->row_message($msg)); ?>
                                 </p>
                             <?php endif; ?>

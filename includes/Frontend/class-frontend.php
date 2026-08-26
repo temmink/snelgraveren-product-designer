@@ -93,11 +93,19 @@ class Frontend {
      * templates (admins/shop managers legitimately reassigning designs).
      *
      * ONE DELIBERATE DIVERGENCE from that mirror: a visitor who approved this
-     * design's proof in this WooCommerce session also owns it here. The proof
-     * link needs no login, so without this the approve-to-cart step would hit
-     * the silent hash drop. It is added HERE ONLY — the proof page is rendered
-     * server-side and never touches the REST layer, so RestDesigns stays as
-     * strict as it was.
+     * design's proof in this WooCommerce session also owns it here
+     * (`is_proof_only_owner()`). This is NOT needed to get the design into the
+     * cart — `ProofPage::add_design_to_cart()` calls `WC_Cart::add_to_cart()`
+     * directly with the hash as `$cart_item_data`, never going through
+     * `add_cart_item_data()`'s `$_POST['pf_design_hash']` read, so the approve
+     * path never touches this method at all. What this clause actually buys:
+     * everywhere else on the frontend that gates on ownership AFTER the
+     * design is in the cart — `override_gallery_thumbnail_html()` swapping the
+     * gallery image, `proof_permalink()` deciding which reopen link is safe —
+     * needs a way to recognise a proof-only visitor as an owner too, since
+     * they have no account and no matching guest session. It is added HERE
+     * ONLY — the proof page is rendered server-side and never touches the
+     * REST layer, so RestDesigns stays as strict as it was.
      *
      * That clause requires BOTH halves, not just the session flag: the session
      * proves this visitor is the one who approved it, and the design's own
@@ -118,13 +126,29 @@ class Frontend {
             return true;
         }
 
-        if (class_exists(\Snelgraveren\ProductDesigner\Proof\ProofSession::class)
-            && ($design['proof_status'] ?? '') === 'approved'
-            && \Snelgraveren\ProductDesigner\Proof\ProofSession::is_approved((string) $design['design_hash'])) {
+        if ($this->is_proof_only_owner($design)) {
             return true;
         }
 
         return current_user_can('edit_sgpd_templates');
+    }
+
+    /**
+     * True when this design's ONLY claim to ownership is a proof approved in
+     * this visitor's WooCommerce session — no account, no matching guest
+     * session. Shared by `owns_design()` and `proof_permalink()` so the
+     * two-condition check (session flag AND `proof_status === 'approved'`)
+     * exists exactly once; see `owns_design()`'s docblock for why both halves
+     * are required.
+     *
+     * `class_exists()` guard: `includes/Proof/` is stripped from the free
+     * build (Pro feature), so this must degrade to false rather than fatal
+     * when it is absent.
+     */
+    private function is_proof_only_owner(array $design): bool {
+        return class_exists(\Snelgraveren\ProductDesigner\Proof\ProofSession::class)
+            && ($design['proof_status'] ?? '') === 'approved'
+            && \Snelgraveren\ProductDesigner\Proof\ProofSession::is_approved((string) $design['design_hash']);
     }
 
     /**
@@ -239,8 +263,15 @@ class Frontend {
      * customer) reads as an empty default design, i.e. "it is broken". Point
      * the permalink at the proof page instead, whose token IS the credential.
      *
-     * class_exists() guard: includes/Proof/ is stripped from the free build,
-     * same reasoning as the mirrored clause in owns_design().
+     * Uses `is_proof_only_owner()` — the same helper `owns_design()` calls —
+     * so this and `owns_design()` cannot disagree about what counts as a
+     * proof-only owner; only a duplicate copy of that check could drift, and
+     * this method no longer carries one. It keeps its own extra
+     * `!empty($design['proof_token'])` check on top, since building a URL
+     * needs a token and `owns_design()` doesn't.
+     *
+     * class_exists() guard is inside is_proof_only_owner(): includes/Proof/
+     * is stripped from the free build, same reasoning as owns_design().
      *
      * @return string The proof page URL, or '' when the ordinary
      *                 ?pf_design= link is the right one (owner is logged in,
@@ -267,9 +298,7 @@ class Frontend {
             return '';
         }
 
-        if (($design['proof_status'] ?? '') === 'approved'
-            && \Snelgraveren\ProductDesigner\Proof\ProofSession::is_approved($hash)
-            && !empty($design['proof_token'])) {
+        if ($this->is_proof_only_owner($design) && !empty($design['proof_token'])) {
             return \Snelgraveren\ProductDesigner\Proof\ProofPage::url((string) $design['proof_token']);
         }
 

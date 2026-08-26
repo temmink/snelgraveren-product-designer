@@ -398,6 +398,8 @@ class ProofWorkflowTest extends TestCase {
 }
 ```
 
+Aanvullend vereist (uit de review van deze taak): een test dat een note langer dan `MAX_NOTE` op exact die lengte wordt afgekapt; dat `approve()` en `request_changes()` óók geweigerd worden vanuit `none` en `changes_requested`; dat `withdraw()` werkt vanuit `none` en `approved`; dat `request_changes()` met een onbekend token gooit; dat `withdraw()` op een onbekend design-id gooit; en `assertTrue(ProofWorkflow::allows('sent', 'send'))` — opnieuw sturen vanuit `sent` is toegestaan en moet expliciet vastliggen.
+
 - [ ] **Step 2: Draai de test en controleer dat hij faalt**
 
 Run: `docker compose exec -T wordpress bash -c "cd /var/www/html/wp-content/plugins/productforge && phpunit --filter ProofWorkflowTest"`
@@ -544,7 +546,7 @@ class ProofWorkflow {
 - [ ] **Step 4: Draai de tests**
 
 Run: `docker compose exec -T wordpress bash -c "cd /var/www/html/wp-content/plugins/productforge && phpunit --filter ProofWorkflowTest"`
-Expected: PASS, 10 tests.
+Expected: PASS, 9 tests.
 
 - [ ] **Step 5: Commit**
 
@@ -585,11 +587,25 @@ Toevoegen aan `tests/php/Database/DesignRepositoryTest.php`:
             'proof_status' => 'sent',
             'proof_token'  => bin2hex(random_bytes(16)),
         ]);
+        // Re-age AFTER update_proof(): updated_at is ON UPDATE CURRENT_TIMESTAMP,
+        // so writing the proof fields makes the row fresh again. Without this the
+        // test passes even with the exclusion deleted — it would be measuring
+        // freshness, not the proof.
+        $this->age_design($with);
 
         $ids = array_map('intval', array_column($this->repo->find_stale_guest_drafts(30), 'id'));
 
         $this->assertContains((int) $without, $ids, 'a plain stale guest draft is still collected');
         $this->assertNotContains((int) $with, $ids, 'a design with a proof must survive the cron');
+    }
+
+    /** Push a design's updated_at past any retention window. */
+    private function age_design(int $id): void {
+        global $wpdb;
+        $wpdb->query($wpdb->prepare(
+            "UPDATE {$wpdb->prefix}pf_designs SET updated_at = DATE_SUB(NOW(), INTERVAL 90 DAY) WHERE id = %d",
+            $id
+        ));
     }
 
     /** A guest draft old enough for the cleanup cron to collect. */
@@ -1496,8 +1512,8 @@ In `templates/proof/proof-page.php`, ná het approve-blok:
         <?php endif; ?>
 
         <?php if ($design['proof_status'] === 'changes_requested') : ?>
-            <p><?php esc_html_e('We have received your request and will send you a new proof.', 'snelgraveren-product-designer'); ?></p>
-            <p><em><?php echo esc_html((string) $design['proof_note']); ?></em></p>
+            <?php // NOTE: this state already has a branch from the approve task — MERGE into it,
+                  // do not add a second one, or the customer's note renders twice. ?>
         <?php elseif ($design['proof_status'] !== 'approved') : ?>
             <form method="post">
                 <input type="hidden" name="sgpd_action" value="<?php echo esc_attr(ProofPage::ACTION_CHANGES); ?>" />
