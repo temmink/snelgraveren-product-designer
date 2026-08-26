@@ -107,6 +107,13 @@ class RestDesigns {
         return current_user_can('edit_sgpd_templates');
     }
 
+    /**
+     * Mirrored in Frontend::owns_design(), with ONE deliberate difference: the
+     * frontend also accepts a design whose proof was approved in this
+     * WooCommerce session. That clause is NOT here. The proof page renders
+     * server-side and never calls this API, so widening it would buy nothing
+     * and cost the strictness this route has.
+     */
     private function owns_design(array $design): bool {
         $user_id    = get_current_user_id();
         $session_id = CapabilityChecker::current_session_id();

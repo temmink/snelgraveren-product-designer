@@ -91,6 +91,13 @@ class Frontend {
      * requester must be the design's logged-in customer, or hold the same
      * guest session id the design was saved under, or be able to manage
      * templates (admins/shop managers legitimately reassigning designs).
+     *
+     * ONE DELIBERATE DIVERGENCE from that mirror: a visitor who approved this
+     * design's proof in this WooCommerce session also owns it here. The proof
+     * link needs no login, so without this the approve-to-cart step would hit
+     * the silent hash drop. It is added HERE ONLY — the proof page is rendered
+     * server-side and never touches the REST layer, so RestDesigns stays as
+     * strict as it was.
      */
     private function owns_design(array $design): bool {
         $user_id = get_current_user_id();
@@ -100,6 +107,11 @@ class Frontend {
 
         $session_id = \Snelgraveren\ProductDesigner\Security\CapabilityChecker::current_session_id();
         if (!empty($session_id) && $design['session_id'] === $session_id) {
+            return true;
+        }
+
+        if (class_exists(\Snelgraveren\ProductDesigner\Proof\ProofSession::class)
+            && \Snelgraveren\ProductDesigner\Proof\ProofSession::is_approved((string) $design['design_hash'])) {
             return true;
         }
 
