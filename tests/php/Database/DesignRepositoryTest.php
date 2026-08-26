@@ -143,6 +143,51 @@ class DesignRepositoryTest extends TestCase {
         $this->assertSame($before + 1, $this->repo->count_for_admin());
     }
 
+    public function test_update_proof_writes_only_whitelisted_fields(): void {
+        $id = $this->repo->create([
+            'template_id' => 1, 'product_id' => 1, 'customer_id' => 0,
+            'session_id'  => 'test-session-' . uniqid(),
+        ]);
+        $this->created_ids[] = $id;
+
+        $this->assertTrue($this->repo->update_proof($id, [
+            'proof_status' => 'sent',
+            'proof_token'  => str_repeat('b', 32),
+            'proof_note'   => 'Naam mag groter',
+            'proof_email'  => 'klant@example.invalid',
+            'status'       => 'ordered',   // niet in de whitelist: moet genegeerd worden
+        ]));
+
+        $design = $this->repo->get($id);
+        $this->assertSame('sent', $design['proof_status']);
+        $this->assertSame(str_repeat('b', 32), $design['proof_token']);
+        $this->assertSame('Naam mag groter', $design['proof_note']);
+        $this->assertSame('klant@example.invalid', $design['proof_email']);
+        // status hoort NIET meegewijzigd te zijn: proefdruk en levenscyclus zijn
+        // aparte assen, en update_proof mag de tweede niet kunnen verzetten.
+        $this->assertSame('draft', $design['status']);
+    }
+
+    public function test_get_by_proof_token_finds_the_design(): void {
+        $id = $this->repo->create([
+            'template_id' => 1, 'product_id' => 1, 'customer_id' => 0,
+            'session_id'  => 'test-session-' . uniqid(),
+        ]);
+        $this->created_ids[] = $id;
+        $token = str_repeat('c', 32);
+        $this->repo->update_proof($id, ['proof_token' => $token, 'proof_status' => 'sent']);
+
+        $found = $this->repo->get_by_proof_token($token);
+        $this->assertNotNull($found);
+        $this->assertSame((int) $id, (int) $found['id']);
+    }
+
+    public function test_get_by_proof_token_ignores_an_empty_token(): void {
+        // Elke rij zonder proefdruk heeft proof_token = ''. Een lege zoekterm
+        // mag daarom nooit een willekeurig ontwerp opleveren.
+        $this->assertNull($this->repo->get_by_proof_token(''));
+    }
+
     protected function tearDown(): void {
         foreach ($this->created_ids as $id) {
             $this->repo->delete($id);

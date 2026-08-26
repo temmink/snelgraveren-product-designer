@@ -145,6 +145,66 @@ class DesignRepository {
         return $result !== false;
     }
 
+    /** Fields update_proof() may write. Nothing else, ever. */
+    private const PROOF_FIELDS = ['proof_status', 'proof_token', 'proof_sent_at', 'proof_note', 'proof_email'];
+
+    /**
+     * Write proof fields on a design.
+     *
+     * The whitelist is the point: proof state and the design's production
+     * `status` are separate axes, and a caller reaching for one must not be
+     * able to move the other by passing an extra key.
+     */
+    public function update_proof(int $id, array $fields): bool {
+        global $wpdb;
+
+        $data    = [];
+        $formats = [];
+        foreach (self::PROOF_FIELDS as $field) {
+            if (!array_key_exists($field, $fields)) {
+                continue;
+            }
+            $data[$field]  = $fields[$field] === null ? null : (string) $fields[$field];
+            $formats[]     = '%s';
+        }
+        if (!$data) {
+            return false;
+        }
+
+        $hash = $wpdb->get_var($wpdb->prepare("SELECT design_hash FROM {$this->table} WHERE id = %d", $id));
+        if (!$hash) {
+            return false;
+        }
+
+        $result = $wpdb->update($this->table, $data, ['id' => $id], $formats, ['%d']);
+        $this->invalidate_cache((string) $hash);
+        return $result !== false;
+    }
+
+    /**
+     * Look a design up by its proof token.
+     *
+     * An empty token matches nothing: every design without a proof carries
+     * proof_token = '', so an empty needle would otherwise hand out an
+     * arbitrary design to anyone who trims the parameter off the URL.
+     */
+    public function get_by_proof_token(string $token): ?array {
+        if (!preg_match('/^[0-9a-f]{32}$/', $token)) {
+            return null;
+        }
+
+        global $wpdb;
+        $row = $wpdb->get_row(
+            $wpdb->prepare("SELECT * FROM {$this->table} WHERE proof_token = %s", $token),
+            ARRAY_A
+        );
+        if (!$row) {
+            return null;
+        }
+        $row['views'] = $this->get_views((int) $row['id']);
+        return $row;
+    }
+
     /**
      * WHERE clause + bind values shared by list_for_admin/count_for_admin, so
      * the two can never disagree about what the filter means.
