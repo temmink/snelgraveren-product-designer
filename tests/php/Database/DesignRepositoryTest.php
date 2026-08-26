@@ -197,6 +197,9 @@ class DesignRepositoryTest extends TestCase {
             'proof_status' => 'sent',
             'proof_token'  => bin2hex(random_bytes(16)),
         ]);
+        // update_proof runs $wpdb->update(), which triggers ON UPDATE CURRENT_TIMESTAMP
+        // and freshens the row. Re-age it so the test measures proof status, not freshness.
+        $this->age_design($with);
 
         $ids = array_map('intval', array_column($this->repo->find_stale_guest_drafts(30), 'id'));
 
@@ -212,12 +215,17 @@ class DesignRepositoryTest extends TestCase {
             'session_id'  => 'stale-' . uniqid(),
         ]);
         $this->created_ids[] = $id;
-        // updated_at is ON UPDATE CURRENT_TIMESTAMP, so age it explicitly.
+        $this->age_design($id);
+        return $id;
+    }
+
+    /** Push a design's updated_at past any retention window. */
+    private function age_design(int $id): void {
+        global $wpdb;
         $wpdb->query($wpdb->prepare(
             "UPDATE {$wpdb->prefix}pf_designs SET updated_at = DATE_SUB(NOW(), INTERVAL 90 DAY) WHERE id = %d",
             $id
         ));
-        return $id;
     }
 
     protected function tearDown(): void {
