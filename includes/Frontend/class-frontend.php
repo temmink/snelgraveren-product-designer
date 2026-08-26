@@ -98,6 +98,14 @@ class Frontend {
      * the silent hash drop. It is added HERE ONLY — the proof page is rendered
      * server-side and never touches the REST layer, so RestDesigns stays as
      * strict as it was.
+     *
+     * That clause requires BOTH halves, not just the session flag: the session
+     * proves this visitor is the one who approved it, and the design's own
+     * `proof_status` column proves the merchant has not withdrawn it since.
+     * `ProofWorkflow::withdraw()` resets the status to `none` and
+     * `request_changes()` sets it to `changes_requested` — neither can reach
+     * into a visitor's session to revoke the grant there, so the column is
+     * what actually cuts ownership off.
      */
     private function owns_design(array $design): bool {
         $user_id = get_current_user_id();
@@ -111,6 +119,7 @@ class Frontend {
         }
 
         if (class_exists(\Snelgraveren\ProductDesigner\Proof\ProofSession::class)
+            && ($design['proof_status'] ?? '') === 'approved'
             && \Snelgraveren\ProductDesigner\Proof\ProofSession::is_approved((string) $design['design_hash'])) {
             return true;
         }

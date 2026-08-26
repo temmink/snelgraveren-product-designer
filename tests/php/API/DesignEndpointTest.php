@@ -2,6 +2,8 @@
 use PHPUnit\Framework\TestCase;
 use Snelgraveren\ProductDesigner\Database\TemplateRepository;
 use Snelgraveren\ProductDesigner\Database\DesignRepository;
+use Snelgraveren\ProductDesigner\API\RestDesigns;
+use Snelgraveren\ProductDesigner\Proof\ProofSession;
 
 class DesignEndpointTest extends TestCase {
     private $server;
@@ -146,6 +148,47 @@ class DesignEndpointTest extends TestCase {
         $request->set_param('page', 1);
         $response = $this->server->dispatch($request);
         $this->assertContains($response->get_status(), [200, 204]);
+    }
+
+    /**
+     * The confinement Task 4 promised: RestDesigns::owns_design() must stay
+     * strict even though Frontend::owns_design() now honours a proof approved
+     * in the visitor's WooCommerce session. A future refactor could quietly
+     * copy the frontend's clause over here; this pins it down via reflection
+     * since the method is private.
+     */
+    public function test_rest_owns_design_ignores_a_session_approved_proof(): void {
+        if (!function_exists('WC') || !WC()->session) {
+            $this->markTestSkipped('WooCommerce session not available in this context.');
+        }
+
+        $template_id = $this->create_published_template();
+        $design_id   = $this->design_repo->create([
+            'template_id' => $template_id,
+            'customer_id' => 0,
+            'session_id'  => 'proof-owner-mismatch-session',
+            'product_id'  => 0,
+        ]);
+        $this->design_repo->update_proof($design_id, ['proof_status' => 'approved']);
+        $design = $this->design_repo->get($design_id);
+        $this->design_hashes[] = $design['design_hash'];
+
+        // No logged-in user, no capability.
+        wp_set_current_user(0);
+        $this->assertFalse(
+            current_user_can('edit_sgpd_templates'),
+            'This test requires a guest with no template-editing capability; adjust the test environment or skip.'
+        );
+
+        // Approved in the session — this is exactly what Frontend::owns_design()
+        // now accepts. RestDesigns must not.
+        ProofSession::mark_approved($design['design_hash']);
+
+        $rest_designs = new RestDesigns();
+        $method        = new \ReflectionMethod(RestDesigns::class, 'owns_design');
+        $method->setAccessible(true);
+
+        $this->assertFalse($method->invoke($rest_designs, $design));
     }
 
     protected function tearDown(): void {

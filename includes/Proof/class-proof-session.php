@@ -11,8 +11,15 @@ defined('ABSPATH') || exit;
  * evidence that the visitor holding the browser is the one who approved, and
  * it is what Frontend::owns_design() consults so add-to-cart keeps the hash.
  *
- * Lives in the WooCommerce session, so it dies with the session and is never
- * written to the database — a stored grant would outlive the visit.
+ * Lives in the WooCommerce session — `WC_Session_Handler::save_data()` writes
+ * the whole session, serialised, into `wp_woocommerce_sessions` with a 48-hour
+ * default expiry and a persistent cookie, and guest session data migrates into
+ * the account on login. So this list DOES sit in the database and the grant
+ * DOES outlive the visit and survive a browser restart — it does not "die
+ * with the session". There is no cross-visitor leak (the cookie is per-visitor
+ * and validated), but callers should not assume this is ephemeral. Because the
+ * value round-trips through PHP's `serialize`/`unserialize` on every request,
+ * it must stay a plain array of strings — no objects, no closures.
  */
 class ProofSession {
 

@@ -41,6 +41,9 @@ class ProofSessionTest extends TestCase {
 
     public function test_a_malformed_hash_is_never_stored(): void {
         ProofSession::mark_approved('not-a-hash');
-        $this->assertFalse(ProofSession::is_approved('not-a-hash'));
+        // Assert against the session directly: is_approved() rejects malformed
+        // hashes on its own read-path guard, so asserting through it would pass
+        // even if mark_approved() had wrongly stored the value.
+        $this->assertSame([], WC()->session->get(ProofSession::KEY));
     }
 }
