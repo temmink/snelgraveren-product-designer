@@ -24,6 +24,9 @@ class ProofPage {
     public const QUERY_VAR = 'sgpd_proof';
 
     public function init(): void {
+        // Priority 5, and maybe_render() exits: a matched token bypasses everything
+        // else on this hook, including WooCommerce's coming-soon gating. That is
+        // deliberate — a proof link must work even before the shop has launched.
         add_action('template_redirect', [$this, 'maybe_render'], 5);
     }
 
@@ -56,10 +59,70 @@ class ProofPage {
 
         $design = (new DesignRepository())->get_by_proof_token($token);
 
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only view selector; the token is the credential
+        if ($design && isset($_GET['sgpd_view'])) {
+            $this->stream_view($design, (int) $_GET['sgpd_view']);
+        }
+
         status_header($design ? 200 : 410);
         nocache_headers();
 
         include SGPD_PLUGIN_DIR . 'templates/proof/proof-page.php';
+        exit;
+    }
+
+    /**
+     * Turn a stored export blob into bytes we may stream.
+     *
+     * Accepts exactly what RestDesigns::sanitize_export_blob() accepts on the
+     * way in: a base64 PNG data URL, or SVG markup. Anything else is refused —
+     * this method hands bytes to a browser with a content-type attached, so
+     * "probably an image" is not good enough.
+     *
+     * @return array{mime: string, bytes: string}|null
+     */
+    public static function decode_export_blob(string $blob): ?array {
+        $blob = trim($blob);
+        if ($blob === '') {
+            return null;
+        }
+
+        if (str_starts_with($blob, 'data:image/png;base64,')) {
+            $bytes = base64_decode(substr($blob, strlen('data:image/png;base64,')), true);
+            if ($bytes === false || substr($bytes, 0, 4) !== "\x89PNG") {
+                return null;
+            }
+            return ['mime' => 'image/png', 'bytes' => $bytes];
+        }
+
+        if (str_starts_with($blob, '<')) {
+            return ['mime' => 'image/svg+xml', 'bytes' => $blob];
+        }
+
+        return null;
+    }
+
+    /**
+     * Stream one view's full-size render.
+     *
+     * Always inline, never an attachment: this is a proof to look at, not the
+     * production file to hand out.
+     */
+    private function stream_view(array $design, int $index): void {
+        $view = $design['views'][$index] ?? null;
+        $out  = $view ? self::decode_export_blob((string) ($view['export_svg'] ?? '')) : null;
+
+        if (!$out) {
+            status_header(404);
+            exit;
+        }
+
+        nocache_headers();
+        header('Content-Type: ' . $out['mime']);
+        header('Content-Length: ' . strlen($out['bytes']));
+        header('Content-Disposition: inline');
+        header('X-Content-Type-Options: nosniff');
+        echo $out['bytes']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- binary image payload
         exit;
     }
 }
