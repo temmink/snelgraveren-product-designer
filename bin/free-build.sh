@@ -26,6 +26,12 @@ rm -f  "$STAGE/$PLUGIN_SLUG/includes/API/class-rest-palettes.php"
 rm -f  "$STAGE/$PLUGIN_SLUG/includes/API/class-rest-fonts-admin.php"
 rm -f  "$STAGE/$PLUGIN_SLUG/includes/API/class-rest-clipart-admin.php"
 rm -rf "$STAGE/$PLUGIN_SLUG/vendor/tecnickcom"
+rm -rf "$STAGE/$PLUGIN_SLUG/includes/Proof"
+rm -rf "$STAGE/$PLUGIN_SLUG/includes/Emails"
+rm -rf "$STAGE/$PLUGIN_SLUG/templates/proof"
+rm -f  "$STAGE/$PLUGIN_SLUG/templates/emails/proof-ready.php"
+rm -f  "$STAGE/$PLUGIN_SLUG/templates/emails/proof-changes-requested.php"
+rm -f  "$STAGE/$PLUGIN_SLUG/templates/emails/proof-approved.php"
 
 # 2. Freemius SDK translation files — wp.org manages plugin translations via
 # translate.wordpress.org and flags bundled .po/.mo/.pot. Our own translations

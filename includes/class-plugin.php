@@ -110,6 +110,7 @@ class Plugin {
             'solid_color',
             'upload_restrictions',
             'auto_export',
+            'proofs',
         ];
 
         if ( ! in_array( $feature, $premium_features, true ) ) {

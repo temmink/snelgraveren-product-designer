@@ -1,6 +1,7 @@
 <?php
 use PHPUnit\Framework\TestCase;
 use Snelgraveren\ProductDesigner\Database\DesignRepository;
+use Snelgraveren\ProductDesigner\Emails\ProofReadyEmail;
 use Snelgraveren\ProductDesigner\Proof\ProofWorkflow;
 
 /**
@@ -129,6 +130,55 @@ class ProofEmailsTest extends TestCase {
 
         $this->assertSame($admin_email, $emails['SGPD_Proof_Changes_Requested']->get_recipient());
         $this->assertSame($admin_email, $emails['SGPD_Proof_Approved']->get_recipient());
+    }
+
+    /**
+     * DesignsPage checks is_mail_enabled() before reporting "Proof sent" on
+     * the row. WC_Email::__construct() reads the enabled/disabled toggle into
+     * $this->enabled exactly ONCE (abstract-wc-email.php), so the registered
+     * singleton this test starts with was built from whatever the option
+     * held at the moment WC_Emails first constructed it earlier in this
+     * process — update_option() alone does NOT change that already-built
+     * object's answer. Confirmed empirically: an earlier version of this
+     * test called update_option() then asserted directly against the
+     * existing singleton and it did NOT react (is_mail_enabled() kept
+     * returning true after setting 'enabled' => 'no').
+     *
+     * That is not a production bug: a real HTTP request always constructs
+     * the singleton fresh from whatever the option currently holds, so
+     * is_mail_enabled() is correct for the case it exists to guard (the
+     * admin-post handler reading the CURRENT setting during ITS OWN
+     * request). It is a PHPUnit artifact — one long-lived process reusing
+     * one singleton across every test in the suite. So this test replaces
+     * the registered singleton with a freshly-constructed instance after
+     * each update_option() call, exactly what a fresh request would do,
+     * before asking is_mail_enabled() to look it up.
+     */
+    public function test_is_mail_enabled_reflects_the_woocommerce_toggle(): void {
+        $option_key = 'woocommerce_sgpd_proof_ready_settings';
+        $original   = get_option($option_key);
+
+        try {
+            $settings            = is_array($original) ? $original : [];
+            $settings['enabled'] = 'no';
+            update_option($option_key, $settings);
+            WC()->mailer()->emails['SGPD_Proof_Ready'] = new ProofReadyEmail();
+            $this->assertFalse(ProofReadyEmail::is_mail_enabled(), 'Disabling the mail setting must be reflected.');
+
+            $settings['enabled'] = 'yes';
+            update_option($option_key, $settings);
+            WC()->mailer()->emails['SGPD_Proof_Ready'] = new ProofReadyEmail();
+            $this->assertTrue(ProofReadyEmail::is_mail_enabled(), 'Re-enabling the mail setting must be reflected.');
+        } finally {
+            if (false === $original) {
+                delete_option($option_key);
+            } else {
+                update_option($option_key, $original);
+            }
+            // Leave the registry in a state consistent with the restored
+            // option for any test that runs after this one.
+            WC()->mailer()->emails['SGPD_Proof_Ready'] = new ProofReadyEmail();
+        }
     }
 
     protected function tearDown(): void {
