@@ -46,6 +46,10 @@ class Plugin {
         // Both contexts: the editor (admin) needs the block registered for the
         // inserter; the frontend needs the render callback.
         (new Frontend\DesignerBlock())->init();
+
+        if (class_exists(\Snelgraveren\ProductDesigner\Proof\ProofPage::class)) {
+            (new \Snelgraveren\ProductDesigner\Proof\ProofPage())->init();
+        }
     }
 
     /**
