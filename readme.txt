@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.11.1
+Stable tag: 1.11.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -133,6 +133,9 @@ No other external services are used. Design exports (PDF/PNG/SVG) are rendered e
 4. Production dashboard: every order with a design, filtered by status and period, ready to download as one ZIP.
 
 == Changelog ==
+
+= 1.11.2 =
+* New: a "Delete design" action on the Designs page — permanently removes a design together with its thumbnails and export files, after confirmation. Designs that belong to an order are protected and cannot be deleted. The automatic guest-draft cleanup (Settings → guest design retention) is unchanged and remains deliberately more conservative.
 
 = 1.11.1 =
 * Improved: the Production dashboard's bulk ZIP now contains every available export format per design (PNG, PDF, SVG and LightBurn) instead of only the configured default. Formats that cannot be generated are listed in a LEESMIJ file inside the ZIP rather than failing the download.

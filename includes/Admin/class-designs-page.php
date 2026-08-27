@@ -30,6 +30,7 @@ class DesignsPage {
     public function init(): void {
         add_action('admin_post_sgpd_assign_design', [$this, 'handle_assign']);
         add_action('admin_post_sgpd_proof_action', [$this, 'handle_proof_action']);
+        add_action('admin_post_sgpd_delete_design', [$this, 'handle_delete']);
     }
 
     public function register_menu(): void {
@@ -322,6 +323,78 @@ class DesignsPage {
      * the exact page, filter and search they were looking at, so the row
      * that was on screen before the click is still there after it.
      */
+
+    /**
+     * Delete one design, with everything that belongs to it: its views (FK),
+     * its thumbnail files and its export records and files. An ordered design
+     * is refused — its hash lives in order item meta, and deleting it would
+     * silently break the order screen's export buttons and thumbnail. The
+     * automatic cleanup (Cleanup::run) stays far more conservative on purpose;
+     * this button is the merchant explicitly deciding a design can go.
+     */
+    public function handle_delete(): void {
+        if (!current_user_can('edit_sgpd_templates')) {
+            wp_die(esc_html__('You do not have permission to do this.', 'snelgraveren-product-designer'));
+        }
+        $id = (int) ($_POST['design_id'] ?? 0);
+        check_admin_referer('sgpd_delete_design_' . $id);
+
+        $repo   = new \Snelgraveren\ProductDesigner\Database\DesignRepository();
+        $design = $repo->get($id);
+        if (!$design) {
+            $this->redirect_with_message($id, 'delete_missing');
+        }
+        if (($design['status'] ?? '') === 'ordered') {
+            $this->redirect_with_message($id, 'delete_ordered');
+        }
+
+        // File deletion is contained to the uploads directory. The stored paths
+        // are server-generated (save_thumbnail_file, ExportManager), but a
+        // delete routine must not TRUST that — resolve and require the real
+        // path to live under uploads before anything is removed.
+        $upload      = wp_upload_dir();
+        $uploads_dir = realpath($upload['basedir']);
+        $delete_contained = static function (string $path) use ($uploads_dir): void {
+            if ($path === '' || strpos($path, '..') !== false) {
+                return;
+            }
+            $real = realpath($path);
+            if ($real && $uploads_dir && str_starts_with($real, $uploads_dir . DIRECTORY_SEPARATOR) && is_file($real)) {
+                wp_delete_file($real);
+            }
+        };
+
+        // Export records + files first, while the design row still exists.
+        $exports = new \Snelgraveren\ProductDesigner\Database\ExportRepository();
+        foreach ($exports->get_by_design($id) as $export) {
+            // Multi-view formats store a comma-separated path list.
+            foreach (array_filter(explode(',', (string) ($export['file_path'] ?? ''))) as $path) {
+                $delete_contained($path);
+            }
+            $exports->delete((int) $export['id']);
+        }
+
+        // Thumbnail files (one per view).
+        foreach (($design['views'] ?? []) as $view) {
+            $thumb = (string) ($view['thumbnail'] ?? '');
+            if ($thumb !== '' && str_starts_with($thumb, $upload['baseurl'])) {
+                $delete_contained(str_replace($upload['baseurl'], $upload['basedir'], $thumb));
+            }
+        }
+
+        $ok = $repo->delete($id);
+        $this->redirect_with_message(0, $ok ? 'deleted' : 'delete_failed');
+    }
+
+    /** Redirect back to the list with a row-scoped message. */
+    private function redirect_with_message(int $design_id, string $msg): void {
+        wp_safe_redirect(add_query_arg([
+            'sgpd_msg' => $msg,
+            'sgpd_row' => $design_id,
+        ], $this->back_url()));
+        exit;
+    }
+
     private function row_message(string $msg): string {
         switch ($msg) {
             case 'assigned':
@@ -332,6 +405,14 @@ class DesignsPage {
                 return __('No account found for that ID, e-mail address or username.', 'snelgraveren-product-designer');
             case 'noinput':
                 return __('Type an ID, e-mail address or username first.', 'snelgraveren-product-designer');
+            case 'deleted':
+                return __('Design deleted, including its thumbnails and export files.', 'snelgraveren-product-designer');
+            case 'delete_ordered':
+                return __('This design belongs to an order and cannot be deleted — the order screen still references it.', 'snelgraveren-product-designer');
+            case 'delete_missing':
+                return __('Design not found (already deleted?).', 'snelgraveren-product-designer');
+            case 'delete_failed':
+                return __('Deleting failed. Check the PHP error log.', 'snelgraveren-product-designer');
             case 'failed':
                 return __('Could not update this design.', 'snelgraveren-product-designer');
             case 'proof_sent':
@@ -390,6 +471,11 @@ class DesignsPage {
         // Result of the last assign, reported on the row it belongs to.
         $msg      = sanitize_key($_GET['sgpd_msg'] ?? '');
         $msg_row  = (int) ($_GET['sgpd_row'] ?? 0);
+        // Delete outcomes have no row left to report on — show them above the
+        // table. Plain markup, deliberately NOT a .notice: the notice-collector
+        // plugin on this shop sweeps those into a hidden drawer.
+        $page_msg = ($msg_row === 0 && strpos($msg, 'delete') === 0 || $msg === 'deleted')
+            ? $this->row_message($msg) : '';
         $typed    = sanitize_text_field(wp_unslash(rawurldecode($_GET['sgpd_customer'] ?? '')));
         // phpcs:enable
 
@@ -423,6 +509,11 @@ class DesignsPage {
             <p class="description">
                 <?php esc_html_e('Design something for a customer on the product page, then assign it to their account here. They will find it under My account → My designs, and the link below reopens it for them.', 'snelgraveren-product-designer'); ?>
             </p>
+            <?php if ($page_msg !== '') : ?>
+                <p style="padding:8px 12px;border-left:4px solid <?php echo $msg === 'deleted' ? '#008a20' : '#d63638'; ?>;background:#fff;">
+                    <?php echo esc_html($page_msg); ?>
+                </p>
+            <?php endif; ?>
 
             <form method="get" style="margin:12px 0;">
                 <input type="hidden" name="page" value="<?php echo esc_attr(self::PAGE_SLUG); ?>" />
@@ -513,6 +604,18 @@ class DesignsPage {
                             <?php if ($reopen !== '') : ?>
                                 <input type="text" readonly value="<?php echo esc_attr($reopen); ?>"
                                        onfocus="this.select();" style="width:100%;margin-top:6px;font-size:11px;" />
+                            <?php endif; ?>
+                            <?php if (($design['status'] ?? '') !== 'ordered') : ?>
+                                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"
+                                      style="margin-top:6px;"
+                                      onsubmit="return confirm('<?php echo esc_js(__('Delete this design permanently, including thumbnails and export files? This cannot be undone.', 'snelgraveren-product-designer')); ?>');">
+                                    <input type="hidden" name="action" value="sgpd_delete_design" />
+                                    <input type="hidden" name="design_id" value="<?php echo esc_attr((string) $design_id); ?>" />
+                                    <?php wp_nonce_field('sgpd_delete_design_' . $design_id); ?>
+                                    <button type="submit" class="button-link button-link-delete" style="font-size:12px;">
+                                        <?php esc_html_e('Delete design', 'snelgraveren-product-designer'); ?>
+                                    </button>
+                                </form>
                             <?php endif; ?>
                         </td>
                         <td>
