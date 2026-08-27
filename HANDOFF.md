@@ -7,8 +7,8 @@ _Last updated: 2026-08-27._
 - **Live site runs 1.11.2** (snelgraveren.nl), uploaded by Martin on 2026-08-27, single plugin
   folder `snelgraveren-product-designer/`. The 1.11.x cycle shipped in one day, driven by a real
   incident: a paying customer's borrelplank (order 2678) exported as a bitmap instead of vectors.
-- **Branch `feature/bitmap-ruler-text` is ~93 commits ahead of `master` and NOT merged.** A merge
-  is Martin's call; master has nothing the branch lacks.
+- **`master` is current and pushed** (fast-forward merge of `feature/bitmap-ruler-text`,
+  2026-08-27, head `59e9345`; both branches pushed to origin). New work can branch from master.
 - **wordpress.org still has 1.7.8** (r3657251). Everything since is direct-upload/Freemius only.
   A wp.org release of 1.11.x would ship the export fixes to free users: run
   `bash bin/wporg-release.sh` in a real terminal (see CLAUDE.md release rules). No new premium
