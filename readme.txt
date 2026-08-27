@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.10.0
+Stable tag: 1.11.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -133,6 +133,13 @@ No other external services are used. Design exports (PDF/PNG/SVG) are rendered e
 4. Production dashboard: every order with a design, filtered by status and period, ready to download as one ZIP.
 
 == Changelog ==
+
+= 1.11.0 =
+* Fixed: the SVG export of designs with curved text silently fell back to a bitmap — Fabric.js emits malformed XML for rotated styled characters, which the sanitizer rejected without a trace. The markup is now repaired and validated before saving, and rejections are logged.
+* Fixed: zone overlays, clip paths and the invisible baseline curves of curved text no longer leak into the SVG exports.
+* Improved: the "SVG" export now outlines every glyph at the exact position and rotation of the approved design (kerning and letter spacing included) and carries real millimetre dimensions.
+* Improved: the "SVG + fonts" export writes curved text as a standard textPath over its own curve, so it imports correctly into LightBurn while staying editable.
+* New (Pro): native LightBurn export (.lbrn2) — text as editable LightBurn Text shapes with the bend calibrated against LightBurn's own rendering, vector art as Path shapes in millimetres.
 
 = 1.10.0 =
 * New (Pro): send a design to a customer as a proof for approval instead of handing over the full editor. The customer gets an e-mailed link to a read-only page showing exactly what was saved — no login needed — with a button to approve and go straight to checkout, or to request a change with a short note. Approving adds the design to their cart automatically.
