@@ -7,6 +7,7 @@ use Snelgraveren\ProductDesigner\Database\DesignRepository;
 use Snelgraveren\ProductDesigner\Database\ExportRepository;
 use Snelgraveren\ProductDesigner\Export\DesignInspector;
 use Snelgraveren\ProductDesigner\Export\ExportManager;
+use Snelgraveren\ProductDesigner\Plugin;
 
 /**
  * Production dashboard: all recent orders containing designs, with a
@@ -146,10 +147,17 @@ class ExportDashboard {
             exit;
         }
 
-        $format = get_option('sgpd_export_default_format', 'pdf');
-        // PDF/SVG generation is premium-only; the free build falls back to PNG.
-        if (!class_exists('Snelgraveren\\ProductDesigner\\Export\\PremiumExports') && $format !== 'png') {
-            $format = 'png';
+        // The production ZIP carries EVERY format the build can produce — the
+        // operator opening it needs the LightBurn file next to the PDF, not a
+        // second trip per format. (The Settings default format still governs
+        // the automatic per-order export on status change.)
+        $formats = ['png'];
+        if (class_exists('Snelgraveren\\ProductDesigner\\Export\\PremiumExports')) {
+            if (Plugin::has_feature('pdf_export')) $formats[] = 'pdf';
+            if (Plugin::has_feature('svg_export')) {
+                $formats[] = 'svg';
+                $formats[] = 'lbrn';
+            }
         }
         $manager = new ExportManager();
         $repo    = new ExportRepository();
@@ -161,7 +169,8 @@ class ExportDashboard {
             wp_delete_file($zip_path);
             wp_die(esc_html__('Could not create the export ZIP file.', 'snelgraveren-product-designer'));
         }
-        $added = 0;
+        $added   = 0;
+        $missing = [];
 
         foreach ($entries as $entry) {
             if (!preg_match('/^(\d+):([a-f0-9]{32})$/', $entry, $m)) {
@@ -170,32 +179,45 @@ class ExportDashboard {
             [, $order_id, $hash] = $m;
             $order_id = (int) $order_id;
 
-            // Reuse an existing done export of the default format, else generate.
-            $design    = $designs->get_by_hash($hash);
-            $export_id = 0;
-            if ($design) {
-                foreach ($repo->get_by_design((int) $design['id']) as $export) {
-                    if ($export['format'] === $format && $export['status'] === 'done') {
-                        $export_id = (int) $export['id'];
-                        break;
+            $design = $designs->get_by_hash($hash);
+            $order  = wc_get_order($order_id);
+            $prefix = 'order-' . ($order ? $order->get_order_number() : $order_id) . '/';
+
+            foreach ($formats as $format) {
+                // Reuse the latest done export of this format, else generate.
+                $export_id = 0;
+                if ($design) {
+                    foreach ($repo->get_by_design((int) $design['id']) as $export) {
+                        if ($export['format'] === $format && $export['status'] === 'done') {
+                            $export_id = (int) $export['id'];
+                            break;
+                        }
+                    }
+                }
+                if (!$export_id) {
+                    $result    = $manager->generate_export($hash, $format, $order_id);
+                    $export_id = (int) ($result['export_id'] ?? 0);
+                    if (!$export_id || ($result['status'] ?? '') !== 'done') {
+                        // One missing format must not sink the ZIP — a design
+                        // saved before 1.11.0 has no LightBurn data yet, for
+                        // example. Note it where the operator will look.
+                        $missing[] = sprintf('%s%s: %s', $prefix, strtoupper($format),
+                            (string) ($result['error'] ?? 'export failed'));
+                        continue;
+                    }
+                }
+                foreach ($manager->get_download_paths($export_id) as $path) {
+                    if ($zip->addFile($path, $prefix . basename($path))) {
+                        $added++;
                     }
                 }
             }
-            if (!$export_id) {
-                $result    = $manager->generate_export($hash, $format, $order_id);
-                $export_id = (int) ($result['export_id'] ?? 0);
-                if (!$export_id || ($result['status'] ?? '') !== 'done') {
-                    continue;
-                }
-            }
-
-            $order  = wc_get_order($order_id);
-            $prefix = 'order-' . ($order ? $order->get_order_number() : $order_id) . '/';
-            foreach ($manager->get_download_paths($export_id) as $path) {
-                if ($zip->addFile($path, $prefix . basename($path))) {
-                    $added++;
-                }
-            }
+        }
+        if (!empty($missing)) {
+            $zip->addFromString('LEESMIJ-ontbrekend.txt',
+                "Niet alle formaten konden worden gemaakt:\n\n" . implode("\n", $missing)
+                . "\n\nEen design van voor versie 1.11.0 heeft nog geen LightBurn-data:\n"
+                . "open het via de reopen-link op de Designs-pagina en sla het opnieuw op.\n");
         }
         $zip->close();
 

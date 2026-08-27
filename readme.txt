@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.11.0
+Stable tag: 1.11.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -133,6 +133,9 @@ No other external services are used. Design exports (PDF/PNG/SVG) are rendered e
 4. Production dashboard: every order with a design, filtered by status and period, ready to download as one ZIP.
 
 == Changelog ==
+
+= 1.11.1 =
+* Improved: the Production dashboard's bulk ZIP now contains every available export format per design (PNG, PDF, SVG and LightBurn) instead of only the configured default. Formats that cannot be generated are listed in a LEESMIJ file inside the ZIP rather than failing the download.
 
 = 1.11.0 =
 * Fixed: the SVG export of designs with curved text silently fell back to a bitmap — Fabric.js emits malformed XML for rotated styled characters, which the sanitizer rejected without a trace. The markup is now repaired and validated before saving, and rejections are logged.
