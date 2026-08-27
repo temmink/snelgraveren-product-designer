@@ -55,6 +55,36 @@ class PremiumExports {
         }
     }
 
+
+    /**
+     * Export views as native LightBurn project files (.lbrn2).
+     *
+     * The document itself was generated in the browser at save time
+     * (utils/lbrnWriter.js) from the live design objects — text as native,
+     * editable LightBurn Text shapes with their bend, vectors as Path shapes in
+     * millimetres — and validated as well-formed XML on the way in
+     * (RestDesigns::sanitize_lbrn_blob). This method only writes it to disk.
+     */
+    public function export_lbrn(array $views, string $dir, string $file_name): string {
+        $paths = [];
+        foreach ($views as $i => $view) {
+            $xml = trim($view['export_lbrn'] ?? '');
+            if ($xml === '') {
+                continue;
+            }
+            $suffix    = count($views) > 1 ? '-view-' . ($i + 1) : '';
+            $file_path = $dir . $file_name . $suffix . '.lbrn2';
+            if (file_put_contents($file_path, $xml) === false) {
+                throw new \RuntimeException(esc_html(sprintf('LightBurn export failed for view %d', $i + 1)));
+            }
+            $paths[] = $file_path;
+        }
+        if (empty($paths)) {
+            throw new \RuntimeException('No views with LightBurn data');
+        }
+        return implode(',', $paths);
+    }
+
     /**
      * Export views as SVG files.
      *
@@ -165,6 +195,14 @@ class PremiumExports {
      */
     private function apply_physical_size(string $svg, array $dimensions): string {
         if ((float) ($dimensions['width_mm'] ?? 0) <= 0) {
+            return $svg;
+        }
+
+        // The browser already stamps the physical size onto the vector it saves
+        // (utils/productionSvg.js#applyPhysicalSize), computed from the same
+        // width_mm. Re-writing it here would only risk a second rounding of the
+        // same number, so leave a root that already carries millimetres alone.
+        if (preg_match('/<svg\b[^>]*\swidth="[\d.]+mm"/', $svg)) {
             return $svg;
         }
 

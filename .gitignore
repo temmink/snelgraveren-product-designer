@@ -22,3 +22,6 @@ template-*.json
 .svn-wporg/
 !wporg-assets/*.png
 .svn-wporg.lock/
+
+# local verification fixture (customer design data)
+tools/export-check/design.json

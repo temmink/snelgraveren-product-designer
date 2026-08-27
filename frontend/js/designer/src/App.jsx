@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { __ } from '@wordpress/i18n';
-import { Canvas as FabricCanvas, cache as fabricCache } from 'fabric';
 import useDesignerStore from './store/useDesignerStore';
 import { loadTemplate, loadDesign, createDesign, saveDesignView, fetchCustomFonts, fetchClipartCollections, previewPrice } from './api/designerApi';
 import DesignerCanvas from './components/DesignerCanvas';
@@ -8,180 +7,17 @@ import Sidebar from './components/Sidebar';
 import Toolbar from './components/Toolbar';
 import { loadGoogleFonts, loadCustomFonts } from './utils/fonts';
 import { getDesignerConfig } from './utils/config';
-import { outlineSvgText, embedFontsInSvg } from './utils/textOutline';
+import {
+  withoutExcludedObjects,
+  renderOffscreenThumbnail,
+  renderOffscreenExportPng,
+  buildExportVectors,
+} from './utils/exportRender';
 import { countPriceableElements } from './utils/priceCounts';
 import useIsMobile from './hooks/useIsMobile';
 import { withoutTextPlaceholders } from '../../../../shared/js/textPlaceholder';
 import atLogicalCanvasSize from '../../../../shared/js/atLogicalCanvasSize';
-
-/**
- * Ensure every text object's font is loaded and re-measured before an offscreen
- * canvas is serialized. Without this, Fabric lays out (especially centered) text
- * using a fallback-font width — so the text ends up off-centre / mis-positioned
- * in the PNG and SVG exports even though the design looks right in the live
- * editor (where the font is already loaded).
- */
-async function ensureFontsAndRemeasure(canvas) {
-  const texts = canvas.getObjects().filter((o) => /text/i.test(o.type || ''));
-  await Promise.all(texts.map((o) => {
-    const fam  = o.fontFamily || 'sans-serif';
-    const size = o.fontSize || 16;
-    try { return document.fonts.load(`${size}px "${fam}"`).catch(() => {}); }
-    catch (_) { return Promise.resolve(); }
-  }));
-  // Drop Fabric's global char-width cache: if a font finished loading only
-  // AFTER the design first rendered (e.g. Google fonts fetched async via the
-  // proxy), the cache holds fallback-font widths for these glyphs. initDimensions
-  // would reuse them, so centred text lays out against the wrong width and drifts
-  // in the export even though the glyphs themselves are outlined at the real
-  // width. Clearing forces a fresh measurement with the now-loaded font.
-  try { fabricCache.clearFontCache(); } catch (_) { /* ignore */ }
-  texts.forEach((o) => { try { o.initDimensions(); o.setCoords(); } catch (_) { /* ignore */ } });
-  canvas.renderAll();
-}
-
-/**
- * Run `fn` with every object flagged data.excludeFromExport hidden, then
- * restore. Used for the production export renders only — thumbnails keep those
- * objects, because a thumbnail should look like what the customer designed.
- *
- * Sets BOTH the plugin's `data.excludeFromExport` flag AND Fabric's own
- * top-level `excludeFromExport` property (unrelated properties that happen to
- * share a name). `visible = false` alone hides the object from raster output
- * (toDataURL) but NOT from toSVG() — Fabric's toSVG() still emits invisible
- * objects, just marked `visibility: hidden` in the markup, so a bitmap
- * reference layer flagged only this way still ships inside export_vector /
- * export_vector_embed for a laser operator to open. The native
- * `excludeFromExport` is what toSVG() actually honours by omitting the object.
- * We restore each object's PRIOR native-flag value (not assume false) so we
- * never clobber a flag some other code path may have already set.
- *
- * The restore lives in `finally` on purpose: two call sites operate on the
- * customer's LIVE on-screen canvas, so a throwing render must never leave a
- * layer hidden (or export-excluded) in front of them.
- */
-function withoutExcludedObjects(canvas, fn) {
-  const hidden = [];
-  try {
-    canvas.getObjects().forEach((o) => {
-      if (o.data?.excludeFromExport && o.visible !== false) {
-        hidden.push({ obj: o, prevExcludeFromExport: o.excludeFromExport });
-        o.visible = false;
-        o.excludeFromExport = true;
-      }
-    });
-    if (hidden.length) canvas.renderAll();
-    return fn();
-  } finally {
-    if (hidden.length) {
-      hidden.forEach(({ obj, prevExcludeFromExport }) => {
-        obj.visible = true;
-        obj.excludeFromExport = prevExcludeFromExport;
-      });
-      canvas.renderAll();
-    }
-  }
-}
-
-/**
- * Render a thumbnail from canvas JSON using an offscreen Fabric canvas.
- * Returns a data URL (PNG) or empty string on failure.
- */
-async function renderOffscreenThumbnail(canvasJson, width, height) {
-  try {
-    const el = document.createElement('canvas');
-    el.width = width;
-    el.height = height;
-    const offscreen = new FabricCanvas(el, { width, height });
-    await offscreen.loadFromJSON(canvasJson);
-    await ensureFontsAndRemeasure(offscreen);
-    offscreen.renderAll();
-    const dataUrl = offscreen.toDataURL({ format: 'png', multiplier: 0.5 });
-    offscreen.dispose();
-    return dataUrl;
-  } catch (err) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.warn('Offscreen thumbnail render failed:', err);
-    }
-    return '';
-  }
-}
-
-/**
- * Generate high-res export PNG from canvas JSON using an offscreen Fabric canvas.
- * Returns a data URL (PNG at 3x resolution) or empty string on failure.
- * We use PNG instead of SVG because SVG text requires the exact fonts on the
- * server, whereas browser-rendered PNG captures text with loaded web fonts.
- */
-async function renderOffscreenExportPng(canvasJson, width, height) {
-  try {
-    const el = document.createElement('canvas');
-    el.width = width;
-    el.height = height;
-    const offscreen = new FabricCanvas(el, { width, height });
-    await offscreen.loadFromJSON(canvasJson);
-    await ensureFontsAndRemeasure(offscreen);
-    offscreen.renderAll();
-    const dataUrl = withoutExcludedObjects(offscreen, () =>
-      offscreen.toDataURL({ format: 'png', multiplier: 3 })
-    );
-    offscreen.dispose();
-    return dataUrl;
-  } catch (err) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.warn('Offscreen export PNG render failed:', err);
-    }
-    return '';
-  }
-}
-
-/**
- * Generate a real vector SVG from canvas JSON using an offscreen Fabric canvas.
- * Returns SVG markup or empty string on failure.
- *
- * Rendered offscreen at the view's NATIVE dimensions (zoom = 1), so the
- * resulting <svg> carries the correct width/height/viewBox regardless of the
- * responsive zoom applied to the live on-screen canvas. This is stored as
- * `export_vector` and used by the SVG export — vector shapes/paths stay vector.
- * Text is emitted as <text> referencing its font family, so the production
- * machine needs that font installed (or the operator outlines it).
- */
-async function renderOffscreenExportSvg(canvasJson, width, height) {
-  try {
-    const el = document.createElement('canvas');
-    el.width = width;
-    el.height = height;
-    const offscreen = new FabricCanvas(el, { width, height });
-    await offscreen.loadFromJSON(canvasJson);
-    await ensureFontsAndRemeasure(offscreen);
-    offscreen.renderAll();
-    const svg = withoutExcludedObjects(offscreen, () => offscreen.toSVG());
-    offscreen.dispose();
-    return svg;
-  } catch (err) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.warn('Offscreen export SVG render failed:', err);
-    }
-    return '';
-  }
-}
-
-/**
- * Build the two production SVG variants from a view's canvas JSON:
- *   outline — text converted to vector <path> (default export; font-independent)
- *   embed   — text kept editable with the fonts embedded as base64 @font-face
- * Both fall back to the raw SVG if outlining/embedding fails, so a save never
- * breaks on a font that can't be resolved.
- */
-async function buildExportVectors(canvasJson, width, height, opts) {
-  const raw = await renderOffscreenExportSvg(canvasJson, width, height);
-  if (!raw) return { outline: '', embed: '' };
-  const [outline, embed] = await Promise.all([
-    outlineSvgText(raw, opts).catch(() => raw),
-    embedFontsInSvg(raw, opts).catch(() => raw),
-  ]);
-  return { outline: outline || raw, embed: embed || raw };
-}
+import { resolveWidthMm } from '../../../../shared/js/rulerTicks';
 
 export default function App() {
   const {
@@ -632,9 +468,15 @@ export default function App() {
             }
             // Real vector SVG (outline default + font-embedded variant), rendered
             // offscreen at native size so it is zoom-independent and correctly scaled.
-            const { outline: exportVector, embed: exportVectorEmbed } =
-              await buildExportVectors(json, w, h, { customFonts: customFontsRef.current, restUrl: config.rest_url });
-            await saveDesignView(hash, view.id, json, thumbnail, exportSvg, exportVector, exportVectorEmbed);
+            const { outline: exportVector, embed: exportVectorEmbed, lbrn: exportLbrn } =
+              await buildExportVectors(json, w, h, {
+                customFonts: customFontsRef.current,
+                restUrl: config.rest_url,
+                // Physical width of the view, so the SVG carries millimetres
+                // instead of pixels a laser would have to guess a DPI for.
+                widthMm: resolveWidthMm(views, idx).widthMm,
+              });
+            await saveDesignView(hash, view.id, json, thumbnail, exportSvg, exportVector, exportVectorEmbed, exportLbrn);
           }
 
           // Sync hash to hidden input
@@ -799,9 +641,13 @@ export default function App() {
         }
         // Real vector SVG (outline default + font-embedded variant), rendered
         // offscreen at native size so it is zoom-independent and correctly scaled.
-        const { outline: exportVector, embed: exportVectorEmbed } =
-          await buildExportVectors(json, w, h, { customFonts: customFontsRef.current, restUrl: config.rest_url });
-        savedDesign = await saveDesignView(hash, view.id, json, thumbnail, exportSvg, exportVector, exportVectorEmbed);
+        const { outline: exportVector, embed: exportVectorEmbed, lbrn: exportLbrn } =
+          await buildExportVectors(json, w, h, {
+            customFonts: customFontsRef.current,
+            restUrl: config.rest_url,
+            widthMm: resolveWidthMm(views, idx).widthMm,
+          });
+        savedDesign = await saveDesignView(hash, view.id, json, thumbnail, exportSvg, exportVector, exportVectorEmbed, exportLbrn);
       }
 
       // Update the product image on the page with the design thumbnail

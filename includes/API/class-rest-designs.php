@@ -26,7 +26,7 @@ class RestDesigns {
         unset($design['id'], $design['template_id'], $design['customer_id'], $design['session_id']);
         if (!empty($design['views'])) {
             $design['views'] = array_map(function ($view) {
-                unset($view['id'], $view['design_id'], $view['export_svg'], $view['export_vector'], $view['export_vector_embed']);
+                unset($view['id'], $view['design_id'], $view['export_svg'], $view['export_vector'], $view['export_vector_embed'], $view['export_lbrn']);
                 return $view;
             }, $design['views']);
         }
@@ -39,30 +39,105 @@ class RestDesigns {
      * enshrined/svg-sanitize to strip scripts, event handlers, external refs).
      * Returns '' if the payload is malformed or too large.
      */
-    private function sanitize_export_blob(string $blob): string {
+    /**
+     * Sanitize one export blob, or return '' when it cannot be trusted.
+     *
+     * Every rejection is logged. Silence here cost a full release: Fabric
+     * emitted malformed XML (a missing space between two tspan attributes), the
+     * sanitizer refused to load it, this returned '', `upsert_view()` skips
+     * empty columns so the old value stayed, and the SVG export fell back to
+     * wrapping the raster PNG. The design saved, no error surfaced anywhere, and
+     * the merchant only found out when the engraving file held a single bitmap.
+     *
+     * @param string $blob  The client-sent markup or data URL.
+     * @param string $field Which column it is destined for, for the log line.
+     */
+    private function sanitize_export_blob(string $blob, string $field = 'export'): string {
         $trimmed = trim($blob);
         if ($trimmed === '') return '';
 
         // Cap at ~10 MB to prevent memory exhaustion during PDF/PNG render.
         // Multiplier:3 PNGs on large canvases can exceed the thumbnail cap.
-        if (strlen($trimmed) > 10 * 1024 * 1024) return '';
+        if (strlen($trimmed) > 10 * 1024 * 1024) {
+            $this->log_export_rejection($field, sprintf('larger than 10 MB (%d bytes)', strlen($trimmed)));
+            return '';
+        }
 
         if (str_starts_with($trimmed, 'data:image/png;base64,')) {
             $b64 = substr($trimmed, strlen('data:image/png;base64,'));
             $decoded = base64_decode($b64, true);
             if ($decoded === false || strlen($decoded) < 8 || substr($decoded, 0, 8) !== "\x89PNG\r\n\x1a\n") {
+                $this->log_export_rejection($field, 'not a valid PNG data URL');
                 return '';
             }
             return $trimmed;
         }
 
-        if (str_starts_with($trimmed, '<') && class_exists(\enshrined\svgSanitize\Sanitizer::class)) {
+        if (str_starts_with($trimmed, '<')) {
+            if (!class_exists(\enshrined\svgSanitize\Sanitizer::class)) {
+                $this->log_export_rejection($field, 'SVG sanitizer class missing (vendor/ incomplete)');
+                return '';
+            }
             $sanitizer = new \enshrined\svgSanitize\Sanitizer();
             $clean = $sanitizer->sanitize($trimmed);
-            return $clean === false ? '' : $clean;
+            if ($clean === false) {
+                $this->log_export_rejection($field, 'SVG could not be parsed (malformed XML)');
+                return '';
+            }
+            return $clean;
         }
 
+        $this->log_export_rejection($field, 'unrecognised payload (neither SVG markup nor a PNG data URL)');
         return '';
+    }
+
+
+    /**
+     * Sanitize a client-sent LightBurn project (.lbrn2, plain XML).
+     *
+     * This blob is never rendered by a browser — it is stored and later
+     * streamed as a file download for the laser operator — so the risk model is
+     * XML parsing, not markup injection: refuse anything that is not
+     * well-formed, refuse DOCTYPE (XXE), require the LightBurnProject root.
+     * Rejections are logged for the same reason sanitize_export_blob logs them:
+     * a silently dropped export blob cost a full release to find.
+     */
+    private function sanitize_lbrn_blob(string $blob): string {
+        $trimmed = trim($blob);
+        if ($trimmed === '') return '';
+
+        if (strlen($trimmed) > 10 * 1024 * 1024) {
+            $this->log_export_rejection('export_lbrn', sprintf('larger than 10 MB (%d bytes)', strlen($trimmed)));
+            return '';
+        }
+        if (stripos($trimmed, '<!DOCTYPE') !== false || stripos($trimmed, '<!ENTITY') !== false) {
+            $this->log_export_rejection('export_lbrn', 'DOCTYPE/ENTITY not allowed');
+            return '';
+        }
+
+        $prev = libxml_use_internal_errors(true);
+        $doc  = new \DOMDocument();
+        $ok   = $doc->loadXML($trimmed, LIBXML_NONET); // no network access; entities already refused above
+        libxml_clear_errors();
+        libxml_use_internal_errors($prev);
+
+        if (!$ok || !$doc->documentElement || $doc->documentElement->nodeName !== 'LightBurnProject') {
+            $this->log_export_rejection('export_lbrn', 'not a well-formed LightBurnProject document');
+            return '';
+        }
+        return $trimmed;
+    }
+
+    /**
+     * Record why an export blob was dropped. Goes to the PHP error log rather
+     * than an admin notice: this runs during a customer's save, where there is
+     * no screen to show it on.
+     */
+    private function log_export_rejection(string $field, string $reason): void {
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+            error_log(sprintf('[snelgraveren-product-designer] dropped %s: %s', $field, $reason));
+        }
     }
 
     /**
@@ -200,6 +275,7 @@ class RestDesigns {
         $export_svg          = $body['export_svg'] ?? '';
         $export_vector       = $body['export_vector'] ?? '';
         $export_vector_embed = $body['export_vector_embed'] ?? '';
+        $export_lbrn         = $body['export_lbrn'] ?? '';
 
         // Save base64 thumbnail as a file
         $thumb_url = '';
@@ -209,15 +285,16 @@ class RestDesigns {
 
         // Sanitize export blob — SVG markup goes through enshrined/svg-sanitize,
         // PNG data URLs are validated for magic bytes. Anything else is dropped.
-        $export_svg = !empty($export_svg) ? $this->sanitize_export_blob($export_svg) : '';
+        $export_svg = !empty($export_svg) ? $this->sanitize_export_blob($export_svg, 'export_svg') : '';
 
         // The real vector output (canvas.toSVG()) is always SVG markup — the same
         // sanitizer strips scripts/handlers/external refs before it is stored.
         // Both the outlined default and the font-embedded variant run through it.
-        $export_vector       = !empty($export_vector) ? $this->sanitize_export_blob($export_vector) : '';
-        $export_vector_embed = !empty($export_vector_embed) ? $this->sanitize_export_blob($export_vector_embed) : '';
+        $export_vector       = !empty($export_vector) ? $this->sanitize_export_blob($export_vector, 'export_vector') : '';
+        $export_vector_embed = !empty($export_vector_embed) ? $this->sanitize_export_blob($export_vector_embed, 'export_vector_embed') : '';
+        $export_lbrn         = !empty($export_lbrn) ? $this->sanitize_lbrn_blob($export_lbrn) : '';
 
-        $this->repo->upsert_view((int) $design['id'], $view_id, $json, $thumb_url, $export_svg, $export_vector, $export_vector_embed);
+        $this->repo->upsert_view((int) $design['id'], $view_id, $json, $thumb_url, $export_svg, $export_vector, $export_vector_embed, $export_lbrn);
         $this->repo->invalidate_cache($request['hash']);
         return new \WP_REST_Response($this->sanitize_for_customer($this->repo->get_by_hash($request['hash'])), 200);
     }

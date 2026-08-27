@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <title>ProductForge export-check</title>
+  <style>
+    body { font: 13px/1.5 -apple-system, sans-serif; margin: 16px; }
+    #log { white-space: pre-wrap; background: #f5f5f5; padding: 10px; border-radius: 4px; }
+    .row { display: flex; gap: 12px; margin-top: 12px; }
+    .row > div { flex: 1; }
+    img, svg { max-width: 100%; border: 1px solid #ddd; background: #fff; }
+    h2 { font-size: 13px; margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <h1>Export-check</h1>
+  <p>Draait de echte exportcode op een opgeslagen design-JSON en toont wat er uit komt.</p>
+  <div id="log">bezig…</div>
+  <div class="row">
+    <div><h2>canvas (wat de klant zag)</h2><div id="canvasOut"></div></div>
+    <div><h2>outline-variant (knop “SVG”)</h2><div id="outlineOut"></div></div>
+    <div><h2>embed-variant (knop “SVG + fonts”)</h2><div id="embedOut"></div></div>
+  </div>
+  <script type="module" src="./run.js"></script>
+</body>
+</html>
