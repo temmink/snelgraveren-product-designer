@@ -396,7 +396,7 @@ class DesignRepository {
         }, $rows ?: []);
     }
 
-    public function upsert_view(int $design_id, int $view_id, array $canvas_json, string $thumbnail = '', string $export_svg = '', string $export_vector = '', string $export_vector_embed = ''): bool {
+    public function upsert_view(int $design_id, int $view_id, array $canvas_json, string $thumbnail = '', string $export_svg = '', string $export_vector = '', string $export_vector_embed = '', string $export_lbrn = ''): bool {
         global $wpdb;
         $existing = $wpdb->get_var(
             $wpdb->prepare(
@@ -426,6 +426,10 @@ class DesignRepository {
                 $data['export_vector_embed'] = $export_vector_embed;
                 $format[]                    = '%s';
             }
+            if (!empty($export_lbrn)) {
+                $data['export_lbrn'] = $export_lbrn;
+                $format[]            = '%s';
+            }
             return (bool) $wpdb->update(
                 $this->views_table,
                 $data,
@@ -443,7 +447,8 @@ class DesignRepository {
             'export_svg'          => $export_svg,
             'export_vector'       => $export_vector,
             'export_vector_embed' => $export_vector_embed,
-        ], ['%d', '%d', '%s', '%s', '%s', '%s', '%s']);
+            'export_lbrn'         => $export_lbrn,
+        ], ['%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s']);
         return (bool) $wpdb->insert_id;
     }
 }

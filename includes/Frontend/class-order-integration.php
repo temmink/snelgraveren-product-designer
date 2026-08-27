@@ -202,12 +202,16 @@ class OrderIntegration {
 
         echo '<strong style="display:block;margin-bottom:4px;">' . esc_html__('Export Design:', 'snelgraveren-product-designer') . '</strong>';
 
-        // Export buttons — gate PDF/SVG for Pro
-        foreach (['png', 'pdf', 'svg'] as $format) {
-            if ( $format !== 'png' && ! Plugin::has_feature( $format . '_export' ) ) {
+        // Export buttons — gate PDF/SVG/LightBurn for Pro. The LightBurn format
+        // rides on the svg_export gate: `has_feature()` fails OPEN for unknown
+        // feature names, so gating on a hypothetical 'lbrn_export' would show
+        // the button to free users whose REST call then 403s.
+        foreach (['png', 'pdf', 'svg', 'lbrn'] as $format) {
+            $gate = $format === 'lbrn' ? 'svg_export' : $format . '_export';
+            if ( $format !== 'png' && ! Plugin::has_feature( $gate ) ) {
                 continue;
             }
-            $label = strtoupper($format);
+            $label = $format === 'lbrn' ? 'LightBurn' : strtoupper($format);
             echo '<button type="button" class="button button-small pf-export-btn" '
                 . 'data-hash="' . esc_attr($hash) . '" '
                 . 'data-format="' . esc_attr($format) . '" '

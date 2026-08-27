@@ -46,9 +46,14 @@ class ExportManager {
         if ( $format === 'svg' && ! Plugin::has_feature( 'svg_export' ) ) {
             return [ 'error' => __( 'SVG export requires Snelgraveren Product Designer Pro.', 'snelgraveren-product-designer' ) ];
         }
+        // The native LightBurn format rides on the same Pro gate as SVG: both
+        // exist for the production machine, not the storefront.
+        if ( $format === 'lbrn' && ! Plugin::has_feature( 'svg_export' ) ) {
+            return [ 'error' => __( 'LightBurn export requires Snelgraveren Product Designer Pro.', 'snelgraveren-product-designer' ) ];
+        }
         // PDF/SVG generation lives in PremiumExports, which is stripped from
         // the free build — guard so a stray request degrades to an error, not a fatal.
-        if ( in_array( $format, [ 'pdf', 'svg' ], true ) && ! class_exists( __NAMESPACE__ . '\\PremiumExports' ) ) {
+        if ( in_array( $format, [ 'pdf', 'svg', 'lbrn' ], true ) && ! class_exists( __NAMESPACE__ . '\\PremiumExports' ) ) {
             return [ 'error' => __( 'PDF and SVG export require Snelgraveren Product Designer Pro.', 'snelgraveren-product-designer' ) ];
         }
 
@@ -97,6 +102,18 @@ class ExportManager {
                 break;
             }
         }
+        // The LightBurn format has its own source column; the raster/vector
+        // fallbacks below are meaningless for it.
+        if ($format === 'lbrn') {
+            $has_svg = false;
+            foreach ($views as $view) {
+                if (!empty($view['export_lbrn'])) { $has_svg = true; break; }
+            }
+            if (!$has_svg) {
+                $this->exports->update_status($export_id, 'failed');
+                return ['error' => 'Design has no LightBurn data. Re-save the design (the view needs a physical width) to generate it.'];
+            }
+        }
         if (!$has_svg) {
             $this->exports->update_status($export_id, 'failed');
             return ['error' => 'Design has no export SVG data. Please re-save the design to generate export data.'];
@@ -110,6 +127,7 @@ class ExportManager {
                 'pdf' => (new PremiumExports($this))->export_pdf($views, $template, $export_dir, $file_name),
                 'png' => $this->export_png($views, $template, $export_dir, $file_name),
                 'svg' => (new PremiumExports($this))->export_svg($views, $template, $export_dir, $file_name, $variant),
+                'lbrn' => (new PremiumExports($this))->export_lbrn($views, $export_dir, $file_name),
                 default => throw new \InvalidArgumentException(esc_html(sprintf('Unsupported format: %s', $format))),
             };
 

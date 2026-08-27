@@ -27,7 +27,7 @@ class RestExports {
             'args'                => [
                 'format' => [
                     'type'    => 'string',
-                    'enum'    => ['pdf', 'png', 'svg'],
+                    'enum'    => ['pdf', 'png', 'svg', 'lbrn'],
                     'default' => 'pdf',
                 ],
                 'order_id' => [
@@ -79,7 +79,7 @@ class RestExports {
         if ( $format === 'pdf' && ! Plugin::has_feature( 'pdf_export' ) ) {
             return new \WP_REST_Response( ['error' => __( 'PDF export requires Snelgraveren Product Designer Pro.', 'snelgraveren-product-designer' )], 403 );
         }
-        if ( $format === 'svg' && ! Plugin::has_feature( 'svg_export' ) ) {
+        if ( in_array( $format, [ 'svg', 'lbrn' ], true ) && ! Plugin::has_feature( 'svg_export' ) ) {
             return new \WP_REST_Response( ['error' => __( 'SVG export requires Snelgraveren Product Designer Pro.', 'snelgraveren-product-designer' )], 403 );
         }
 
@@ -115,9 +115,10 @@ class RestExports {
             $filename = preg_replace('/[^a-zA-Z0-9._-]/', '_', $filename);
 
             $mime = match (pathinfo($path, PATHINFO_EXTENSION)) {
-                'pdf' => 'application/pdf',
-                'png' => 'image/png',
-                'svg' => 'image/svg+xml',
+                'pdf'   => 'application/pdf',
+                'png'   => 'image/png',
+                'svg'   => 'image/svg+xml',
+                'lbrn2' => 'application/xml',
                 default => 'application/octet-stream',
             };
 
