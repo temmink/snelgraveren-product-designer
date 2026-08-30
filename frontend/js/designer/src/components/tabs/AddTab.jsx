@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { __ } from '@wordpress/i18n';
 import useDesignerStore from '../../store/useDesignerStore';
 import DesignTemplates from '../DesignTemplates';
+import ClipartPicker from '../ClipartPicker';
 
 export default function AddTab() {
   const { template, currentViewIndex, activeTool, setActiveTool, clipartCollections, addClipart } = useDesignerStore();
+  const [openClipartCollection, setOpenClipartCollection] = useState(null);
 
   const currentView = template?.views?.[currentViewIndex];
   const zones = currentView?.zones_config || [];
@@ -26,8 +28,9 @@ export default function AddTab() {
     }
   };
 
-  const handleClipartClick = (svgUrl) => {
+  const handleClipartSelect = (svgUrl) => {
     addClipart?.(svgUrl);
+    setOpenClipartCollection(null);
   };
 
   const showClipart = globalConfig.clipart_enabled && isTypeAllowed('svg') && clipartCollections.length > 0;
@@ -109,26 +112,33 @@ export default function AddTab() {
       {showClipart && (
         <div className="pf-clipart-section">
           <h3 className="pf-sidebar__heading">{__('Clip Art', 'snelgraveren-product-designer')}</h3>
-          {clipartCollections.map((collection) => (
-            <div key={collection.id} className="pf-clipart-collection">
-              <h4 className="pf-clipart-collection__name">{collection.name}</h4>
-              <div className="pf-clipart-collection__grid">
-                {(collection.items || []).map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className="pf-clipart-collection__item"
-                    onClick={() => handleClipartClick(item.svg_url)}
-                    title={item.name}
-                    aria-label={item.name}
-                  >
-                    <img src={item.svg_url} alt={item.name} />
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
+          <div className="pf-clipart-categories">
+            {clipartCollections.map((collection) => (
+              <button
+                key={collection.id}
+                type="button"
+                className="pf-clipart-category"
+                onClick={() => setOpenClipartCollection(collection)}
+              >
+                <span className="pf-clipart-category__thumbs" aria-hidden="true">
+                  {(collection.items || []).slice(0, 3).map((item) => (
+                    <img key={item.id} src={item.svg_url} alt="" />
+                  ))}
+                </span>
+                <span className="pf-clipart-category__name">{collection.name}</span>
+                <span className="pf-clipart-category__count">{(collection.items || []).length}</span>
+              </button>
+            ))}
+          </div>
         </div>
+      )}
+
+      {openClipartCollection && (
+        <ClipartPicker
+          collection={openClipartCollection}
+          onSelect={handleClipartSelect}
+          onClose={() => setOpenClipartCollection(null)}
+        />
       )}
     </div>
   );

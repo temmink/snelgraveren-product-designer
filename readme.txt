@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.11.3
+Stable tag: 1.11.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -133,6 +133,9 @@ No other external services are used. Design exports (PDF/PNG/SVG) are rendered e
 4. Production dashboard: every order with a design, filtered by status and period, ready to download as one ZIP.
 
 == Changelog ==
+
+= 1.11.4 =
+* Improved: clip art in the designer is now chosen from a large-preview panel that opens when the customer clicks a category, instead of tiny thumbnails in the sidebar.
 
 = 1.11.3 =
 * Improved: the clip art upload size limit was raised from 512 KB to 3 MB per SVG file.
