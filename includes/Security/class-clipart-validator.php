@@ -5,7 +5,7 @@ defined('ABSPATH') || exit;
 
 class ClipartValidator {
 
-    private const MAX_FILE_SIZE = 512 * 1024; // 512 KB
+    private const MAX_FILE_SIZE = 3 * 1024 * 1024; // 3 MB
     private const RATE_LIMIT    = 20;          // per minute (admin-only, higher than customer limit)
 
     public static function validate_and_store(array $file): array {
@@ -28,7 +28,7 @@ class ClipartValidator {
 
     private static function check_size(array $file): void {
         if ($file['size'] > self::MAX_FILE_SIZE) {
-            throw new \RuntimeException('Clip art file exceeds maximum size of 512 KB.', 400);
+            throw new \RuntimeException('Clip art file exceeds maximum size of 3 MB.', 400);
         }
     }
 

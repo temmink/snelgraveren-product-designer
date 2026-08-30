@@ -536,7 +536,7 @@ The Collection Manager is an inline panel in the Settings tab.
 1. Click the collection name to expand it.
 2. Click **Upload SVGs**.
 3. Select one or more `.svg` files (multiple selection supported).
-4. SVGs are validated (512 KB max, MIME check, sanitized), stored with random filenames, and appear as thumbnails in the collection.
+4. SVGs are validated (3 MB max, MIME check, sanitized), stored with random filenames, and appear as thumbnails in the collection.
 
 **Collection management:**
 - **Rename**: Click "Rename" next to a collection, enter the new name.
@@ -1015,7 +1015,7 @@ All database queries use `$wpdb->prepare()` with parameterized placeholders. Raw
 | **Font validation** | WOFF2/WOFF/TTF files validated via magic bytes and MIME check. |
 | **Rate limiting** | Customer uploads limited to 10 per minute per session (tracked via WordPress transients). |
 | **Secure filenames** | All uploaded files renamed to `bin2hex(random_bytes(8))` + extension — no user-provided filenames are used. |
-| **Clip art size limit** | Clip art SVGs limited to 512 KB. |
+| **Clip art size limit** | Clip art SVGs limited to 3 MB. |
 
 ### Design ID Security
 - Designs are publicly identified by `design_hash`: 32 characters of CSPRNG hex (`bin2hex(random_bytes(16))`).
@@ -1138,7 +1138,7 @@ npm run dev                             # Vite dev server (HMR)
 
 ### SVG upload rejected
 - Ensure the SVG is valid XML.
-- Check file size (customer uploads: 10 MB max; clip art: 512 KB max).
+- Check file size (customer uploads: 10 MB max; clip art: 3 MB max).
 - The SVG may contain disallowed elements (scripts, external references) that are being sanitized. Simplify the SVG and retry.
 
 ### Rate limit hit on uploads
