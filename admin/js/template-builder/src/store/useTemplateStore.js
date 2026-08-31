@@ -9,6 +9,7 @@ const DEFAULT_GLOBAL_CONFIG = {
   colors_enabled: false,
   any_color: false,
   allowed_fonts: [],
+  allowed_font_groups: [],
   allowed_colors: [],
   max_elements_per_view: 50,
   max_file_size_mb: 10,
@@ -132,6 +133,9 @@ const useTemplateStore = create((set, get) => ({
   // Custom fonts uploaded by the admin
   customFonts: [],
 
+  // Font groups (shared across all templates, managed on the Fonts admin page)
+  fontGroups: [],
+
   // Global color palettes (shared across all templates)
   colorPalettes: [],
 
@@ -154,6 +158,7 @@ const useTemplateStore = create((set, get) => ({
   // ── Core setters ──────────────────────────────────────────────────────────
 
   setCustomFonts:      (fonts)  => set({ customFonts: fonts }),
+  setFontGroups:       (groups) => set({ fontGroups: groups }),
   setColorPalettes:    (p)     => set({ colorPalettes: p }),
   setClipartCollections: (collections) => set({ clipartCollections: collections }),
 

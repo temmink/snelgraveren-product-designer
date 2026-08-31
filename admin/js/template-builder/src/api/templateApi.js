@@ -59,6 +59,11 @@ export const fontApi = {
   deleteFamily: (family) => request('DELETE', `fonts/family/${encodeURIComponent(family)}`),
 };
 
+// Font groups (managed on the Fonts admin page; the builder only reads them)
+export const fontGroupApi = {
+  list: () => request('GET', 'font-groups'),
+};
+
 // Color Palettes
 export const paletteApi = {
   list:   ()           => request('GET',    'palettes'),

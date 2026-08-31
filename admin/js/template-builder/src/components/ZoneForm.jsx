@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { __, sprintf } from '@wordpress/i18n';
 import { extractSvgBoundingBox } from '../utils/svgPathUtils';
 import useTemplateStore from '../store/useTemplateStore';
-import { AVAILABLE_FONTS, mergeCustomFonts } from '../utils/fonts';
+import { AVAILABLE_FONTS, mergeCustomFonts, resolveAllowedFonts } from '../utils/fonts';
 import { mergeLayersToBoundary } from '../utils/mergeLayersToBoundary';
 import { layerSubPathItems } from '../utils/layerBoundaryItems';
 
@@ -88,7 +88,7 @@ function FillColorPicker({ value, onChange, onClear, globalConfig }) {
 }
 
 export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChange }) {
-  const { globalConfig, customFonts, views, currentViewIndex } = useTemplateStore();
+  const { globalConfig, customFonts, fontGroups, views, currentViewIndex } = useTemplateStore();
   const [data, setData] = useState({ ...DEFAULT, ...initialData });
 
   // Imported svg layers on the current view that carry inline geometry.
@@ -478,7 +478,7 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
       </fieldset>
 
       {data.allowed_types.includes('text') && (() => {
-        const allowedFonts = globalConfig.allowed_fonts || [];
+        const allowedFonts = resolveAllowedFonts(globalConfig, fontGroups);
         const allFonts = mergeCustomFonts(customFonts);
         const fontOptions = allowedFonts.length > 0
           ? allFonts.filter((f) => allowedFonts.includes(f.family))

@@ -20,6 +20,7 @@ class Admin {
     private string $hook_builder = '';
     private string $hook_design_templates = '';
     private string $hook_clipart = '';
+    private string $hook_fonts = '';
 
     public function __construct() {
         add_action('admin_menu',           [$this, 'register_menus']);
@@ -88,6 +89,15 @@ class Admin {
             [$this, 'render_clipart_page']
         );
 
+        $this->hook_fonts = (string) add_submenu_page(
+            'sgpd-templates',
+            __('Fonts', 'snelgraveren-product-designer'),
+            __('Fonts', 'snelgraveren-product-designer'),
+            'edit_sgpd_templates',
+            'sgpd-fonts',
+            [$this, 'render_fonts_page']
+        );
+
         $this->designs_page->register_menu();
 
         $this->export_dashboard->register_menu();
@@ -109,6 +119,10 @@ class Admin {
         include SGPD_PLUGIN_DIR . 'includes/Admin/views/clipart.php';
     }
 
+    public function render_fonts_page(): void {
+        include SGPD_PLUGIN_DIR . 'includes/Admin/views/fonts.php';
+    }
+
     public function render_builder_page(): void {
         $builder = new TemplateBuilder();
         $builder->render();
@@ -122,6 +136,11 @@ class Admin {
 
         if ($this->hook_clipart !== '' && $hook === $this->hook_clipart) {
             $this->enqueue_clipart_scripts();
+            return;
+        }
+
+        if ($this->hook_fonts !== '' && $hook === $this->hook_fonts) {
+            $this->enqueue_fonts_scripts();
             return;
         }
 
@@ -399,6 +418,33 @@ class Admin {
         }
 
         wp_localize_script('sgpd-clipart', 'sgpdClipart', [
+            'restUrl'    => esc_url_raw(rest_url()),
+            'nonce'      => wp_create_nonce('wp_rest'),
+            'isPremium'  => \Snelgraveren\ProductDesigner\Plugin::is_premium(),
+            'upgradeUrl' => function_exists('sgpd_fs') ? sgpd_fs()->get_upgrade_url() : '',
+        ]);
+    }
+
+    private function enqueue_fonts_scripts(): void {
+        $js_file = SGPD_PLUGIN_DIR . 'dist/admin-fonts.js';
+        $version = file_exists($js_file) ? substr(md5_file($js_file), 0, 8) : SGPD_VERSION;
+
+        wp_enqueue_script(
+            'sgpd-fonts',
+            SGPD_PLUGIN_URL . 'dist/admin-fonts.js',
+            ['react', 'react-dom', 'wp-i18n'],
+            $version,
+            true
+        );
+
+        $this->inline_script_translations('sgpd-fonts', 'snelgraveren-product-designer', 'dist/admin-fonts.js');
+
+        $css_file = SGPD_PLUGIN_DIR . 'dist/admin-fonts.css';
+        if (file_exists($css_file)) {
+            wp_enqueue_style('sgpd-fonts', SGPD_PLUGIN_URL . 'dist/admin-fonts.css', [], $version);
+        }
+
+        wp_localize_script('sgpd-fonts', 'sgpdFonts', [
             'restUrl'    => esc_url_raw(rest_url()),
             'nonce'      => wp_create_nonce('wp_rest'),
             'isPremium'  => \Snelgraveren\ProductDesigner\Plugin::is_premium(),

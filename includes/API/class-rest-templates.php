@@ -203,6 +203,21 @@ class RestTemplates {
             unset($global_config["{$prefix}_color_mode"], $global_config["{$prefix}_color_palette_id"]);
         }
 
+        // Resolve font groups to a flat allowed_fonts list. Templates store
+        // only group ids, so a font added to a group later reaches every
+        // template using that group — including templates saved before the
+        // change. Union of individual fonts + group members, deduplicated;
+        // deleted group ids are silently skipped (same philosophy as
+        // palettes above). The group ids themselves are internal and removed
+        // from the public response.
+        $group_ids = $global_config['allowed_font_groups'] ?? [];
+        if (is_array($group_ids) && !empty($group_ids)) {
+            $individual = is_array($global_config['allowed_fonts'] ?? null) ? $global_config['allowed_fonts'] : [];
+            $resolved   = \Snelgraveren\ProductDesigner\Database\FontGroupRepository::resolve_families($group_ids);
+            $global_config['allowed_fonts'] = array_values(array_unique(array_merge($individual, $resolved)));
+        }
+        unset($global_config['allowed_font_groups']);
+
         // Also set legacy fields for backwards compatibility with older frontend cache
         $global_config['any_color']      = $global_config['product_any_color'] ?? false;
         $global_config['allowed_colors'] = $global_config['product_allowed_colors'] ?? [];

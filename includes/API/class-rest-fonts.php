@@ -3,6 +3,7 @@ namespace Snelgraveren\ProductDesigner\API;
 
 defined('ABSPATH') || exit;
 
+use Snelgraveren\ProductDesigner\Database\FontGroupRepository;
 use Snelgraveren\ProductDesigner\Database\FontRepository;
 
 /**
@@ -38,6 +39,16 @@ class RestFonts {
             'permission_callback' => '__return_true',
         ]);
 
+        // Public: list font groups with their member families. Mirrors the
+        // clipart-collections pattern (names aren't sensitive); the template
+        // builder and the Fonts admin page read this. Mutations live in
+        // RestFontsAdmin (premium).
+        register_rest_route('pf/v1', '/font-groups', [
+            'methods'             => 'GET',
+            'callback'            => [$this, 'list_font_groups'],
+            'permission_callback' => '__return_true',
+        ]);
+
         // Public: proxy a Google font as base64 TTF, so the designer can outline
         // (opentype.js) / embed text in SVG exports without decoding woff2 or
         // hitting CORS. Google fonts only; the URL is built server-side from a
@@ -55,6 +66,10 @@ class RestFonts {
 
     public function list_fonts(): \WP_REST_Response {
         return rest_ensure_response(FontRepository::all());
+    }
+
+    public function list_font_groups(): \WP_REST_Response {
+        return rest_ensure_response(FontGroupRepository::list_groups());
     }
 
     /**

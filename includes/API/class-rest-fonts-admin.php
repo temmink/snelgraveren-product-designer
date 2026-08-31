@@ -3,6 +3,7 @@ namespace Snelgraveren\ProductDesigner\API;
 
 defined('ABSPATH') || exit;
 
+use Snelgraveren\ProductDesigner\Database\FontGroupRepository;
 use Snelgraveren\ProductDesigner\Database\FontRepository;
 use Snelgraveren\ProductDesigner\Plugin;
 use Snelgraveren\ProductDesigner\Security\FontValidator;
@@ -34,6 +35,27 @@ class RestFontsAdmin {
         register_rest_route('pf/v1', '/fonts/family/(?P<family>[^/]+)', [
             'methods'             => 'DELETE',
             'callback'            => [$this, 'delete_family'],
+            'permission_callback' => [$this, 'can_edit'],
+        ]);
+
+        // Admin: create a font group
+        register_rest_route('pf/v1', '/font-groups', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'create_group'],
+            'permission_callback' => [$this, 'can_edit'],
+        ]);
+
+        // Admin: update a font group (name and/or member families)
+        register_rest_route('pf/v1', '/font-groups/(?P<id>\d+)', [
+            'methods'             => 'PUT',
+            'callback'            => [$this, 'update_group'],
+            'permission_callback' => [$this, 'can_edit'],
+        ]);
+
+        // Admin: delete a font group
+        register_rest_route('pf/v1', '/font-groups/(?P<id>\d+)', [
+            'methods'             => 'DELETE',
+            'callback'            => [$this, 'delete_group'],
             'permission_callback' => [$this, 'can_edit'],
         ]);
     }
@@ -123,6 +145,84 @@ class RestFontsAdmin {
         }
 
         return new \WP_REST_Response(null, 204);
+    }
+
+    public function create_group(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+        if ( ! Plugin::has_feature( 'custom_fonts' ) ) {
+            return Plugin::premium_error( 'custom_fonts' );
+        }
+
+        $name = sanitize_text_field($request->get_param('name') ?? '');
+        if (empty($name)) {
+            return new \WP_Error('no_name', 'Group name is required.', ['status' => 400]);
+        }
+
+        $id = FontGroupRepository::create_group($name);
+
+        $families = $this->sanitize_families($request->get_param('families'));
+        if (!empty($families)) {
+            FontGroupRepository::set_members($id, $families);
+        }
+
+        return new \WP_REST_Response(FontGroupRepository::get_group($id), 201);
+    }
+
+    public function update_group(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+        if ( ! Plugin::has_feature( 'custom_fonts' ) ) {
+            return Plugin::premium_error( 'custom_fonts' );
+        }
+
+        $id = (int) $request['id'];
+        if (!FontGroupRepository::group_exists($id)) {
+            return new \WP_Error('not_found', 'Font group not found.', ['status' => 404]);
+        }
+
+        $name = $request->get_param('name');
+        if ($name !== null) {
+            $name = sanitize_text_field($name);
+            if (empty($name)) {
+                return new \WP_Error('no_name', 'Group name is required.', ['status' => 400]);
+            }
+            FontGroupRepository::rename_group($id, $name);
+        }
+
+        if ($request->get_param('families') !== null) {
+            FontGroupRepository::set_members($id, $this->sanitize_families($request->get_param('families')));
+        }
+
+        return rest_ensure_response(FontGroupRepository::get_group($id));
+    }
+
+    public function delete_group(\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
+        if ( ! Plugin::has_feature( 'custom_fonts' ) ) {
+            return Plugin::premium_error( 'custom_fonts' );
+        }
+
+        if (!FontGroupRepository::delete_group((int) $request['id'])) {
+            return new \WP_Error('not_found', 'Font group not found.', ['status' => 404]);
+        }
+
+        return new \WP_REST_Response(null, 204);
+    }
+
+    /** Family names are plain text (they end up in CSS font-family and Fabric JSON). */
+    private function sanitize_families(mixed $families): array {
+        if (!is_array($families)) {
+            return [];
+        }
+
+        $clean = [];
+        foreach ($families as $family) {
+            if (!is_string($family)) {
+                continue;
+            }
+            $family = sanitize_text_field($family);
+            if ($family !== '') {
+                $clean[] = $family;
+            }
+        }
+
+        return $clean;
     }
 
     private static function delete_file(string $url): void {

@@ -1,0 +1,267 @@
+/* ── Fonts Manager ──────────────────────────────────────────────────────── */
+.pf-fa {
+  max-width: 900px;
+  margin-top: 16px;
+}
+
+.pf-fa__section-title {
+  font-size: 16px;
+  margin: 24px 0 4px;
+}
+.pf-fa__section-title:first-child {
+  margin-top: 0;
+}
+.pf-fa__intro {
+  margin: 0 0 16px;
+  color: #50575e;
+  max-width: 640px;
+}
+
+/* ── Upgrade prompt ────────────────────────────────────────────────────── */
+.pf-fa__upgrade {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 16px;
+  margin: 16px 0;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 100%);
+  border: 1px solid #c3d4f7;
+  border-radius: 8px;
+  text-align: center;
+  max-width: 500px;
+}
+.pf-fa__upgrade-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #fff;
+  background: #2563eb;
+  border-radius: 10px;
+}
+.pf-fa__upgrade p {
+  margin: 0;
+  font-size: 14px;
+  color: #555;
+}
+
+/* ── Create bar ────────────────────────────────────────────────────────── */
+.pf-fa__create-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.pf-fa__create-input {
+  padding: 6px 10px;
+  font-size: 14px;
+  border: 1px solid #d0d5dd;
+  border-radius: 4px;
+  width: 300px;
+  transition: border-color 0.15s;
+}
+.pf-fa__create-input:focus {
+  border-color: #2271b1;
+  outline: none;
+  box-shadow: 0 0 0 1px #2271b1;
+}
+
+/* ── Empty state ───────────────────────────────────────────────────────── */
+.pf-fa__empty {
+  padding: 32px;
+  text-align: center;
+  border: 2px dashed #e5e7eb;
+  border-radius: 8px;
+  background: #fafbfc;
+  color: #646970;
+}
+.pf-fa__empty p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* ── Group list / card ─────────────────────────────────────────────────── */
+.pf-fa__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pf-fa__card {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.pf-fa__card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.1s;
+  user-select: none;
+}
+.pf-fa__card-header:hover {
+  background: #f5f5f5;
+}
+
+.pf-fa__chevron {
+  display: inline-flex;
+  align-items: center;
+  color: #8c8f94;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.pf-fa__chevron--open {
+  transform: rotate(90deg);
+}
+
+.pf-fa__card-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e1e1e;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pf-fa__rename-input {
+  flex: 1;
+  padding: 4px 8px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid #2271b1;
+  border-radius: 3px;
+  outline: none;
+}
+
+.pf-fa__card-count {
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 22px;
+  height: 22px;
+  line-height: 22px;
+  text-align: center;
+  border-radius: 11px;
+  background: #e5e7eb;
+  color: #50575e;
+  flex-shrink: 0;
+}
+
+.pf-fa__card-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.pf-fa__btn-danger {
+  color: #d63638 !important;
+  border-color: #d63638 !important;
+}
+.pf-fa__btn-danger:hover {
+  background: #fcecec !important;
+}
+
+/* ── Card body: font checkboxes ────────────────────────────────────────── */
+.pf-fa__card-body {
+  border-top: 1px solid #e5e7eb;
+  padding: 14px;
+  background: #fafbfc;
+}
+
+.pf-fa__font-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 4px 16px;
+}
+
+.pf-fa__font-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.pf-fa__font-check:hover {
+  background: #f0f0f1;
+}
+.pf-fa__font-check--missing .pf-fa__font-sample {
+  color: #d63638;
+}
+
+.pf-fa__font-sample {
+  font-size: 15px;
+  color: #1e1e1e;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pf-fa__font-cat {
+  font-size: 11px;
+  color: #8c8f94;
+  flex-shrink: 0;
+}
+
+/* ── Custom fonts section ──────────────────────────────────────────────── */
+.pf-fa__custom {
+  margin-top: 32px;
+  padding-top: 8px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.pf-fa__upload-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.pf-fa__upload-row input[type='text'] {
+  padding: 5px 10px;
+  border: 1px solid #d0d5dd;
+  border-radius: 4px;
+}
+
+.pf-fa__note {
+  font-size: 12px;
+  color: #646970;
+  margin: 6px 0 0;
+}
+
+.pf-fa__error {
+  color: #d63638;
+  font-size: 13px;
+  margin: 8px 0 0;
+}
+
+.pf-fa__custom-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 14px;
+}
+.pf-fa__custom-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fff;
+}
+.pf-fa__custom-item .pf-fa__note {
+  margin: 0;
+}
+.pf-fa__custom-item .pf-fa__font-sample {
+  flex: 0 1 auto;
+  font-size: 15px;
+}

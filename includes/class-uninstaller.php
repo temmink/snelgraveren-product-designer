@@ -25,7 +25,9 @@ class Uninstaller {
         global $wpdb;
 
         $tables = [
-            'pf_clipart_items',
+            'pf_font_group_members',
+            'pf_font_groups',
+            'pf_clipart',
             'pf_clipart_collections',
             'pf_design_template_views',
             'pf_design_templates',

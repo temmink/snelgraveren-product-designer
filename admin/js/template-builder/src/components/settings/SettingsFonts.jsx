@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { __ } from '@wordpress/i18n';
 import useTemplateStore from '../../store/useTemplateStore';
-import { AVAILABLE_FONTS, loadCustomFonts, mergeCustomFonts } from '../../utils/fonts';
+import { AVAILABLE_FONTS, loadCustomFonts, mergeCustomFonts, resolveAllowedFonts } from '../../utils/fonts';
 import { fontApi } from '../../api/templateApi';
 
 function FontSelector({ allowed, onChange }) {
@@ -181,17 +181,45 @@ function FontSelector({ allowed, onChange }) {
         </div>
       )}
 
-      {allowed.length === 0 && (
-        <p className="pf-settings__note">
-          {__("No fonts selected. Customers won't be able to change fonts.", 'snelgraveren-product-designer')}
-        </p>
-      )}
+    </div>
+  );
+}
+
+/**
+ * Checkbox list of font groups (managed on the Product Designer → Fonts admin
+ * page). Templates store only the group IDS; the server expands them when the
+ * customer designer loads the template, so a font added to a group later
+ * reaches every template using that group automatically.
+ */
+function FontGroupPicker({ groups, selected, onChange }) {
+  const toggle = (id) => {
+    onChange(selected.includes(id) ? selected.filter((g) => g !== id) : [...selected, id]);
+  };
+
+  return (
+    <div className="pf-settings__font-groups">
+      {groups.map((group) => (
+        <label key={group.id} className="pf-settings__check" title={(group.families || []).join(', ')}>
+          <input
+            type="checkbox"
+            checked={selected.includes(group.id)}
+            onChange={() => toggle(group.id)}
+          />
+          {group.name}
+          <span className="pf-settings__note" style={{ marginLeft: '0.5em' }}>
+            ({(group.families || []).length} {__('fonts', 'snelgraveren-product-designer')})
+          </span>
+        </label>
+      ))}
     </div>
   );
 }
 
 export default function SettingsFonts({ globalConfig, update }) {
   const { fonts_enabled = false } = globalConfig;
+  const { fontGroups } = useTemplateStore();
+
+  const resolved = resolveAllowedFonts(globalConfig, fontGroups);
 
   return (
     <>
@@ -206,10 +234,37 @@ export default function SettingsFonts({ globalConfig, update }) {
           {__('Enable font picker', 'snelgraveren-product-designer')}
         </label>
         {fonts_enabled && (
-          <FontSelector
-            allowed={globalConfig.allowed_fonts || []}
-            onChange={(fonts) => update('allowed_fonts', fonts)}
-          />
+          <>
+            {fontGroups.length > 0 && (
+              <>
+                <h4>{__('Font groups', 'snelgraveren-product-designer')}</h4>
+                <FontGroupPicker
+                  groups={fontGroups}
+                  selected={globalConfig.allowed_font_groups || []}
+                  onChange={(ids) => update('allowed_font_groups', ids)}
+                />
+                <p className="pf-settings__note">
+                  {__('A font added to a selected group later is automatically available in this template.', 'snelgraveren-product-designer')}
+                </p>
+                <h4>{__('Individual fonts', 'snelgraveren-product-designer')}</h4>
+              </>
+            )}
+            <FontSelector
+              allowed={globalConfig.allowed_fonts || []}
+              onChange={(fonts) => update('allowed_fonts', fonts)}
+            />
+            {resolved.length === 0 ? (
+              <p className="pf-settings__note">
+                {__("No fonts selected. Customers won't be able to change fonts.", 'snelgraveren-product-designer')}
+              </p>
+            ) : (
+              (globalConfig.allowed_font_groups || []).length > 0 && (
+                <p className="pf-settings__note">
+                  {__('Customers can use:', 'snelgraveren-product-designer')} {resolved.join(', ')}
+                </p>
+              )
+            )}
+          </>
         )}
       </fieldset>
     </>

@@ -21,7 +21,7 @@ A WooCommerce plugin that lets customers design text, images, and SVGs onto prod
 - **Approach B: Pure custom database tables** (11 tables, no CPTs). All data in `wp_pf_*` tables.
 - **Frontend canvas:** Fabric.js 6.x
 - **UI framework:** React 18 + Zustand state management
-- **Build system:** Vite (single config, four entry points: admin, design-templates, clipart, frontend) + CSS copy step for Safari compatibility
+- **Build system:** Vite (single config, five entry points: admin, design-templates, clipart, fonts, frontend) + CSS copy step for Safari compatibility
 - **Licensing:** Freemius SDK for premium feature gating; `is_premium()` helper in main `Plugin` class (`Snelgraveren\ProductDesigner\Plugin`, file `includes/class-plugin.php`)
 - **Export:** Local only — everything a format needs is captured client-side during save (only the browser has the fonts and the live Fabric objects) and stored per view; the server emits files from those columns. Four formats: PNG (3× raster), PDF (TCPDF), SVG, and **LightBurn `.lbrn2`** (Pro, 1.11.0). Multi-view exports stream as ZIP. The production-SVG pipeline lives in `frontend/js/designer/src/utils/productionSvg.js` + `exportRender.js` + `textOutline.js` and exists because of a silent failure that reached a laser (memory `project_fabric_tspan_svg_bug`): Fabric 6.9.1 emits malformed XML for a rotated+styled tspan character, which the sanitizer rejected without a trace, so every curved-text design exported as a bitmap. Rules that must hold: repair + `parseSvgOrThrow` BEFORE anything consumes Fabric's markup; strip zone overlays, clipPaths and curved-text baseline paths (LightBurn burns all three as lines); the "SVG" variant outlines every glyph at measured position AND rotation (per-character output forced via a hairline charSpacing — Fabric's `timeToRender` collapses to one tspan per line otherwise, handing letter placement to the consumer); the "SVG + fonts" variant writes curved text as `<textPath>` (the one form LightBurn imports correctly — it re-flows per-character tspans into garbage); never detach `obj.path` before `toSVG()` (destroys the per-character layout for charSpacing-0 text); real mm on the root, geometry untouched (Imagick chokes on extra transforms). Failures are LOUD end to end: `buildExportVectors` collects errors instead of falling back to raw markup, and the server logs every rejected blob (`sanitize_export_blob`/`sanitize_lbrn_blob`). Verify any export change with `npx vite --config tools/export-check/vite.config.js` — it runs the real pipeline on a saved design JSON.
 - **LightBurn export (`utils/lbrnWriter.js`):** the inverse of the template builder's `lbrnParser` and round-trip-tested through it. Text ships as native, editable LightBurn Text shapes; the placement model was CALIBRATED against LightBurn's own SVG re-exports, not assumed — the full model (anchor formula, arc fit on the laid ink segment, per-line shapes for straight text, single-char tangent rule, Av/Ah semantics incl. "Av0 + Bend scatters glyphs") is in memory `project_lbrn_export`. Requires the view's `width_mm`; designs saved before 1.11.0 have no data until re-saved (reopen link → save).
@@ -249,8 +249,22 @@ These exist because FPD had CVE-2024-51919 (arbitrary file upload → RCE) and C
 | `wp_pf_fonts` | Custom font uploads (family name, file URL, format) |
 | `wp_pf_clipart_collections` | Clipart collections (name, slug) |
 | `wp_pf_clipart` | Clipart items (SVG file URL, collection FK) |
+| `wp_pf_font_groups` | Font groups (name) — named sets of fonts the merchant selects per template |
+| `wp_pf_font_group_members` | Group membership as **family-name strings** (not FKs to `wp_pf_fonts` — web-safe/Google fonts have no row there), UNIQUE (group_id, family), FK cascade on group delete |
 
-All tables use InnoDB engine for foreign key and transaction support. Total: 11 tables.
+All tables use InnoDB engine for foreign key and transaction support. Total: 13 tables.
+
+**Font groups resolve at READ time, never at save time.** Templates store only group ids in
+`global_config.allowed_font_groups` (alongside the individual `allowed_fonts`);
+`RestTemplates::get_public_template()` expands them into the flat `allowed_fonts` list (union,
+deduplicated, deleted group ids silently skipped, the ids themselves stripped from the response) —
+the same spot where color palettes are resolved. That is the whole "add a font to a group later and
+every template picks it up" mechanism: never bake the expanded list into a stored template. The
+builder mirrors this client-side via `utils/fonts.js#resolveAllowedFonts` (the admin template
+endpoint returns the RAW config on purpose). Group management lives on the `sgpd-fonts` admin page
+(React app `admin/js/fonts/`); mutations sit in `RestFontsAdmin` (premium, `custom_fonts` gate),
+the public `GET /pf/v1/font-groups` in `RestFonts`. `FontRepository::delete_family()` also removes
+the family from every group.
 
 ## Prefix Rename (wp.org review round 2)
 
@@ -290,6 +304,7 @@ Other renames: Freemius helper `pf_fs()` → `sgpd_fs()`, global `$pf_fs` → `$
 | Add New | `pf-template-builder` | Template builder React app (canvas, zones, layers, permissions, pricing) |
 | Design Templates | `pf-design-templates` | Design template CRUD React app (list, create, edit, delete, import/export JSON) |
 | Clipart | `pf-clipart` | Clipart manager React app (collections CRUD, bulk SVG upload, drag & drop) |
+| Fonts | `sgpd-fonts` | `admin/js/fonts/` React app: custom-font upload + **font groups** (create/rename/delete, tick fonts per group — web-safe, Google and custom alike). Groups are selected per template in the builder (Settings → Fonts) and resolved server-side at read time — see "Font groups resolve at READ time" under Database Tables |
 | Designs | `sgpd-designs` | `Admin\DesignsPage` — every saved design, newest first, with the one action WP admin had no route for: **assigning a design to a customer**. Also **send, resend and withdraw a proof** (Pro, 1.10.0) — see "Handing a design to a customer" below. **Delete design** (1.11.2) removes a design + thumbnails + export files behind a confirm; ordered designs are refused (their hash lives in order item meta) and file deletion is realpath-contained to uploads/ |
 | Settings | `pf-settings` | Export options (`pf_export_trigger_status`, `pf_export_default_format`), `pf_delete_data_on_uninstall` toggle, guest design retention (`pf_guest_design_retention_days`), health e-mail alert toggle (`pf_health_email_alerts`), a design-statistics panel (saved/ordered/conversion, last 30 days), and system status checks (`Admin\SystemStatus`: PHP ≥ 8.1, finfo, rsvg-convert/Imagick-SVG, writable `pf-thumbnails`/`pf-exports`/`pf-fonts`/`pf-clipart`/`pf-cache`, DB tables, LiteSpeed detection). Critical failures also show as an admin notice on every ProductForge screen (cached 5 min in the `pf_system_status_critical` transient) |
 | Production | `pf-export-dashboard` | `Admin\ExportDashboard` — lists recent orders (filterable by status/days) that contain designs, flags designs containing raster images via `DesignInspector::contains_raster()`, and bulk-downloads the selection as one ZIP via `admin_post_pf_bulk_export`. Since 1.11.1 the ZIP carries EVERY format the build's gates allow (PNG/PDF/SVG/lbrn) per design; a format that cannot be generated lands in a `LEESMIJ-ontbrekend.txt` inside the ZIP instead of sinking the download. The Settings default format only governs the automatic on-status-change export |

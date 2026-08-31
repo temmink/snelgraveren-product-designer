@@ -8,8 +8,8 @@ import TreePanel from './components/TreePanel';
 import PermissionsPanel from './components/PermissionsPanel';
 import PricingPanel from './components/PricingPanel';
 import GlobalSettings from './components/GlobalSettings';
-import { loadGoogleFonts, loadCustomFonts } from './utils/fonts';
-import { fontApi, paletteApi, clipartApi } from './api/templateApi';
+import { loadGoogleFonts, loadCustomFonts, resolveAllowedFonts } from './utils/fonts';
+import { fontApi, fontGroupApi, paletteApi, clipartApi } from './api/templateApi';
 
 const isPremium = window.sgpdTemplateBuilder?.isPremium;
 
@@ -27,6 +27,8 @@ export default function App() {
     loadFromApi, setTitle, setStatus, setId, setIsSaving, setIsDirty,
     addView, updateView, removedViewIds, clearRemovedViewIds,
     setCustomFonts,
+    setFontGroups,
+    fontGroups,
     setColorPalettes,
     setClipartCollections,
   } = useTemplateStore();
@@ -110,12 +112,15 @@ export default function App() {
   // (matching templateApi's `${base()}pf/v1/${path}` convention) — the
   // localized `restUrl` is only the wp-json root.
   useEffect(() => {
-    const fonts = globalConfig.allowed_fonts || [];
+    // Resolve font groups client-side — the admin endpoint returns the raw
+    // config (group ids), so the builder previews the same union the customer
+    // will get from the public endpoint.
+    const fonts = resolveAllowedFonts(globalConfig, fontGroups);
     if (fonts.length > 0) {
       const wpJsonBase = window.sgpdTemplateBuilder?.restUrl || '/wp-json/';
       loadGoogleFonts(fonts, `${wpJsonBase}pf/v1`);
     }
-  }, [globalConfig.allowed_fonts]);
+  }, [globalConfig.allowed_fonts, globalConfig.allowed_font_groups, fontGroups]);
 
   // Load custom fonts, color palettes, and clip art collections (premium only)
   useEffect(() => {
@@ -130,6 +135,12 @@ export default function App() {
       .catch((err) => console.error('Failed to load color palettes:', err));
 
     clipartApi.listCollections().then((c) => setClipartCollections(c)).catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Font groups are needed regardless of premium: a downgraded site keeps
+  // its groups, and existing templates must keep resolving them.
+  useEffect(() => {
+    fontGroupApi.list().then(setFontGroups).catch(() => {});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSave = async () => {

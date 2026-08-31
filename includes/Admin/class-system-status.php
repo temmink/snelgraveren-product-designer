@@ -28,6 +28,8 @@ class SystemStatus {
         'pf_fonts',
         'pf_clipart_collections',
         'pf_clipart',
+        'pf_font_groups',
+        'pf_font_group_members',
     ];
 
     /** Upload subdirectories the plugin writes to at runtime. */

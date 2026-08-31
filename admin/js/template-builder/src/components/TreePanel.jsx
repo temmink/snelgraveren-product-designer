@@ -7,7 +7,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import useTemplateStore from '../store/useTemplateStore';
 import TreeNode from './TreeNode';
 import ZoneForm from './ZoneForm';
-import { AVAILABLE_FONTS, mergeCustomFonts } from '../utils/fonts';
+import { AVAILABLE_FONTS, mergeCustomFonts, resolveAllowedFonts } from '../utils/fonts';
 import { clipartApi } from '../api/templateApi';
 import { isLayerLockedForCustomer } from '../../../../../shared/js/layerLockForCustomer';
 import { fontSizeInputFloorPx, clampFontSizePx } from '../../../../../shared/js/fontSizeLimits';
@@ -630,8 +630,8 @@ function FontSizeField({ layer, onChange }) {
 }
 
 function LayerDetail({ layer, onChange }) {
-  const { globalConfig, customFonts, colorPalettes } = useTemplateStore();
-  const allowedFonts = globalConfig.allowed_fonts || [];
+  const { globalConfig, customFonts, colorPalettes, fontGroups } = useTemplateStore();
+  const allowedFonts = resolveAllowedFonts(globalConfig, fontGroups);
   const allFonts = mergeCustomFonts(customFonts);
   // In admin, show allowed fonts if configured, otherwise show all available fonts (including custom)
   const fontOptions = allowedFonts.length > 0

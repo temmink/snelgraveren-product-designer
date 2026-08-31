@@ -87,6 +87,26 @@ export function loadCustomFonts(customFonts) {
 }
 
 /**
+ * The customer-facing allowed-fonts list a template's config produces:
+ * union of the individually selected fonts and every member of the selected
+ * font groups, deduplicated. Mirrors the server-side resolution in
+ * RestTemplates::get_public_template() — the builder needs the same list
+ * client-side for its own font dropdowns and the Settings preview, because
+ * the admin template endpoint returns the RAW config (group ids), on purpose.
+ *
+ * @param {object} globalConfig — template global_config (allowed_fonts, allowed_font_groups)
+ * @param {Array}  fontGroups   — from GET /pf/v1/font-groups: [{id, name, families}]
+ */
+export function resolveAllowedFonts(globalConfig, fontGroups) {
+  const individual = globalConfig.allowed_fonts || [];
+  const groupIds = globalConfig.allowed_font_groups || [];
+  const fromGroups = (fontGroups || [])
+    .filter((g) => groupIds.includes(g.id))
+    .flatMap((g) => g.families || []);
+  return [...new Set([...individual, ...fromGroups])];
+}
+
+/**
  * Merge custom fonts into AVAILABLE_FONTS for the font picker.
  * Returns a new array with builtin + custom fonts sorted alphabetically by
  * family (case-insensitive), so the picker reads A→Z everywhere.

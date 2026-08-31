@@ -1544,6 +1544,16 @@
   color: #1e1e1e;
 }
 
+.pf-settings__font-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+.pf-settings__font-groups .pf-settings__check {
+  margin: 0;
+}
+
 .pf-settings__label {
   display: flex;
   flex-direction: column;

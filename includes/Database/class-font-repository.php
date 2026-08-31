@@ -77,6 +77,9 @@ class FontRepository {
 
         if (!empty($rows)) {
             $wpdb->delete($table, ['family' => $family], ['%s']);
+            // A deleted family must also leave every font group, or groups
+            // would keep offering customers a font that no longer loads.
+            FontGroupRepository::remove_family($family);
         }
 
         return $rows;
