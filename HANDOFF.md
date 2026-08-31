@@ -4,17 +4,15 @@ _Last updated: 2026-08-31._
 
 ## Where things stand
 
-- **Live site runs 1.11.4** (snelgraveren.nl, verified as guest via the public readme probe on
-  2026-08-31). Single plugin folder `snelgraveren-product-designer/`.
-- **1.12.0 is built and WAITING FOR MARTIN'S UPLOAD**: `snelgraveren-product-designer-1.12.0.zip`
-  (2.1 MB) in the project dir, content-verified (admin-fonts.js, Migration1300,
-  FontGroupRepository, views/fonts.php all present; version 1.12.0 in header, constant and Stable
-  tag). Deploy = WP-admin → Plugins → Upload → "Huidige vervangen door de geüploade" → LiteSpeed
-  Purge All → check the active row on plugins.php. Migration1300 (two new tables) runs on the
-  first pageview after activation.
-- **Post-upload verification** (do this once uploaded): readme probe shows Stable tag 1.12.0;
-  Settings → System status says "All 13 tables present"; guest fetch of
-  `GET /wp-json/pf/v1/font-groups` returns 200 (`[]` until groups are created).
+- **Live site runs 1.12.0** (snelgraveren.nl), uploaded by Martin on 2026-08-31 and verified as
+  guest the same day: readme Stable tag 1.12.0; `GET /pf/v1/font-groups` returns Martin's first
+  two real groups ("Display", "Handwriting") — so Migration1300 ran; the designer product page
+  (hondenpenning) serves 200 with the no-cache headers intact and the hashed bundle
+  `frontend-designer.1cc7e481.js`, md5-identical to the local `dist/frontend-designer.js`.
+  Single plugin folder `snelgraveren-product-designer/`. The `…-1.12.0.zip` in the project dir is
+  the live build (keep as rollback anchor next to 1.11.x).
+- **Groups are live but not yet attached to templates** — per template: builder → Settings →
+  Fonts → tick group(s). Nothing changes for a template until that's done (opt-in by design).
 - **`master` is current, NOT pushed** since `b7299ef` (1.11.4). Local commits on top:
   `feat(fonts)` fontgroepen, `chore(release): 1.12.0`, plus this docs commit. Push when convenient.
 - **wordpress.org still has 1.7.8** (r3657251). A wp.org release would now also ship font groups
@@ -48,8 +46,8 @@ in CLAUDE.md ("Font groups resolve at READ time" under Database Tables).
 
 ## Open — needs Martin, not code
 
-1. **Upload the 1.12.0 ZIP** (see above) — then create real font groups and switch templates over
-   at leisure; groups are opt-in per template, nothing migrates automatically (by design).
+1. **Tick font groups on the templates that should use them** (builder → Settings → Fonts) — the
+   groups themselves ("Display", "Handwriting") already exist on live.
 2. **Guest-design retention still at 30 days** — Martin asked about 14; setting exists under
    Product Designer → Settings.
 3. **Five live templates still have the claiming `Imported` zone**: tpl 22 acacia (2630), tpl 7
