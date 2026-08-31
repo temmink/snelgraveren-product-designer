@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.11.4
+Stable tag: 1.12.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -133,6 +133,10 @@ No other external services are used. Design exports (PDF/PNG/SVG) are rendered e
 4. Production dashboard: every order with a design, filtered by status and period, ready to download as one ZIP.
 
 == Changelog ==
+
+= 1.12.0 =
+* New: font groups — create named sets of fonts on the new Product Designer → Fonts admin page and enable whole groups per template in the builder. Adding a font to a group later automatically makes it available in every template using that group, including existing ones.
+* Fixed: uninstall now removes the clip art items table when "delete data on uninstall" is enabled.
 
 = 1.11.4 =
 * Improved: clip art in the designer is now chosen from a large-preview panel that opens when the customer clicks a category, instead of tiny thumbnails in the sidebar.
