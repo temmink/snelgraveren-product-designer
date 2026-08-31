@@ -47,11 +47,15 @@ npm run dev                             # Vite dev server (HMR)
 npm run build                           # Production build → dist/
 ```
 
-- WordPress: http://localhost:8080 — the stock `admin`/`admin` account exists only on a fresh
-  install. This environment now runs a COPY OF THE LIVE SHOP's database, so the users table is
-  the live one: the administrator is `martin.temmink` (live password). `pf-dev-test` (ID 18) is a
-  throwaway administrator created locally on 2026-08-24 for browser verification; it exists only
-  in the local Docker database and must never be created on the live site.
+- WordPress: http://localhost:8080. **TWO compose stacks exist and they have DIFFERENT databases**
+  (verified 2026-08-31): `docker compose up` from the repo runs as project **`productforge`**
+  (containers `productforge-wordpress-1` etc., own volume — NOT the live-shop copy; admin is the
+  throwaway `pf-dev-test` / `pf-dev-test-2026`, and its wp-config carries `SGPD_LICENSE_KEY` set to
+  the dev hash so premium gates pass). The **live-DB copy** lives in the separate
+  **`productdesigner`** stack (`productdesigner-wordpress-1`, admin `martin.temmink`) — when that
+  one is running, address it via `docker exec productdesigner-wordpress-1 …`; starting the other
+  stack alongside it fails on port 3306. Check `docker ps` first to see which stack is up.
+  `pf-dev-test` exists only locally and must never be created on the live site.
 - phpMyAdmin: http://localhost:8081
 - **In-container plugin path is `productforge`, not the slug** — the source is bind-mounted at `/var/www/html/wp-content/plugins/productforge/`. Use it for `php -l` / `wp eval`, e.g. `docker compose exec -T wordpress php -l /var/www/html/wp-content/plugins/productforge/includes/....php`.
 
