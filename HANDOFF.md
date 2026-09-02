@@ -1,16 +1,18 @@
 # Handoff
 
-_Last updated: 2026-09-02._
+_Last updated: 2026-09-02 (evening)._
 
 ## Where things stand
 
-- **Live site runs 1.12.1** (snelgraveren.nl), ZIP uploaded by Martin on 2026-09-02 (cache purged
-  by him too) and verified the same day: readme Stable tag 1.12.1 as guest, single plugin folder
-  `snelgraveren-product-designer/`, and the new Designs-page features verified END-TO-END on live
-  through Martin's logged-in Chrome session (chrome-devtools MCP): all 20 rows render the design
-  link + download links, and a real SVG download (design 51, olijfhouten borrelplank) returned
-  200 / `image/svg+xml` / attachment / 67 KB. The `…-1.12.1.zip` in the project dir is the live
-  build (keep as rollback anchor next to 1.12.0).
+- **Live site runs 1.12.2** (snelgraveren.nl), deployed 2026-09-02 through Martin's logged-in
+  Chrome session (upload → "Huidige vervangen door de geüploade" → LiteSpeed purge all) and
+  verified as guest: readme Stable tag 1.12.2, product page serves hashed bundle
+  `frontend-designer.be335d65.js`, md5-identical to local dist and containing the Layers-tab
+  code; `dist/frontend-designer.css` carries the `pf-layers` styles. The `…-1.12.2.zip` in the
+  project dir is the live build (rollback anchor next to 1.12.1).
+- **1.12.1 shipped earlier the same day** (Designs page: per-row SVG/LightBurn download +
+  design link) — see "What shipped in 1.12.1" below; live-verified end-to-end before 1.12.2
+  replaced it.
 - **All 30 live designs predate 1.11.0 and have no `export_lbrn` data** — the LightBurn download
   correctly reports "reopen and re-save once" on those rows until each design is re-saved.
 - **`master` is current, NOT pushed** since `b7299ef` (1.11.4). Local commits on top: the 1.12.0
@@ -22,6 +24,19 @@ _Last updated: 2026-09-02._
   `PremiumExports` anyway.
 - **Freemius Deployment**: no 1.11.x/1.12.x pushed to Freemius — live updates happen via direct
   ZIP upload only (dev-licence site, Freemius pushes nothing).
+
+## What shipped in 1.12.2 (2026-09-02)
+
+**Layers tab in the customer designer** — Martin's report: with overlapping elements the canvas
+selects the wrong one. Cause: Fabric hit-tests on bounding box, so transparent clipart corners /
+empty text-box space on top steal the click. Chosen fix (out of four options offered): a fourth
+sidebar tab listing every selectable element, topmost first (`tabs/LayersTab.jsx`); click selects
+via `canvas.setActiveObject()` (fires the selection events, so store + Element tab follow).
+Locked template art, zones, placeholders and background stay out of the list. The auto-switch to
+the Element tab deliberately skips the Layers tab. Verified on the wolfje template in the
+`productdesigner` stack. The NOT-chosen options remain candidates if canvas clicking itself
+should improve: per-pixel target find for images/SVG, click-through cycling, builder zones
+selectable on border only.
 
 ## What shipped in 1.12.1 (2026-09-02)
 
