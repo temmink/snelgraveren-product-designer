@@ -4,6 +4,7 @@ import useDesignerStore from '../store/useDesignerStore';
 import useIsMobile from '../hooks/useIsMobile';
 import AddTab from './tabs/AddTab';
 import ElementTab from './tabs/ElementTab';
+import LayersTab from './tabs/LayersTab';
 import ViewsTab from './tabs/ViewsTab';
 
 export default function Sidebar() {
@@ -18,10 +19,15 @@ export default function Sidebar() {
     (z) => z.boundary_type === 'svg' && z.svg_url && z.svg_fill_editable
   );
 
-  // Auto-switch to Element tab when object selected
+  // Auto-switch to Element tab when object selected — except while the user
+  // is on the Layers tab: that tab exists to select one element after
+  // another, and yanking them to Element after every click would make it
+  // useless for exactly its purpose.
   useEffect(() => {
     if (selectedObject) {
-      setActiveTab('element');
+      if (activeTab !== 'layers') {
+        setActiveTab('element');
+      }
     } else if (activeTab === 'element' && !hasEditableZones) {
       setActiveTab('views');
     }
@@ -48,7 +54,9 @@ export default function Sidebar() {
             ? __('Element Options', 'snelgraveren-product-designer')
             : activeTab === 'add'
               ? __('Add Element', 'snelgraveren-product-designer')
-              : __('Views', 'snelgraveren-product-designer')
+              : activeTab === 'layers'
+                ? __('Layers', 'snelgraveren-product-designer')
+                : __('Views', 'snelgraveren-product-designer')
           }
         </button>
       )}
@@ -87,6 +95,17 @@ export default function Sidebar() {
         >
           {__('Add', 'snelgraveren-product-designer')}
         </button>
+        <button
+          type="button"
+          role="tab"
+          id="pf-tab-layers"
+          aria-selected={activeTab === 'layers'}
+          aria-controls="pf-panel-layers"
+          className={`pf-sidebar__tab${activeTab === 'layers' ? ' pf-sidebar__tab--active' : ''}`}
+          onClick={() => setActiveTab('layers')}
+        >
+          {__('Layers', 'snelgraveren-product-designer')}
+        </button>
       </div>
       <div className="pf-sidebar__content">
         {activeTab === 'views' && (
@@ -102,6 +121,11 @@ export default function Sidebar() {
         {activeTab === 'add' && (
           <div role="tabpanel" id="pf-panel-add" aria-labelledby="pf-tab-add">
             <AddTab />
+          </div>
+        )}
+        {activeTab === 'layers' && (
+          <div role="tabpanel" id="pf-panel-layers" aria-labelledby="pf-tab-layers">
+            <LayersTab />
           </div>
         )}
       </div>
