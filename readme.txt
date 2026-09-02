@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.12.1
+Stable tag: 1.12.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -133,6 +133,9 @@ No other external services are used. Design exports (PDF/PNG/SVG) are rendered e
 4. Production dashboard: every order with a design, filtered by status and period, ready to download as one ZIP.
 
 == Changelog ==
+
+= 1.12.2 =
+* New: a Layers tab in the designer sidebar listing every selectable element, topmost first. Where elements overlap on the canvas, a click can land on the wrong one — the list selects exactly the element you mean, and selecting from the list keeps you on the Layers tab.
 
 = 1.12.1 =
 * New: download a design straight from the Designs admin page as a production SVG or native LightBurn file (Pro) — draft or not, no order needed. A design saved before 1.11.0 has no LightBurn data yet; the row explains to reopen and re-save it once.
