@@ -55,6 +55,13 @@ npm run build                           # Production build → dist/
   **`productdesigner`** stack (`productdesigner-wordpress-1`, admin `martin.temmink`) — when that
   one is running, address it via `docker exec productdesigner-wordpress-1 …`; starting the other
   stack alongside it fails on port 3306. Check `docker ps` first to see which stack is up.
+  Both stacks share ONE compose file — only the project name differs: start the live-copy with
+  `docker compose -p productdesigner up -d` (both serve WordPress on :8080). Gotcha: `wp` in the
+  container runs as root, so files it creates under `uploads/` (e.g. a test export in
+  `pf-exports/`) become root-owned and www-data can no longer overwrite them from the browser —
+  `chown -R www-data:www-data` the dir after CLI experiments. Cookie-login for curl tests without
+  a password: `wp eval` + `wp_generate_auth_cookie($id, $exp, 'auth')` / `'logged_in'` under the
+  `AUTH_COOKIE` / `LOGGED_IN_COOKIE` names.
   `pf-dev-test` exists only locally and must never be created on the live site.
 - phpMyAdmin: http://localhost:8081
 - **In-container plugin path is `productforge`, not the slug** — the source is bind-mounted at `/var/www/html/wp-content/plugins/productforge/`. Use it for `php -l` / `wp eval`, e.g. `docker compose exec -T wordpress php -l /var/www/html/wp-content/plugins/productforge/includes/....php`.
@@ -69,7 +76,7 @@ npm run build                           # Production build → dist/
 - **All DB access via Repository classes** — never use `$wpdb` directly outside `includes/Database/`
 - **File uploads validated via `UploadValidator`** — MIME check with `finfo_file()`, SVG sanitized with `enshrined/svg-sanitize`
 - **Prices always calculated server-side** — never trust client-sent price values
-- **Design IDs are hashes** — public-facing design identifiers use `bin2hex(random_bytes(16))`, never sequential IDs
+- **Design IDs are hashes** — public-facing design identifiers use `bin2hex(random_bytes(16))`, never sequential IDs. `DesignRepository::create()` generates the hash ITSELF and ignores any `design_hash` in `$data` — when seeding test designs, read the real hash back via `get($id)`
 
 ### Shared browser modules (`shared/js/`)
 
@@ -309,7 +316,7 @@ Other renames: Freemius helper `pf_fs()` → `sgpd_fs()`, global `$pf_fs` → `$
 | Design Templates | `pf-design-templates` | Design template CRUD React app (list, create, edit, delete, import/export JSON) |
 | Clipart | `pf-clipart` | Clipart manager React app (collections CRUD, bulk SVG upload, drag & drop) |
 | Fonts | `sgpd-fonts` | `admin/js/fonts/` React app: custom-font upload + **font groups** (create/rename/delete, tick fonts per group — web-safe, Google and custom alike). Groups are selected per template in the builder (Settings → Fonts) and resolved server-side at read time — see "Font groups resolve at READ time" under Database Tables |
-| Designs | `sgpd-designs` | `Admin\DesignsPage` — every saved design, newest first, with the one action WP admin had no route for: **assigning a design to a customer**. Also **send, resend and withdraw a proof** (Pro, 1.10.0) — see "Handing a design to a customer" below. **Delete design** (1.11.2) removes a design + thumbnails + export files behind a confirm; ordered designs are refused (their hash lives in order item meta) and file deletion is realpath-contained to uploads/ |
+| Designs | `sgpd-designs` | `Admin\DesignsPage` — every saved design, newest first, with the one action WP admin had no route for: **assigning a design to a customer**. Also **send, resend and withdraw a proof** (Pro, 1.10.0) — see "Handing a design to a customer" below. **Delete design** (1.11.2) removes a design + thumbnails + export files behind a confirm; ordered designs are refused (their hash lives in order item meta) and file deletion is realpath-contained to uploads/. **Download SVG/LightBurn per row** (Pro, 1.12.1, `admin_post_sgpd_download_design`): reuses `ExportManager::generate_export()` with `order_id 0`, so drafts without an order export too — always regenerated (a cached export of a draft goes stale on the next edit); missing export data reports on the row ("reopen and re-save once"). Product name + thumbnail open the design itself (reopen link, new tab); the WC edit screen sits behind a small "(edit product)" link |
 | Settings | `pf-settings` | Export options (`pf_export_trigger_status`, `pf_export_default_format`), `pf_delete_data_on_uninstall` toggle, guest design retention (`pf_guest_design_retention_days`), health e-mail alert toggle (`pf_health_email_alerts`), a design-statistics panel (saved/ordered/conversion, last 30 days), and system status checks (`Admin\SystemStatus`: PHP ≥ 8.1, finfo, rsvg-convert/Imagick-SVG, writable `pf-thumbnails`/`pf-exports`/`pf-fonts`/`pf-clipart`/`pf-cache`, DB tables, LiteSpeed detection). Critical failures also show as an admin notice on every ProductForge screen (cached 5 min in the `pf_system_status_critical` transient) |
 | Production | `pf-export-dashboard` | `Admin\ExportDashboard` — lists recent orders (filterable by status/days) that contain designs, flags designs containing raster images via `DesignInspector::contains_raster()`, and bulk-downloads the selection as one ZIP via `admin_post_pf_bulk_export`. Since 1.11.1 the ZIP carries EVERY format the build's gates allow (PNG/PDF/SVG/lbrn) per design; a format that cannot be generated lands in a `LEESMIJ-ontbrekend.txt` inside the ZIP instead of sinking the download. The Settings default format only governs the automatic on-status-change export |
 
@@ -340,7 +347,7 @@ Other renames: Freemius helper `pf_fs()` → `sgpd_fs()`, global `$pf_fs` → `$
 
 ## Deployment
 
-- **Live site:** snelgraveren.nl (LiteSpeed Cache — flush after deploy). LiteSpeed on this host is aggressive: it caused the shop-category 404 (rewrite flush, above) AND caused customers to see the wrong/default design (see next bullet). Debug caching **as a guest** (`fetch(url, {credentials:'omit'})`, twice, to catch a HIT) — logged-in admins are never cached, so the bug is invisible when you're logged in.
+- **Live site:** snelgraveren.nl (LiteSpeed Cache — flush after deploy). LiteSpeed on this host is aggressive: it caused the shop-category 404 (rewrite flush, above) AND caused customers to see the wrong/default design (see next bullet). Debug caching **as a guest** (`fetch(url, {credentials:'omit'})`, twice, to catch a HIT) — logged-in admins are never cached, so the bug is invisible when you're logged in. For logged-in live verification (admin pages, downloads): Martin's Chrome usually carries a live wp-admin session — drive it via the chrome-devtools MCP (`new_page` to the wp-admin URL; a page title without "Log In" confirms the session) instead of asking for credentials.
 - **Designer pages must NEVER be full-page cached.** They embed a per-session WordPress nonce and load/save session-specific designs over REST; a cached copy freezes one visitor's nonce for everyone (breaks saves → default image) and leaks one customer's design to another (also breaks the return-from-cart design reload). `Frontend::enqueue_assets()` calls `prevent_page_cache()` (`DONOTCACHEPAGE` + `litespeed_control_set_nocache`) on every page where the designer renders. Do not remove it. (Full symptom map in memory `feedback_designer_page_nocache`.)
 - **One plugin folder on the live site: `snelgraveren-product-designer/`** (measured as a guest,
   2026-08-26 — `wp-content/plugins/snelgraveren-product-designer/dist/frontend-designer.css` returns

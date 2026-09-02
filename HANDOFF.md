@@ -1,61 +1,65 @@
 # Handoff
 
-_Last updated: 2026-08-31._
+_Last updated: 2026-09-02._
 
 ## Where things stand
 
-- **Live site runs 1.12.0** (snelgraveren.nl), uploaded by Martin on 2026-08-31 and verified as
-  guest the same day: readme Stable tag 1.12.0; `GET /pf/v1/font-groups` returns Martin's first
-  two real groups ("Display", "Handwriting") — so Migration1300 ran; the designer product page
-  (hondenpenning) serves 200 with the no-cache headers intact and the hashed bundle
-  `frontend-designer.1cc7e481.js`, md5-identical to the local `dist/frontend-designer.js`.
-  Single plugin folder `snelgraveren-product-designer/`. The `…-1.12.0.zip` in the project dir is
-  the live build (keep as rollback anchor next to 1.11.x).
-- **Groups are live but not yet attached to templates** — per template: builder → Settings →
-  Fonts → tick group(s). Nothing changes for a template until that's done (opt-in by design).
-- **`master` is current, NOT pushed** since `b7299ef` (1.11.4). Local commits on top:
-  `feat(fonts)` fontgroepen, `chore(release): 1.12.0`, plus this docs commit. Push when convenient.
-- **wordpress.org still has 1.7.8** (r3657251). A wp.org release would now also ship font groups
-  to free users minus management (mutations live in the already-stripped
-  `class-rest-fonts-admin.php`, so the three premium strip lists needed NO changes — verified).
-- **Freemius Deployment**: neither 1.11.x nor 1.12.0 confirmed pushed to Freemius — live updates
-  happen via direct ZIP upload only (dev-licence site, Freemius pushes nothing).
+- **Live site runs 1.12.1** (snelgraveren.nl), ZIP uploaded by Martin on 2026-09-02 (cache purged
+  by him too) and verified the same day: readme Stable tag 1.12.1 as guest, single plugin folder
+  `snelgraveren-product-designer/`, and the new Designs-page features verified END-TO-END on live
+  through Martin's logged-in Chrome session (chrome-devtools MCP): all 20 rows render the design
+  link + download links, and a real SVG download (design 51, olijfhouten borrelplank) returned
+  200 / `image/svg+xml` / attachment / 67 KB. The `…-1.12.1.zip` in the project dir is the live
+  build (keep as rollback anchor next to 1.12.0).
+- **All 30 live designs predate 1.11.0 and have no `export_lbrn` data** — the LightBurn download
+  correctly reports "reopen and re-save once" on those rows until each design is re-saved.
+- **`master` is current, NOT pushed** since `b7299ef` (1.11.4). Local commits on top: the 1.12.0
+  font-groups cycle, `chore(release): 1.12.1` (`2daa3f1`), plus this docs commit. Push when
+  convenient.
+- **wordpress.org still has 1.7.8** (r3657251). Nothing in 1.12.1 changes the premium strip
+  lists: the new download handler lives in the free-build `class-designs-page.php` but hides its
+  links behind the `svg_export` gate, and `generate_export()` refuses premium formats without
+  `PremiumExports` anyway.
+- **Freemius Deployment**: no 1.11.x/1.12.x pushed to Freemius — live updates happen via direct
+  ZIP upload only (dev-licence site, Freemius pushes nothing).
 
-## What shipped in 1.12.0 (2026-08-31)
+## What shipped in 1.12.1 (2026-09-02)
 
-**Font groups** — spec `docs/superpowers/specs/2026-08-31-font-groups-design.md`, design details
-in CLAUDE.md ("Font groups resolve at READ time" under Database Tables).
+Two Designs-adminpage improvements, both requested by Martin:
 
-- New admin page **Product Designer → Fonts** (`sgpd-fonts`, React app `admin/js/fonts/`, fifth
-  Vite entry `admin-fonts`): create/rename/delete groups, tick fonts per group (web-safe, Google
-  and custom uploads alike, each previewed in its own face), plus central custom-font upload.
-- Template builder Settings → Fonts: tick groups alongside the individual font list; preview of
-  the resolved union. `TreePanel`/`ZoneForm`/Google-font loading use the same
-  `resolveAllowedFonts()` union.
-- **Core mechanism**: templates store only group ids (`global_config.allowed_font_groups`);
-  `get_public_template()` expands them into `allowed_fonts` at read time (union, dedup, deleted
-  ids skipped, ids stripped from the payload). Adding a font to a group therefore reaches every
-  template using that group instantly — existing ones included. The customer designer is
-  untouched. Verified end-to-end on dev through the real UI (group → builder → save → public
-  payload; then group edited → payload updated without touching the template).
-- Tables 11 → 13: `wp_pf_font_groups` + `wp_pf_font_group_members` (family-name strings, UNIQUE
-  (group_id, family), FK cascade). `FontRepository::delete_family()` also removes the family from
-  every group. Uninstaller/SystemStatus updated.
-- **Drive-by fix**: the uninstaller listed `pf_clipart_items` instead of the real `pf_clipart`, so
-  that table was never dropped on uninstall-with-data-deletion. Fixed.
+- **Click the design, not the product**: the product name and thumbnail on each row now open the
+  design itself (the existing reopen link, `?pf_design=HASH`, new tab); the WooCommerce product
+  edit screen moved behind a small "(edit product)" link. Before, the name linked to
+  `get_edit_post_link()` and there was no way to *view* a design from the list.
+- **Download SVG / LightBurn per design, order or not** (`admin_post_sgpd_download_design` in
+  `Admin\DesignsPage`): reuses `ExportManager::generate_export()` with `order_id 0` — the
+  Production dashboard only reaches ordered designs, this reaches every draft. Always
+  regenerates (a cached export of a draft goes stale on the next edit). Single view streams the
+  file directly; multi-view zips. Failures land as row messages (`download_nodata` with
+  re-save instructions / `download_failed`). Links render only when the Pro `svg_export` gate
+  passes. `back_url()` now reads `_wp_http_referer` from `$_REQUEST` (the download links are GET
+  and carry it as a query arg).
+
+Testing route that worked: seed a design via `wp eval` (`DesignRepository::create()` IGNORES a
+passed `design_hash` — read the real one back), log in with `wp_generate_auth_cookie` cookies for
+curl, and mind that root-owned files from CLI tests block www-data writes in `pf-exports/`
+(chown afterwards). Verified on BOTH stacks; the `productdesigner` live-copy is the one that
+counts (`docker compose -p productdesigner up -d`, same :8080).
 
 ## Open — needs Martin, not code
 
 1. **Tick font groups on the templates that should use them** (builder → Settings → Fonts) — the
-   groups themselves ("Display", "Handwriting") already exist on live.
-2. **Guest-design retention still at 30 days** — Martin asked about 14; setting exists under
+   groups ("Display", "Handwriting") exist on live since 1.12.0.
+2. **Re-save old designs that need a LightBurn download** — open via the row's design link, save
+   once; the browser then writes `export_lbrn` (and the other export columns) fresh.
+3. **Guest-design retention still at 30 days** — Martin asked about 14; setting exists under
    Product Designer → Settings.
-3. **Five live templates still have the claiming `Imported` zone**: tpl 22 acacia (2630), tpl 7
+4. **Five live templates still have the claiming `Imported` zone**: tpl 22 acacia (2630), tpl 7
    leeuwtje (1979), tpl 6 olifantje (1988), tpl 4 wolfje (1991), tpl 5 vosje (2007).
-4. **Nearly every design zone is `behavior: clip`, not `restrict`** — a decision, not a bug.
-5. **Modal display mode still off on all designer products** (`_pf_display_mode`).
-6. **wordpress-mcp token is expired** (server rejected it with 403 this session) — renew it if
-   Claude should reach the live site directly.
+5. **Nearly every design zone is `behavior: clip`, not `restrict`** — a decision, not a bug.
+6. **Modal display mode still off on all designer products** (`_pf_display_mode`).
+7. **wordpress-mcp token is expired** (403 again this session) — renew it if Claude should reach
+   the live site via MCP; the logged-in-Chrome route (chrome-devtools MCP) covered it this time.
 
 ## Open — code, deliberately deferred
 
@@ -68,14 +72,13 @@ in CLAUDE.md ("Font groups resolve at READ time" under Database Tables).
   mean nothing on another site — harmless (resolution skips unknown ids silently), but a future
   import warning à la the unknown-font warning would be friendlier.
 
-## Environment notes (updated 2026-08-31 — the previous note was half wrong)
+## Environment notes
 
-- **Two Docker stacks with different databases.** The repo's `docker compose up` runs as project
-  `productforge` (symlink-derived name) with its OWN volume: NOT the live-DB copy. That stack is
-  where 1.12.0 was verified; it has admin `pf-dev-test` / `pf-dev-test-2026` and
-  `SGPD_LICENSE_KEY` (dev hash) in wp-config so premium gates pass in CLI and browser. The
-  live-copy DB lives in the `productdesigner` stack (admin `martin.temmink`); both can't run at
-  once (port 3306). `docker ps` tells you which is up. Details in CLAUDE.md → Development
-  Environment.
+- **Two Docker stacks, one compose file, different databases.** Repo `docker compose up` =
+  project `productforge` (own volume, admin `pf-dev-test` / `pf-dev-test-2026`, dev
+  `SGPD_LICENSE_KEY` in wp-config). Live-copy = `docker compose -p productdesigner up -d`
+  (admin `martin.temmink`, cookie-login via `wp eval` if the password is needed-but-unknown).
+  Both serve :8080 and both claim :3306, so never together — `docker ps` first. Details in
+  CLAUDE.md → Development Environment.
 - The productforge stack's system status complains about non-writable `uploads/pf-*` dirs —
   container permission quirk of that fresh volume, unrelated to code.
