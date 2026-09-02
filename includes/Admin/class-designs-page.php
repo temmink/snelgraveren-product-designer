@@ -31,6 +31,7 @@ class DesignsPage {
         add_action('admin_post_sgpd_assign_design', [$this, 'handle_assign']);
         add_action('admin_post_sgpd_proof_action', [$this, 'handle_proof_action']);
         add_action('admin_post_sgpd_delete_design', [$this, 'handle_delete']);
+        add_action('admin_post_sgpd_download_design', [$this, 'handle_download']);
     }
 
     public function register_menu(): void {
@@ -127,8 +128,10 @@ class DesignsPage {
      * that never renders it, with the refusal message going nowhere.
      */
     private function back_url(): string {
-        $referer = isset($_POST['_wp_http_referer']) && is_string($_POST['_wp_http_referer'])
-            ? wp_unslash($_POST['_wp_http_referer'])
+        // $_REQUEST, not $_POST: the download links are GET requests that carry
+        // the same `_wp_http_referer` as a query argument.
+        $referer = isset($_REQUEST['_wp_http_referer']) && is_string($_REQUEST['_wp_http_referer'])
+            ? wp_unslash($_REQUEST['_wp_http_referer'])
             : '';
 
         $query = [];
@@ -386,6 +389,85 @@ class DesignsPage {
         $this->redirect_with_message(0, $ok ? 'deleted' : 'delete_failed');
     }
 
+    /**
+     * Download a design as a production file (SVG or LightBurn), order or no
+     * order. The Production dashboard only reaches designs that sit in an
+     * order; a draft the merchant is preparing for a customer has no order
+     * yet, and re-drawing it in LightBurn just to test-burn it defeats the
+     * point of the designer. Always regenerates from the stored export
+     * columns — a cached export of a draft goes stale the moment the design
+     * is edited again, and regeneration is just writing a column to disk.
+     */
+    public function handle_download(): void {
+        if (!current_user_can('edit_sgpd_templates')) {
+            wp_die(esc_html__('You do not have permission to do this.', 'snelgraveren-product-designer'));
+        }
+        $id     = (int) ($_GET['design_id'] ?? 0);
+        $format = isset($_GET['export_format']) ? sanitize_key(wp_unslash($_GET['export_format'])) : '';
+        check_admin_referer('sgpd_download_design_' . $id);
+
+        if (!in_array($format, ['svg', 'lbrn'], true)) {
+            $this->redirect_with_message($id, 'download_failed');
+        }
+
+        $design = (new DesignRepository())->get($id);
+        if (!$design) {
+            $this->redirect_with_message($id, 'delete_missing');
+        }
+
+        $manager = new \Snelgraveren\ProductDesigner\Export\ExportManager();
+        $result  = $manager->generate_export($design['design_hash'], $format);
+        if (($result['status'] ?? '') !== 'done') {
+            // "Design has no LightBurn data" / "no export SVG data" both mean
+            // the same thing to the merchant: reopen the design and save it
+            // once, so the browser writes the export columns.
+            $error = (string) ($result['error'] ?? '');
+            $this->redirect_with_message($id, strpos($error, ' has no ') !== false ? 'download_nodata' : 'download_failed');
+        }
+
+        $paths = $manager->get_download_paths((int) $result['export_id']);
+        if (empty($paths)) {
+            $this->redirect_with_message($id, 'download_failed');
+        }
+
+        nocache_headers();
+        header('X-Content-Type-Options: nosniff');
+
+        if (count($paths) === 1) {
+            $path     = $paths[0];
+            $filename = preg_replace('/[^a-zA-Z0-9._-]/', '_', basename($path));
+            $mime     = $format === 'svg' ? 'image/svg+xml' : 'application/xml';
+
+            header('Content-Type: ' . $mime);
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            header('Content-Length: ' . filesize($path));
+            // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- streaming export files; WP_Filesystem would load them fully into memory
+            readfile($path);
+            exit;
+        }
+
+        // Multi-view design — bundle the per-view files into one ZIP.
+        $zip_path = wp_tempnam('pf-design-export.zip');
+        $zip      = new \ZipArchive();
+        if ($zip->open($zip_path, \ZipArchive::OVERWRITE) !== true) {
+            wp_delete_file($zip_path);
+            $this->redirect_with_message($id, 'download_failed');
+        }
+        foreach ($paths as $path) {
+            $zip->addFile($path, basename($path));
+        }
+        $zip->close();
+
+        $zip_name = preg_replace('/[^a-zA-Z0-9._-]/', '_', $design['design_hash'] . '-' . $format) . '.zip';
+        header('Content-Type: application/zip');
+        header('Content-Disposition: attachment; filename="' . $zip_name . '"');
+        header('Content-Length: ' . filesize($zip_path));
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- streaming export files; WP_Filesystem would load them fully into memory
+        readfile($zip_path);
+        wp_delete_file($zip_path);
+        exit;
+    }
+
     /** Redirect back to the list with a row-scoped message. */
     private function redirect_with_message(int $design_id, string $msg): void {
         wp_safe_redirect(add_query_arg([
@@ -429,6 +511,10 @@ class DesignsPage {
                 return __('That is not a valid e-mail address.', 'snelgraveren-product-designer');
             case 'proof_unavailable':
                 return __('The proof feature is not available on this install.', 'snelgraveren-product-designer');
+            case 'download_nodata':
+                return __('This design has no export data for that format yet. Open it via the link above and save it once — the browser generates the export data on save.', 'snelgraveren-product-designer');
+            case 'download_failed':
+                return __('Could not generate this export. Check the PHP error log.', 'snelgraveren-product-designer');
             default:
                 return '';
         }
@@ -559,7 +645,10 @@ class DesignsPage {
                 <?php if (!$designs) : ?>
                     <tr><td colspan="7"><?php esc_html_e('No designs found.', 'snelgraveren-product-designer'); ?></td></tr>
                 <?php endif; ?>
-                <?php foreach ($designs as $design) :
+                <?php
+                $can_export = class_exists(\Snelgraveren\ProductDesigner\Export\PremiumExports::class)
+                    && \Snelgraveren\ProductDesigner\Plugin::has_feature('svg_export');
+                foreach ($designs as $design) :
                     $product   = wc_get_product((int) $design['product_id']);
                     $reopen    = self::reopen_url($design);
                     $design_id = (int) $design['id'];
@@ -567,11 +656,23 @@ class DesignsPage {
                     <tr>
                         <td>
                             <?php if (!empty($design['thumbnail'])) : ?>
-                                <img src="<?php echo esc_url($design['thumbnail']); ?>" alt="" style="max-width:50px;height:auto;" />
+                                <?php if ($reopen !== '') : ?>
+                                    <a href="<?php echo esc_url($reopen); ?>" target="_blank" rel="noopener">
+                                        <img src="<?php echo esc_url($design['thumbnail']); ?>" alt="" style="max-width:50px;height:auto;" />
+                                    </a>
+                                <?php else : ?>
+                                    <img src="<?php echo esc_url($design['thumbnail']); ?>" alt="" style="max-width:50px;height:auto;" />
+                                <?php endif; ?>
                             <?php endif; ?>
                         </td>
                         <td>
-                            <?php if ($product) : ?>
+                            <?php if ($product && $reopen !== '') : ?>
+                                <a href="<?php echo esc_url($reopen); ?>" target="_blank" rel="noopener"
+                                   title="<?php esc_attr_e('Open this design in the designer', 'snelgraveren-product-designer'); ?>"><?php echo esc_html($product->get_name()); ?></a>
+                                <a href="<?php echo esc_url(get_edit_post_link((int) $design['product_id'])); ?>" class="description" style="font-size:11px;">
+                                    (<?php esc_html_e('edit product', 'snelgraveren-product-designer'); ?>)
+                                </a>
+                            <?php elseif ($product) : ?>
                                 <a href="<?php echo esc_url(get_edit_post_link((int) $design['product_id'])); ?>"><?php echo esc_html($product->get_name()); ?></a>
                             <?php else : ?>
                                 <em><?php esc_html_e('Product deleted', 'snelgraveren-product-designer'); ?></em>
@@ -604,6 +705,25 @@ class DesignsPage {
                             <?php if ($reopen !== '') : ?>
                                 <input type="text" readonly value="<?php echo esc_attr($reopen); ?>"
                                        onfocus="this.select();" style="width:100%;margin-top:6px;font-size:11px;" />
+                            <?php endif; ?>
+                            <?php if ($can_export) :
+                                // Direct production download, draft or not — the
+                                // Production dashboard only reaches ordered designs.
+                                $download_url = static function (string $format) use ($design_id): string {
+                                    return wp_nonce_url(add_query_arg([
+                                        'action'           => 'sgpd_download_design',
+                                        'design_id'        => $design_id,
+                                        'export_format'    => $format,
+                                        '_wp_http_referer' => wp_unslash($_SERVER['REQUEST_URI'] ?? ''),
+                                    ], admin_url('admin-post.php')), 'sgpd_download_design_' . $design_id);
+                                };
+                                ?>
+                                <p style="margin:6px 0 0;font-size:12px;">
+                                    <?php esc_html_e('Download:', 'snelgraveren-product-designer'); ?>
+                                    <a href="<?php echo esc_url($download_url('svg')); ?>">SVG</a>
+                                    &middot;
+                                    <a href="<?php echo esc_url($download_url('lbrn')); ?>">LightBurn</a>
+                                </p>
                             <?php endif; ?>
                             <?php if (($design['status'] ?? '') !== 'ordered') : ?>
                                 <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"

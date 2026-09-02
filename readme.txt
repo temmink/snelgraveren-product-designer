@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.12.0
+Stable tag: 1.12.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -133,6 +133,10 @@ No other external services are used. Design exports (PDF/PNG/SVG) are rendered e
 4. Production dashboard: every order with a design, filtered by status and period, ready to download as one ZIP.
 
 == Changelog ==
+
+= 1.12.1 =
+* New: download a design straight from the Designs admin page as a production SVG or native LightBurn file (Pro) — draft or not, no order needed. A design saved before 1.11.0 has no LightBurn data yet; the row explains to reopen and re-save it once.
+* Improved: on the Designs admin page, clicking a design's product name (or thumbnail) now opens the design itself in the designer, in a new tab. The WooCommerce product edit screen stays reachable via a small "edit product" link.
 
 = 1.12.0 =
 * New: font groups — create named sets of fonts on the new Product Designer → Fonts admin page and enable whole groups per template in the builder. Adding a font to a group later automatically makes it available in every template using that group, including existing ones.
