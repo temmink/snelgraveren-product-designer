@@ -1,15 +1,17 @@
 # Handoff
 
-_Last updated: 2026-09-02 (evening)._
+_Last updated: 2026-09-04._
 
 ## Where things stand
 
-- **Live site runs 1.12.2** (snelgraveren.nl), deployed 2026-09-02 through Martin's logged-in
-  Chrome session (upload → "Huidige vervangen door de geüploade" → LiteSpeed purge all) and
-  verified as guest: readme Stable tag 1.12.2, product page serves hashed bundle
-  `frontend-designer.be335d65.js`, md5-identical to local dist and containing the Layers-tab
-  code; `dist/frontend-designer.css` carries the `pf-layers` styles. The `…-1.12.2.zip` in the
-  project dir is the live build (rollback anchor next to 1.12.1).
+- **Live site runs 1.12.3** (snelgraveren.nl), uploaded + installed + LiteSpeed-purged by Martin
+  himself on 2026-09-04 (the chrome-devtools MCP could not connect and the persistent MCP Chrome
+  profile's wp-admin session had expired). Verified as guest: readme Stable tag 1.12.3,
+  `dist/admin-template-builder.js` and `dist/frontend-designer.js` md5-identical to local dist,
+  live builder bundle contains "PT Serif Caption". `…-1.12.3.zip` in the project dir is the live
+  build (rollback anchor: `…-1.12.2.zip`).
+- **1.12.2 (Layers tab)** was live from 2026-09-02 until 1.12.3 replaced it — see "What shipped
+  in 1.12.2" below.
 - **1.12.1 shipped earlier the same day** (Designs page: per-row SVG/LightBurn download +
   design link) — see "What shipped in 1.12.1" below; live-verified end-to-end before 1.12.2
   replaced it.
@@ -24,6 +26,28 @@ _Last updated: 2026-09-02 (evening)._
   `PremiumExports` anyway.
 - **Freemius Deployment**: no 1.11.x/1.12.x pushed to Freemius — live updates happen via direct
   ZIP upload only (dev-licence site, Freemius pushes nothing).
+
+## What shipped in 1.12.3 (2026-09-04)
+
+**LightBurn import: Rect/Ellipse shapes** — Martin's Leisteen template imported with "Skipped an
+unreadable shape" ×2. LightBurn stores a `Rect` as `W`/`H`/`Cr` and an `Ellipse` as `Rx`/`Ry`,
+centred on the XForm, with NO VertList; the parser treated them as Path and dropped them, so the
+200 mm slate outline and the 160 mm rule vanished and the design imported at 160 mm.
+`lbrnParser.js#rectVertPrim/ellipseVertPrim` synthesise the outline in LightBurn's own vertex
+format (rounded corners/ellipses as beziers) so bbox/transform/group handling is untouched. Tests:
+synthetic Rect/rounded Rect/Ellipse + the real file (`tests/js/fixtures/leisteen_template.lbrn2`).
+The Ellipse attribute names `Rx`/`Ry` are from memory of LightBurn files, not from a sample —
+if an ellipse still imports as unreadable, check the attribute names first.
+
+**"PT Serif Caption" added to the built-in Google Fonts** — a separate family from "PT Serif".
+Four lists must agree and were all edited: builder `utils/fonts.js`, `RestFonts::ALLOWED_GOOGLE_FONTS`
+(font-file proxy whitelist), `RestFontsAdmin` reserved names, `RestTemplateTransfer::BUILTIN_FONTS`.
+Google serves only weight 400 for it, so bold renders as browser-synthesised bold (the import
+never carried the Qt weight anyway). Not verified with `php -l` (Docker was down, no local php);
+the edits are single strings inside existing arrays.
+
+Pre-existing, unrelated: `tests/js/components/AddTab.test.js` and `Sidebar.test.js` fail (12
+tests) on master before and after 1.12.3.
 
 ## What shipped in 1.12.2 (2026-09-02)
 
