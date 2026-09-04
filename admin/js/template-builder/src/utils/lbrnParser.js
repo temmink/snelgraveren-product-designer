@@ -161,6 +161,64 @@ export function vertPrimBoundsPoints(vertList, primList, xform) {
   return pts;
 }
 
+/** Bezier circle-arc constant: control handle length as a fraction of the radius. */
+const KAPPA = 0.552285;
+
+/**
+ * Synthesise a LightBurn VertList/PrimList pair for a primitive shape that
+ * carries NO geometry of its own. LightBurn stores a `Rect` as just
+ * `W`/`H`/`Cr` (corner radius) and an `Ellipse` as `Rx`/`Ry`, both centred on
+ * the shape's XForm translation (the same convention as Bitmap). Emitting the
+ * shape in LightBurn's own vertex format — rather than a path `d` directly —
+ * lets the rest of the pipeline (bbox extrema, transform composition, group
+ * merge) treat it exactly like a drawn Path. Returns `{ vert: '', prim: '' }`
+ * for a degenerate size so the caller reports it as unreadable.
+ */
+export function rectVertPrim(w, h, cr = 0) {
+  if (!(w > 0) || !(h > 0)) return { vert: '', prim: '' };
+  const hw = w / 2;
+  const hh = h / 2;
+  const r = Math.max(0, Math.min(Number(cr) || 0, hw, hh));
+  if (r === 0) {
+    return {
+      vert: `V${n(-hw)} ${n(-hh)}V${n(hw)} ${n(-hh)}V${n(hw)} ${n(hh)}V${n(-hw)} ${n(hh)}`,
+      prim: 'L0 1L1 2L2 3L3 0',
+    };
+  }
+  const k = KAPPA * r;
+  // Eight vertices: one at each end of every corner arc. `c0` is the OUTGOING
+  // handle (used when this vertex starts a bezier), `c1` the INCOMING one.
+  const V = (x, y, c0, c1) =>
+    `V${n(x)} ${n(y)}` +
+    (c0 ? `c0x${n(c0[0])}c0y${n(c0[1])}` : '') +
+    (c1 ? `c1x${n(c1[0])}c1y${n(c1[1])}` : '');
+  const vert =
+    V(-hw + r, -hh, null, [-hw + r - k, -hh]) +
+    V(hw - r, -hh, [hw - r + k, -hh], null) +
+    V(hw, -hh + r, null, [hw, -hh + r - k]) +
+    V(hw, hh - r, [hw, hh - r + k], null) +
+    V(hw - r, hh, null, [hw - r + k, hh]) +
+    V(-hw + r, hh, [-hw + r - k, hh], null) +
+    V(-hw, hh - r, null, [-hw, hh - r + k]) +
+    V(-hw, -hh + r, [-hw, -hh + r - k], null);
+  return { vert, prim: 'L0 1B1 2L2 3B3 4L4 5B5 6L6 7B7 0' };
+}
+
+/** Four-bezier ellipse centred on the origin (see `rectVertPrim`). */
+export function ellipseVertPrim(rx, ry) {
+  if (!(rx > 0) || !(ry > 0)) return { vert: '', prim: '' };
+  const kx = KAPPA * rx;
+  const ky = KAPPA * ry;
+  const V = (x, y, c0, c1) =>
+    `V${n(x)} ${n(y)}c0x${n(c0[0])}c0y${n(c0[1])}c1x${n(c1[0])}c1y${n(c1[1])}`;
+  const vert =
+    V(rx, 0, [rx, ky], [rx, -ky]) +
+    V(0, ry, [-kx, ry], [kx, ry]) +
+    V(-rx, 0, [-rx, -ky], [-rx, ky]) +
+    V(0, -ry, [kx, -ry], [-kx, -ry]);
+  return { vert, prim: 'B0 1B1 2B2 3B3 0' };
+}
+
 export const PX_PER_MM = 3.7795; // ≈ 96 dpi; matches svgPathUtils.js unit conversion
 
 /** LightBurn's default 30-colour layer palette (index → hex). Verify against
@@ -368,7 +426,22 @@ export function parseLbrn(xmlString, opts = {}) {
     const cutIndex = parseInt(el.getAttribute('CutIndex') || '0', 10);
 
     if (type === 'Path' || type === 'Rect' || type === 'Ellipse') {
-      const { vert, prim } = resolvePathGeom(el, vertPool, primPool);
+      let { vert, prim } = resolvePathGeom(el, vertPool, primPool);
+      // Rect and Ellipse normally carry NO VertList at all — only their size
+      // attributes — so synthesise the outline in LightBurn's vertex format.
+      // A shape that does ship geometry (older files) keeps its own.
+      if (!vert && type === 'Rect') {
+        ({ vert, prim } = rectVertPrim(
+          parseFloat(el.getAttribute('W') || '0'),
+          parseFloat(el.getAttribute('H') || '0'),
+          parseFloat(el.getAttribute('Cr') || '0')
+        ));
+      } else if (!vert && type === 'Ellipse') {
+        ({ vert, prim } = ellipseVertPrim(
+          parseFloat(el.getAttribute('Rx') || '0'),
+          parseFloat(el.getAttribute('Ry') || '0')
+        ));
+      }
       if (!pushPath(vert, prim, xform, cutIndex, groupKey)) warnings.push('Skipped an unreadable shape.');
     } else if (type === 'Text') {
       const str = el.getAttribute('Str') || '';

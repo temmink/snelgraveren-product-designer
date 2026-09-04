@@ -25,7 +25,7 @@ class RestFonts {
     private const ALLOWED_GOOGLE_FONTS = [
         'Roboto', 'Open Sans', 'Lato', 'Montserrat', 'Poppins', 'Inter', 'Raleway',
         'Nunito', 'Ubuntu', 'Oswald', 'Playfair Display', 'Merriweather', 'Lora',
-        'PT Serif', 'Roboto Slab', 'Roboto Mono', 'Source Code Pro', 'Fira Code',
+        'PT Serif', 'PT Serif Caption', 'Roboto Slab', 'Roboto Mono', 'Source Code Pro', 'Fira Code',
         'Dancing Script', 'Pacifico', 'Great Vibes', 'Caveat', 'Satisfy',
         'Bebas Neue', 'Lobster', 'Righteous', 'Permanent Marker', 'Alfa Slab One',
         'Anton', 'Bangers',

@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.12.2
+Stable tag: 1.12.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -133,6 +133,10 @@ No other external services are used. Design exports (PDF/PNG/SVG) are rendered e
 4. Production dashboard: every order with a design, filtered by status and period, ready to download as one ZIP.
 
 == Changelog ==
+
+= 1.12.3 =
+* Fix: the LightBurn import (Pro) skipped every Rect and Ellipse shape as "unreadable" — LightBurn stores those without a vertex list, only their size. They now import as outlines, so a 200 mm slate drawn as a rectangle sets the true design size.
+* New: "PT Serif Caption" added to the built-in Google Fonts, so LightBurn text set in it imports as editable text instead of an outline.
 
 = 1.12.2 =
 * New: a Layers tab in the designer sidebar listing every selectable element, topmost first. Where elements overlap on the canvas, a click can land on the wrong one — the list selects exactly the element you mean, and selecting from the list keeps you on the Layers tab.

@@ -33,6 +33,7 @@ export const AVAILABLE_FONTS = [
   { family: 'Merriweather', category: 'serif', source: 'google' },
   { family: 'Lora', category: 'serif', source: 'google' },
   { family: 'PT Serif', category: 'serif', source: 'google' },
+  { family: 'PT Serif Caption', category: 'serif', source: 'google' },
   { family: 'Roboto Slab', category: 'serif', source: 'google' },
   { family: 'Roboto Mono', category: 'monospace', source: 'google' },
   { family: 'Source Code Pro', category: 'monospace', source: 'google' },

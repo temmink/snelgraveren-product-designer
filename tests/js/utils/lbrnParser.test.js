@@ -569,3 +569,94 @@ describe('parseLbrn (arcacia.lbrn2 — real LightBurn file)', () => {
     expect(svgs[2].top - svgs[1].top).toBeCloseTo(113.347, 2);
   });
 });
+
+describe('parseLbrn (Rect / Ellipse shapes without a VertList)', () => {
+  // LightBurn stores primitive shapes WITHOUT geometry: a Rect is just
+  // `W`/`H`/`Cr` (corner radius) and an Ellipse `Rx`/`Ry`, both centred on
+  // the XForm translation. Treating them like Path (VertList-only) skipped
+  // every one of them with "Skipped an unreadable shape.".
+  const wrap = (shapes) => `<?xml version="1.0" encoding="UTF-8"?>
+<LightBurnProject AppVersion="2.1.03">
+${shapes}
+</LightBurnProject>`;
+  // A Path that exactly covers the extent of a 20x10 rect centred on (50,30).
+  const COVER = `  <Shape Type="Path" CutIndex="0">
+    <XForm>1 0 0 1 0 0</XForm>
+    <VertList>V40 25V60 25V60 35V40 35</VertList>
+    <PrimList>L0 1L1 2L2 3L3 0</PrimList>
+  </Shape>`;
+  const RECT = `  <Shape Type="Rect" CutIndex="1" W="20" H="10" Cr="0">
+    <XForm>1 0 0 1 50 30</XForm>
+  </Shape>`;
+  const ROUNDED = `  <Shape Type="Rect" CutIndex="1" W="20" H="10" Cr="2">
+    <XForm>1 0 0 1 50 30</XForm>
+  </Shape>`;
+  const ELLIPSE = `  <Shape Type="Ellipse" CutIndex="1" Rx="10" Ry="5">
+    <XForm>1 0 0 1 50 30</XForm>
+  </Shape>`;
+  const size = (layer) => ({
+    w: parseFloat(layer.svg_markup.match(/width="([\d.]+)"/)[1]),
+    h: parseFloat(layer.svg_markup.match(/height="([\d.]+)"/)[1]),
+  });
+
+  it('imports a Rect as an svg layer with no warning', () => {
+    const { layers, warnings } = parseLbrn(wrap(RECT), { availableFonts: [] });
+    expect(warnings).toEqual([]);
+    expect(layers.length).toBe(1);
+    expect(layers[0].type).toBe('svg');
+    expect(size(layers[0]).w).toBeCloseTo(20 * PX_PER_MM, 1);
+    expect(size(layers[0]).h).toBeCloseTo(10 * PX_PER_MM, 1);
+  });
+
+  it('centres the Rect on its XForm translation (same bounds as a covering path)', () => {
+    const { layers } = parseLbrn(wrap(COVER + '\n' + RECT), { availableFonts: [] });
+    const [cover, rect] = layers;
+    expect(rect.left).toBeCloseTo(cover.left, 2);
+    expect(rect.top).toBeCloseTo(cover.top, 2);
+    expect(size(rect).w).toBeCloseTo(size(cover).w, 1);
+    expect(size(rect).h).toBeCloseTo(size(cover).h, 1);
+  });
+
+  it('rounds the corners of a Rect with Cr > 0 without changing its bounds', () => {
+    const { layers, warnings } = parseLbrn(wrap(COVER + '\n' + ROUNDED), { availableFonts: [] });
+    expect(warnings).toEqual([]);
+    const [cover, rect] = layers;
+    expect(rect.svg_markup).toMatch(/ d="[^"]*C/);
+    expect(rect.left).toBeCloseTo(cover.left, 2);
+    expect(rect.top).toBeCloseTo(cover.top, 2);
+    expect(size(rect).w).toBeCloseTo(size(cover).w, 1);
+    expect(size(rect).h).toBeCloseTo(size(cover).h, 1);
+  });
+
+  it('imports an Ellipse as a closed bezier outline with Rx/Ry bounds', () => {
+    const { layers, warnings } = parseLbrn(wrap(COVER + '\n' + ELLIPSE), { availableFonts: [] });
+    expect(warnings).toEqual([]);
+    const [cover, ell] = layers;
+    expect(ell.svg_markup).toMatch(/ d="[^"]*C[^"]*Z"/);
+    expect(ell.left).toBeCloseTo(cover.left, 2);
+    expect(ell.top).toBeCloseTo(cover.top, 2);
+    expect(size(ell).w).toBeCloseTo(size(cover).w, 1);
+    expect(size(ell).h).toBeCloseTo(size(cover).h, 1);
+  });
+});
+
+describe('parseLbrn (leisteen_template.lbrn2 — real file with Rect shapes)', () => {
+  const LEISTEEN = fs.readFileSync(
+    path.join(__dirname, '../fixtures/leisteen_template.lbrn2'), 'utf8'
+  );
+
+  it('imports both Rect shapes instead of skipping them as unreadable', () => {
+    const { layers, warnings } = parseLbrn(LEISTEEN, { availableFonts: ['PT Serif Caption'] });
+    expect(warnings).toEqual([]);
+    // 2 rects (200 mm slate + 160 mm rule) + 1 ungrouped 160 mm path + 1 grouped path layer + 3 editable texts
+    expect(layers.filter((l) => l.type === 'svg').length).toBe(4);
+    expect(layers.filter((l) => l.type === 'text').map((t) => t.text))
+      .toEqual(['FAMILIE', 'Naam 1 - Naam 2', 'voornaam 1, voornaam 2\nvoornaam 3, voornaam 4']);
+  });
+
+  it('reports the 200 mm slate outline as the design extent', () => {
+    const { widthMm, heightMm } = parseLbrn(LEISTEEN, { availableFonts: ['PT Serif Caption'] });
+    expect(widthMm).toBeCloseTo(200, 1);
+    expect(heightMm).toBeCloseTo(200, 1);
+  });
+});
