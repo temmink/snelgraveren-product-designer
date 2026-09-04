@@ -27,6 +27,14 @@ A WooCommerce plugin that lets customers design text, images, and SVGs onto prod
 - **LightBurn export (`utils/lbrnWriter.js`):** the inverse of the template builder's `lbrnParser` and round-trip-tested through it. Text ships as native, editable LightBurn Text shapes; the placement model was CALIBRATED against LightBurn's own SVG re-exports, not assumed — the full model (anchor formula, arc fit on the laid ink segment, per-line shapes for straight text, single-char tangent rule, Av/Ah semantics incl. "Av0 + Bend scatters glyphs") is in memory `project_lbrn_export`. Requires the view's `width_mm`; designs saved before 1.11.0 have no data until re-saved (reopen link → save).
 - **PHP autoloading:** PSR-4 via custom autoloader. Namespace `Snelgraveren\ProductDesigner\` maps to `includes/`. (Renamed from `ProductForge\` in v1.7.6 for the wp.org review — the reviewer's tool flagged `product_forge` as a non-distinctive prefix; the main class `ProductForge` became `Plugin`.)
 - **LightBurn import (Pro):** `admin/js/template-builder/src/utils/lbrnParser.js` parses a `.lbrn2` (plain XML) into editable text/`svg` layer descriptors; `ImportLightBurn.jsx` is the button. Geometry uses shared VertList/PrimID pools + composed Group XForms; the "double image" is design-inherent, not a bug (memory `project_lightburn_double_image`).
+- **LightBurn primitive shapes carry NO geometry (1.12.3):** a `<Shape Type="Rect">` is just
+  `W`/`H`/`Cr` (corner radius) and an `Ellipse` just `Rx`/`Ry`, both centred on the XForm
+  translation like a Bitmap — there is no VertList/PrimList to read. Treating them as Path
+  skipped every one as "unreadable", which silently dropped a 200 mm slate outline and imported
+  the design at 160 mm. `rectVertPrim`/`ellipseVertPrim` synthesise the outline in LightBurn's
+  own vertex format so bbox extrema, transform composition and group merge stay one code path.
+  `Rx`/`Ry` is unverified against a real ellipse file — if an ellipse still imports as
+  unreadable, check the attribute names before anything else.
 - **LightBurn bitmap sizing:** a `<Shape Type="Bitmap" W H>` stores its **local** size; the
   `<XForm>` carries the scale. The real size is `W * sx`, never `W / sx` — on a real file
   `211.64021 * 1.89 = 400.000 mm` exactly, and the round number is the giveaway. Getting this
