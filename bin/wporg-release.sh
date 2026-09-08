@@ -5,6 +5,9 @@
 #   bash bin/wporg-release.sh            # build + stage + show diff, ask before commit
 #   bash bin/wporg-release.sh --dry-run  # build + stage only, never touches the remote
 #   bash bin/wporg-release.sh --skip-build   # reuse existing *-free-<version>.zip
+#   bash bin/wporg-release.sh --readme-only  # push ONLY readme.txt to trunk/ + tags/<stable>/
+#                                            # (listing text: description, FAQ, changelog,
+#                                            # upgrade notice — no build, no new tag)
 #
 # What it does
 #   1. bin/package.sh  → premium ZIP          (npm run build + composer --no-dev)
@@ -31,10 +34,12 @@ ASSETS_SRC="wporg-assets"
 
 DRY_RUN=0
 SKIP_BUILD=0
+README_ONLY=0
 for arg in "$@"; do
     case "$arg" in
         --dry-run)    DRY_RUN=1 ;;
         --skip-build) SKIP_BUILD=1 ;;
+        --readme-only) README_ONLY=1 ;;
         *) echo "Unknown option: $arg"; exit 1 ;;
     esac
 done
@@ -66,6 +71,51 @@ if [ -n "$(git status --porcelain -- "$PLUGIN_FILE" readme.txt includes/ 2>/dev/
     echo "WARN: uncommitted changes in plugin sources — SVN should only receive released code."
 fi
 echo "    version ${VERSION}, stable tag ${STABLE_TAG} ✓"
+
+# --readme-only: wp.org renders the listing from tags/<stable tag>/readme.txt (trunk's
+# readme only supplies the Stable tag line), so a text change must land in BOTH.
+# No build, no new tag, no version bump — the released tag's code stays untouched.
+if [ "$README_ONLY" -eq 1 ]; then
+    echo "==> Readme-only update for ${VERSION}"
+    if [ -d "$SVN_DIR/.svn" ]; then
+        svn cleanup "$SVN_DIR" >/dev/null 2>&1 || true
+        svn revert -R -q "$SVN_DIR" >/dev/null 2>&1 || true
+        svn update -q "$SVN_DIR"
+    else
+        svn checkout -q "$SVN_URL" "$SVN_DIR"
+    fi
+    if ! svn ls "${SVN_URL}/tags/" 2>/dev/null | grep -qx "${VERSION}/"; then
+        echo "FAIL: tags/${VERSION} is not released yet — release it first, then update the readme."
+        exit 1
+    fi
+    cp readme.txt "$SVN_DIR/trunk/readme.txt"
+    cp readme.txt "$SVN_DIR/tags/$VERSION/readme.txt"
+    echo "==> SVN diff (stat)"
+    (cd "$SVN_DIR" && svn status trunk/readme.txt "tags/$VERSION/readme.txt")
+    (cd "$SVN_DIR" && svn diff trunk/readme.txt | grep -cE '^[+-][^+-]' | sed 's/^/    changed lines in trunk\/readme.txt: /')
+    if [ "$DRY_RUN" -eq 1 ]; then
+        echo "Dry run — nothing committed. Inspect ${SVN_DIR}/, then run again without --dry-run."
+        exit 0
+    fi
+    if [ ! -t 0 ]; then
+        echo "This step is interactive (confirmation + SVN credentials) and stdin is not a terminal."
+        exit 1
+    fi
+    answer=""
+    read -r -p "Commit 'Update readme for ${VERSION}' to ${SVN_URL}? [y/N] " answer || true
+    if [ "${answer}" != "y" ] && [ "${answer}" != "Y" ]; then
+        echo "Aborted. Revert with: (cd ${SVN_DIR} && svn revert -R .)"
+        exit 1
+    fi
+    if [ -n "${SVN_USER:-}" ]; then
+        (cd "$SVN_DIR" && svn commit --username "$SVN_USER" -m "Update readme for ${VERSION}" trunk/readme.txt "tags/$VERSION/readme.txt")
+    else
+        (cd "$SVN_DIR" && svn commit -m "Update readme for ${VERSION}" trunk/readme.txt "tags/$VERSION/readme.txt")
+    fi
+    echo "Readme updated for ${VERSION}. The listing refreshes within a few minutes:"
+    echo "  https://wordpress.org/plugins/${PLUGIN_SLUG}/"
+    exit 0
+fi
 
 if [ "$SKIP_BUILD" -eq 0 ]; then
     echo "==> Building premium + free packages"
