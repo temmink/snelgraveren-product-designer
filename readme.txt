@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.12.3
+Stable tag: 1.12.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -133,6 +133,10 @@ No other external services are used. Design exports (PDF/PNG/SVG) are rendered e
 4. Production dashboard: every order with a design, filtered by status and period, ready to download as one ZIP.
 
 == Changelog ==
+
+= 1.12.4 =
+* Fix: on a phone, a product set to the modal display mode showed two "Customize Product" buttons under each other, and the lower one did nothing. There is now one button, and it opens the designer.
+* Fix: the free build no longer requests a live price preview on every canvas change — that endpoint only exists in Pro, so each change produced a needless 404 in the server log.
 
 = 1.12.3 =
 * Fix: the LightBurn import (Pro) skipped every Rect and Ellipse shape as "unreadable" — LightBurn stores those without a vertex list, only their size. They now import as outlines, so a 200 mm slate drawn as a rectangle sets the true design size.

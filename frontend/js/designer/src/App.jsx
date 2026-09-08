@@ -7,6 +7,7 @@ import Sidebar from './components/Sidebar';
 import Toolbar from './components/Toolbar';
 import { loadGoogleFonts, loadCustomFonts } from './utils/fonts';
 import { getDesignerConfig } from './utils/config';
+import { getExternalOpenButtons } from './utils/openDesignerButtons';
 import {
   withoutExcludedObjects,
   renderOffscreenThumbnail,
@@ -68,6 +69,10 @@ export default function App() {
 
   const isMobile = useIsMobile();
   const effectiveDisplayMode = isMobile ? 'modal' : (config.display_mode || 'embedded');
+  // PHP renders a "Customize Product" button next to the root in modal mode.
+  // When it is there, React must not render a second one on mobile (the two
+  // sat one under the other, and the PHP one was dead — see the modal effect).
+  const [hasExternalOpenButton, setHasExternalOpenButton] = useState(() => getExternalOpenButtons().length > 0);
 
   const [loading, setLoading] = useState(true);
   // These initializers only see a real config when it was readable at mount;
@@ -104,6 +109,13 @@ export default function App() {
   // the cart.
   useEffect(() => {
     if (!config.template_id || !template) return;
+    // Pricing is a premium feature: the free build ships without the
+    // /pricing/preview route at all (bin/free-build.sh strips includes/Pricing),
+    // so without this gate every canvas change fired a 404 into the server log.
+    if (!config.isPremium) {
+      setPricePreview(null);
+      return;
+    }
     const counts = countPriceableElements(canvasSnapshots);
     if (counts.text + counts.image + counts.svg === 0) {
       setPricePreview(null);
@@ -206,12 +218,16 @@ export default function App() {
       setDesignerOpen(true);
     }
 
-    const btn = document.querySelector('.pf-open-designer');
-    if (!btn) return;
+    // Wire EVERY button outside the root, not the first `.pf-open-designer`
+    // in the DOM: on mobile that first match was React's own (already wired)
+    // button, so the PHP-rendered one below it never got a listener.
+    const buttons = getExternalOpenButtons();
+    setHasExternalOpenButton(buttons.length > 0);
+    if (buttons.length === 0) return;
 
     const handler = () => setDesignerOpen(true);
-    btn.addEventListener('click', handler);
-    return () => btn.removeEventListener('click', handler);
+    buttons.forEach((btn) => btn.addEventListener('click', handler));
+    return () => buttons.forEach((btn) => btn.removeEventListener('click', handler));
   }, [effectiveDisplayMode, config.template_id, config.existing_design_hash]);
 
   // Modal focus trapping and keyboard handling
@@ -695,7 +711,7 @@ export default function App() {
 
   return (
     <>
-      {isMobile && !designerOpen && (
+      {isMobile && !designerOpen && !hasExternalOpenButton && (
         <button
           type="button"
           className="pf-open-designer button"
