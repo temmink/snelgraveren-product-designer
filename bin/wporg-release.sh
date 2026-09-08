@@ -87,7 +87,14 @@ chk 'class-premium-exports\.php'      "premium exports class still in free ZIP"
 chk 'includes/Proof/'                 "premium path includes/Proof/ still in free ZIP"
 chk 'includes/Emails/'                "premium path includes/Emails/ still in free ZIP"
 chk 'templates/proof/'                "premium path templates/proof/ still in free ZIP"
-chk '\.(po|mo|pot)$'                  "gettext files in ZIP (wp.org manages translations)"
+# Only the Freemius SDK's own translations may ship (freemius/languages/);
+# our languages/ must stay out — wp.org serves those from translate.wordpress.org.
+if echo "$LISTING" | grep -E '\.(po|mo|pot)$' | grep -vq "/freemius/languages/"; then
+    echo "FAIL: gettext files outside freemius/languages/ in ZIP (wp.org manages our translations)"; fail=1
+fi
+if ! echo "$LISTING" | grep -q "/freemius/languages/freemius-nl_NL\.mo"; then
+    echo "FAIL: Freemius SDK translations missing from free ZIP (freemius/languages/)"; fail=1
+fi
 chk 'node_modules/'                   "node_modules in ZIP"
 chk '/\.git'                          ".git files in ZIP"
 chk 'frontend/js/.*/src/'             "unbuilt frontend sources in ZIP"

@@ -33,12 +33,13 @@ rm -f  "$STAGE/$PLUGIN_SLUG/templates/emails/proof-ready.php"
 rm -f  "$STAGE/$PLUGIN_SLUG/templates/emails/proof-changes-requested.php"
 rm -f  "$STAGE/$PLUGIN_SLUG/templates/emails/proof-approved.php"
 
-# 2. Freemius SDK translation files — wp.org manages plugin translations via
-# translate.wordpress.org and flags bundled .po/.mo/.pot. Our own translations
-# are already excluded (package.sh doesn't bundle languages/); strip the SDK's
-# too so the uploaded ZIP contains ZERO gettext files. The Freemius opt-in UI
-# just falls back to English, which is fine for the free build.
-rm -rf "$STAGE/$PLUGIN_SLUG/freemius/languages"
+# 2. Translations: our OWN languages/ stays out (package.sh never bundles it —
+# wp.org serves those from translate.wordpress.org). The Freemius SDK's
+# freemius/languages/*.mo are KEPT on purpose: they are the SDK's, not ours,
+# wp.org does not translate them, and the free build Freemius generated for
+# the 1.7.7 review carried them and was approved. Stripping them (done from
+# 2026-07 to 1.12.4) only made the opt-in screens English on wp.org installs.
+# The matching check in wporg-release.sh whitelists freemius/languages/.
 
 # 3 + 4. Free-mode Freemius init
 sed -i '' "/wp_org_gatekeeper/d" "$STAGE/$PLUGIN_SLUG/freemius-init.php"
