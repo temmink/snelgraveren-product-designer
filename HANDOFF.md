@@ -1,9 +1,23 @@
 # Handoff
 
-_Last updated: 2026-09-04._
+_Last updated: 2026-09-08._
 
 ## Where things stand
 
+- **1.12.4 is built and committed (`b9f9ba3`), NOT yet released anywhere.** Two designer fixes
+  found while investigating a Freemius bug report from le-denhelder.nl (runs the wp.org 1.7.8):
+  one working "Customize Product" button on mobile in modal mode (the PHP button was dead, React
+  rendered a second one), and no `/pricing/preview` 404 per canvas change in the free build.
+  The reported bug itself ("can't make the URL" on save-to-cart, Android Chrome) could NOT be
+  reproduced — the full guest flow on their site works; a screenshot has been requested.
+  - `snelgraveren-product-designer-1.12.4.zip` (premium) and `…-free-1.12.4.zip` are in the
+    project dir; the free zip passed the strip checks (0 proof/Pricing paths).
+  - **wp.org:** `.svn-wporg/` is staged (dry-run, trunk + tags/1.12.4). Martin runs
+    `bash bin/wporg-release.sh --skip-build` in Terminal.app (needs tty + SVN password).
+  - **Freemius:** upload the premium zip under Deployment in dashboard.freemius.com (Chrome had
+    no dashboard session). No 1.11.x/1.12.x has ever been pushed there.
+  - **snelgraveren.nl** still runs 1.12.3; the same premium zip can go up via plugin-install
+    upload when convenient (nothing in 1.12.4 is urgent for the live shop).
 - **Live site runs 1.12.3** (snelgraveren.nl), uploaded + installed + LiteSpeed-purged by Martin
   himself on 2026-09-04 (the chrome-devtools MCP could not connect and the persistent MCP Chrome
   profile's wp-admin session had expired). Verified as guest: readme Stable tag 1.12.3,
