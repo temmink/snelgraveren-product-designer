@@ -14,8 +14,10 @@ _Last updated: 2026-09-08._
     project dir; the free zip passed the strip checks (0 proof/Pricing paths).
   - **wp.org:** `.svn-wporg/` is staged (dry-run, trunk + tags/1.12.4). Martin runs
     `bash bin/wporg-release.sh --skip-build` in Terminal.app (needs tty + SVN password).
-  - **Freemius:** upload the premium zip under Deployment in dashboard.freemius.com (Chrome had
-    no dashboard session). No 1.11.x/1.12.x has ever been pushed there.
+  - **Freemius: DONE** — deployment **150982**, status Released, non-incremental (the Release
+    dialog defaults "incremental" to ON; unticked), 2026-09-08. Driven through Martin's logged-in
+    Chrome tab via the chrome-devtools MCP (upload_file on "Add New Version"). Before this,
+    Freemius sat on 1.7.8 since 2026-08-20.
   - **snelgraveren.nl** still runs 1.12.3; the same premium zip can go up via plugin-install
     upload when convenient (nothing in 1.12.4 is urgent for the live shop).
 - **Live site runs 1.12.3** (snelgraveren.nl), uploaded + installed + LiteSpeed-purged by Martin
