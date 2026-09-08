@@ -27,7 +27,8 @@ _Last updated: 2026-09-08._
   columns populated identically (export_svg data URL, thumbnail file), reopen → add text → save
   → 200 with a larger canvas_json part. snelgraveren.nl itself accepts 12 MB JSON, so the live
   shop was never affected. Still worth releasing everywhere: any wp.org user on cPanel hits it.
-  Reply to Remco: hosting workaround = raise `SecRequestBodyNoFilesLimit`; update follows.
+  Reply to Remco SENT 2026-09-08 (update to 1.12.5; if still refused, ask zxcs to raise
+  `SecRequestBodyNoFilesLimit`). Awaiting his confirmation that saving with a photo works.
 - **1.12.4 is LIVE everywhere (2026-09-08):** snelgraveren.nl (uploaded by Martin, verified as
   guest: readme 1.12.4, `dist/frontend-designer.js` md5 `6d4ad6f4…` identical to local, one plugin
   folder, designer page `x-litespeed-cache-control: no-cache`), wordpress.org (SVN tag 1.12.4,
