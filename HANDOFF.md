@@ -4,7 +4,13 @@ _Last updated: 2026-09-08._
 
 ## Where things stand
 
-- **1.12.5 built + committed, NOT released (2026-09-08):** the real fix for the le-denhelder.nl
+- **1.12.5 RELEASED on wordpress.org (r3686301, API reports 1.12.5) and Freemius (deployment 151001,
+  Released, non-incremental) on 2026-09-08.** NOT on snelgraveren.nl (still 1.12.4 — the live host
+  accepts 12 MB JSON, nothing there is broken; upload the premium ZIP when convenient). The SVN
+  commit ran from Claude Code via `expect` around `bin/wporg-release.sh --skip-build` — the SVN
+  password is cached in ~/.subversion since 2026-08-20, so only the y/N prompt needed a pty.
+  Docs updated in the same release: readme FAQ, admin guide (requirements + troubleshooting),
+  user guide (troubleshooting), current_status.md. Origin of 1.12.5: the real fix for the le-denhelder.nl
   report. Remco's screenshot showed WordPress' `rest_no_route` on save; curl proved the host
   (zxcs cPanel, ModSecurity) bounces any request whose non-file body is ≥ 1,048,576 bytes and
   hands WordPress a GET on the same URI. A view save with a photo carried the 3x export PNG as
