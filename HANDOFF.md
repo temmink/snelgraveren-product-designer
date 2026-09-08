@@ -4,7 +4,11 @@ _Last updated: 2026-09-08._
 
 ## Where things stand
 
-- **1.12.4 is built and committed (`b9f9ba3`), NOT yet released anywhere.** Two designer fixes
+- **1.12.4 is LIVE everywhere (2026-09-08):** snelgraveren.nl (uploaded by Martin, verified as
+  guest: readme 1.12.4, `dist/frontend-designer.js` md5 `6d4ad6f4…` identical to local, one plugin
+  folder, designer page `x-litespeed-cache-control: no-cache`), wordpress.org (SVN tag 1.12.4,
+  API reports 1.12.4, pushed by Martin from Terminal), Freemius (deployment 150982, Released).
+  Rollback anchor: `…-1.12.3.zip`. Built and committed as `b9f9ba3`. Two designer fixes
   found while investigating a Freemius bug report from le-denhelder.nl (runs the wp.org 1.7.8):
   one working "Customize Product" button on mobile in modal mode (the PHP button was dead, React
   rendered a second one), and no `/pricing/preview` 404 per canvas change in the free build.
@@ -12,15 +16,18 @@ _Last updated: 2026-09-08._
   reproduced — the full guest flow on their site works; a screenshot has been requested.
   - `snelgraveren-product-designer-1.12.4.zip` (premium) and `…-free-1.12.4.zip` are in the
     project dir; the free zip passed the strip checks (0 proof/Pricing paths).
-  - **wp.org:** `.svn-wporg/` is staged (dry-run, trunk + tags/1.12.4). Martin runs
-    `bash bin/wporg-release.sh --skip-build` in Terminal.app (needs tty + SVN password).
+  - **wp.org: DONE** — Martin ran `bin/wporg-release.sh --skip-build`; tag 1.12.4 + trunk live.
+    Our free ZIP was diffed against Freemius' generated free ZIP for 150982: identical apart from
+    the SDK translations (see next bullet), a `Contributors: freemius` line and formatting.
+  - **Build change after the release (`506e090`):** `free-build.sh` now KEEPS
+    `freemius/languages/*.mo` (Freemius' own free build ships them and passed review; stripping
+    them left the opt-in screens English on wp.org installs) and `wporg-release.sh` asserts
+    nl_NL is present + no gettext outside that dir. Effective from 1.12.5.
   - **Freemius: DONE** — deployment **150982**, status Released, non-incremental (the Release
     dialog defaults "incremental" to ON; unticked), 2026-09-08. Driven through Martin's logged-in
     Chrome tab via the chrome-devtools MCP (upload_file on "Add New Version"). Before this,
     Freemius sat on 1.7.8 since 2026-08-20.
-  - **snelgraveren.nl** still runs 1.12.3; the same premium zip can go up via plugin-install
-    upload when convenient (nothing in 1.12.4 is urgent for the live shop).
-- **Live site runs 1.12.3** (snelgraveren.nl), uploaded + installed + LiteSpeed-purged by Martin
+- **Live site ran 1.12.3** (snelgraveren.nl), uploaded + installed + LiteSpeed-purged by Martin
   himself on 2026-09-04 (the chrome-devtools MCP could not connect and the persistent MCP Chrome
   profile's wp-admin session had expired). Verified as guest: readme Stable tag 1.12.3,
   `dist/admin-template-builder.js` and `dist/frontend-designer.js` md5-identical to local dist,
