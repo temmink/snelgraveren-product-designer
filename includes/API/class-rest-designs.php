@@ -268,14 +268,51 @@ class RestDesigns {
         if (!$design) return new \WP_Error('not_found', 'Design not found.', ['status' => 404]);
         if (!$this->owns_design($design)) return new \WP_Error('forbidden', 'Access denied.', ['status' => 403]);
 
-        $body       = $request->get_json_params();
-        $view_id    = (int) ($body['view_id'] ?? 0);
-        $json       = $body['canvas_json'] ?? [];
-        $thumb               = $body['thumbnail'] ?? '';
-        $export_svg          = $body['export_svg'] ?? '';
-        $export_vector       = $body['export_vector'] ?? '';
-        $export_vector_embed = $body['export_vector_embed'] ?? '';
-        $export_lbrn         = $body['export_lbrn'] ?? '';
+        // Two payload shapes. Since 1.12.5 the designer sends multipart/form-data
+        // with every blob as a FILE part: cPanel hosts run ModSecurity with
+        // SecRequestBodyNoFilesLimit at 1 MiB, which counts every non-file byte,
+        // so one JSON body carrying the 3x export PNG as base64 was bounced as
+        // soon as a design held a photo — and WordPress answered the server's
+        // fallback GET with rest_no_route (le-denhelder.nl, 2026-09-08). File
+        // parts fall under the far larger SecRequestBodyLimit. The JSON body is
+        // still accepted for bundles cached from before the change. Either way
+        // the values are normalised to the strings the pipeline below always took.
+        $files = $request->get_file_params();
+        if (!empty($files)) {
+            $view_id             = (int) $request->get_param('view_id');
+            $json_raw            = $this->read_view_part($files['canvas_json'] ?? null);
+            $json                = $json_raw !== '' ? json_decode($json_raw, true) : [];
+            $thumb               = $this->png_part_to_data_url($this->read_view_part($files['thumbnail'] ?? null));
+            $export_svg          = $this->png_part_to_data_url($this->read_view_part($files['export_svg'] ?? null));
+            $export_vector       = $this->read_view_part($files['export_vector'] ?? null);
+            $export_vector_embed = $this->read_view_part($files['export_vector_embed'] ?? null);
+            $export_lbrn         = $this->read_view_part($files['export_lbrn'] ?? null);
+        } else {
+            $body = $request->get_json_params();
+            if (empty($body)) {
+                // PHP drops BOTH $_POST and $_FILES when post_max_size is exceeded,
+                // and a JSON body can arrive empty the same way. Refuse rather
+                // than upsert "view 0" with an empty canvas over a real design.
+                return new \WP_Error(
+                    'sgpd_empty_view_payload',
+                    __('The design did not reach the server in full, usually because it exceeds the server’s upload limits. Please try a smaller image, or contact the shop.', 'snelgraveren-product-designer'),
+                    ['status' => 400]
+                );
+            }
+            $view_id             = (int) ($body['view_id'] ?? 0);
+            $json                = $body['canvas_json'] ?? [];
+            $thumb               = $body['thumbnail'] ?? '';
+            $export_svg          = $body['export_svg'] ?? '';
+            $export_vector       = $body['export_vector'] ?? '';
+            $export_vector_embed = $body['export_vector_embed'] ?? '';
+            $export_lbrn         = $body['export_lbrn'] ?? '';
+        }
+        if (!is_array($json)) {
+            $json = [];
+        }
+        if ($view_id <= 0) {
+            return new \WP_Error('sgpd_missing_view_id', 'view_id is required.', ['status' => 400]);
+        }
 
         // Save base64 thumbnail as a file
         $thumb_url = '';
@@ -297,6 +334,43 @@ class RestDesigns {
         $this->repo->upsert_view((int) $design['id'], $view_id, $json, $thumb_url, $export_svg, $export_vector, $export_vector_embed, $export_lbrn);
         $this->repo->invalidate_cache($request['hash']);
         return new \WP_REST_Response($this->sanitize_for_customer($this->repo->get_by_hash($request['hash'])), 200);
+    }
+
+    /**
+     * Contents of one multipart file part of a view save, or '' when absent,
+     * failed, or over the cap. The cap (7.5 MB raw) keeps a PNG under the
+     * 10 MB data-URL limit that sanitize_export_blob() enforces once it is
+     * base64-encoded; SVG/XML/JSON parts share the same ceiling for simplicity.
+     */
+    private function read_view_part(?array $file): string {
+        if (!is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            return '';
+        }
+        $tmp = (string) ($file['tmp_name'] ?? '');
+        if ($tmp === '' || !is_file($tmp)) {
+            return '';
+        }
+        $size = (int) ($file['size'] ?? filesize($tmp));
+        if ($size <= 0 || $size > 7_500_000) {
+            error_log(sprintf('[sgpd] view part "%s" rejected: %d bytes', (string) ($file['name'] ?? '?'), $size));
+            return '';
+        }
+        $contents = file_get_contents($tmp);
+        return $contents === false ? '' : $contents;
+    }
+
+    /**
+     * Re-shape raw PNG bytes from a file part into the `data:image/png;base64,`
+     * string the JSON path always delivered, so storage, sanitising and every
+     * consumer (thumbnail file, PDF/PNG export, proof page) stay unchanged.
+     * Anything that is not a PNG by magic bytes is dropped — the declared MIME
+     * type of an upload is never trusted.
+     */
+    private function png_part_to_data_url(string $bytes): string {
+        if ($bytes === '' || strlen($bytes) < 8 || substr($bytes, 0, 8) !== "\x89PNG\r\n\x1a\n") {
+            return '';
+        }
+        return 'data:image/png;base64,' . base64_encode($bytes);
     }
 
     private function save_thumbnail_file(string $hash, int $view_id, string $data_url): string {

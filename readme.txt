@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.12.4
+Stable tag: 1.12.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -133,6 +133,10 @@ No other external services are used. Design exports (PDF/PNG/SVG) are rendered e
 4. Production dashboard: every order with a design, filtered by status and period, ready to download as one ZIP.
 
 == Changelog ==
+
+= 1.12.5 =
+* Fix: saving a design with a photo failed on some hosts with "No route was found matching the URL and request method". Hosting firewalls (ModSecurity on cPanel) refuse requests whose non-file body exceeds 1 MB, and the save sent the full-resolution export as one JSON payload. Every export is now sent as a file part, which falls under the far larger file limit; older cached bundles keep working.
+* Improved: when a server still refuses a save or upload before it reaches the plugin, the designer now explains that the design is too large for the server's limits instead of showing WordPress' "no route" message. A save whose payload was dropped entirely by PHP is refused instead of overwriting the design with an empty canvas.
 
 = 1.12.4 =
 * Fix: on a phone, a product set to the modal display mode showed two "Customize Product" buttons under each other, and the lower one did nothing. There is now one button, and it opens the designer.

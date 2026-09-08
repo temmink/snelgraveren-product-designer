@@ -4,6 +4,22 @@ _Last updated: 2026-09-08._
 
 ## Where things stand
 
+- **1.12.5 built + committed, NOT released (2026-09-08):** the real fix for the le-denhelder.nl
+  report. Remco's screenshot showed WordPress' `rest_no_route` on save; curl proved the host
+  (zxcs cPanel, ModSecurity) bounces any request whose non-file body is ≥ 1,048,576 bytes and
+  hands WordPress a GET on the same URI. A view save with a photo carried the 3x export PNG as
+  base64 in one JSON body → over the limit → "Geen route gevonden…". Fix: `saveDesignView` sends
+  multipart/form-data with every blob as a file part (file parts fall under SecRequestBodyLimit,
+  ~13 MB); `RestDesigns::upsert_view` reads file params first, JSON still accepted, empty
+  payload refused (`sgpd_empty_view_payload`); `designerApi#restError` turns a rest_no_route on
+  our own routes into a "too large for this server" message. Tests:
+  `tests/php/API/DesignViewMultipartTest.php` (4) + `tests/js/api/designerApi.test.js` (6);
+  full PHPUnit 120/120 green (phpunit.phar installed ad hoc in the productdesigner container at
+  /usr/local/bin/phpunit). Browser-verified on the local live copy: save with photo → 200,
+  columns populated identically (export_svg data URL, thumbnail file), reopen → add text → save
+  → 200 with a larger canvas_json part. snelgraveren.nl itself accepts 12 MB JSON, so the live
+  shop was never affected. Still worth releasing everywhere: any wp.org user on cPanel hits it.
+  Reply to Remco: hosting workaround = raise `SecRequestBodyNoFilesLimit`; update follows.
 - **1.12.4 is LIVE everywhere (2026-09-08):** snelgraveren.nl (uploaded by Martin, verified as
   guest: readme 1.12.4, `dist/frontend-designer.js` md5 `6d4ad6f4…` identical to local, one plugin
   folder, designer page `x-litespeed-cache-control: no-cache`), wordpress.org (SVN tag 1.12.4,
