@@ -1,7 +1,7 @@
 # ProductForge — Current Status
 
 **Last updated:** 2026-09-08
-**Plugin version:** 1.12.5 (built; 1.12.4 live on snelgraveren.nl, wordpress.org and Freemius)
+**Plugin version:** 1.12.5 (live on snelgraveren.nl, wordpress.org r3686301 and Freemius 151001, 2026-09-08)
 **Docker environment:** Running (WordPress 6.7, WooCommerce 10.6.1, MariaDB 11)
 
 > **Since 2026-03-22:** Freemius premium gating, Clipart Manager admin, Design Templates admin, redesigned Add Layer panel with clipart picker, engraving text (Hershey single-line fonts), pre-rendered browser export pipeline with multi-view ZIP downloads, migration 700 (`export_svg` column), clipart upload rate-limit, history restore-rejection guard, and input sanitization + size-cap for export blobs.
@@ -16,7 +16,7 @@ Triggered by a Freemius bug report from a wp.org user (le-denhelder.nl, cPanel h
   the first `.pf-open-designer`, which on mobile was React's own button. `utils/openDesignerButtons.js`
   wires every button outside the root and React renders its own only when PHP rendered none. The free
   build no longer calls the (Pro-only) `/pricing/preview` route on every canvas change.
-- **1.12.5 (built, not yet released):** the actual cause of the report, proven with curl. ModSecurity's
+- **1.12.5 (released everywhere 2026-09-08):** the actual cause of the report, proven with curl. ModSecurity's
   `SecRequestBodyNoFilesLimit` (1 MiB, exact threshold 1,048,576 bytes) counts every non-file byte;
   the view save carried the 3x export PNG as base64 in one JSON body, so any design with a photo was
   bounced and WordPress answered the server's fallback GET with `rest_no_route`. `saveDesignView` now

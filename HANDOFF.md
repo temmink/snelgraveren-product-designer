@@ -5,8 +5,10 @@ _Last updated: 2026-09-08._
 ## Where things stand
 
 - **1.12.5 RELEASED on wordpress.org (r3686301, API reports 1.12.5) and Freemius (deployment 151001,
-  Released, non-incremental) on 2026-09-08.** NOT on snelgraveren.nl (still 1.12.4 — the live host
-  accepts 12 MB JSON, nothing there is broken; upload the premium ZIP when convenient). The SVN
+  Released, non-incremental) on 2026-09-08, and on snelgraveren.nl the same day** (uploaded by
+  Martin; verified as guest: readme 1.12.5, `dist/frontend-designer.js` md5 `f514338a…` identical
+  to local, multipart views route answers `rest_forbidden` not 5xx, designer page no-cache).
+  Rollback anchor: `…-1.12.4.zip`. The SVN
   commit ran from Claude Code via `expect` around `bin/wporg-release.sh --skip-build` — the SVN
   password is cached in ~/.subversion since 2026-08-20, so only the y/N prompt needed a pty.
   Docs updated in the same release: readme FAQ, admin guide (requirements + troubleshooting),
