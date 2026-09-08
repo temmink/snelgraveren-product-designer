@@ -98,15 +98,16 @@ ProductForge is a WooCommerce plugin that adds a drag-and-drop product designer 
 - WooCommerce 8.0 or higher
 - PHP extensions: `finfo` (for MIME detection), `gd` or `imagick` (for PNG export)
 - Composer dependency: `enshrined/svg-sanitize` (included in the plugin)
+- Request-body limits: saving a design uploads its export files (a full-resolution PNG plus SVG/LightBurn variants) in one multipart request of typically 1–10 MB. Make sure PHP's `post_max_size` and `upload_max_filesize` allow that (32M is comfortable). On cPanel hosting with ModSecurity, the export files travel as file parts on purpose so they fall under `SecRequestBodyLimit` (usually 13 MB) rather than the 1 MB `SecRequestBodyNoFilesLimit` — see Troubleshooting if saves are still refused.
 
 ### Installation
 
-1. Upload the `productforge` folder to `wp-content/plugins/`.
+1. Upload the `snelgraveren-product-designer` folder to `wp-content/plugins/` (or install from WordPress.org / upload the ZIP).
 2. Activate the plugin in **Plugins → Installed Plugins**.
 3. The plugin automatically:
-   - Creates the required database tables (11 tables).
-   - Registers the `edit_pf_templates` capability.
-   - Adds a **ProductForge** menu item to the WordPress admin sidebar.
+   - Creates the required database tables (13 tables).
+   - Grants the `edit_sgpd_templates` capability to shop managers and administrators.
+   - Adds a **Product Designer** menu item to the WordPress admin sidebar.
 
 ### HPOS Compatibility
 ProductForge declares compatibility with WooCommerce High-Performance Order Storage (HPOS). It works with both the legacy `wp_posts`-based order storage and the new `wp_wc_orders` table.
@@ -1103,10 +1104,19 @@ npm run dev                             # Vite dev server (HMR)
 - Verify the plugin is activated and the `wp_pf_templates` table exists.
 
 ### Designer doesn't appear on the product page
-- Confirm the product has **Enable Designer** checked in the ProductForge tab.
+- Confirm the product has **Enable Designer** checked in the Product Designer tab.
 - Confirm the assigned template has **Published** status.
-- Check that the `[productforge]` shortcode is not duplicated in the product description.
+- Check that the `[sgpd_designer]` shortcode is not duplicated in the product description.
 - If using a page builder, ensure the shortcode is rendered (not escaped).
+
+### Saving fails with "No route was found matching the URL and request method"
+That text is WordPress' own `rest_no_route` answer, and it means the save never reached the plugin. The usual cause is the hosting firewall: ModSecurity on cPanel servers refuses any request whose non-file body exceeds `SecRequestBodyNoFilesLimit` (1 MB by default), then hands WordPress a GET on the same URL, which has no route. Before 1.12.5 the designer sent the full-resolution export PNG as text inside one JSON request, so every design with a photo crossed that line while text-only designs did not ("it works sometimes").
+- Update to 1.12.5 or later: the export files are sent as file parts, which fall under the much larger `SecRequestBodyLimit`.
+- If the designer then reports that the design is too large for the server's limits, ask the host to raise `SecRequestBodyNoFilesLimit` / `SecRequestBodyLimit` for the site and check PHP's `post_max_size` and `upload_max_filesize` (32M is comfortable). When PHP drops an oversized request entirely, the plugin refuses the save (`sgpd_empty_view_payload`) rather than storing an empty design.
+- To confirm it is the server: send a 1.1 MB JSON POST to `/wp-json/pf/v1/designs/<any-32-hex-hash>/views` with curl. A firewall limit answers `rest_no_route`; a healthy server answers `rest_forbidden` (missing nonce) or `not_found`.
+
+### Two "Customize Product" buttons on a phone, the lower one does nothing
+Fixed in 1.12.4. Products in modal display mode rendered both the server-side button and the designer's own mobile button, and only the first one was wired. Update the plugin; no configuration change is needed.
 
 ### Fonts not loading for customers
 - Verify fonts are added to the **Allowed Fonts** list in template Settings.
@@ -1133,8 +1143,8 @@ npm run dev                             # Vite dev server (HMR)
 
 ### Database tables missing
 - Deactivate and reactivate the plugin to trigger migration.
-- Or run: `docker compose exec wordpress wp eval "ProductForge\Database\DbManager::run_migrations();"`.
-- Check the `pf_db_version` option value — it should match the latest migration number (700).
+- Or run: `docker compose exec wordpress wp eval "Snelgraveren\ProductDesigner\Database\DbManager::run_migrations();"`.
+- Check the `sgpd_db_version` option value — it should match the latest migration number.
 
 ### SVG upload rejected
 - Ensure the SVG is valid XML.

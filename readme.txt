@@ -105,6 +105,10 @@ Yes. Classic themes render the designer automatically on the product page (or vi
 
 Exports (PDF, PNG, SVG) are generated locally on your server — nothing is sent to external services. Download them per order or in bulk from the Production dashboard.
 
+= Saving a design fails with "No route was found matching the URL and request method" =
+
+That message comes from WordPress, not from the plugin: your web server's firewall (typically ModSecurity on cPanel hosting, with `SecRequestBodyNoFilesLimit` at 1 MB) refused the save before it reached the plugin and let WordPress answer a request it has no route for. It only happened for designs large enough to cross that limit, usually ones with a photo. Since 1.12.5 the designer sends the design's export files as file uploads, which fall under the server's much larger file limit, so update the plugin first. If a save is still refused, the designer now says so in plain words; ask your host to raise the request-body limits (`SecRequestBodyNoFilesLimit`, and PHP's `post_max_size` / `upload_max_filesize`) for your site.
+
 = What does the free version include? =
 
 The free version includes the full designer with unlimited templates and PNG export. Pro unlocks multiple product views, PDF/SVG production export, automatic exports on order status, pricing rules, custom fonts, clip art management, color palettes, and more.

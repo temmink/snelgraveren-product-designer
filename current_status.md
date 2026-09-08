@@ -1,10 +1,35 @@
 # ProductForge — Current Status
 
-**Last updated:** 2026-07-17
-**Plugin version:** 1.0.0
+**Last updated:** 2026-09-08
+**Plugin version:** 1.12.5 (built; 1.12.4 live on snelgraveren.nl, wordpress.org and Freemius)
 **Docker environment:** Running (WordPress 6.7, WooCommerce 10.6.1, MariaDB 11)
 
 > **Since 2026-03-22:** Freemius premium gating, Clipart Manager admin, Design Templates admin, redesigned Add Layer panel with clipart picker, engraving text (Hershey single-line fonts), pre-rendered browser export pipeline with multi-view ZIP downloads, migration 700 (`export_svg` column), clipart upload rate-limit, history restore-rejection guard, and input sanitization + size-cap for export blobs.
+
+## 2026-09-08 — 1.12.4 / 1.12.5: mobile Customize button, hosting body limits
+
+Triggered by a Freemius bug report from a wp.org user (le-denhelder.nl, cPanel hosting, still on 1.7.8):
+"can't make the URL" when saving to the cart, intermittent, Android Chrome.
+
+- **1.12.4 (released everywhere 2026-09-08):** on a phone, a product in modal display mode showed two
+  "Customize Product" buttons and the lower (PHP-rendered) one was dead — the modal effect wired only
+  the first `.pf-open-designer`, which on mobile was React's own button. `utils/openDesignerButtons.js`
+  wires every button outside the root and React renders its own only when PHP rendered none. The free
+  build no longer calls the (Pro-only) `/pricing/preview` route on every canvas change.
+- **1.12.5 (built, not yet released):** the actual cause of the report, proven with curl. ModSecurity's
+  `SecRequestBodyNoFilesLimit` (1 MiB, exact threshold 1,048,576 bytes) counts every non-file byte;
+  the view save carried the 3x export PNG as base64 in one JSON body, so any design with a photo was
+  bounced and WordPress answered the server's fallback GET with `rest_no_route`. `saveDesignView` now
+  sends multipart/form-data with every blob as a file part; `RestDesigns::upsert_view` reads file params
+  first (PNG parts re-shaped into the same data-URL strings), still accepts JSON, and refuses an empty
+  payload instead of upserting an empty view. `designerApi#restError` turns a `rest_no_route` on our own
+  routes into a "too large for this server" message. Tests: `DesignViewMultipartTest` (PHP) +
+  `designerApi.test.js`. Verified in the browser on the local live copy incl. reopen → save.
+- Build change: the wp.org free build keeps `freemius/languages/*.mo` from 1.12.5 on (Freemius' own
+  free build ships them; stripping them left the opt-in screens English).
+- Docs: readme FAQ, admin guide (requirements + troubleshooting), user guide (troubleshooting).
+
+---
 
 ## 2026-07-17 — Eight-feature expansion
 

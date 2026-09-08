@@ -297,6 +297,9 @@ Your element is inside a restricted zone — it cannot be dragged outside the de
 ### I can't change the color of a clip art item
 The shop owner may have disabled recoloring for clip art items. This is a per-product setting.
 
+### "The server refused this request … the design is too large for the server's limits"
+The shop's web server has a size limit on what it accepts in one request, and your design (usually because of a large photo) went over it. Try a smaller or more compressed photo, or let the shop know — the limit is set by their hosting, not by the designer. If you see WordPress' own "No route was found matching the URL and request method" instead, the shop is running a plugin version older than 1.12.5; the cause is the same.
+
 ### The designer won't load
 - Ensure your browser is up to date (Chrome, Firefox, Safari, Edge).
 - Try clearing your browser cache.
