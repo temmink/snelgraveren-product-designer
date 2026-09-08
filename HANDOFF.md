@@ -27,8 +27,14 @@ _Last updated: 2026-09-08._
   columns populated identically (export_svg data URL, thumbnail file), reopen → add text → save
   → 200 with a larger canvas_json part. snelgraveren.nl itself accepts 12 MB JSON, so the live
   shop was never affected. Still worth releasing everywhere: any wp.org user on cPanel hits it.
-  Reply to Remco SENT 2026-09-08 (update to 1.12.5; if still refused, ask zxcs to raise
-  `SecRequestBodyNoFilesLimit`). Awaiting his confirmation that saving with a photo works.
+  Replies to Remco SENT 2026-09-08 (twice): update to 1.12.5. His host (Vimexx support) denies
+  running ModSecurity; re-measured without that assumption — the limit is content-aware (valid
+  JSON / form / multipart TEXT ≥ 1,048,576 B → 413, same bytes as text/plain or as a FILE part
+  pass, invalid JSON passes) and the 413 is rendered by WordPress via the .htaccess→index.php
+  ErrorDocument path, which on a REST route becomes rest_no_route. Sent him a curl repro for
+  the host; irrelevant for 1.12.5 (file parts pass). His site was still on 1.7.8 at 11:30 —
+  wp.org update check runs every 12 h (Dashboard → Updates → "Opnieuw controleren" forces it).
+  Awaiting his confirmation that saving with a photo works on 1.12.5.
 - **1.12.4 is LIVE everywhere (2026-09-08):** snelgraveren.nl (uploaded by Martin, verified as
   guest: readme 1.12.4, `dist/frontend-designer.js` md5 `6d4ad6f4…` identical to local, one plugin
   folder, designer page `x-litespeed-cache-control: no-cache`), wordpress.org (SVN tag 1.12.4,
