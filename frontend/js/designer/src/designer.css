@@ -1,0 +1,1149 @@
+/* ── Reset & isolation ───────────────────────────────────────────────────── */
+
+.pf-designer {
+  all: initial;
+  display: block;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1f2937;
+}
+
+.pf-designer *,
+.pf-designer *::before,
+.pf-designer *::after {
+  box-sizing: border-box;
+}
+
+/* ── Loading & error states ──────────────────────────────────────────────── */
+
+.pf-designer--loading,
+.pf-designer--error {
+  padding: 2rem;
+  text-align: center;
+  color: #6b7280;
+}
+
+.pf-designer--error {
+  color: #dc2626;
+}
+
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+
+.pf-designer__layout {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 0;
+  /* Containing block for the clipart picker overlay — it must escape the
+     sidebar's overflow:hidden and cover the canvas area. */
+  position: relative;
+}
+
+.pf-canvas-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.pf-canvas-scroll {
+  overflow: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  background: #f9fafb;
+}
+
+.pf-canvas-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+}
+
+/* The canvas cell must be allowed to be NARROWER than the canvas inside it.
+   A grid/flex item's automatic minimum size is its min-content — here the
+   canvas's own current width — so without this the width useCanvasScale
+   measures is a floor set by the canvas itself: it can never shrink to fit a
+   narrow window, and it reports slightly more room after every pass, which
+   with a scale ceiling above 1 walks the canvas up to MAX_SCALE on any window
+   at all. Same reason .pf-canvas-wrap already carries min-width: 0. */
+.pf-canvas-grid,
+.pf-canvas-cell {
+  min-width: 0;
+}
+
+/* Fabric leaves its lower canvas display:inline, so the line box adds a
+   descender's worth of height (6 px at this line-height) below a canvas that
+   is otherwise exactly as tall as its box. Harmless while the canvas was
+   always smaller than the room it had; now that it fills the room, those 6 px
+   raise a vertical scrollbar, which eats 15 px of width and raises a
+   horizontal one too — two scrollbars around a design that fits. */
+.pf-canvas-scroll canvas {
+  display: block;
+}
+
+.pf-canvas-grid--ruler {
+  grid-template-columns: 22px 1fr;
+  grid-template-rows: 22px 1fr;
+}
+
+.pf-ruler__corner {
+  font-size: 9px;
+  line-height: 22px;
+  text-align: center;
+  color: #888;
+  user-select: none;
+}
+
+.pf-ruler--top  { grid-column: 2; grid-row: 1; }
+.pf-ruler--left { grid-column: 1; grid-row: 2; }
+.pf-canvas-grid--ruler .pf-canvas-cell { grid-column: 2; grid-row: 2; }
+
+.pf-ruler__tick  { stroke: #999; stroke-width: 1; }
+.pf-ruler__label { font-size: 8px; fill: #666; user-select: none; }
+
+.pf-designer__sidebar-wrap {
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* ── Modal mode ──────────────────────────────────────────────────────────── */
+
+.pf-designer--modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.pf-designer--modal.pf-designer--open {
+  display: block;
+}
+
+.pf-designer--modal .pf-designer__layout {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.pf-designer__close-btn {
+  text-transform: none;
+  letter-spacing: normal;
+  padding: 0.6rem 1rem;
+  background: #fff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.pf-designer__close-btn:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+/* ── Open designer button (rendered by PHP) ──────────────────────────────── */
+
+.pf-open-designer {
+  margin: 1rem 0;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+
+.pf-sidebar {
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.pf-sidebar__tabs {
+  display: flex;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.pf-sidebar__tab {
+  /* Width follows the label, not an equal quarter: translated labels differ a
+     lot in length ("Lagen" vs "Toevoegen") and equal columns truncated the
+     long ones to "Toevoe…" while the short ones had room to spare. */
+  flex: 1 1 auto;
+  padding: 0.5rem 0.25rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+  border-bottom: 2px solid transparent;
+  text-transform: none;
+  letter-spacing: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.pf-sidebar__tab:hover:not(:disabled) {
+  color: #1f2937;
+}
+
+.pf-sidebar__tab--active {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+}
+
+.pf-sidebar__tab:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.pf-element__text-field {
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.pf-element__text-field span {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+
+.pf-element__text-field textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem;
+  border: 1px solid #9ca3af;
+  border-radius: 4px;
+  background: #fff;
+  color: #1f2937;
+  /* 16px: iOS zooms the whole page when a focused field is smaller. */
+  font-size: 16px;
+  font-family: inherit;
+  line-height: 1.3;
+  resize: vertical;
+}
+
+.pf-element__text-field textarea:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 0;
+  border-color: #2563eb;
+}
+
+.pf-sidebar__content {
+  padding: 0.75rem;
+}
+
+.pf-sidebar__heading {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: #374151;
+}
+
+.pf-layers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pf-layers__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #1f2937;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.pf-layers__item:hover {
+  border-color: #9ca3af;
+  background: #f9fafb;
+  color: #1f2937;
+}
+
+.pf-layers__item--active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1f2937;
+}
+
+.pf-layers__badge {
+  flex: 0 0 auto;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #6b7280;
+  background: #f3f4f6;
+  border-radius: 3px;
+  padding: 2px 5px;
+}
+
+.pf-layers__item--active .pf-layers__badge {
+  color: #2563eb;
+  background: #dbeafe;
+}
+
+.pf-layers__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pf-layers__empty {
+  margin: 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.pf-sidebar__tab-content p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+/* ── Add tools ───────────────────────────────────────────────────────────── */
+
+.pf-add-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pf-add-tools__btn {
+  text-transform: none;
+  letter-spacing: normal;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: #fff;
+  color: #1f2937;
+  cursor: pointer;
+  font-size: 13px;
+  text-align: left;
+}
+
+.pf-add-tools__btn:hover:not(:disabled) {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.pf-add-tools__btn--active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.pf-add-tools__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pf-add-tools__btn--main {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  font-size: 15px;
+  font-weight: 600;
+  border-color: #9ca3af;
+}
+
+.pf-add-tools__icon {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 20px;
+  font-weight: 700;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.pf-add-tools__label {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pf-add-tools__label small {
+  font-size: 12px;
+  font-weight: 400;
+  color: #6b7280;
+}
+
+.pf-add-more {
+  margin-top: 0.75rem;
+  font-size: 13px;
+}
+
+.pf-add-more summary {
+  cursor: pointer;
+  color: #4b5563;
+  padding: 0.25rem 0;
+}
+
+.pf-add-more .pf-add-tools {
+  margin-top: 0.5rem;
+}
+
+.pf-add-more__hint {
+  margin: 0.5rem 0 0;
+  padding: 0.5rem;
+  border-radius: 4px;
+  background: #eff6ff;
+  color: #1e40af;
+  font-size: 13px;
+}
+
+/* ── Product options (size, colour) ──────────────────────────────────────── */
+
+.pf-options {
+  padding: 0.5rem;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.pf-options__fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 0.5rem;
+}
+
+.pf-options__field {
+  display: block;
+  min-width: 0;
+}
+
+.pf-options__field span {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4b5563;
+  margin-bottom: 2px;
+}
+
+.pf-options__select {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #9ca3af;
+  border-radius: 4px;
+  background: #fff;
+  color: #1f2937;
+  /* 16px: iOS zooms the page when a focused control is smaller. */
+  font-size: 16px;
+}
+
+/* Still to choose: the one thing standing between the customer and the cart. */
+.pf-options__select--empty {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.pf-options__note {
+  margin: 0.5rem 0 0;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  background: #fffbeb;
+  border: 1px solid #f59e0b;
+  color: #78350f;
+  font-size: 13px;
+}
+
+/* ── Actions (order / close) ─────────────────────────────────────────────── */
+
+.pf-designer__actions,
+.pf-designer__buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Close comes first in the markup (left of the order button on a phone); in
+   a column the order button belongs on top. */
+.pf-designer__buttons {
+  flex-direction: column-reverse;
+}
+
+.pf-designer__notice {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #f59e0b;
+  border-radius: 4px;
+  background: #fffbeb;
+  color: #78350f;
+  font-size: 14px;
+}
+
+.pf-designer__notice-btn {
+  align-self: flex-start;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid #b45309;
+  border-radius: 4px;
+  background: #fff;
+  color: #78350f;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+  cursor: pointer;
+}
+
+.pf-designer__notice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.pf-designer__notice-btn--primary {
+  background: #b45309;
+  border-color: #b45309;
+  color: #fff;
+}
+
+/* ── Start bar: the way into the designer while it is out of sight ───────── */
+
+.pf-start-bar {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 9990;
+}
+
+.pf-start-bar__btn {
+  all: unset;
+  box-sizing: border-box;
+  display: block;
+  padding: 0.85rem 1.5rem;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #fff;
+  font: 600 16px/1.2 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.pf-start-bar__note {
+  margin: 0 0 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  background: #fffbeb;
+  border: 1px solid #f59e0b;
+  color: #78350f;
+  font: 500 14px/1.3 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  text-align: center;
+}
+
+.pf-start-bar__btn:hover { background: #1d4ed8; }
+.pf-start-bar__btn:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+
+/* ── Element properties ──────────────────────────────────────────────────── */
+
+.pf-element__props {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pf-element__field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 13px;
+}
+
+.pf-element__field span {
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.pf-element__field select,
+.pf-element__field input[type="number"] {
+  width: 120px;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 3px;
+  font-size: 13px;
+}
+
+.pf-element__field input[type="color"] {
+  width: 40px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid #d1d5db;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.pf-element__color-swatches {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.pf-element__swatch {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #d1d5db;
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.pf-element__swatch--active {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px #2563eb;
+}
+
+.pf-zone-fill {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.pf-element__hint {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 12px;
+}
+
+.pf-element__warning {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: #92400e;
+  background: #fef3c7;
+  border-left: 3px solid #dba617;
+  border-radius: 4px;
+}
+
+.pf-element__toggles {
+  display: flex;
+  gap: 4px;
+}
+
+.pf-element__toggle {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #d1d5db;
+  border-radius: 3px;
+  background: #fff;
+  color: #1f2937;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.pf-element__toggle--active {
+  background: #eff6ff;
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.pf-element__more {
+  margin-top: 0.25rem;
+  font-size: 13px;
+}
+
+.pf-element__more summary {
+  cursor: pointer;
+  color: #4b5563;
+  padding: 0.25rem 0;
+}
+
+.pf-element__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.pf-element__row-label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* Inside a labelled row the buttons are fixed squares: themes add their own
+   padding and min-width to every <button>, which pushed the third one out of
+   the 280px sidebar. */
+.pf-element__row .pf-element__toggles {
+  flex: none;
+  gap: 4px;
+}
+
+.pf-element__row .pf-element__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 36px;
+  min-width: 0;
+  height: 32px;
+  padding: 0;
+  line-height: 1;
+}
+
+.pf-element__toggle svg {
+  display: block;
+}
+
+.pf-element__align {
+  margin-top: 0.75rem;
+}
+
+.pf-element__align-label {
+  font-size: 12px;
+  color: #64748b;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.pf-element__align-btns {
+  display: flex;
+  gap: 4px;
+}
+
+.pf-element__align-btn {
+  padding: 4px 8px;
+  font-size: 14px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  cursor: pointer;
+  line-height: 1;
+  color: #334155;
+}
+
+.pf-element__align-btn:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+}
+
+.pf-element__delete-btn {
+  text-transform: none;
+  letter-spacing: normal;
+  margin-top: 0.75rem;
+  padding: 0.4rem 0.75rem;
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.pf-element__delete-btn:hover {
+  background: #fecaca;
+}
+
+/* ── Views ───────────────────────────────────────────────────────────────── */
+
+.pf-views {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.pf-views__btn {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: #fff;
+  color: #1f2937;
+  cursor: pointer;
+  font-size: 13px;
+  text-align: center;
+  text-transform: none;
+  letter-spacing: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pf-views__btn--active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #2563eb;
+  font-weight: 500;
+}
+
+/* ── Save button ─────────────────────────────────────────────────────────── */
+
+.pf-designer__save-btn {
+  /* Themes upper-case and letter-space buttons; the translated label then
+     wraps onto two lines in the 280px sidebar. */
+  text-transform: none;
+  letter-spacing: normal;
+  padding: 0.6rem 1rem;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.pf-designer__save-btn:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.pf-designer__save-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.pf-designer__save-btn--saved {
+  background: #16a34a;
+  opacity: 1 !important;
+}
+
+.pf-designer__save-btn--saved:hover {
+  background: #16a34a;
+}
+
+.pf-designer__price {
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #1f2937;
+  background: #f3f4f6;
+  border-radius: 6px;
+  text-align: center;
+}
+
+/* ── Focus styles for keyboard navigation ────────────────────────────────── */
+
+.pf-designer button:focus-visible,
+.pf-designer [role="tab"]:focus-visible,
+.pf-designer input:focus-visible,
+.pf-designer select:focus-visible {
+  outline: 2px solid #1e88e5;
+  outline-offset: 2px;
+}
+
+/* ── Screen-reader only utility ──────────────────────────────────────────── */
+
+.pf-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Error ────────────────────────────────────────────────────────────────── */
+
+.pf-designer__error {
+  padding: 0.5rem 0.75rem;
+  background: #fee2e2;
+  color: #dc2626;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* ── Cart integration: design-required state ────────────────────────────── */
+
+.single_add_to_cart_button.pf-design-required {
+  position: relative;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Designer present → its "Save & add to cart" button is the single add-to-cart
+   action; hide the native WooCommerce button (the form still submits). */
+body.pf-designer-present .single_add_to_cart_button {
+  display: none !important;
+}
+
+/* ── Mobile responsive ──────────────────────────────────────────────────── */
+
+@media (max-width: 767px) {
+  /* Stack layout vertically */
+  .pf-designer__layout {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+  }
+
+  /* Canvas takes full width */
+  .pf-canvas-wrap {
+    width: 100%;
+  }
+
+  /* Canvas scroll container should not overflow horizontally */
+  .pf-canvas-scroll {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  /* Sidebar becomes full-width bottom panel */
+  .pf-designer__sidebar-wrap {
+    width: 100%;
+    flex-shrink: 1;
+    gap: 0.5rem;
+  }
+
+  /* Enlarge all interactive elements for touch (44px min target) */
+  .pf-sidebar__tab {
+    padding: 0.75rem 0.25rem;
+    font-size: 14px;
+    min-height: 44px;
+  }
+
+  .pf-add-tools__btn {
+    padding: 0.75rem;
+    font-size: 14px;
+    min-height: 44px;
+  }
+
+  .pf-element__row .pf-element__toggle {
+    width: 44px;
+    height: 44px;
+  }
+
+  .pf-element__toggle {
+    width: 44px;
+    height: 44px;
+    font-size: 15px;
+  }
+
+  .pf-element__swatch {
+    width: 32px;
+    height: 32px;
+  }
+
+  .pf-element__align-btn {
+    padding: 8px 12px;
+    font-size: 16px;
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .pf-element__delete-btn {
+    padding: 0.75rem;
+    font-size: 14px;
+    min-height: 44px;
+  }
+
+  .pf-views__btn {
+    padding: 0.75rem;
+    font-size: 14px;
+    min-height: 44px;
+  }
+
+  .pf-designer__save-btn {
+    padding: 0.75rem 1rem;
+    font-size: 15px;
+    min-height: 48px;
+  }
+
+  .pf-designer__close-btn {
+    padding: 0.75rem 1rem;
+    font-size: 15px;
+    min-height: 48px;
+  }
+
+  .pf-element__field select,
+  .pf-element__field input[type="number"] {
+    width: 100%;
+    padding: 0.5rem;
+    font-size: 14px;
+    min-height: 40px;
+  }
+
+  .pf-element__field input[type="color"] {
+    width: 48px;
+    height: 40px;
+  }
+
+  .pf-element__field {
+    flex-wrap: wrap;
+  }
+
+  /* Modal: fullscreen on mobile for maximum canvas space */
+  .pf-designer--modal {
+    padding: 0;
+  }
+
+  /* A phone screen, top to bottom: the product (stays put), the options
+     (scroll underneath it), the order button (stays put). Before this the
+     canvas box was stretched to fill the screen — 400 px of empty white —
+     the options were folded away under it, and opening them pushed the
+     order button off the bottom. */
+  .pf-designer--modal {
+    background: #fff;
+  }
+
+  .pf-designer--modal .pf-designer__layout {
+    padding: 0 0.5rem;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .pf-designer--modal .pf-canvas-wrap {
+    flex: none;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    padding: 0.5rem 0;
+    background: #fff;
+  }
+
+  .pf-designer--modal .pf-sidebar {
+    border: none;
+    overflow: visible;
+  }
+
+  .pf-designer--modal .pf-designer__actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    padding: 0.5rem 0 calc(0.5rem + env(safe-area-inset-bottom, 0px));
+    background: #fff;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .pf-designer--modal .pf-designer__buttons {
+    flex-direction: row;
+  }
+
+  .pf-designer--modal .pf-designer__save-btn {
+    flex: 1;
+  }
+
+  .pf-start-bar {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 0.5rem 0.75rem calc(0.5rem + env(safe-area-inset-bottom, 0px));
+    background: #fff;
+    border-top: 1px solid #e5e7eb;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.12);
+  }
+
+  .pf-start-bar__btn {
+    width: 100%;
+    border-radius: 6px;
+    box-shadow: none;
+  }
+
+  .pf-designer--modal .pf-canvas-scroll {
+    border: none;
+    background: #e8eaed;
+    border-radius: 4px;
+  }
+}
+
+/* Toolbar */
+.pf-toolbar { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; }
+.pf-toolbar__group { display: flex; gap: 4px; }
+.pf-toolbar__separator { width: 1px; height: 24px; background: #ddd; }
+.pf-toolbar__btn { padding: 4px 10px; border: 1px solid #ccc; border-radius: 4px; background: white; cursor: pointer; font-size: 14px; line-height: 1; color: #333; }
+.pf-toolbar__btn:hover:not(:disabled) { background: #f0f0f0; }
+.pf-toolbar__btn--active { border-color: #2271b1; background: #e8f0fe; color: #2271b1; }
+.pf-toolbar__btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.pf-toolbar__group--options { align-items: center; gap: 8px; font-size: 12px; color: #666; }
+.pf-toolbar__option { display: flex; align-items: center; gap: 4px; }
+.pf-toolbar__option input[type="range"] { width: 80px; }
+.pf-toolbar__option input[type="color"] { width: 28px; height: 24px; padding: 0; border: 1px solid #ccc; border-radius: 3px; cursor: pointer; }
+
+/* Clip Art section in AddTab */
+.pf-clipart-section { margin-top: 16px; }
+.pf-clipart-categories { display: flex; flex-direction: column; gap: 6px; }
+.pf-clipart-category { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; text-align: left; color: #1f2937; }
+.pf-clipart-category:hover { border-color: #0073aa; box-shadow: 0 0 0 1px #0073aa; }
+.pf-clipart-category__thumbs { display: flex; gap: 2px; flex-shrink: 0; }
+.pf-clipart-category__thumbs img { width: 28px; height: 28px; object-fit: contain; pointer-events: none; }
+.pf-clipart-category__name { flex: 1; font-size: 13px; font-weight: 600; }
+.pf-clipart-category__count { font-size: 11px; color: #6b7280; background: #f3f4f6; border-radius: 10px; padding: 2px 8px; }
+
+/* Clipart picker — overlay over the designer layout with large previews */
+.pf-clipart-picker { position: absolute; inset: 0; z-index: 500; background: rgba(0, 0, 0, 0.35); display: flex; align-items: flex-start; justify-content: center; padding: 1.5rem; }
+.pf-clipart-picker__panel { background: #fff; border-radius: 8px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25); max-width: 640px; width: 100%; max-height: 100%; display: flex; flex-direction: column; }
+.pf-clipart-picker__header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #e5e7eb; }
+.pf-clipart-picker__title { margin: 0; font-size: 15px; font-weight: 600; color: #1f2937; }
+.pf-clipart-picker__close { border: none; background: none; cursor: pointer; font-size: 22px; line-height: 1; color: #6b7280; padding: 4px 8px; }
+.pf-clipart-picker__close:hover { color: #1f2937; }
+.pf-clipart-picker__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; padding: 16px; overflow-y: auto; }
+.pf-clipart-picker__item { aspect-ratio: 1; border: 1px solid #ddd; border-radius: 6px; background: #fff; cursor: pointer; padding: 8px; }
+.pf-clipart-picker__item:hover { border-color: #0073aa; box-shadow: 0 0 0 2px #0073aa; }
+.pf-clipart-picker__item img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+
+@media (max-width: 782px) {
+  .pf-clipart-picker { padding: 0.5rem; }
+  .pf-clipart-picker__grid { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); }
+}
+
+/* Image Filters */
+.pf-filters__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.pf-filters__title { font-weight: 600; font-size: 13px; color: #1f2937; }
+.pf-filters__reset { font-size: 11px; color: #2271b1; background: none; border: none; cursor: pointer; }
+.pf-filters__presets { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+.pf-filters__preset { padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px; background: #f9fafb; cursor: pointer; font-size: 10px; color: #333; }
+.pf-filters__preset--active { border-color: #2271b1; background: #e8f0fe; color: #2271b1; font-weight: 600; }
+.pf-filters__slider { display: block; margin-bottom: 6px; }
+.pf-filters__slider-header { display: flex; justify-content: space-between; font-size: 11px; color: #666; margin-bottom: 2px; }
+.pf-filters__slider input[type="range"] { width: 100%; }
+
+/* Curved Text */
+.pf-curved-text__presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 10px; }
+.pf-curved-text__preset { padding: 6px; border: 1px solid #ddd; border-radius: 4px; background: white; cursor: pointer; text-align: center; font-size: 9px; color: #666; }
+.pf-curved-text__preset--active { border-color: #2271b1; background: #e8f0fe; color: #2271b1; }
+.pf-curved-text__preset svg { display: block; margin: 0 auto 2px; }
+
+/* Design Templates */
+.pf-design-templates { margin-bottom: 14px; }
+.pf-design-templates__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 14px; }
+.pf-design-templates__item { padding: 0; border: 1px solid #ddd; border-radius: 4px; background: white; cursor: pointer; overflow: hidden; text-align: center; color: #333; }
+.pf-design-templates__item:hover { border-color: #2271b1; }
+.pf-design-templates__item img { width: 100%; aspect-ratio: 4/3; object-fit: cover; }
+.pf-design-templates__placeholder { width: 100%; aspect-ratio: 4/3; background: #f3f4f6; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #999; }
+.pf-design-templates__name { display: block; padding: 4px; font-size: 10px; color: #666; }
+.pf-design-templates__category-filter { width: 100%; padding: 4px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 3px; font-size: 11px; }

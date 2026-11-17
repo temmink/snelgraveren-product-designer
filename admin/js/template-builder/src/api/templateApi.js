@@ -1,0 +1,101 @@
+const base  = () => window.sgpdTemplateBuilder?.restUrl || '/wp-json/';
+const nonce = () => window.sgpdTemplateBuilder?.nonce   || '';
+
+async function request(method, path, body) {
+  const res = await fetch(`${base()}pf/v1/${path}`, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-WP-Nonce':   nonce(),
+    },
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+
+  // 204 No Content — nothing to parse.
+  if (res.status === 204) return null;
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data?.message || `Request failed: ${res.status}`);
+  }
+  return data;
+}
+
+export const templateApi = {
+  // Templates
+  list:      ()              => request('GET',    'templates'),
+  create:    (data)          => request('POST',   'templates', data),
+  get:       (id)            => request('GET',    `templates/${id}`),
+  update:    (id, data)      => request('PUT',    `templates/${id}`, data),
+  delete:    (id)            => request('DELETE', `templates/${id}`),
+  duplicate: (id)            => request('POST',   `templates/${id}/duplicate`),
+
+  // Views
+  createView: (templateId, data)           => request('POST',   `templates/${templateId}/views`, data),
+  updateView: (templateId, viewId, data)   => request('PUT',    `templates/${templateId}/views/${viewId}`, data),
+  deleteView: (templateId, viewId)         => request('DELETE', `templates/${templateId}/views/${viewId}`),
+};
+
+// Fonts
+export const fontApi = {
+  list: () => request('GET', 'fonts'),
+
+  upload: async (file, family) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('family', family);
+
+    const res = await fetch(`${base()}pf/v1/fonts`, {
+      method: 'POST',
+      headers: { 'X-WP-Nonce': nonce() },
+      body: formData,
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.message || 'Font upload failed');
+    return data;
+  },
+
+  deleteFamily: (family) => request('DELETE', `fonts/family/${encodeURIComponent(family)}`),
+};
+
+// Font groups (managed on the Fonts admin page; the builder only reads them)
+export const fontGroupApi = {
+  list: () => request('GET', 'font-groups'),
+};
+
+// Color Palettes
+export const paletteApi = {
+  list:   ()           => request('GET',    'palettes'),
+  create: (data)       => request('POST',   'palettes', data),
+  update: (id, data)   => request('PUT',    `palettes/${id}`, data),
+  delete: (id)         => request('DELETE', `palettes/${id}`),
+};
+
+// Clip Art
+export const clipartApi = {
+  listCollections: () => request('GET', 'clipart/collections'),
+  createCollection: (name) => request('POST', 'clipart/collections', { name }),
+  getCollection: (id) => request('GET', `clipart/collections/${id}`),
+  renameCollection: (id, name) => request('PUT', `clipart/collections/${id}`, { name }),
+  deleteCollection: (id) => request('DELETE', `clipart/collections/${id}`),
+
+  upload: async (file, collectionId, name) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('collection_id', collectionId);
+    if (name) formData.append('name', name);
+
+    const res = await fetch(`${base()}pf/v1/clipart`, {
+      method: 'POST',
+      headers: { 'X-WP-Nonce': nonce() },
+      body: formData,
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.message || 'Clip art upload failed');
+    return data;
+  },
+
+  deleteItem: (id) => request('DELETE', `clipart/${id}`),
+};

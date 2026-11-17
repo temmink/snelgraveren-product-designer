@@ -1,0 +1,192 @@
+<?php
+namespace Snelgraveren\ProductDesigner\API;
+
+defined('ABSPATH') || exit;
+
+use Snelgraveren\ProductDesigner\Export\ExportManager;
+use Snelgraveren\ProductDesigner\Database\ExportRepository;
+use Snelgraveren\ProductDesigner\Plugin;
+
+class RestExports {
+
+    private ?ExportManager $manager = null;
+
+    private function manager(): ExportManager {
+        if (!$this->manager) {
+            $this->manager = new ExportManager();
+        }
+        return $this->manager;
+    }
+
+    public function register_routes(): void {
+        // Trigger export for a design
+        register_rest_route('pf/v1', '/exports/(?P<hash>[a-f0-9]{32})', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'trigger_export'],
+            'permission_callback' => [$this, 'admin_permission'],
+            'args'                => [
+                'format' => [
+                    'type'    => 'string',
+                    'enum'    => ['pdf', 'png', 'svg', 'lbrn'],
+                    'default' => 'pdf',
+                ],
+                'order_id' => [
+                    'type'    => 'integer',
+                    'default' => 0,
+                ],
+                // SVG only: 'outline' (default, text as vector paths) or 'embed'
+                // (text kept editable with fonts inlined).
+                'variant' => [
+                    'type'    => 'string',
+                    'enum'    => ['outline', 'embed'],
+                    'default' => 'outline',
+                ],
+            ],
+        ]);
+
+        // Download an export file
+        register_rest_route('pf/v1', '/exports/(?P<id>\d+)/download', [
+            'methods'             => 'GET',
+            'callback'            => [$this, 'download_export'],
+            'permission_callback' => [$this, 'admin_permission'],
+        ]);
+
+        // List exports for an order
+        register_rest_route('pf/v1', '/orders/(?P<order_id>\d+)/exports', [
+            'methods'             => 'GET',
+            'callback'            => [$this, 'list_order_exports'],
+            'permission_callback' => [$this, 'admin_permission'],
+        ]);
+
+        // Delete an export
+        register_rest_route('pf/v1', '/exports/(?P<id>\d+)', [
+            'methods'             => 'DELETE',
+            'callback'            => [$this, 'delete_export'],
+            'permission_callback' => [$this, 'admin_permission'],
+        ]);
+    }
+
+    public function admin_permission(): bool {
+        return current_user_can('edit_sgpd_templates');
+    }
+
+    public function trigger_export(\WP_REST_Request $request): \WP_REST_Response {
+        $hash     = $request->get_param('hash');
+        $format   = $request->get_param('format') ?: 'pdf';
+        $order_id = (int) ($request->get_param('order_id') ?: 0);
+        $variant  = $request->get_param('variant') === 'embed' ? 'embed' : 'outline';
+
+        if ( $format === 'pdf' && ! Plugin::has_feature( 'pdf_export' ) ) {
+            return new \WP_REST_Response( ['error' => __( 'PDF export requires Snelgraveren Product Designer Pro.', 'snelgraveren-product-designer' )], 403 );
+        }
+        if ( in_array( $format, [ 'svg', 'lbrn' ], true ) && ! Plugin::has_feature( 'svg_export' ) ) {
+            return new \WP_REST_Response( ['error' => __( 'SVG export requires Snelgraveren Product Designer Pro.', 'snelgraveren-product-designer' )], 403 );
+        }
+
+        $result = $this->manager()->generate_export($hash, $format, $order_id, $variant);
+
+        if (isset($result['error'])) {
+            return new \WP_REST_Response(['error' => $result['error']], 400);
+        }
+
+        return new \WP_REST_Response([
+            'export_id' => $result['export_id'],
+            'status'    => $result['status'],
+            'format'    => $format,
+        ], 201);
+    }
+
+    public function download_export(\WP_REST_Request $request): \WP_REST_Response {
+        $export_id = (int) $request->get_param('id');
+
+        $paths = $this->manager()->get_download_paths($export_id);
+
+        if (empty($paths)) {
+            return new \WP_REST_Response(['error' => 'Export not found or not ready'], 404);
+        }
+
+        nocache_headers();
+        header('X-Content-Type-Options: nosniff');
+
+        if (count($paths) === 1) {
+            // Single file — stream directly
+            $path = $paths[0];
+            $filename = basename($path);
+            $filename = preg_replace('/[^a-zA-Z0-9._-]/', '_', $filename);
+
+            $mime = match (pathinfo($path, PATHINFO_EXTENSION)) {
+                'pdf'   => 'application/pdf',
+                'png'   => 'image/png',
+                'svg'   => 'image/svg+xml',
+                'lbrn2' => 'application/xml',
+                default => 'application/octet-stream',
+            };
+
+            header('Content-Type: ' . $mime);
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            header('Content-Length: ' . filesize($path));
+            // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- streaming large export files; WP_Filesystem would load them fully into memory
+            readfile($path);
+            exit;
+        }
+
+        // Multi-view — create a zip on the fly
+        $zip_path = sys_get_temp_dir() . '/pf-export-' . $export_id . '.zip';
+        $zip = new \ZipArchive();
+        if ($zip->open($zip_path, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            return new \WP_REST_Response(['error' => 'Failed to create zip'], 500);
+        }
+
+        foreach ($paths as $path) {
+            $zip->addFile($path, basename($path));
+        }
+        $zip->close();
+
+        $zip_name = preg_replace('/[^a-zA-Z0-9._-]/', '_', basename($paths[0], '.' . pathinfo($paths[0], PATHINFO_EXTENSION))) . '-all-views.zip';
+
+        header('Content-Type: application/zip');
+        header('Content-Disposition: attachment; filename="' . $zip_name . '"');
+        header('Content-Length: ' . filesize($zip_path));
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- streaming large export files; WP_Filesystem would load them fully into memory
+        readfile($zip_path);
+        wp_delete_file($zip_path);
+        exit;
+    }
+
+    public function list_order_exports(\WP_REST_Request $request): \WP_REST_Response {
+        $order_id = (int) $request->get_param('order_id');
+        $repo     = new ExportRepository();
+        $exports  = $repo->get_by_order($order_id);
+
+        return new \WP_REST_Response($exports, 200);
+    }
+
+    public function delete_export(\WP_REST_Request $request): \WP_REST_Response {
+        $export_id = (int) $request->get_param('id');
+        $repo      = new ExportRepository();
+
+        $export = $repo->get_by_id($export_id);
+        if (!$export) {
+            return new \WP_REST_Response(['error' => 'Export not found'], 404);
+        }
+
+        // Delete file(s) from disk (with path traversal protection).
+        // Multi-view exports store a comma-separated list of paths.
+        if (!empty($export['file_path'])) {
+            $upload_dir  = wp_upload_dir();
+            $exports_dir = realpath($upload_dir['basedir'] . '/pf-exports');
+            if ($exports_dir) {
+                foreach (explode(',', $export['file_path']) as $path) {
+                    $real_path = realpath(trim($path));
+                    if ($real_path && str_starts_with($real_path, $exports_dir . '/')) {
+                        wp_delete_file($real_path);
+                    }
+                }
+            }
+        }
+
+        $repo->delete($export_id);
+
+        return new \WP_REST_Response(null, 204);
+    }
+}

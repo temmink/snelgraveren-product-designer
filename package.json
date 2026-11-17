@@ -1,0 +1,36 @@
+{
+  "name": "productforge",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "rm -rf dist && VITE_ENTRY=admin vite build && VITE_ENTRY=design-templates vite build && VITE_ENTRY=clipart vite build && VITE_ENTRY=fonts vite build && VITE_ENTRY=frontend vite build && cp frontend/js/designer/src/designer.css dist/frontend-designer.css",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed"
+  },
+  "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "fabric": "^6.5.4",
+    "opentype.js": "^1.3.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^4.5.5"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.29.2",
+    "@babel/preset-react": "^7.28.5",
+    "@playwright/test": "^1.58.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@vitejs/plugin-react": "^4.3.4",
+    "@wordpress/i18n": "^6.15.0",
+    "babel-jest": "^30.3.0",
+    "jest": "^30.3.0",
+    "jest-environment-jsdom": "^30.3.0",
+    "vite": "^5.4.14"
+  }
+}

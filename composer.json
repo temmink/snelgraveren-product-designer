@@ -1,0 +1,20 @@
+{
+    "name": "martintemmink/productforge",
+    "description": "WooCommerce ProductForge Plugin",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "php": ">=8.1",
+        "tecnickcom/tcpdf": "^6.7",
+        "enshrined/svg-sanitize": "^0.22"
+    },
+    "autoload": {
+        "psr-4": {
+            "ProductForge\\": "includes/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    }
+}

@@ -1,0 +1,2972 @@
+# Copyright (C) 2026 Martin Temmink
+# This file is distributed under the GPL-2.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Snelgraveren Product Designer for WooCommerce 1.12.8\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/snelgraveren-product-designer\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-11-17T00:50:02+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: snelgraveren-product-designer\n"
+
+#. Plugin Name of the plugin
+#: snelgraveren-product-designer.php
+msgid "Snelgraveren Product Designer for WooCommerce"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: snelgraveren-product-designer.php
+msgid "https://github.com/temmink/snelgraveren-product-designer"
+msgstr ""
+
+#. Description of the plugin
+#: snelgraveren-product-designer.php
+msgid "Let customers personalise products with text, images, and SVGs using a drag-and-drop editor."
+msgstr ""
+
+#. Author of the plugin
+#: snelgraveren-product-designer.php
+msgid "Martin Temmink"
+msgstr ""
+
+#: includes/Admin/class-admin.php:47
+#: includes/Admin/class-admin.php:48
+#: includes/Admin/class-product-integration.php:18
+#: blocks/designer/editor.js:31
+#: frontend/js/designer/src/App.jsx:794
+msgid "Product Designer"
+msgstr ""
+
+#: includes/Admin/class-admin.php:58
+#: includes/Admin/class-admin.php:59
+#: includes/Admin/views/template-list.php:24
+msgid "Templates"
+msgstr ""
+
+#: includes/Admin/class-admin.php:67
+msgid "Template Builder"
+msgstr ""
+
+#: includes/Admin/class-admin.php:68
+#: includes/Admin/views/template-list.php:26
+#: admin/js/design-templates/src/App.jsx:193
+msgid "Add New"
+msgstr ""
+
+#: includes/Admin/class-admin.php:76
+#: includes/Admin/class-admin.php:77
+#: includes/Admin/views/design-templates.php:3
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:289
+#: frontend/js/designer/src/components/DesignTemplates.jsx:71
+msgid "Design Templates"
+msgstr ""
+
+#: includes/Admin/class-admin.php:85
+#: includes/Admin/class-admin.php:86
+#: includes/Admin/views/clipart.php:3
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:281
+#: admin/js/template-builder/src/components/TreePanel.jsx:473
+msgid "Clipart"
+msgstr ""
+
+#: includes/Admin/class-admin.php:94
+#: includes/Admin/class-admin.php:95
+#: includes/Admin/views/fonts.php:3
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:226
+msgid "Fonts"
+msgstr ""
+
+#: includes/Admin/class-admin.php:262
+#: admin/js/template-builder/src/components/ImportLightBurn.jsx:38
+msgid "Importing…"
+msgstr ""
+
+#: includes/Admin/class-admin.php:263
+msgid "Could not import this template. Please try again."
+msgstr ""
+
+#: includes/Admin/class-admin.php:315
+msgid "Could not export this template."
+msgstr ""
+
+#: includes/Admin/class-admin.php:316
+msgid "Could not import this file."
+msgstr ""
+
+#: includes/Admin/class-admin.php:317
+msgid "Template imported as draft."
+msgstr ""
+
+#: includes/Admin/class-admin.php:483
+msgid "SVG sanitization library not available."
+msgstr ""
+
+#: includes/Admin/class-admin.php:489
+msgid "Could not read SVG file."
+msgstr ""
+
+#: includes/Admin/class-admin.php:496
+msgid "SVG file contains disallowed content and was rejected."
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:40
+#: includes/Admin/class-designs-page.php:41
+#: includes/Admin/class-designs-page.php:594
+msgid "Designs"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:74
+#: includes/Admin/class-designs-page.php:617
+msgid "Not sent"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:75
+#: includes/Admin/class-designs-page.php:618
+msgid "Waiting for customer"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:76
+#: includes/Admin/class-designs-page.php:619
+#: includes/Emails/class-proof-changes-requested-email.php:29
+msgid "Change requested"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:77
+#: includes/Admin/class-designs-page.php:620
+msgid "Approved"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:155
+#: includes/Admin/class-designs-page.php:222
+msgid "You do not have permission to do that."
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:340
+#: includes/Admin/class-designs-page.php:403
+msgid "You do not have permission to do this."
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:483
+msgid "Assigned. The customer sees it under My designs and can add it to the cart."
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:485
+msgid "No longer assigned to a customer."
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:487
+msgid "No account found for that ID, e-mail address or username."
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:489
+msgid "Type an ID, e-mail address or username first."
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:491
+msgid "Design deleted, including its thumbnails and export files."
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:493
+msgid "This design belongs to an order and cannot be deleted — the order screen still references it."
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:495
+msgid "Design not found (already deleted?)."
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:497
+msgid "Deleting failed. Check the PHP error log."
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:499
+msgid "Could not update this design."
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:501
+msgid "Proof sent. The customer can view and approve it from the link in their e-mail."
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:503
+msgid "Proof link created, but the proof e-mail is switched off in WooCommerce → Settings → E-mails, so nothing was sent. Copy the link below to hand it over yourself."
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:505
+msgid "Proof withdrawn. The link no longer works."
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:507
+msgid "Could not send this proof."
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:509
+msgid "Enter an e-mail address for this proof — this design has no customer account to fall back on."
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:511
+msgid "That is not a valid e-mail address."
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:513
+msgid "The proof feature is not available on this install."
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:515
+msgid "This design has no export data for that format yet. Open it via the link above and save it once — the browser generates the export data on save."
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:517
+msgid "Could not generate this export. Check the PHP error log."
+msgstr ""
+
+#. translators: %d: user ID of an account that no longer exists
+#: includes/Admin/class-designs-page.php:532
+#, php-format
+msgid "Deleted account (#%d)"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:537
+msgid "Guest session"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:538
+msgid "Nobody"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:543
+#: includes/Admin/class-export-dashboard.php:74
+#: includes/Admin/class-export-dashboard.php:140
+#: includes/Admin/class-settings-page.php:164
+msgid "You do not have permission to access this page."
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:586
+msgid "All statuses"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:587
+#: includes/Admin/class-template-list-table.php:195
+#: includes/Admin/class-template-list-table.php:226
+#: admin/js/template-builder/src/App.jsx:236
+msgid "Draft"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:588
+msgid "Final"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:589
+msgid "Ordered"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:590
+#: includes/Admin/class-template-list-table.php:197
+#: includes/Admin/class-template-list-table.php:228
+#: admin/js/template-builder/src/App.jsx:238
+msgid "Archived"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:596
+msgid "Design something for a customer on the product page, then assign it to their account here. They will find it under My account → My designs, and the link below reopens it for them."
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:616
+msgid "Any proof state"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:628
+msgid "Start of the design code"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:629
+#: includes/Admin/class-export-dashboard.php:99
+msgid "Filter"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:635
+#: admin/js/template-builder/src/components/TreePanel.jsx:698
+msgid "Preview"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:636
+#: includes/Admin/class-export-dashboard.php:112
+#: includes/Frontend/class-account-designs.php:71
+msgid "Product"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:637
+msgid "Belongs to"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:638
+#: includes/Admin/class-template-list-table.php:40
+#: admin/js/design-templates/src/App.jsx:82
+#: admin/js/design-templates/src/App.jsx:213
+msgid "Status"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:639
+#: includes/Frontend/class-account-designs.php:72
+msgid "Last edited"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:640
+msgid "Assign to customer"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:641
+msgid "Proof"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:646
+msgid "No designs found."
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:671
+msgid "Open this design in the designer"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:673
+msgid "edit product"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:678
+msgid "Product deleted"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:692
+msgid "ID, e-mail or username"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:693
+msgid "Assign"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:696
+msgid "Unassign"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:722
+msgid "Download:"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:731
+msgid "Delete this design permanently, including thumbnails and export files? This cannot be undone."
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:736
+msgid "Delete design"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:762
+msgid "E-mail address for the proof"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:765
+msgid "Send proof"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:766
+msgid "Send again"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:771
+msgid "Withdraw"
+msgstr ""
+
+#: includes/Admin/class-designs-page.php:798
+msgid "Pro feature"
+msgstr ""
+
+#: includes/Admin/class-export-dashboard.php:29
+#: includes/Admin/class-export-dashboard.php:30
+msgid "Production"
+msgstr ""
+
+#: includes/Admin/class-export-dashboard.php:85
+msgid "Production — design exports"
+msgstr ""
+
+#: includes/Admin/class-export-dashboard.php:95
+msgid "Last"
+msgstr ""
+
+#: includes/Admin/class-export-dashboard.php:97
+msgid "days"
+msgstr ""
+
+#: includes/Admin/class-export-dashboard.php:103
+msgid "No orders with designs found for this filter."
+msgstr ""
+
+#: includes/Admin/class-export-dashboard.php:111
+msgid "Order"
+msgstr ""
+
+#: includes/Admin/class-export-dashboard.php:113
+msgid "Notes"
+msgstr ""
+
+#: includes/Admin/class-export-dashboard.php:125
+msgid "contains raster images"
+msgstr ""
+
+#: includes/Admin/class-export-dashboard.php:131
+msgid "Download selection as ZIP"
+msgstr ""
+
+#: includes/Admin/class-export-dashboard.php:170
+msgid "Could not create the export ZIP file."
+msgstr ""
+
+#: includes/Admin/class-export-dashboard.php:226
+msgid "No export files could be generated for the selection."
+msgstr ""
+
+#: includes/Admin/class-product-integration.php:42
+msgid "Enable Designer"
+msgstr ""
+
+#: includes/Admin/class-product-integration.php:43
+msgid "Allow customers to personalise this product."
+msgstr ""
+
+#: includes/Admin/class-product-integration.php:53
+msgid "— Select template —"
+msgstr ""
+
+#. translators: %s: template title
+#: includes/Admin/class-product-integration.php:63
+#, php-format
+msgid "%s (not published — customers cannot use it)"
+msgstr ""
+
+#: includes/Admin/class-product-integration.php:71
+msgid "Template"
+msgstr ""
+
+#: includes/Admin/class-product-integration.php:76
+msgid "This template is not published, so the designer is hidden on the product page. Publish the template or choose another one."
+msgstr ""
+
+#: includes/Admin/class-product-integration.php:77
+msgid "Only published templates are listed."
+msgstr ""
+
+#: includes/Admin/class-product-integration.php:82
+msgid "Display Mode"
+msgstr ""
+
+#: includes/Admin/class-product-integration.php:84
+msgid "Embedded on product page"
+msgstr ""
+
+#: includes/Admin/class-product-integration.php:85
+msgid "Open in modal popup"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:35
+#: includes/Admin/class-settings-page.php:36
+#: admin/js/template-builder/src/App.jsx:20
+msgid "Settings"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:90
+msgid "Guide"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:121
+msgid "When a product has a colour option, the designer shows the product in the colour the customer chose. It finds the tint by the option's name in this list, so \"Rood\" here covers every product with an option called Rood."
+msgstr ""
+
+#. translators: %s: comma-separated colour option names
+#: includes/Admin/class-settings-page.php:128
+#, php-format
+msgid "No tint set yet for: %s. Until you add them, the preview keeps its current colour for these options."
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:137
+#: includes/Admin/class-settings-page.php:151
+msgid "Tint"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:138
+#: includes/Admin/class-settings-page.php:152
+msgid "Colour name"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:139
+#: includes/Admin/class-settings-page.php:153
+msgid "Remove this colour"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:144
+msgid "Add colour"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:189
+msgid "Product Designer Settings"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:192
+msgid "Guides"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:194
+msgid "Guide for shop owners"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:195
+msgid "templates, zones, permissions, pricing, exports and settings."
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:197
+msgid "Guide for customers"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:198
+msgid "how the designer on the product page works; share the link or use it for your own help page."
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:200
+msgid "The guides open on GitHub and are written in English."
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:209
+msgid "Auto-export on order status"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:220
+msgid "Design exports are generated automatically when an order reaches this status."
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:226
+msgid "Default export format"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:235
+msgid "PDF and SVG export are available in Snelgraveren Product Designer Pro."
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:241
+msgid "Guest design retention (days)"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:246
+msgid "Abandoned guest designs (never ordered) are deleted after this many days. 0 disables cleanup. Ordered designs and designs of logged-in customers are never deleted."
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:250
+msgid "Delete data on uninstall"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:254
+msgid "Permanently delete ALL templates, customer designs, and exports when the plugin is deleted."
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:257
+msgid "Leave this off unless you are permanently removing the plugin. With this off, your templates and designs survive a delete + reinstall."
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:262
+msgid "E-mail alerts"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:266
+msgid "E-mail the site admin when a critical system check starts failing (checked daily)."
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:271
+msgid "Colour names"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:279
+msgid "Design statistics (last 30 days)"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:283
+msgid "Designs saved"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:284
+msgid "Designs ordered"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:285
+msgid "Conversion"
+msgstr ""
+
+#. translators: %d: product rank
+#: includes/Admin/class-settings-page.php:292
+#, php-format
+msgid "Top product #%d"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:298
+msgid "\"Ordered\" counts designs saved after this feature was installed — older orders are not back-filled."
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:302
+msgid "System status"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:303
+msgid "Environment checks for everything the plugin needs at runtime. Reload this page to re-run them."
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:308
+msgid "Check"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:309
+msgid "Result"
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:376
+msgid "Snelgraveren Product Designer: server configuration problem."
+msgstr ""
+
+#. translators: %s: comma-separated list of failed checks
+#: includes/Admin/class-settings-page.php:379
+#, php-format
+msgid "Failed checks: %s."
+msgstr ""
+
+#: includes/Admin/class-settings-page.php:383
+msgid "View details and fixes"
+msgstr ""
+
+#: includes/Admin/class-starter-templates.php:85
+msgid "Starter template not found."
+msgstr ""
+
+#: includes/Admin/class-starter-templates.php:94
+msgid "This starter template has already been imported."
+msgstr ""
+
+#: includes/Admin/class-starter-templates.php:102
+#: includes/API/class-rest-template-transfer.php:152
+msgid "SVG sanitizer is not available."
+msgstr ""
+
+#: includes/Admin/class-starter-templates.php:146
+#: includes/API/class-rest-template-transfer.php:248
+msgid "Failed to create template."
+msgstr ""
+
+#. translators: %s: asset filename
+#: includes/Admin/class-starter-templates.php:183
+#, php-format
+msgid "Starter asset \"%s\" not found."
+msgstr ""
+
+#: includes/Admin/class-starter-templates.php:192
+msgid "Could not read starter asset."
+msgstr ""
+
+#: includes/Admin/class-starter-templates.php:202
+msgid "Starter asset failed SVG sanitization."
+msgstr ""
+
+#: includes/Admin/class-starter-templates.php:216
+msgid "Could not store starter asset."
+msgstr ""
+
+#: includes/Admin/class-system-status.php:56
+msgid "PHP version"
+msgstr ""
+
+#. translators: %s: detected PHP version
+#: includes/Admin/class-system-status.php:59
+#, php-format
+msgid "PHP %s detected. Minimum required: 8.1."
+msgstr ""
+
+#: includes/Admin/class-system-status.php:60
+msgid "Ask your host to upgrade PHP to 8.1 or newer."
+msgstr ""
+
+#: includes/Admin/class-system-status.php:67
+msgid "PHP fileinfo extension"
+msgstr ""
+
+#: includes/Admin/class-system-status.php:70
+msgid "Available. Uploaded files are MIME-validated."
+msgstr ""
+
+#: includes/Admin/class-system-status.php:71
+msgid "Missing. Upload validation cannot run, so all uploads are rejected."
+msgstr ""
+
+#: includes/Admin/class-system-status.php:72
+msgid "Enable the \"fileinfo\" PHP extension (php.ini or ask your host)."
+msgstr ""
+
+#. translators: %s: directory path relative to ABSPATH
+#: includes/Admin/class-system-status.php:90
+#, php-format
+msgid "Writable: %s"
+msgstr ""
+
+#: includes/Admin/class-system-status.php:93
+msgid "Writable."
+msgstr ""
+
+#. translators: %s: what the directory is used for
+#: includes/Admin/class-system-status.php:95
+#, php-format
+msgid "Not writable — used for %s."
+msgstr ""
+
+#. translators: %s: directory path
+#: includes/Admin/class-system-status.php:98
+#, php-format
+msgid "Make the directory writable for the web server, e.g. via your hosting file manager or: chmod 755 %s (owner must be the web server user)."
+msgstr ""
+
+#: includes/Admin/class-system-status.php:115
+msgid "Writable: uploads/pf-cache/ directory"
+msgstr ""
+
+#: includes/Admin/class-system-status.php:118
+msgid "Writable. Hash-named JS copies are created for reliable cache busting."
+msgstr ""
+
+#: includes/Admin/class-system-status.php:119
+msgid "Not writable. The designer still works, but browsers may serve a stale JS bundle after plugin updates (Safari caches JS for a year)."
+msgstr ""
+
+#. translators: %s: directory path
+#: includes/Admin/class-system-status.php:122
+#, php-format
+msgid "Make %s writable for the web server to enable hash-named cache busting."
+msgstr ""
+
+#: includes/Admin/class-system-status.php:134
+msgid "LiteSpeed Cache"
+msgstr ""
+
+#: includes/Admin/class-system-status.php:136
+msgid "Detected. The designer bundle is excluded from JS combining/minification automatically. Remember to purge the cache after plugin updates."
+msgstr ""
+
+#: includes/Admin/class-system-status.php:164
+msgid "rsvg-convert found (preferred converter)."
+msgstr ""
+
+#: includes/Admin/class-system-status.php:166
+msgid "Imagick with SVG support found."
+msgstr ""
+
+#: includes/Admin/class-system-status.php:168
+msgid "Neither rsvg-convert nor Imagick with SVG support found. Exports of designs saved with older plugin versions (SVG data) will fail; current browser-rendered PNG exports still work."
+msgstr ""
+
+#: includes/Admin/class-system-status.php:173
+msgid "SVG to PNG converter"
+msgstr ""
+
+#: includes/Admin/class-system-status.php:176
+msgid "Install librsvg2-bin (provides /usr/bin/rsvg-convert) or enable the Imagick PHP extension with SVG delegate support."
+msgstr ""
+
+#. translators: %d: number of database tables found
+#: includes/Admin/class-system-status.php:194
+#, php-format
+msgid "All %d tables present."
+msgstr ""
+
+#. translators: %s: comma-separated list of missing table names
+#: includes/Admin/class-system-status.php:196
+#, php-format
+msgid "Missing tables: %s"
+msgstr ""
+
+#. translators: %s: database error messages
+#: includes/Admin/class-system-status.php:203
+#, php-format
+msgid "Database error: %s"
+msgstr ""
+
+#: includes/Admin/class-system-status.php:208
+msgid "Database tables"
+msgstr ""
+
+#: includes/Admin/class-system-status.php:211
+msgid "Deactivate and re-activate the plugin to repair the database tables. If they are still missing afterwards, send the database error above to support."
+msgstr ""
+
+#: includes/Admin/class-template-list-table.php:39
+msgid "Title"
+msgstr ""
+
+#: includes/Admin/class-template-list-table.php:41
+#: admin/js/design-templates/src/App.jsx:212
+msgid "Views"
+msgstr ""
+
+#: includes/Admin/class-template-list-table.php:42
+msgid "Products"
+msgstr ""
+
+#: includes/Admin/class-template-list-table.php:43
+msgid "Created"
+msgstr ""
+
+#: includes/Admin/class-template-list-table.php:58
+#: includes/Admin/class-template-list-table.php:169
+msgid "Restore"
+msgstr ""
+
+#: includes/Admin/class-template-list-table.php:59
+#: includes/Admin/class-template-list-table.php:171
+msgid "Delete Permanently"
+msgstr ""
+
+#: includes/Admin/class-template-list-table.php:63
+msgid "Publish"
+msgstr ""
+
+#: includes/Admin/class-template-list-table.php:64
+msgid "Archive"
+msgstr ""
+
+#: includes/Admin/class-template-list-table.php:65
+msgid "Move to Trash"
+msgstr ""
+
+#: includes/Admin/class-template-list-table.php:183
+#: admin/js/design-templates/src/App.jsx:237
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:121
+#: frontend/js/designer/src/components/Sidebar.jsx:48
+msgid "Edit"
+msgstr ""
+
+#: includes/Admin/class-template-list-table.php:185
+#: admin/js/design-templates/src/App.jsx:241
+msgid "Export"
+msgstr ""
+
+#: includes/Admin/class-template-list-table.php:186
+#: includes/Admin/class-template-list-table.php:233
+msgid "Trash"
+msgstr ""
+
+#: includes/Admin/class-template-list-table.php:196
+#: includes/Admin/class-template-list-table.php:227
+#: admin/js/template-builder/src/App.jsx:237
+msgid "Published"
+msgstr ""
+
+#: includes/Admin/class-template-list-table.php:198
+msgid "Trashed"
+msgstr ""
+
+#: includes/Admin/class-template-list-table.php:225
+msgid "All"
+msgstr ""
+
+#: includes/Admin/views/clipart.php:4
+msgid "Manage clip art collections and SVG assets available in the designer."
+msgstr ""
+
+#: includes/Admin/views/design-templates.php:4
+msgid "Manage pre-made design templates that customers can apply in the designer."
+msgstr ""
+
+#: includes/Admin/views/fonts.php:4
+msgid "Upload custom fonts and organise fonts into groups you can enable per template."
+msgstr ""
+
+#: includes/Admin/views/template-list.php:18
+msgid "Engrave"
+msgstr ""
+
+#: includes/Admin/views/template-list.php:19
+msgid "Print"
+msgstr ""
+
+#: includes/Admin/views/template-list.php:20
+msgid "Basic"
+msgstr ""
+
+#: includes/Admin/views/template-list.php:29
+msgid "Import Template"
+msgstr ""
+
+#: includes/Admin/views/template-list.php:36
+msgid "Template moved to Trash."
+msgstr ""
+
+#: includes/Admin/views/template-list.php:39
+msgid "Template restored."
+msgstr ""
+
+#: includes/Admin/views/template-list.php:42
+msgid "Template permanently deleted."
+msgstr ""
+
+#: includes/Admin/views/template-list.php:50
+msgid "Get started with a ready-made template"
+msgstr ""
+
+#: includes/Admin/views/template-list.php:51
+msgid "You don't have any templates yet. Import one of the starter templates below to get a working product in seconds, or build your own with \"Add New\"."
+msgstr ""
+
+#: includes/Admin/views/template-list.php:55
+msgid "Starter templates"
+msgstr ""
+
+#: includes/Admin/views/template-list.php:93
+#: admin/js/template-builder/src/utils/importedZone.js:39
+msgid "Imported"
+msgstr ""
+
+#: includes/Admin/views/template-list.php:101
+msgid "Import"
+msgstr ""
+
+#: includes/Admin/views/template-list.php:116
+msgid "Search Templates"
+msgstr ""
+
+#: includes/API/class-rest-designs.php:261
+msgid "This design belongs to an order and can no longer be changed. Save it as a new design instead."
+msgstr ""
+
+#: includes/API/class-rest-designs.php:334
+msgid "The design did not reach the server in full, usually because it exceeds the server’s upload limits. Please try a smaller image, or contact the shop."
+msgstr ""
+
+#: includes/API/class-rest-exports.php:80
+#: includes/Export/class-export-manager.php:44
+msgid "PDF export requires Snelgraveren Product Designer Pro."
+msgstr ""
+
+#: includes/API/class-rest-exports.php:83
+#: includes/Export/class-export-manager.php:47
+msgid "SVG export requires Snelgraveren Product Designer Pro."
+msgstr ""
+
+#: includes/API/class-rest-pricing.php:37
+#: includes/API/class-rest-template-transfer.php:67
+msgid "Template not found."
+msgstr ""
+
+#: includes/API/class-rest-template-transfer.php:145
+msgid "Import file is too large (max 20 MB)."
+msgstr ""
+
+#: includes/API/class-rest-template-transfer.php:149
+msgid "This is not a valid template export file."
+msgstr ""
+
+#. translators: %s: asset key
+#: includes/API/class-rest-template-transfer.php:167
+#, php-format
+msgid "Asset \"%s\" was skipped (unsupported or invalid file)."
+msgstr ""
+
+#. translators: %s: asset reference
+#: includes/API/class-rest-template-transfer.php:184
+#, php-format
+msgid "Missing asset reference \"%s\" — the field was cleared."
+msgstr ""
+
+#. translators: %s: font family name
+#: includes/API/class-rest-template-transfer.php:234
+#, php-format
+msgid "Font \"%s\" is not available on this site — text will fall back to Arial until you upload it."
+msgstr ""
+
+#: includes/API/class-rest-template-transfer.php:240
+msgid "Imported template"
+msgstr ""
+
+#: includes/API/class-rest-template-transfer.php:292
+msgid "Could not create the assets directory."
+msgstr ""
+
+#: includes/API/class-rest-template-transfer.php:296
+msgid "Could not store an imported asset."
+msgstr ""
+
+#. translators: %s: site hostname
+#: includes/class-cleanup.php:108
+#, php-format
+msgid "[%s] Snelgraveren Product Designer: server configuration problem"
+msgstr ""
+
+#. translators: 1: failure list, 2: settings page URL
+#: includes/class-cleanup.php:111
+#, php-format
+msgid ""
+"The following Snelgraveren Product Designer system checks are failing:\n"
+"\n"
+"%1$s\n"
+"\n"
+"Details and fixes: %2$s"
+msgstr ""
+
+#: includes/class-plugin.php:124
+msgid "This feature requires Snelgraveren Product Designer Pro."
+msgstr ""
+
+#: includes/Emails/class-proof-approved-email.php:11
+msgid "Proof: approved"
+msgstr ""
+
+#: includes/Emails/class-proof-approved-email.php:12
+msgid "Sent to you when a customer approves their proof."
+msgstr ""
+
+#: includes/Emails/class-proof-approved-email.php:25
+msgid "A customer approved their proof"
+msgstr ""
+
+#: includes/Emails/class-proof-approved-email.php:29
+msgid "Proof approved"
+msgstr ""
+
+#: includes/Emails/class-proof-approved-email.php:36
+#: includes/Emails/class-proof-changes-requested-email.php:36
+msgid "Recipient(s)"
+msgstr ""
+
+#. translators: %s: the site's admin e-mail address
+#: includes/Emails/class-proof-approved-email.php:39
+#: includes/Emails/class-proof-changes-requested-email.php:39
+#, php-format
+msgid "Defaults to %s."
+msgstr ""
+
+#: includes/Emails/class-proof-changes-requested-email.php:11
+msgid "Proof: change requested"
+msgstr ""
+
+#: includes/Emails/class-proof-changes-requested-email.php:12
+msgid "Sent to you when a customer asks for a change to their proof."
+msgstr ""
+
+#: includes/Emails/class-proof-changes-requested-email.php:25
+msgid "A customer requested a change to a proof"
+msgstr ""
+
+#: includes/Emails/class-proof-ready-email.php:13
+msgid "Proof ready"
+msgstr ""
+
+#: includes/Emails/class-proof-ready-email.php:14
+msgid "Sent to the customer when you send them a proof to approve."
+msgstr ""
+
+#: includes/Emails/class-proof-ready-email.php:25
+msgid "Your proof is ready to approve"
+msgstr ""
+
+#: includes/Emails/class-proof-ready-email.php:29
+msgid "Your proof is ready"
+msgstr ""
+
+#: includes/Export/class-export-manager.php:52
+msgid "LightBurn export requires Snelgraveren Product Designer Pro."
+msgstr ""
+
+#: includes/Export/class-export-manager.php:57
+msgid "PDF and SVG export require Snelgraveren Product Designer Pro."
+msgstr ""
+
+#: includes/Frontend/class-account-designs.php:43
+#: includes/Frontend/class-account-designs.php:50
+msgid "My designs"
+msgstr ""
+
+#: includes/Frontend/class-account-designs.php:65
+msgid "You have no saved designs yet. Start designing on any customizable product!"
+msgstr ""
+
+#: includes/Frontend/class-account-designs.php:70
+#: includes/Frontend/class-frontend.php:274
+#: includes/Frontend/class-order-integration.php:164
+msgid "Design"
+msgstr ""
+
+#: includes/Frontend/class-account-designs.php:89
+msgid "Open in designer"
+msgstr ""
+
+#: includes/Frontend/class-frontend.php:232
+#: includes/Frontend/class-order-integration.php:125
+#: includes/Frontend/class-order-integration.php:146
+msgid "Custom design"
+msgstr ""
+
+#. translators: %d: view number
+#: includes/Frontend/class-frontend.php:260
+#, php-format
+msgid "Custom Design – View %d"
+msgstr ""
+
+#. translators: %d: view number
+#: includes/Frontend/class-frontend.php:262
+#, php-format
+msgid "Your custom product design – view %d"
+msgstr ""
+
+#: includes/Frontend/class-frontend.php:275
+#: includes/Frontend/class-order-integration.php:165
+msgid "Customized"
+msgstr ""
+
+#: includes/Frontend/class-frontend.php:446
+msgid "Your custom design"
+msgstr ""
+
+#: includes/Frontend/class-frontend.php:506
+msgid "Product Designer: the designer is switched on for this product, but its template is missing or not published, so customers do not see it. Only you see this message."
+msgstr ""
+
+#: includes/Frontend/class-frontend.php:802
+#: frontend/js/designer/src/App.jsx:770
+#: frontend/js/designer/src/components/StartBar.jsx:37
+msgid "Customize Product"
+msgstr ""
+
+#: includes/Frontend/class-order-integration.php:199
+msgid "This design contains raster images (photos) — check engraving suitability before production."
+msgstr ""
+
+#: includes/Frontend/class-order-integration.php:203
+msgid "Export Design:"
+msgstr ""
+
+#: includes/Frontend/class-order-integration.php:234
+msgid "SVG with fonts embedded (editable text)"
+msgstr ""
+
+#: includes/Frontend/class-order-integration.php:236
+msgid "SVG + fonts"
+msgstr ""
+
+#: includes/Frontend/class-order-integration.php:242
+msgid "Pro: PDF & SVG export"
+msgstr ""
+
+#: includes/Pricing/class-cart-surcharge.php:84
+msgid "Design surcharge"
+msgstr ""
+
+#: includes/Proof/class-proof-page.php:164
+msgid "Too many requests. Please try again later."
+msgstr ""
+
+#: includes/Proof/class-proof-page.php:169
+msgid "Please describe what you would like changed."
+msgstr ""
+
+#: includes/Proof/class-proof-page.php:175
+msgid "This proof can no longer be changed."
+msgstr ""
+
+#: snelgraveren-product-designer.php:57
+msgid "Snelgraveren Product Designer for WooCommerce requires WooCommerce to be installed and active. The plugin is idle until WooCommerce is activated."
+msgstr ""
+
+#: templates/emails/proof-approved.php:8
+msgid "A customer approved their proof."
+msgstr ""
+
+#: templates/emails/proof-approved.php:14
+#: templates/emails/proof-changes-requested.php:18
+msgid "View the design"
+msgstr ""
+
+#: templates/emails/proof-changes-requested.php:8
+msgid "A customer asked for a change to their proof."
+msgstr ""
+
+#: templates/emails/proof-ready.php:8
+msgid "We have prepared your design. Please take a look and let us know."
+msgstr ""
+
+#: templates/emails/proof-ready.php:22
+msgid "View and approve"
+msgstr ""
+
+#: templates/proof/proof-page.php:23
+msgid "Your proof"
+msgstr ""
+
+#: templates/proof/proof-page.php:39
+msgid "This proof is no longer valid"
+msgstr ""
+
+#: templates/proof/proof-page.php:40
+msgid "The link has expired or was withdrawn. Please contact us for a new one."
+msgstr ""
+
+#: templates/proof/proof-page.php:44
+#: templates/proof/proof-view.php:55
+msgid "Your design"
+msgstr ""
+
+#: templates/proof/proof-page.php:52
+msgid "Proof preview"
+msgstr ""
+
+#: templates/proof/proof-page.php:58
+msgid "View at full size"
+msgstr ""
+
+#: templates/proof/proof-page.php:70
+msgid "Your design was approved, but we could not add it to your cart just now."
+msgstr ""
+
+#: templates/proof/proof-page.php:71
+msgid "This can happen when the product briefly went unavailable. Please try again — approving again is safe and will not create a duplicate."
+msgstr ""
+
+#: templates/proof/proof-page.php:74
+msgid "Try again"
+msgstr ""
+
+#: templates/proof/proof-page.php:76
+msgid "If it still does not work, just reply to the e-mail you received and we will sort it out for you."
+msgstr ""
+
+#: templates/proof/proof-page.php:78
+#: templates/proof/proof-view.php:64
+msgid "You have already approved this design."
+msgstr ""
+
+#: templates/proof/proof-page.php:79
+#: templates/proof/proof-view.php:66
+msgid "Go to your cart"
+msgstr ""
+
+#: templates/proof/proof-page.php:81
+msgid "We have received your request and will send you a new proof."
+msgstr ""
+
+#: templates/proof/proof-page.php:85
+msgid "If you have changed your mind and this version is fine as it is, you can approve it now instead of waiting."
+msgstr ""
+
+#: templates/proof/proof-page.php:88
+msgid "Approve this version"
+msgstr ""
+
+#: templates/proof/proof-page.php:93
+#: templates/proof/proof-view.php:72
+msgid "Approve and order"
+msgstr ""
+
+#: templates/proof/proof-page.php:98
+msgid "Would you like something changed?"
+msgstr ""
+
+#: templates/proof/proof-page.php:100
+msgid "Request a change"
+msgstr ""
+
+#: templates/proof/proof-view.php:32
+msgid "Your proof, full size"
+msgstr ""
+
+#: templates/proof/proof-view.php:50
+msgid "Back to your proof"
+msgstr ""
+
+#: templates/proof/proof-view.php:59
+msgid "Proof preview, full size"
+msgstr ""
+
+#: templates/proof/proof-view.php:76
+msgid "Or go back to request a change"
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:36
+msgid "Clipart management requires Snelgraveren Product Designer Pro."
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:38
+#: admin/js/fonts/src/App.jsx:41
+msgid "Upgrade Now"
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:86
+msgid "Uploading"
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:91
+msgid "Drop SVG files here or"
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:93
+msgid "browse"
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:149
+#, js-format
+msgid "Delete collection \"%s\" and all its items?"
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:160
+#, js-format
+msgid "Delete %d selected items?"
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:226
+#: admin/js/design-templates/src/App.jsx:94
+#: admin/js/fonts/src/App.jsx:133
+#: admin/js/template-builder/src/App.jsx:245
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:134
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:104
+msgid "Save"
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:229
+#: admin/js/design-templates/src/App.jsx:97
+#: admin/js/fonts/src/App.jsx:136
+#: admin/js/fonts/src/App.jsx:263
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:137
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:107
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:150
+#: admin/js/template-builder/src/components/ZoneForm.jsx:523
+msgid "Cancel"
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:235
+#: admin/js/fonts/src/App.jsx:142
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:151
+msgid "Rename"
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:238
+#: admin/js/design-templates/src/App.jsx:245
+#: admin/js/fonts/src/App.jsx:145
+#: admin/js/fonts/src/App.jsx:284
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:154
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:124
+#: admin/js/template-builder/src/components/TreeNode.jsx:225
+#: admin/js/template-builder/src/components/TreeNode.jsx:226
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:162
+msgid "Delete"
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:248
+#: admin/js/design-templates/src/App.jsx:202
+#: admin/js/fonts/src/App.jsx:378
+#: admin/js/template-builder/src/components/TreePanel.jsx:396
+#: admin/js/template-builder/src/components/TreePanel.jsx:419
+msgid "Loading..."
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:259
+msgid "Select All"
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:268
+msgid "Deleting..."
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:269
+msgid "Delete Selected"
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:353
+msgid "New collection name..."
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:363
+#: admin/js/fonts/src/App.jsx:373
+msgid "Creating..."
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:363
+msgid "Create Collection"
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:368
+msgid "Loading collections..."
+msgstr ""
+
+#: admin/js/clipart/src/App.jsx:371
+msgid "No clip art collections yet. Create one to get started."
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:31
+msgid "Name is required."
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:58
+msgid "Edit Design Template"
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:58
+msgid "New Design Template"
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:63
+#: admin/js/design-templates/src/App.jsx:209
+#: admin/js/template-builder/src/components/TreePanel.jsx:693
+#: admin/js/template-builder/src/components/ZoneForm.jsx:218
+msgid "Name"
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:67
+#: admin/js/design-templates/src/App.jsx:210
+msgid "Category"
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:68
+msgid "e.g. T-Shirt, Mug"
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:71
+#: admin/js/design-templates/src/App.jsx:211
+msgid "Product Template"
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:74
+msgid "Any template"
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:85
+#: admin/js/design-templates/src/App.jsx:232
+msgid "Active"
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:86
+#: admin/js/design-templates/src/App.jsx:232
+msgid "Inactive"
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:94
+msgid "Saving..."
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:162
+#, js-format
+msgid "Delete design template \"%s\"?"
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:196
+msgid "Importing..."
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:196
+msgid "Import JSON"
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:204
+msgid "No design templates yet. Create one to get started."
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:214
+msgid "Actions"
+msgstr ""
+
+#: admin/js/design-templates/src/App.jsx:222
+msgid "Any"
+msgstr ""
+
+#: admin/js/fonts/src/App.jsx:39
+msgid "Font management requires Snelgraveren Product Designer Pro."
+msgstr ""
+
+#: admin/js/fonts/src/App.jsx:95
+#, js-format
+msgid "Delete group \"%s\"? Templates using it keep their other fonts."
+msgstr ""
+
+#: admin/js/fonts/src/App.jsx:176
+msgid "unknown font"
+msgstr ""
+
+#: admin/js/fonts/src/App.jsx:222
+#, js-format
+msgid "Delete font \"%s\"? It is also removed from every group."
+msgstr ""
+
+#: admin/js/fonts/src/App.jsx:234
+msgid "Custom Fonts"
+msgstr ""
+
+#: admin/js/fonts/src/App.jsx:238
+msgid "Upload Font File"
+msgstr ""
+
+#: admin/js/fonts/src/App.jsx:252
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:130
+msgid "Font family name"
+msgstr ""
+
+#: admin/js/fonts/src/App.jsx:260
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:179
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:142
+msgid "Uploading…"
+msgstr ""
+
+#: admin/js/fonts/src/App.jsx:260
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:142
+msgid "Upload"
+msgstr ""
+
+#: admin/js/fonts/src/App.jsx:268
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:155
+msgid "Supported formats: .woff2, .woff, .ttf. You can upload multiple files for the same family name (e.g. regular + bold)."
+msgstr ""
+
+#: admin/js/fonts/src/App.jsx:354
+msgid "Font Groups"
+msgstr ""
+
+#: admin/js/fonts/src/App.jsx:356
+msgid "Select a group in the template builder to allow all its fonts at once. Adding a font to a group later automatically updates every template using that group."
+msgstr ""
+
+#: admin/js/fonts/src/App.jsx:363
+msgid "New group name..."
+msgstr ""
+
+#: admin/js/fonts/src/App.jsx:373
+msgid "Create Group"
+msgstr ""
+
+#: admin/js/fonts/src/App.jsx:381
+msgid "No font groups yet. Create one and tick the fonts that belong in it."
+msgstr ""
+
+#: admin/js/template-builder/src/App.jsx:17
+msgid "Structure"
+msgstr ""
+
+#: admin/js/template-builder/src/App.jsx:18
+#: admin/js/template-builder/src/components/settings/SettingsPermissions.jsx:7
+msgid "Permissions"
+msgstr ""
+
+#: admin/js/template-builder/src/App.jsx:19
+#: admin/js/template-builder/src/components/settings/SettingsPricing.jsx:7
+msgid "Pricing"
+msgstr ""
+
+#: admin/js/template-builder/src/App.jsx:97
+msgid "Front"
+msgstr ""
+
+#: admin/js/template-builder/src/App.jsx:148
+msgid "Title is required."
+msgstr ""
+
+#: admin/js/template-builder/src/App.jsx:204
+msgid "Save failed."
+msgstr ""
+
+#: admin/js/template-builder/src/App.jsx:213
+msgid "Loading template…"
+msgstr ""
+
+#: admin/js/template-builder/src/App.jsx:222
+msgid "← Templates"
+msgstr ""
+
+#: admin/js/template-builder/src/App.jsx:229
+msgid "Template title…"
+msgstr ""
+
+#: admin/js/template-builder/src/App.jsx:245
+#: frontend/js/designer/src/App.jsx:903
+msgid "Saving…"
+msgstr ""
+
+#: admin/js/template-builder/src/App.jsx:245
+msgid "Saved ✓"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1126
+msgid "Select Background Image"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1127
+#: admin/js/template-builder/src/components/Canvas.jsx:1379
+msgid "Set Background"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1328
+msgid "Select at least one vector layer to use as a boundary."
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1333
+#: admin/js/template-builder/src/components/ZoneForm.jsx:247
+msgid "Boundary"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1350
+#, js-format
+msgid "Boundary created. Ignored non-vector layers: %d"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1361
+msgid "Enable zone enforcement"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1361
+msgid "Disable zone enforcement for free positioning"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1363
+msgid "Enforce Zones"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1363
+msgid "Free Move"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1369
+msgid "Turn the selected vector layer(s) into a boundary"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1371
+msgid "Use as Boundary"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1377
+msgid "Set background image"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1379
+msgid "Change Background"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1385
+msgid "Resize and reposition the background image"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1387
+msgid "Resize BG"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1394
+msgid "Apply background position"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1396
+msgid "Done"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1403
+msgid "Remove background image"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1405
+msgid "Remove BG"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1412
+#: frontend/js/designer/src/components/Toolbar.jsx:38
+msgid "Undo (Ctrl+Z)"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1414
+msgid "↩ Undo"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1420
+#: frontend/js/designer/src/components/Toolbar.jsx:45
+msgid "Redo (Ctrl+Shift+Z)"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1422
+msgid "↪ Redo"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1475
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:499
+msgid "Align left"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1476
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:500
+msgid "Align center"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1477
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:501
+msgid "Align right"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1478
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:502
+msgid "Align top"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1479
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:503
+msgid "Align middle"
+msgstr ""
+
+#: admin/js/template-builder/src/components/Canvas.jsx:1480
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:504
+msgid "Align bottom"
+msgstr ""
+
+#: admin/js/template-builder/src/components/GlobalSettings.jsx:40
+msgid "Configure product color palettes and element color modes with Pro."
+msgstr ""
+
+#: admin/js/template-builder/src/components/GlobalSettings.jsx:44
+msgid "Upload custom fonts for your designs with Pro."
+msgstr ""
+
+#: admin/js/template-builder/src/components/GlobalSettings.jsx:50
+msgid "Create clip art libraries for customers with Pro."
+msgstr ""
+
+#: admin/js/template-builder/src/components/GlobalSettings.jsx:56
+msgid "Add design surcharges and per-element pricing with Pro."
+msgstr ""
+
+#: admin/js/template-builder/src/components/GlobalSettings.jsx:60
+msgid "Fine-tune element permissions per type with Pro."
+msgstr ""
+
+#: admin/js/template-builder/src/components/ImportLightBurn.jsx:30
+msgid "Import LightBurn (Pro)"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ImportLightBurn.jsx:46
+msgid "No importable shapes found."
+msgstr ""
+
+#: admin/js/template-builder/src/components/ImportLightBurn.jsx:68
+#, js-format
+msgid "Bitmap %d"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ImportLightBurn.jsx:78
+#, js-format
+msgid "Could not upload a bitmap image: %s"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ImportLightBurn.jsx:116
+#, js-format
+msgid "Group %1$d (%2$d shapes)"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ImportLightBurn.jsx:119
+#: admin/js/template-builder/src/components/ZoneForm.jsx:418
+#, js-format
+msgid "Shape %d"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ImportLightBurn.jsx:159
+msgid "Imported with warnings: "
+msgstr ""
+
+#: admin/js/template-builder/src/components/ImportLightBurn.jsx:160
+msgid "Imported successfully."
+msgstr ""
+
+#: admin/js/template-builder/src/components/ImportLightBurn.jsx:163
+msgid "Import failed: "
+msgstr ""
+
+#: admin/js/template-builder/src/components/ImportLightBurn.jsx:172
+msgid "Import LightBurn"
+msgstr ""
+
+#: admin/js/template-builder/src/components/PermissionsPanel.jsx:53
+msgid "Min scale"
+msgstr ""
+
+#: admin/js/template-builder/src/components/PermissionsPanel.jsx:62
+msgid "Max scale"
+msgstr ""
+
+#: admin/js/template-builder/src/components/PermissionsPanel.jsx:72
+msgid "Min font size (mm)"
+msgstr ""
+
+#: admin/js/template-builder/src/components/PermissionsPanel.jsx:78
+msgid "0 disables the minimum. Requires the view to have a physical width."
+msgstr ""
+
+#: admin/js/template-builder/src/components/PermissionsPanel.jsx:84
+msgid "Grid size (px)"
+msgstr ""
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:27
+msgid "Pricing mode"
+msgstr ""
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:33
+msgid "Per element"
+msgstr ""
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:34
+msgid "Tier-based"
+msgstr ""
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:41
+msgid "Element prices"
+msgstr ""
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:43
+#: admin/js/template-builder/src/components/TreePanel.jsx:322
+#: admin/js/template-builder/src/components/TreePanel.jsx:326
+#: admin/js/template-builder/src/components/TreePanel.jsx:457
+#: admin/js/template-builder/src/components/TreePanel.jsx:656
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:23
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:718
+#: frontend/js/designer/src/components/tabs/LayersTab.jsx:20
+msgid "Text"
+msgstr ""
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:44
+msgid "Image"
+msgstr ""
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:45
+msgid "SVG"
+msgstr ""
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:46
+msgid "Extra layer"
+msgstr ""
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:63
+msgid "Tiers (element count → surcharge)"
+msgstr ""
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:66
+msgid "Min"
+msgstr ""
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:68
+msgid "Max"
+msgstr ""
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:74
+msgid "Remove tier"
+msgstr ""
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:82
+msgid "Add Tier"
+msgstr ""
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:88
+msgid "Surcharge caps"
+msgstr ""
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:90
+msgid "Minimum"
+msgstr ""
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:97
+msgid "Maximum cap"
+msgstr ""
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:97
+msgid "leave blank for no cap"
+msgstr ""
+
+#: admin/js/template-builder/src/components/PricingPanel.jsx:101
+msgid "No cap"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:33
+msgid "Delete this collection and all its clip art?"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:118
+msgid "Clip Art Collections"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:179
+msgid "Upload SVGs"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:200
+msgid "New collection name"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:210
+msgid "Create"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:222
+msgid "Assets"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:223
+msgid "Manage clip art libraries available to customers."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:226
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:113
+msgid "Clip Art"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:230
+msgid "Enable clip art library"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:237
+msgid "Allow recoloring clip art"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:242
+msgid "Available collections:"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:280
+msgid "Manage collections and upload SVGs from the"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:282
+msgid "admin page."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:293
+msgid "Enable design templates"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:297
+msgid "Manage design templates from the Product Designer → Design Templates admin page."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:58
+msgid "Color Palettes"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:98
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:168
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:290
+#: frontend/js/designer/src/components/Sidebar.jsx:45
+msgid "Add"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:134
+msgid "New Palette"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:139
+msgid "Palette name"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:178
+msgid "Create Palette"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:206
+msgid "Enable color picker"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:212
+msgid "Color mode"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:218
+msgid "All colors (full picker)"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:219
+msgid "Use a color palette"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:220
+msgid "Individual colors"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:228
+msgid "Palette"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:235
+msgid "— Select a palette —"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:237
+msgid "colors"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:245
+#: frontend/js/designer/src/App.jsx:892
+#: frontend/js/designer/src/components/ClipartPicker.jsx:55
+msgid "Close"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:245
+msgid "Manage Palettes"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:281
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:282
+msgid "Pick a color"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:288
+msgid "Add selected color"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:311
+msgid "Colors"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:312
+msgid "Configure color pickers for product and element colors."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:315
+msgid "Colorpicker Product"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsColors.jsx:324
+msgid "Colorpicker Elements"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:100
+msgid "Add a font..."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:111
+msgid "Upload Custom Font"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:115
+msgid "Choose File"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:163
+msgid "Uploaded Fonts"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:175
+msgid "Delete font"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:210
+msgid "fonts"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:227
+msgid "Control which fonts customers can use in their designs."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:230
+msgid "Font Picker"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:234
+msgid "Enable font picker"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:240
+msgid "Font groups"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:247
+msgid "A font added to a selected group later is automatically available in this template."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:249
+msgid "Individual fonts"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:258
+msgid "No fonts selected. Customers won't be able to change fonts."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:263
+msgid "Customers can use:"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsGeneral.jsx:11
+msgid "General"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsGeneral.jsx:12
+msgid "Global template behavior and product settings."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsGeneral.jsx:15
+msgid "Cart Behavior"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsGeneral.jsx:19
+msgid "Require customization before adding to cart"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsGeneral.jsx:22
+msgid "When enabled, customers must save a design before they can add the product to their cart."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsGeneral.jsx:27
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:628
+msgid "Product Color"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsGeneral.jsx:31
+msgid "Solid color product (all views share the same color)"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsGeneral.jsx:34
+msgid "Enable this for products like dog tags, keychains, etc. where front and back are the same color. Changing the color on one view will update all views."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsPermissions.jsx:8
+msgid "Control global customer permissions across all templates."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsPermissions.jsx:9
+msgid "No global permissions configured."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsPricing.jsx:8
+msgid "Configure global pricing rules for customization surcharges."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsPricing.jsx:9
+msgid "No global pricing configured."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsTools.jsx:10
+msgid "Tools"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsTools.jsx:11
+msgid "Configure which tools are available to customers."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsTools.jsx:14
+msgid "Drawing Tool"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsTools.jsx:21
+msgid "Enable drawing tool"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsTools.jsx:26
+msgid "Default stroke width"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsTools.jsx:36
+msgid "Default stroke color"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsTools.jsx:48
+msgid "Image Filters"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsTools.jsx:55
+msgid "Enable image filters"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsTools.jsx:59
+msgid "Available filters:"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsTools.jsx:85
+msgid "Curved Text"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsTools.jsx:92
+msgid "Enable curved text tool"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:24
+msgid "Uploads"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:25
+msgid "Restrict what customers can upload to their designs."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:28
+msgid "Vector Only"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:32
+msgid "Vector only (engraving) — block raster image uploads"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:35
+msgid "Enable this for laser/CNC engraving products. Customers can still upload SVGs and use clip art, but photo (JPG/PNG/WebP) uploads are blocked."
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:40
+msgid "Image Upload Restrictions"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:42
+msgid "Max file size (MB)"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:49
+msgid "Min width (px)"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:56
+msgid "Min height (px)"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:63
+msgid "Min DPI"
+msgstr ""
+
+#: admin/js/template-builder/src/components/settings/SettingsUploads.jsx:70
+msgid "Allowed types:"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:110
+msgid "Unnamed Zone"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:110
+#: admin/js/template-builder/src/components/TreePanel.jsx:686
+msgid "Layer"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:145
+msgid "Drag to reorder"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:154
+msgid "Collapse"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:154
+msgid "Expand"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:206
+#: admin/js/template-builder/src/components/TreeNode.jsx:207
+msgid "Add layer"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:213
+#: admin/js/template-builder/src/components/TreeNode.jsx:214
+msgid "Show"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:213
+#: admin/js/template-builder/src/components/TreeNode.jsx:214
+msgid "Hide"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:219
+#: admin/js/template-builder/src/components/TreeNode.jsx:220
+msgid "Unlock"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:219
+#: admin/js/template-builder/src/components/TreeNode.jsx:220
+msgid "Lock"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:168
+msgid "Add a boundary first to place layers."
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:217
+msgid "Add Boundary"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:219
+msgid "+ Add Boundary"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:221
+msgid "Saved Boundary"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:342
+msgid "Select SVG"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:342
+msgid "Select Image"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:343
+msgid "Use"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:389
+msgid "Back"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:391
+msgid "Clipart Library"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:399
+msgid "No collections yet."
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:400
+msgid "Create one"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:421
+msgid "Empty collection."
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:448
+msgid "Add Layer"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:465
+msgid "Media Library"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:507
+#: admin/js/template-builder/src/components/TreePanel.jsx:515
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:343
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:793
+#: frontend/js/designer/src/components/Toolbar.jsx:100
+msgid "Color"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:592
+msgid "Font Size"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:621
+#, js-format
+msgid "Raised to %2$d px — this template’s minimum text size is %1$s mm."
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:623
+#, js-format
+msgid "Raised to %d px — the smallest size this field accepts."
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:625
+#, js-format
+msgid "Minimum %1$s mm (%2$d px), set under Permissions → Text."
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:647
+msgid "Customers cannot move this layer."
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:648
+msgid "Customers can move this layer."
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:653
+msgid "Text Properties"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:661
+msgid "Font Family"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:675
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:423
+msgid "Text Align"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:677
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:172
+msgid "Left"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:678
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:173
+msgid "Center"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:679
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:174
+msgid "Right"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:690
+msgid "Properties"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:702
+msgid "Opacity"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:716
+msgid "X"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:720
+msgid "Y"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:726
+msgid "Scale X"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:730
+msgid "Scale Y"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:735
+#: admin/js/template-builder/src/components/ZoneForm.jsx:343
+msgid "Rotation"
+msgstr ""
+
+#: admin/js/template-builder/src/components/UpgradePrompt.jsx:9
+msgid "Pro"
+msgstr ""
+
+#: admin/js/template-builder/src/components/UpgradePrompt.jsx:17
+msgid "Upgrade to Pro"
+msgstr ""
+
+#. translators: %d is the view number
+#: admin/js/template-builder/src/components/ViewTabs.jsx:22
+msgid "View"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ViewTabs.jsx:101
+msgid "Double-click to rename"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ViewTabs.jsx:108
+#: admin/js/template-builder/src/components/ZoneForm.jsx:283
+msgid "Remove"
+msgstr ""
+
+#. translators: %s is the view name
+#: admin/js/template-builder/src/components/ViewTabs.jsx:113
+msgid "Remove view"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ViewTabs.jsx:128
+msgid "Add view"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ViewTabs.jsx:130
+msgid "Multiple views require Pro"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ViewTabs.jsx:132
+msgid "+ Add View"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ViewTabs.jsx:143
+msgid "Real width (mm)"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ViewTabs.jsx:156
+msgid "Physical width. Fill this in to show the millimetre ruler and to enable the minimum font size."
+msgstr ""
+
+#: admin/js/template-builder/src/components/ViewTabs.jsx:161
+#, js-format
+msgid "Using %s mm from another view — type a value here to override it for this view only."
+msgstr ""
+
+#: admin/js/template-builder/src/components/ViewTabs.jsx:167
+msgid "Height follows canvas:"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ViewTabs.jsx:168
+msgid "Empty = export uses the 96-DPI pixel size"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:67
+#: admin/js/template-builder/src/components/ZoneForm.jsx:81
+msgid "Clear"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:110
+#, js-format
+msgid "Layer %d"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:223
+msgid "e.g. Front Print Area"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:230
+msgid "Type"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:232
+msgid "Safe Area"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:233
+msgid "Upload Zone"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:237
+msgid "Behavior"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:239
+msgid "Restrict (can't leave)"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:240
+msgid "Clip at boundary"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:252
+msgid "Rectangle"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:253
+msgid "SVG Shape"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:264
+msgid "Upload SVG"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:269
+msgid "From layers"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:277
+msgid "Zone shape"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:292
+msgid "Select SVG Zone Shape"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:293
+msgid "Use Shape"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:304
+msgid "Could not parse SVG file."
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:323
+msgid "Failed to parse SVG file."
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:329
+msgid "Upload SVG Shape"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:335
+msgid "Scale"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:351
+msgid "Fill Color"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:365
+msgid "Customer can change fill color"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:376
+msgid "No vector layers with editable geometry on this view. Import a LightBurn file first, then reopen this form."
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:403
+msgid "Hide shapes"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:403
+msgid "Choose individual shapes"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:404
+#, js-format
+msgid "%d shapes"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:459
+msgid "Resize the SVG on canvas or change Scale to adjust"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:467
+msgid "Allowed element types"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:489
+msgid "Default Font"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:495
+msgid "Default (Arial)"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:510
+msgid "Mask SVG URL"
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:522
+msgid "Save Boundary"
+msgstr ""
+
+#: blocks/designer/editor.js:35
+msgid "The product designer renders here for customers, on products that have a designer template enabled."
+msgstr ""
+
+#: frontend/js/designer/src/api/designerApi.js:21
+msgid "The server refused this request before it reached the designer, usually because the design is too large for the server’s limits. Please try a smaller image, or contact the shop."
+msgstr ""
+
+#: frontend/js/designer/src/App.jsx:67
+msgid "The designer could not load. Please reload the page."
+msgstr ""
+
+#: frontend/js/designer/src/App.jsx:480
+msgid "Could not find the add-to-cart form."
+msgstr ""
+
+#: frontend/js/designer/src/App.jsx:630
+msgid "Please customize your product before adding to cart."
+msgstr ""
+
+#: frontend/js/designer/src/App.jsx:748
+msgid "Loading designer..."
+msgstr ""
+
+#: frontend/js/designer/src/App.jsx:752
+msgid "Template not available."
+msgstr ""
+
+#: frontend/js/designer/src/App.jsx:775
+msgid "Your design is kept."
+msgstr ""
+
+#. translators: %s: the product options still to choose, e.g. "Size, Colour"
+#: frontend/js/designer/src/App.jsx:821
+#, js-format
+msgid "First choose: %s. Your design is kept."
+msgstr ""
+
+#: frontend/js/designer/src/App.jsx:826
+#: frontend/js/designer/src/App.jsx:842
+msgid "Choose options"
+msgstr ""
+
+#: frontend/js/designer/src/App.jsx:834
+msgid "This combination of options cannot be ordered. Choose another one. Your design is kept."
+msgstr ""
+
+#. translators: %s: the shop's own availability message, e.g. "Out of stock"
+#: frontend/js/designer/src/App.jsx:837
+#, js-format
+msgid "%s — choose another option. Your design is kept."
+msgstr ""
+
+#. translators: %s: the example texts, quoted and comma-separated, e.g. “First name”, “Phone number” (Back)
+#: frontend/js/designer/src/App.jsx:851
+#, js-format
+msgid "Still the example text: %s. It will be engraved like this."
+msgstr ""
+
+#: frontend/js/designer/src/App.jsx:863
+msgid "Change it"
+msgstr ""
+
+#: frontend/js/designer/src/App.jsx:866
+msgid "Leave it out"
+msgstr ""
+
+#: frontend/js/designer/src/App.jsx:869
+msgid "Order as it is"
+msgstr ""
+
+#: frontend/js/designer/src/App.jsx:876
+msgid "This could not be added to the cart yet — see the message at the top of the page. Your design is kept."
+msgstr ""
+
+#: frontend/js/designer/src/App.jsx:881
+msgid "Design surcharge:"
+msgstr ""
+
+#: frontend/js/designer/src/App.jsx:904
+msgid "Save & add to cart"
+msgstr ""
+
+#: frontend/js/designer/src/components/CurvedTextProperties.jsx:40
+msgid "Curve intensity"
+msgstr ""
+
+#: frontend/js/designer/src/components/CurvedTextProperties.jsx:51
+msgid "Letter spacing"
+msgstr ""
+
+#: frontend/js/designer/src/components/DesignerCanvas.jsx:1078
+#: frontend/js/designer/src/components/DesignerCanvas.jsx:1150
+msgid "Your text here"
+msgstr ""
+
+#: frontend/js/designer/src/components/DesignerCanvas.jsx:1206
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:270
+msgid "Your text"
+msgstr ""
+
+#: frontend/js/designer/src/components/DesignerCanvas.jsx:1254
+msgid "Photos are not possible on this product (engraving requires vector artwork)."
+msgstr ""
+
+#: frontend/js/designer/src/components/DesignTemplates.jsx:24
+msgid "Apply this template? This will replace your current design elements."
+msgstr ""
+
+#: frontend/js/designer/src/components/DesignTemplates.jsx:57
+msgid "Loading templates..."
+msgstr ""
+
+#: frontend/js/designer/src/components/DesignTemplates.jsx:78
+msgid "All categories"
+msgstr ""
+
+#: frontend/js/designer/src/components/ImageFilters.jsx:86
+msgid "Filters"
+msgstr ""
+
+#: frontend/js/designer/src/components/ImageFilters.jsx:88
+msgid "Reset"
+msgstr ""
+
+#: frontend/js/designer/src/components/ImageFilters.jsx:100
+msgid "None"
+msgstr ""
+
+#. translators: 1: the options that were cleared, e.g. "Pink"; 2: the option just chosen, e.g. "51 mm"
+#: frontend/js/designer/src/components/ProductOptions.jsx:106
+#, js-format
+msgid "%1$s is sold out in %2$s — please choose again."
+msgstr ""
+
+#: frontend/js/designer/src/components/ProductOptions.jsx:127
+msgid "Choose…"
+msgstr ""
+
+#: frontend/js/designer/src/components/ProductOptions.jsx:132
+#, js-format
+msgid "%s (sold out)"
+msgstr ""
+
+#: frontend/js/designer/src/components/Sidebar.jsx:51
+msgid "Layers"
+msgstr ""
+
+#: frontend/js/designer/src/components/Sidebar.jsx:58
+msgid "Designer tools"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:46
+msgid "Photo or logo: JPG, PNG, WebP or SVG"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:48
+msgid "Photo: JPG, PNG or WebP"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:49
+msgid "Vector artwork only: SVG"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:61
+msgid "Add text"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:68
+msgid "Add image"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:77
+msgid "More kinds of text"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:85
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:24
+msgid "Curved text"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:92
+msgid "Add engraving text (single-line font)"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:94
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:25
+msgid "Engraving text"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/AddTab.jsx:101
+msgid "Now click on the product where the text should go."
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:26
+#: frontend/js/designer/src/components/tabs/LayersTab.jsx:22
+msgid "Photo"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:27
+#: frontend/js/designer/src/components/tabs/LayersTab.jsx:24
+msgid "Clip art"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:28
+#: frontend/js/designer/src/components/tabs/LayersTab.jsx:26
+msgid "Drawing"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:29
+#: frontend/js/designer/src/components/tabs/LayersTab.jsx:28
+msgid "Element"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:83
+msgid "Select an element to edit its properties"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:144
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:386
+msgid "More options"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:284
+msgid "Font"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:301
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:759
+#: frontend/js/designer/src/components/Toolbar.jsx:89
+msgid "Size"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:389
+msgid "Style"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:395
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:396
+msgid "Bold"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:409
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:410
+msgid "Italic"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:509
+msgid "Position on the product"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:554
+msgid "This image is scaled beyond its resolution — the result may look blurry or pixelated. Use a larger image for a sharp result."
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:561
+msgid "Tint Color"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:729
+msgid "Engraving Font"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:729
+msgid "single-line"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/LayersTab.jsx:38
+msgid "Empty text"
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/LayersTab.jsx:89
+msgid "No elements yet. Use the Add tab to place text or an image."
+msgstr ""
+
+#: frontend/js/designer/src/components/tabs/LayersTab.jsx:95
+msgid "Elements on this design"
+msgstr ""
+
+#: frontend/js/designer/src/components/Toolbar.jsx:57
+msgid "Select"
+msgstr ""
+
+#: frontend/js/designer/src/components/Toolbar.jsx:63
+msgid "Draw"
+msgstr ""
+
+#: frontend/js/designer/src/components/Toolbar.jsx:69
+msgid "Eraser"
+msgstr ""
+
+#: frontend/js/designer/src/components/ViewSwitcher.jsx:20
+msgid "Product views"
+msgstr ""
+
+#: frontend/js/designer/src/utils/viewLabel.js:12
+msgctxt "product side"
+msgid "Front"
+msgstr ""
+
+#: frontend/js/designer/src/utils/viewLabel.js:13
+msgctxt "product side"
+msgid "Back"
+msgstr ""
+
+#: frontend/js/designer/src/utils/viewLabel.js:14
+msgctxt "product side"
+msgid "Left"
+msgstr ""
+
+#: frontend/js/designer/src/utils/viewLabel.js:15
+msgctxt "product side"
+msgid "Right"
+msgstr ""
+
+#: frontend/js/designer/src/utils/viewLabel.js:16
+msgctxt "product side"
+msgid "Top"
+msgstr ""
+
+#: frontend/js/designer/src/utils/viewLabel.js:17
+msgctxt "product side"
+msgid "Bottom"
+msgstr ""
+
+#: frontend/js/designer/src/utils/viewLabel.js:18
+msgctxt "product side"
+msgid "Inside"
+msgstr ""
+
+#. translators: %d: number of the product view (1, 2, ...)
+#: frontend/js/designer/src/utils/viewLabel.js:25
+#, js-format
+msgid "View %d"
+msgstr ""
+
+#: blocks/designer/block.json
+msgctxt "block title"
+msgid "Snelgraveren Product Designer"
+msgstr ""
+
+#: blocks/designer/block.json
+msgctxt "block description"
+msgid "Shows the product designer on a customizable product page. Place it anywhere in the product template or description."
+msgstr ""
+
+#: blocks/designer/block.json
+msgctxt "block keyword"
+msgid "designer"
+msgstr ""
+
+#: blocks/designer/block.json
+msgctxt "block keyword"
+msgid "personalize"
+msgstr ""
+
+#: blocks/designer/block.json
+msgctxt "block keyword"
+msgid "product designer"
+msgstr ""

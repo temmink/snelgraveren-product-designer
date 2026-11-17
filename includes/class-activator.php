@@ -1,0 +1,13 @@
+<?php
+namespace Snelgraveren\ProductDesigner;
+
+defined('ABSPATH') || exit;
+
+class Activator {
+
+    public static function activate(): void {
+        Database\DbManager::run_migrations();
+        Database\DbManager::repair_schema();
+        flush_rewrite_rules();
+    }
+}

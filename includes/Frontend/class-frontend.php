@@ -1,0 +1,839 @@
+<?php
+namespace Snelgraveren\ProductDesigner\Frontend;
+
+defined('ABSPATH') || exit;
+
+class Frontend {
+
+    private ?\Snelgraveren\ProductDesigner\Database\DesignRepository $design_repo = null;
+
+    private function design_repo(): \Snelgraveren\ProductDesigner\Database\DesignRepository {
+        if (!$this->design_repo) {
+            $this->design_repo = new \Snelgraveren\ProductDesigner\Database\DesignRepository();
+        }
+        return $this->design_repo;
+    }
+
+    public function init(): void {
+        add_action('wp_enqueue_scripts', [$this, 'enqueue_assets']);
+        add_action('woocommerce_before_add_to_cart_button', [$this, 'render_designer']);
+
+        // Exclude our frontend JS from LiteSpeed Cache JS combining/minification.
+        // Our IIFE bundle includes React internally and breaks when concatenated.
+        // Substring match, WITHOUT the .js suffix: the enqueued file is the
+        // hash-named copy (frontend-designer.<md5>.js), which the literal
+        // 'frontend-designer.js' would not match.
+        add_filter('litespeed_optimize_js_excludes', function ($excludes) {
+            $excludes[] = 'frontend-designer.';
+            return $excludes;
+        });
+        // [sgpd_designer] is the only registered tag — a distinctive prefix, as
+        // the wp.org guidelines require for plugin-owned shortcodes. (The earlier
+        // unprefixed [productdesigner] and the legacy [productforge] tags were
+        // dropped for the listing; any leftover instances in existing content
+        // fall through to the product-page auto-render, so the designer still
+        // shows without a #pf-designer-root duplicate.)
+        add_shortcode('sgpd_designer', [$this, 'shortcode']);
+        add_filter('woocommerce_add_cart_item_data', [$this, 'add_cart_item_data'], 10, 2);
+        add_filter('woocommerce_cart_item_thumbnail', [$this, 'cart_item_thumbnail'], 10, 3);
+        add_filter('woocommerce_get_item_data', [$this, 'display_cart_item_data'], 10, 2);
+        // Block cart: override thumbnail via Store API
+        add_filter('woocommerce_store_api_cart_item_images', [$this, 'store_api_cart_item_images'], 10, 3);
+        // Append design hash to cart item permalink so designer can reload saved design
+        add_filter('woocommerce_cart_item_permalink', [$this, 'cart_item_permalink'], 10, 3);
+        add_action('woocommerce_add_to_cart', [$this, 'replace_cart_line_for_design'], 10, 3);
+        // Replace product gallery image with design thumbnail when returning from cart
+        add_filter('woocommerce_single_product_image_thumbnail_html', [$this, 'override_gallery_thumbnail_html'], 10, 2);
+    }
+
+    /**
+     * Attach design_hash to cart item data when adding to cart.
+     *
+     * Ownership validation (Snelgraveren\ProductDesigner\Database\DesignRepository::get_by_hash
+     * + a customer_id/session_id match, mirroring RestDesigns::owns_design) is
+     * the PRIMARY defense here: without it, any visitor could paste any 32-hex
+     * design hash into the pf_design_hash field and attach someone else's
+     * design (and its saved price) to their own cart.
+     *
+     * The nonce is defense-in-depth, not authoritative: LiteSpeed page-caches
+     * product pages, so a logged-out customer can be served a cached form
+     * carrying a stale nonce. A MISSING nonce is therefore tolerated — the
+     * ownership check still gates attachment. But a nonce that IS supplied and
+     * fails verification is treated as a forged request and rejected outright.
+     */
+    public function add_cart_item_data(array $cart_item_data, int $product_id): array {
+        if (empty($_POST['pf_design_hash'])) {
+            return $cart_item_data;
+        }
+
+        $hash = sanitize_text_field(wp_unslash($_POST['pf_design_hash']));
+        if (!preg_match('/^[0-9a-f]{32}$/', $hash)) {
+            return $cart_item_data;
+        }
+
+        // When a nonce is supplied it MUST verify; a missing nonce is tolerated
+        // for cached forms (see method docblock). Ownership still gates below.
+        if (isset($_POST['sgpd_design_nonce'])
+            && !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['sgpd_design_nonce'])), 'sgpd_add_design')) {
+            return $cart_item_data;
+        }
+
+        $design = $this->design_repo()->get_by_hash($hash);
+        if (!$design || !$this->owns_design($design)) {
+            return $cart_item_data;
+        }
+
+        $cart_item_data['pf_design_hash'] = $hash;
+        return $cart_item_data;
+    }
+
+    /**
+     * One design, one cart line.
+     *
+     * A customer reopens their design from the cart (the line's link carries
+     * `?pf_design=HASH`), changes something — the text, or the colour option —
+     * and presses "Save & add to cart" again. That is an edit of the line they
+     * came from, but WooCommerce only knows "add": the same options bumped the
+     * quantity to 2, different options left the old line standing next to a
+     * new one, both showing the same (edited) design.
+     *
+     * So after an add that carries a design hash, every OTHER line with that
+     * hash is removed, and the line that was added gets exactly the quantity
+     * that was asked for. Runs on `woocommerce_add_to_cart`, i.e. only when
+     * the add succeeded — a refused add leaves the cart as it was.
+     *
+     * The hash on a line was put there by add_cart_item_data(), which already
+     * verified ownership; a line without one is never touched.
+     */
+    public function replace_cart_line_for_design($cart_item_key, $product_id, $quantity): void {
+        if (!function_exists('WC') || !WC()->cart) {
+            return;
+        }
+        $cart  = WC()->cart;
+        $added = $cart->get_cart_item((string) $cart_item_key);
+        $hash  = is_array($added) ? (string) ($added['pf_design_hash'] ?? '') : '';
+        if ($hash === '') {
+            return;
+        }
+
+        foreach ($cart->get_cart() as $key => $item) {
+            if ($key !== $cart_item_key && ($item['pf_design_hash'] ?? '') === $hash) {
+                $cart->remove_cart_item($key);
+            }
+        }
+        // Same options as before: WooCommerce merged into the existing line
+        // and added the quantities up.
+        if ((int) $added['quantity'] !== (int) $quantity && (int) $quantity > 0) {
+            $cart->set_quantity((string) $cart_item_key, (int) $quantity, false);
+        }
+    }
+
+    /**
+     * Mirrors Snelgraveren\ProductDesigner\API\RestDesigns::owns_design(): the current
+     * requester must be the design's logged-in customer, or hold the same
+     * guest session id the design was saved under, or be able to manage
+     * templates (admins/shop managers legitimately reassigning designs).
+     *
+     * ONE DELIBERATE DIVERGENCE from that mirror: a visitor who approved this
+     * design's proof in this WooCommerce session also owns it here
+     * (`is_proof_only_owner()`). This is NOT needed to get the design into the
+     * cart — `ProofPage::add_design_to_cart()` calls `WC_Cart::add_to_cart()`
+     * directly with the hash as `$cart_item_data`, never going through
+     * `add_cart_item_data()`'s `$_POST['pf_design_hash']` read, so the approve
+     * path never touches this method at all. What this clause actually buys:
+     * everywhere else on the frontend that gates on ownership AFTER the
+     * design is in the cart — `override_gallery_thumbnail_html()` swapping the
+     * gallery image, `proof_permalink()` deciding which reopen link is safe —
+     * needs a way to recognise a proof-only visitor as an owner too, since
+     * they have no account and no matching guest session. It is added HERE
+     * ONLY — the proof page is rendered server-side and never touches the
+     * REST layer, so RestDesigns stays as strict as it was.
+     *
+     * That clause requires BOTH halves, not just the session flag: the session
+     * proves this visitor is the one who approved it, and the design's own
+     * `proof_status` column proves the merchant has not withdrawn it since.
+     * `ProofWorkflow::withdraw()` resets the status to `none` and
+     * `request_changes()` sets it to `changes_requested` — neither can reach
+     * into a visitor's session to revoke the grant there, so the column is
+     * what actually cuts ownership off.
+     */
+    private function owns_design(array $design): bool {
+        $user_id = get_current_user_id();
+        if ($user_id && (int) $design['customer_id'] === $user_id) {
+            return true;
+        }
+
+        $session_id = \Snelgraveren\ProductDesigner\Security\CapabilityChecker::current_session_id();
+        if (!empty($session_id) && $design['session_id'] === $session_id) {
+            return true;
+        }
+
+        if ($this->is_proof_only_owner($design)) {
+            return true;
+        }
+
+        return current_user_can('edit_sgpd_templates');
+    }
+
+    /**
+     * True when this design's ONLY claim to ownership is a proof approved in
+     * this visitor's WooCommerce session — no account, no matching guest
+     * session. Shared by `owns_design()` and `proof_permalink()` so the
+     * two-condition check (session flag AND `proof_status === 'approved'`)
+     * exists exactly once; see `owns_design()`'s docblock for why both halves
+     * are required.
+     *
+     * `class_exists()` guard: `includes/Proof/` is stripped from the free
+     * build (Pro feature), so this must degrade to false rather than fatal
+     * when it is absent.
+     */
+    private function is_proof_only_owner(array $design): bool {
+        return class_exists(\Snelgraveren\ProductDesigner\Proof\ProofSession::class)
+            && ($design['proof_status'] ?? '') === 'approved'
+            && \Snelgraveren\ProductDesigner\Proof\ProofSession::is_approved((string) $design['design_hash']);
+    }
+
+    /**
+     * Get all thumbnail URLs for a design hash.
+     *
+     * @return string[] Valid thumbnail URLs, one per view.
+     */
+    private function get_design_thumbnail_urls(string $hash): array {
+        $design = $this->design_repo()->get_by_hash($hash);
+        if (!$design || empty($design['views'])) {
+            return [];
+        }
+
+        $urls = [];
+        foreach ($design['views'] as $view) {
+            $thumb_url = $view['thumbnail'] ?? '';
+            if (!empty($thumb_url) && filter_var($thumb_url, FILTER_VALIDATE_URL)) {
+                $urls[] = $thumb_url;
+            }
+        }
+        return $urls;
+    }
+
+    /**
+     * Show design thumbnails in classic cart.
+     */
+    public function cart_item_thumbnail(string $thumbnail, array $cart_item, string $cart_item_key): string {
+        if (empty($cart_item['pf_design_hash'])) {
+            return $thumbnail;
+        }
+
+        $urls = $this->get_design_thumbnail_urls($cart_item['pf_design_hash']);
+        if (empty($urls)) {
+            return $thumbnail;
+        }
+
+        $html = '<div style="display:flex;gap:4px;">';
+        foreach ($urls as $url) {
+            $html .= '<img src="' . esc_url($url) . '" alt="' . esc_attr__('Custom design', 'snelgraveren-product-designer') . '" style="max-width:80px;max-height:80px;border-radius:3px;" />';
+        }
+        $html .= '</div>';
+        return $html;
+    }
+
+    /**
+     * Show design thumbnails in block-based cart (Store API).
+     */
+    public function store_api_cart_item_images(array $images, array $cart_item, string $cart_item_key): array {
+        if (empty($cart_item['pf_design_hash'])) {
+            return $images;
+        }
+
+        $urls = $this->get_design_thumbnail_urls($cart_item['pf_design_hash']);
+        if (empty($urls)) {
+            return $images;
+        }
+
+        $result = [];
+        foreach ($urls as $i => $url) {
+            $result[] = (object) [
+                'id'        => 0,
+                'src'       => $url,
+                'thumbnail' => $url,
+                'srcset'    => '',
+                'sizes'     => '',
+                /* translators: %d: view number */
+                'name'      => sprintf(__('Custom Design – View %d', 'snelgraveren-product-designer'), $i + 1),
+                /* translators: %d: view number */
+                'alt'       => sprintf(__('Your custom product design – view %d', 'snelgraveren-product-designer'), $i + 1),
+            ];
+        }
+        return $result;
+    }
+
+    /**
+     * Display "Customized" label in cart item data.
+     */
+    public function display_cart_item_data(array $item_data, array $cart_item): array {
+        if (!empty($cart_item['pf_design_hash'])) {
+            $item_data[] = [
+                'key'   => __('Design', 'snelgraveren-product-designer'),
+                'value' => __('Customized', 'snelgraveren-product-designer'),
+            ];
+        }
+        return $item_data;
+    }
+
+    /**
+     * Append design hash to cart item permalink so the designer can reload saved designs.
+     */
+    public function cart_item_permalink(string $permalink, array $cart_item, string $cart_item_key): string {
+        if (!empty($cart_item['pf_design_hash']) && !empty($permalink)) {
+            $proof_url = $this->proof_permalink((string) $cart_item['pf_design_hash']);
+            if ($proof_url !== '') {
+                return $proof_url;
+            }
+
+            // Use the canonical product permalink to avoid SEO plugin redirects
+            // stripping query parameters during URL normalization.
+            $product = wc_get_product($cart_item['product_id'] ?? 0);
+            $base = $product ? $product->get_permalink() : $permalink;
+            // The canonical permalink is the PARENT product's, so the options
+            // this line was ordered with (size, colour) have to be put back on
+            // the URL — WooCommerce pre-selects its option lists from
+            // attribute_* request parameters. Without them the customer
+            // reopened their design to find every option empty again.
+            $args = [];
+            foreach ((array) ($cart_item['variation'] ?? []) as $attribute => $value) {
+                if (is_string($attribute) && strpos($attribute, 'attribute_') === 0 && is_scalar($value) && (string) $value !== '') {
+                    $args[$attribute] = rawurlencode((string) $value);
+                }
+            }
+            $args['pf_design'] = $cart_item['pf_design_hash'];
+            $permalink = add_query_arg($args, $base);
+        }
+        return $permalink;
+    }
+
+    /**
+     * When this cart line's owner holds it ONLY through an approved proof —
+     * no account, no matching guest session — `?pf_design=HASH` is the wrong
+     * link: the designer's REST fetch checks ownership too and 403s for this
+     * visitor, which (per this project's own notes on handing a design to a
+     * customer) reads as an empty default design, i.e. "it is broken". Point
+     * the permalink at the proof page instead, whose token IS the credential.
+     *
+     * Uses `is_proof_only_owner()` — the same helper `owns_design()` calls —
+     * so this and `owns_design()` cannot disagree about what counts as a
+     * proof-only owner; only a duplicate copy of that check could drift, and
+     * this method no longer carries one. It keeps its own extra
+     * `!empty($design['proof_token'])` check on top, since building a URL
+     * needs a token and `owns_design()` doesn't.
+     *
+     * class_exists() guard is inside is_proof_only_owner(): includes/Proof/
+     * is stripped from the free build, same reasoning as owns_design().
+     *
+     * @return string The proof page URL, or '' when the ordinary
+     *                 ?pf_design= link is the right one (owner is logged in,
+     *                 owns the guest session, or the proof grant does not
+     *                 apply).
+     */
+    private function proof_permalink(string $hash): string {
+        if (!class_exists(\Snelgraveren\ProductDesigner\Proof\ProofSession::class)) {
+            return '';
+        }
+
+        $design = $this->design_repo()->get_by_hash($hash);
+        if (!$design) {
+            return '';
+        }
+
+        $user_id = get_current_user_id();
+        if ($user_id && (int) $design['customer_id'] === $user_id) {
+            return '';
+        }
+
+        $session_id = \Snelgraveren\ProductDesigner\Security\CapabilityChecker::current_session_id();
+        if (!empty($session_id) && $design['session_id'] === $session_id) {
+            return '';
+        }
+
+        if ($this->is_proof_only_owner($design) && !empty($design['proof_token'])) {
+            return \Snelgraveren\ProductDesigner\Proof\ProofPage::url((string) $design['proof_token']);
+        }
+
+        return '';
+    }
+
+    /**
+     * Get the existing design hash from the URL query parameter, if valid.
+     *
+     * Read-only: this drives navigation (reopening a design when returning from
+     * the cart), so a nonce is not appropriate — the link must survive caching
+     * and bookmarking. No design data is exposed on the strength of the hash
+     * alone: every caller either loads the design over an ownership-checked REST
+     * route or gates rendering with owns_design() (see override_gallery_thumbnail_html).
+     */
+    private function get_design_hash_from_url(): string {
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only navigation param, callers enforce ownership.
+        $hash = isset($_GET['pf_design']) ? sanitize_text_field(wp_unslash($_GET['pf_design'])) : '';
+        // phpcs:enable WordPress.Security.NonceVerification.Recommended
+        if ($hash !== '' && preg_match('/^[0-9a-f]{32}$/', $hash)) {
+            return $hash;
+        }
+        return '';
+    }
+
+    /**
+     * The design that came with an add-to-cart request WooCommerce refused, or ''.
+     *
+     * Same gates as add_cart_item_data(): a supplied nonce must verify, and the
+     * requester must own the design. An error notice is what tells a refused
+     * request from an accepted one — after a successful add the design belongs
+     * to a cart line and must not be reopened for editing here.
+     */
+    private function get_design_hash_from_refused_add_to_cart(): string {
+        // phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce verified below when supplied; ownership is the authoritative gate (see add_cart_item_data()).
+        if (empty($_POST['pf_design_hash']) || empty($_POST['add-to-cart'])) {
+            return '';
+        }
+        if (!function_exists('wc_notice_count') || wc_notice_count('error') === 0) {
+            return '';
+        }
+        $hash = sanitize_text_field(wp_unslash($_POST['pf_design_hash']));
+        if (!preg_match('/^[0-9a-f]{32}$/', $hash)) {
+            return '';
+        }
+        if (isset($_POST['sgpd_design_nonce'])
+            && !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['sgpd_design_nonce'])), 'sgpd_add_design')) {
+            return '';
+        }
+        // phpcs:enable WordPress.Security.NonceVerification.Missing
+        $design = $this->design_repo()->get_by_hash($hash);
+        if (!$design || !$this->owns_design($design)) {
+            return '';
+        }
+        return $hash;
+    }
+
+    /**
+     * Replace the product gallery image with the design thumbnail when returning from cart.
+     */
+    /** Whether the gallery's main image was already swapped for the design thumbnail. */
+    private bool $gallery_thumb_replaced = false;
+
+    public function override_gallery_thumbnail_html(string $html, $attachment_id): string {
+        $hash = $this->get_design_hash_from_url();
+        if (empty($hash)) {
+            return $html;
+        }
+
+        // This filter fires once per gallery image. Replace only the FIRST
+        // (main) image with the design thumbnail; replacing every image would
+        // show the same thumbnail multiple times on products with a gallery.
+        if ($this->gallery_thumb_replaced) {
+            return $html;
+        }
+
+        // The hash arrives via a URL query param, so only reveal the design's
+        // thumbnail to its owner (logged-in customer, matching guest session, or
+        // a template manager). Without this, a known hash could expose another
+        // customer's design preview.
+        $design = $this->design_repo()->get_by_hash($hash);
+        if (!$design || !$this->owns_design($design)) {
+            return $html;
+        }
+
+        $urls = $this->get_design_thumbnail_urls($hash);
+        $thumb_url = $urls[0] ?? '';
+        if (!empty($thumb_url)) {
+            $this->gallery_thumb_replaced = true;
+            return '<div data-thumb="' . esc_url($thumb_url) . '" class="woocommerce-product-gallery__image">'
+                . '<img src="' . esc_url($thumb_url) . '" alt="' . esc_attr__('Your custom design', 'snelgraveren-product-designer') . '" class="wp-post-image" />'
+                . '</div>';
+        }
+
+        return $html;
+    }
+
+    /**
+     * Opt the current response out of full-page caching.
+     *
+     * The designer page carries a per-session WordPress nonce and personalized,
+     * session-specific design state, so caching it publicly breaks customer
+     * saves (frozen/expired nonce) and can leak one customer's design to
+     * another. `DONOTCACHEPAGE` is honoured by LiteSpeed, WP Rocket, W3TC, WP
+     * Super Cache and others; the LiteSpeed action is a belt-and-suspenders
+     * signal for that host in particular.
+     */
+    private function prevent_page_cache(): void {
+        if (!defined('DONOTCACHEPAGE')) {
+            define('DONOTCACHEPAGE', true);
+        }
+        do_action('litespeed_control_set_nocache', 'ProductForge designer page (per-session nonce and personalized design)');
+    }
+
+    /** @var array<int,bool> per-request answers of designer_usable() */
+    private array $designer_usable = [];
+
+    /**
+     * Whether the designer can actually run for this product: switched on,
+     * AND its template is one customers may load (published).
+     *
+     * The second half was missing. A template that had been assigned while
+     * Published and was later set back to Draft or Archived left the product
+     * with a designer that could only tell the customer "Template not found."
+     * (reported for 1.12.5). Without a usable template there is no designer
+     * on the page at all; staff see why, customers see a normal product.
+     */
+    private function designer_usable(int $product_id): bool {
+        if (isset($this->designer_usable[$product_id])) {
+            return $this->designer_usable[$product_id];
+        }
+        $usable = false;
+        if (get_post_meta($product_id, '_pf_designer_enabled', true)) {
+            $template_id = (int) get_post_meta($product_id, '_pf_template_id', true);
+            if ($template_id) {
+                $template = (new \Snelgraveren\ProductDesigner\Database\TemplateRepository())->get($template_id);
+                $usable   = $template && ($template['status'] ?? '') === 'published';
+            }
+        }
+        return $this->designer_usable[$product_id] = $usable;
+    }
+
+    /**
+     * Shown to shop staff only, in place of the designer that cannot load.
+     */
+    private function unusable_template_notice(int $product_id): string {
+        if (!current_user_can('edit_sgpd_templates') || !get_post_meta($product_id, '_pf_designer_enabled', true)) {
+            return '';
+        }
+        return '<p class="sgpd-staff-notice" style="padding:10px 14px;border-left:4px solid #dba617;background:#fff8e5;">'
+            . esc_html__('Product Designer: the designer is switched on for this product, but its template is missing or not published, so customers do not see it. Only you see this message.', 'snelgraveren-product-designer')
+            . '</p>';
+    }
+
+    public function enqueue_assets(): void {
+        if (!is_product()) {
+            return;
+        }
+
+        global $post;
+        $product_id = $post->ID;
+
+        if (!$this->designer_usable($product_id)) {
+            return;
+        }
+
+        $template_id = (int) get_post_meta($product_id, '_pf_template_id', true);
+
+        // Reaching here means the designer renders on this page. It embeds a
+        // per-session WordPress nonce and loads/saves session-specific customer
+        // designs over REST, so it must never be full-page cached: a cached copy
+        // freezes one visitor's nonce (breaking every later customer's save) and
+        // can serve one customer's design to another. Opt this response out of
+        // every common page cache.
+        $this->prevent_page_cache();
+
+        $dist_path = SGPD_PLUGIN_DIR . 'dist/';
+        $dist_url  = SGPD_PLUGIN_URL . 'dist/';
+
+        $upload_dir = wp_upload_dir();
+        $cache_path = trailingslashit($upload_dir['basedir']) . 'pf-cache/';
+        $cache_url  = trailingslashit($upload_dir['baseurl']) . 'pf-cache/';
+
+        // Enqueue JS
+        $js_file = 'frontend-designer.js';
+        if (file_exists($dist_path . $js_file)) {
+            // Hashing the full bundle on every pageview is wasteful — cache
+            // the hash keyed on the file's mtime, recompute only after a build.
+            $js_mtime   = (int) filemtime($dist_path . $js_file);
+            $hash_cache = get_option('sgpd_frontend_js_hash');
+            if (is_array($hash_cache) && ($hash_cache['mtime'] ?? 0) === $js_mtime && !empty($hash_cache['hash'])) {
+                $js_version = $hash_cache['hash'];
+            } else {
+                $js_version = substr(md5_file($dist_path . $js_file), 0, 8);
+                update_option('sgpd_frontend_js_hash', ['mtime' => $js_mtime, 'hash' => $js_version], true);
+            }
+
+            // Safari caches JS with max-age=31557600 (1 year) keyed on the
+            // URL. LiteSpeed's Delay JS feature strips the ?ver= query
+            // parameter we pass to wp_enqueue_script, so without a different
+            // URL, Safari keeps serving the old bundle after every deploy.
+            // Copy the source to a hash-named file in uploads/pf-cache/ so the
+            // URL itself changes per build. wp.org disallows writing inside
+            // the plugin directory, so this never touches dist/. If uploads
+            // isn't writable we fall back to the un-hashed dist/ URL (same
+            // fallback behavior as before).
+            $hashed_file = 'frontend-designer.' . $js_version . '.js';
+            wp_mkdir_p($cache_path);
+            $hashed_path = $cache_path . $hashed_file;
+            if (!file_exists($hashed_path) && wp_is_writable($cache_path)) {
+                // Keep the NEWEST existing hashed copy (the previous build's):
+                // LiteSpeed page-cached HTML keeps referencing that URL until
+                // the cache expires or is flushed — deleting it immediately
+                // would 404 the bundle on every cached page. Older copies and
+                // orphaned temp files are removed.
+                $existing = [];
+                foreach (glob($cache_path . 'frontend-designer.*.js') ?: [] as $candidate) {
+                    if (strpos(basename($candidate), 'frontend-designer.tmp-') === 0) {
+                        // Temp file from a crashed/concurrent request.
+                        if (time() - (int) filemtime($candidate) > DAY_IN_SECONDS) {
+                            wp_delete_file($candidate);
+                        }
+                        continue;
+                    }
+                    $existing[] = $candidate;
+                }
+                usort($existing, static function ($a, $b) {
+                    return (int) filemtime($b) <=> (int) filemtime($a);
+                });
+                foreach (array_slice($existing, 1) as $old) {
+                    wp_delete_file($old);
+                }
+
+                // Write via temp file + atomic move: a concurrent request can
+                // never serve (and Safari never caches, with its 1-year
+                // max-age) a half-written bundle. The temp name never matches
+                // $hashed_file, so it is never enqueued.
+                global $wp_filesystem;
+                if (empty($wp_filesystem)) {
+                    require_once ABSPATH . 'wp-admin/includes/file.php';
+                    WP_Filesystem();
+                }
+                if ($wp_filesystem) {
+                    $tmp_path = $cache_path . 'frontend-designer.tmp-' . wp_generate_password(8, false) . '.js';
+                    if ($wp_filesystem->copy($dist_path . $js_file, $tmp_path, true)
+                        && !$wp_filesystem->move($tmp_path, $hashed_path, true)) {
+                        wp_delete_file($tmp_path);
+                    }
+                }
+            }
+
+            $enqueue_from_cache = file_exists($hashed_path);
+            $enqueue_url        = $enqueue_from_cache ? ($cache_url . $hashed_file) : ($dist_url . $js_file);
+
+            wp_enqueue_script(
+                'sgpd-frontend-designer',
+                $enqueue_url,
+                ['wp-i18n'],
+                $js_version,
+                true
+            );
+
+            // Exclude from JS combining/minification by caching plugins.
+            // Our IIFE bundle includes React internally and breaks when concatenated.
+            // data-no-optimize: Autoptimize, data-no-minify: general, excluded by LiteSpeed filter below.
+            wp_script_add_data('sgpd-frontend-designer', 'data-no-optimize', '1');
+            wp_script_add_data('sgpd-frontend-designer', 'data-no-minify', '1');
+
+            // Translations are inlined (see Translations): caching plugins rewrite
+            // script URLs, which breaks wp_set_script_translations' file matching.
+            \Snelgraveren\ProductDesigner\Translations::inline_for_script('sgpd-frontend-designer');
+
+            $this->js_config = $this->build_js_config($product_id, $template_id);
+
+            // Prevent pinch-to-zoom interference when designer is open on mobile
+            wp_add_inline_script('sgpd-frontend-designer', '
+  document.addEventListener("pf:designer-open", function() {
+    var meta = document.querySelector("meta[name=viewport]");
+    if (meta) {
+      meta._pfOriginal = meta.getAttribute("content");
+      meta.setAttribute("content", "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no");
+    }
+  });
+  document.addEventListener("pf:designer-close", function() {
+    var meta = document.querySelector("meta[name=viewport]");
+    if (meta && meta._pfOriginal) {
+      meta.setAttribute("content", meta._pfOriginal);
+    }
+  });
+', 'after');
+        }
+
+        // Enqueue CSS if present
+        $css_file = 'frontend-designer.css';
+        if (file_exists($dist_path . $css_file)) {
+            wp_enqueue_style(
+                'sgpd-frontend-designer',
+                $dist_url . $css_file,
+                [],
+                file_exists($dist_path . $css_file) ? substr(md5_file($dist_path . $css_file), 0, 8) : SGPD_VERSION
+            );
+        }
+    }
+
+    private bool $designer_rendered = false;
+
+    /**
+     * Designer config emitted as data-config JSON attribute on
+     * #pf-designer-root. It lives on the HTML element itself so LiteSpeed's
+     * JS optimizations can never break the ordering. Built in
+     * enqueue_assets(), or on demand in data_config_attr() when a render
+     * path runs before wp_enqueue_scripts (e.g. an SEO plugin applying
+     * the_content early).
+     */
+    private array $js_config = [];
+
+    /**
+     * Build the designer config array for the given product/template.
+     */
+    private function build_js_config(int $product_id, int $template_id): array {
+        $config = [
+            'template_id'     => $template_id,
+            'product_id'      => $product_id,
+            'display_mode'    => $this->has_shortcode_in_content() ? 'embedded' : (get_post_meta($product_id, '_pf_display_mode', true) ?: 'embedded'),
+            'nonce'           => wp_create_nonce('wp_rest'),
+            'rest_url'        => rest_url('pf/v1'),
+            'currency_symbol' => function_exists('get_woocommerce_currency_symbol')
+                ? get_woocommerce_currency_symbol()
+                : '€',
+            'isPremium'       => \Snelgraveren\ProductDesigner\Plugin::is_premium(),
+            /**
+             * Whether the designer pins a "Customize Product" button to the
+             * bottom of the screen while the designer (or its open button) is
+             * scrolled out of sight. Return false for a theme that already
+             * has its own sticky bar there.
+             *
+             * @param bool $enabled    Default true.
+             * @param int  $product_id Product being rendered.
+             */
+            'sticky_start'    => (bool) apply_filters('sgpd_sticky_start_button', true, $product_id),
+            // Colour-option name => tint, so the preview follows the colour the
+            // customer picks as a product option (see ColorNames).
+            'color_names'     => \Snelgraveren\ProductDesigner\ColorNames::map(),
+        ];
+
+        // If returning from cart with an existing design, pass the hash and auto-open
+        $existing_hash = $this->get_design_hash_from_url();
+        if (!empty($existing_hash)) {
+            $config['existing_design_hash'] = $existing_hash;
+            $config['auto_open'] = true;
+        }
+
+        // The page is the answer to an add-to-cart that WooCommerce refused
+        // (options not chosen, out of stock, …). The design in that request is
+        // already saved; hand it back instead of showing an empty designer —
+        // closed, so the shop's error message on the page stays visible.
+        if (empty($existing_hash)) {
+            $refused_hash = $this->get_design_hash_from_refused_add_to_cart();
+            if ($refused_hash !== '') {
+                $config['existing_design_hash'] = $refused_hash;
+                $config['resume_closed']        = true;
+            }
+        }
+
+        return $config;
+    }
+
+    /**
+     * Render the data-config attribute for #pf-designer-root.
+     * Returns an empty string when no config is available (designer not enabled).
+     */
+    private function data_config_attr(): string {
+        if (empty($this->js_config)) {
+            // enqueue_assets() has not run (yet) for this request — build on
+            // demand so an early the_content render never emits a config-less
+            // root element that config.js would then latch onto.
+            global $post;
+            $template_id = $post ? (int) get_post_meta($post->ID, '_pf_template_id', true) : 0;
+            if (!$template_id) {
+                return '';
+            }
+            $this->js_config = $this->build_js_config((int) $post->ID, $template_id);
+        }
+        return ' data-config="' . esc_attr(wp_json_encode($this->js_config)) . '"';
+    }
+
+    /**
+     * Check if the current product's content contains the [sgpd_designer]
+     * shortcode or the snelgraveren/product-designer block. Either means "the
+     * merchant placed the designer explicitly" — the before-add-to-cart
+     * auto-render must then stay out of the way (no duplicate #pf-designer-root)
+     * and the display mode is forced to embedded. Legacy unprefixed tags are
+     * intentionally NOT detected here: a leftover [productdesigner] must fall
+     * through to auto-render (it is no longer a registered shortcode), so the
+     * designer keeps rendering instead of leaving a bare tag on the page.
+     */
+    private function has_shortcode_in_content(): bool {
+        global $post;
+        if (!$post) {
+            return false;
+        }
+        return has_shortcode($post->post_content, 'sgpd_designer')
+            || has_block('snelgraveren/product-designer', $post)
+            || $this->template_has_designer_block();
+    }
+
+    /**
+     * Whether the resolved block template (block themes / Site Editor) itself
+     * contains the snelgraveren/product-designer block. WP core stores the current
+     * template's markup in $_wp_current_template_content before rendering, so
+     * hooks firing mid-template (like woocommerce_before_add_to_cart_button)
+     * can detect an explicit template placement and skip the auto-render —
+     * otherwise the page would get two #pf-designer-root elements.
+     */
+    private function template_has_designer_block(): bool {
+        global $_wp_current_template_content;
+        return is_string($_wp_current_template_content ?? null)
+            && has_block('snelgraveren/product-designer', $_wp_current_template_content);
+    }
+
+    public function render_designer(): void {
+        if ($this->designer_rendered || !is_product()) {
+            return;
+        }
+
+        // If the shortcode is placed in the content, let it handle rendering instead.
+        if ($this->has_shortcode_in_content()) {
+            return;
+        }
+
+        global $post;
+        if (!$this->designer_usable((int) $post->ID)) {
+            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from esc_html__() only
+            echo $this->unusable_template_notice((int) $post->ID);
+            return;
+        }
+
+        $mode = get_post_meta($post->ID, '_pf_display_mode', true) ?: 'embedded';
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- data_config_attr() already wraps its value in esc_attr(wp_json_encode())
+        echo '<div id="pf-designer-root" data-mode="' . esc_attr($mode) . '"' . $this->data_config_attr() . '></div>';
+        // Hooked to woocommerce_before_add_to_cart_button, i.e. inside the WC
+        // <form class="cart">, so this field is POSTed with add-to-cart. See
+        // add_cart_item_data() for why it's checked but never authoritative.
+        wp_nonce_field('sgpd_add_design', 'sgpd_design_nonce');
+
+        if ($mode === 'modal') {
+            echo '<button type="button" class="pf-open-designer button">' . esc_html__('Customize Product', 'snelgraveren-product-designer') . '</button>';
+        }
+
+        $this->designer_rendered = true;
+    }
+
+    /**
+     * [sgpd_designer] shortcode — renders the designer inline.
+     * Auto-detects product context on product pages.
+     */
+    public function shortcode(array $atts = []): string {
+        if (!is_product()) {
+            return '';
+        }
+
+        global $post;
+        $product_id = $post->ID;
+
+        if (!$this->designer_usable((int) $product_id)) {
+            return $this->unusable_template_notice((int) $product_id);
+        }
+
+        // Allow the shortcode to render on every the_content call.
+        // Plugins/themes (Rank Math, Astra) may call the_content before
+        // WooCommerce renders the description tab — their output is
+        // discarded or stripped. Only the tab render produces visible HTML.
+        $this->designer_rendered = true;
+
+        // Best-effort here: the shortcode can be placed outside the WC
+        // add-to-cart <form> by the merchant, in which case this hidden
+        // field never gets POSTed with the cart submission — that's fine,
+        // add_cart_item_data() treats a missing nonce as "not present",
+        // never as a block (see its docblock).
+        return '<div id="pf-designer-root" data-mode="embedded"' . $this->data_config_attr() . '></div>'
+            . wp_nonce_field('sgpd_add_design', 'sgpd_design_nonce', true, false);
+    }
+
+}
