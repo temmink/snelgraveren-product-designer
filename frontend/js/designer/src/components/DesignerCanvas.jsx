@@ -13,7 +13,7 @@ import { applyCurve } from '../utils/curvedText';
 import useCanvasHistory, { beginHistorySettling, endHistorySettling } from '../hooks/useCanvasHistory';
 import { filterFabricJson } from '../utils/fabricJson';
 import { fitInsideZoneShape } from '../../../../../shared/js/zoneContainment';
-import { clampObjectDuringMove, settleObjectInZone, zoneContainmentShape } from '../../../../../shared/js/zoneClamp';
+import { clampObjectDuringMove, settleObjectInZone, zonePlacementShape } from '../../../../../shared/js/zoneClamp';
 import { zoneClips, firstZoneForCustomerType, zoneAtPointForCustomerType } from '../../../../../shared/js/zoneSelection';
 import { minFontSizePx, textMinScaleLimit } from '../../../../../shared/js/fontSizeLimits';
 import { isLayerLockedForCustomer, customerLockProps } from '../../../../../shared/js/layerLockForCustomer';
@@ -26,8 +26,7 @@ import { installTextPlaceholders, isTextPlaceholder } from '../../../../../share
 import { inferElementType, reapplyPostRestoreState } from '../utils/postRestoreState';
 
 // Shape-aware initial placement for a newly-added image/clipart object.
-// Uses zoneContainmentShape() — the same test the clamp and the settle use —
-// so all three agree about which zones are enforced against their outline.
+// Uses the zone's svg outline (zonePlacementShape: restrict AND clip zones).
 // Placing blind at the bbox centre would leave the object outside a concave or
 // off-centre contour. Returns true (and mutates `img`'s left/top/scaleX/scaleY)
 // when it placed the object via the shape fit; false means the caller should
@@ -36,14 +35,15 @@ import { inferElementType, reapplyPostRestoreState } from '../utils/postRestoreS
 // initial size for something the customer has not sized yet, not overriding a
 // size they chose.
 function placeInsideZoneShape(img, zone) {
-  // One shared answer to "is this zone enforced against its outline?" — the
-  // clamp, the settle and this placement must never disagree about that.
-  const shape = zoneContainmentShape(zone);
+  // Placement uses the outline of 'clip' zones too (zonePlacementShape): a clip
+  // zone masks what falls outside it, so a bbox-centred drop on a curved board
+  // hid most of the clip art. Enforcement afterwards is still restrict-only.
+  const shape = zonePlacementShape(zone);
   if (!shape) return false;
   // Same cap as the existing scaleToWidth(Math.min(img.width, zone.width * 0.8))
   // call it replaces: never upscale past the source's natural pixel size.
   const maxScale = Math.min(1, (zone.width * 0.8) / img.width);
-  const fit = fitInsideZoneShape({ shape, zone, width: img.width, height: img.height, maxScale });
+  const fit = fitInsideZoneShape({ shape, zone, width: img.width, height: img.height, maxScale, roomiest: true });
   if (!fit) return false;
   img.set({ scaleX: fit.scale, scaleY: fit.scale, left: fit.left, top: fit.top });
   return true;

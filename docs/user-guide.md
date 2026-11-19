@@ -199,6 +199,10 @@ After ordering, the designer on the product page starts fresh, so you can make a
 
 This **updates** the item in your cart — you do not get a second one. If you want two of the same design, change the quantity in the cart.
 
+### Starting from a design you ordered before
+
+A design you have already ordered is kept exactly as it was made. You can open it again (for example from **My account → My designs**) and use it as a starting point: when you save, it becomes a **new** design, and the earlier order is not affected.
+
 ---
 
 ## On a Phone

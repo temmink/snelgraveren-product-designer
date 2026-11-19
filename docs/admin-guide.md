@@ -174,7 +174,7 @@ ProductDesigner/
 | **Archived** | Template is hidden but preserved. Cannot be assigned to new products. |
 | **Trashed** | Marked for deletion. Can be restored or permanently deleted. |
 
-Only **Published** templates appear in the product settings dropdown and are accessible via the public API.
+Only **Published** templates appear in the product settings dropdown and are accessible via the public API. A product that already uses a template you later set back to Draft or Archived keeps it in the dropdown, labelled as not published, with a warning; on the product page the designer is then not shown at all (shop staff see a notice explaining why).
 
 ### Duplicating Templates
 
@@ -690,6 +690,10 @@ Then all opened views are saved with thumbnails and export data:
 ### One Design, One Cart Line
 
 The link from a cart line back to the product carries the design and the options it was ordered with, so the customer returns to their design with size and colour filled in. Saving it again **replaces** that cart line — it does not add a second one. A customer who wants two of the same design changes the quantity in the cart.
+
+### Ordered Designs Do Not Change
+
+Once an order carries a design, that design is the production record of the order. A customer can no longer change or delete it; the REST API answers `409 sgpd_design_ordered`. Reopening it and saving creates a new design with its own preview and export files, so a second order never alters what the first one was made from. Shop staff (users who can manage WooCommerce) can still correct an ordered design.
 
 ### Mobile Behavior
 

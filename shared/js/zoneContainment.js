@@ -107,6 +107,11 @@ export function pointsInsideZoneShape(path, zone, points) {
  *   that fits, not be flung back to the middle of the zone. When given, the
  *   coarse grid anchor is refined by a line search back toward this point, so
  *   the result is "just far enough in", not a grid step away.
+ * @param {boolean} [opts.roomiest] for a NEW element without `prefer`: when the
+ *   zone's centre cannot hold it at `maxScale`, search the zone for the spot
+ *   that holds it LARGEST instead of shrinking it in place. The bbox centre of
+ *   a curved outline (the olive-wood boards) sits next to its narrowest part,
+ *   so shrinking there put clip art on the board at a few millimetres.
  * @param {Function} [opts.isInside] containment predicate, injected for tests
  * @returns {{left:number, top:number, scale:number}|null} null when nothing fits
  */
@@ -114,6 +119,7 @@ export function fitInsideZoneShape({
   shape, zone, width, height,
   maxScale = 1, minScale = 0.05,
   prefer = null,
+  roomiest = false,
   isInside = pointsInsideZoneShape,
 }) {
   if (!shape || !zone || !(width > 0) || !(height > 0)) return null;
@@ -127,6 +133,44 @@ export function fitInsideZoneShape({
     ];
     return isInside(shape, zone, objectSamplePoints(corners));
   };
+
+  if (roomiest && !prefer) {
+    const cx = zone.x + zone.width / 2;
+    const cy = zone.y + zone.height / 2;
+    const largestAt = (x, y) => {
+      if (!fits(x, y, minScale)) return 0;
+      if (fits(x, y, maxScale)) return maxScale;
+      let lo = minScale;
+      let hi = maxScale;
+      for (let k = 0; k < 14; k++) {
+        const mid = (lo + hi) / 2;
+        if (fits(x, y, mid)) lo = mid; else hi = mid;
+      }
+      return lo;
+    };
+    let best = null;
+    const consider = (x, y) => {
+      const scale = largestAt(x, y);
+      if (!scale) return;
+      const d = (x - cx) ** 2 + (y - cy) ** 2;
+      // A clearly larger fit wins; a fit within 2% counts as equal and the
+      // spot nearer the middle wins, so a roomy zone still centres the art.
+      if (!best || scale > best.scale * 1.02 || (scale >= best.scale / 1.02 && d < best.d)) {
+        best = { x, y, scale, d };
+      }
+    };
+    consider(cx, cy);
+    if (!best || best.scale < maxScale) {
+      const N = 16;
+      for (let i = 1; i < N; i++) {
+        for (let j = 1; j < N; j++) {
+          consider(zone.x + (zone.width * i) / N, zone.y + (zone.height * j) / N);
+        }
+      }
+    }
+    if (!best) return null;
+    return { left: best.x - (width * best.scale) / 2, top: best.y - (height * best.scale) / 2, scale: best.scale };
+  }
 
   // 1. Anchor: the desired centre when the contour allows it, otherwise the
   //    inside grid point closest to it. A coarse grid is enough — we only need a

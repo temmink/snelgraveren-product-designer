@@ -98,6 +98,28 @@ export function zoneContainmentShape(zone, getShape = defaultZoneShapePath) {
 }
 
 /**
+ * The outline a NEW element is placed inside: the zone's svg outline whether
+ * the zone restricts or only clips.
+ *
+ * Enforcement (clamp, settle) stays restrict-only — `zoneContainmentShape`
+ * above. Placement is different: a 'clip' zone masks everything outside its
+ * outline, so dropping new clip art on the zone's bounding-box centre (the
+ * only option for a non-shape zone) left most of it masked on the narrow,
+ * curved olive-wood boards, where the bbox centre sits next to the handle.
+ * Choosing a first position and size inside the visible area constrains
+ * nothing afterwards; the customer can still move the element anywhere.
+ *
+ * @param {object} zone
+ * @param {Function} [getShape] injected for tests
+ * @returns {Path2D|null}
+ */
+export function zonePlacementShape(zone, getShape = defaultZoneShapePath) {
+  if (!zone || (zone.behavior !== 'restrict' && zone.behavior !== 'clip')) return null;
+  if (zone.boundary_type !== 'svg' || !zone.svg_markup || zone.svg_rotation) return null;
+  return getShape(zone) || null;
+}
+
+/**
  * The rectangle an object's position is actually held inside.
  *
  * The object's zone when that zone is a 'restrict' zone. Otherwise — no zone

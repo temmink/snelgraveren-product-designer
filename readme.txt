@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.12.8
+Stable tag: 1.12.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -148,6 +148,9 @@ No other external services are used. Design exports (PDF/PNG/SVG) are rendered e
 
 == Upgrade Notice ==
 
+= 1.12.9 =
+Fixes clip art that was shown and exported cut off, and places new clip art inside shaped engraving areas.
+
 = 1.12.8 =
 Fixes Undo in the customer designer, makes a newly added text readable on phones and places it clear of existing text, and restores the Dutch translation.
 
@@ -164,6 +167,11 @@ Fixes design saves failing with "No route was found matching the URL and request
 Fixes the second, dead "Customize Product" button on phones for products in modal display mode.
 
 == Changelog ==
+
+= 1.12.9 =
+* Fix: clip art made as an SVG without its own width and height (a viewBox only, as most design tools export it) was drawn cut off — only part of the artwork showed, at every scale, and the cut-off version also reached the cart picture and the production PNG. SVG artwork is now always drawn whole, also in designs saved before this update.
+* Fix: on a product with a shaped engraving area (for example the curved olive-wood boards) new clip art was placed on the middle of the area's bounding box, where the shape can be narrow, so most of it fell outside the engravable area. It is now placed, at the largest size that fits, where the shape has room.
+* Fix: the "scaled beyond its resolution" warning appeared for vector clip art, which stays sharp at any size.
 
 = 1.12.8 =
 * Fix: Undo in the customer designer did nothing — clicking it after adding an element left the element in place. One click now removes the last change and Redo brings it back; Undo stops at the template's own starting state.
