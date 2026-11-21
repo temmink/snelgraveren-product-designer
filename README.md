@@ -15,14 +15,16 @@ Licence: GPL-2.0-or-later (see `LICENSE`).
 
 | Shipped bundle (`dist/`) | Source |
 |--------------------------|--------|
-| `frontend-designer.js` / `.css` | `frontend/js/designer/src/` (React 18 + Fabric.js) |
-| `admin-template-builder.js` / `.css` | `admin/js/template-builder/src/` |
+| `frontend-designer.js` | `frontend/js/designer/src/` (React 18 + Fabric.js) |
+| `frontend-designer.css` | `frontend/js/designer/src/designer.css`, copied as-is |
+| `admin-template-builder.js` | `admin/js/template-builder/src/` |
 | `admin-design-templates.js` | `admin/js/design-templates/src/` |
-| `admin-clipart.js` / `.css` | `admin/js/clipart/src/` |
+| `admin-clipart.js` | `admin/js/clipart/src/` |
 | `admin-fonts.js` | `admin/js/fonts/src/` |
 
-`shared/js/` holds the modules both the template builder and the customer
-designer import. The Gutenberg block script (`blocks/designer/editor.js`) is
+The admin screens have no separate stylesheet: their CSS is bundled into the
+`.js` file and injected at runtime. `shared/js/` holds the modules both the
+template builder and the customer designer import. The Gutenberg block script (`blocks/designer/editor.js`) is
 hand-written, un-minified, and ships as-is.
 
 ## Building
@@ -33,9 +35,14 @@ npm run build                                     # compiles the bundles into di
 composer install --no-dev --optimize-autoloader   # PHP dependencies into vendor/
 ```
 
-- **JavaScript:** [Vite](https://vitejs.dev/) — see `vite.config.mjs`.
-- **PHP dependencies:** [Composer](https://getcomposer.org/)
-  (`enshrined/svg-sanitize` for SVG sanitisation).
+- **JavaScript:** [Vite](https://vitejs.dev/) — see `vite.config.mjs`. Its
+  `frontend-pro` entry builds the Pro-only export bundle from `pro/`, which is
+  not part of the free plugin and not in this repository; `npm run build`
+  skips that step when `pro/` is absent.
+- **PHP dependencies:** [Composer](https://getcomposer.org/):
+  `enshrined/svg-sanitize` for SVG sanitisation. `composer.json` also lists
+  `tecnickcom/tcpdf`, used only by the Pro PDF export; the free plugin does not
+  ship it.
 
 The Freemius SDK that the published plugin bundles in `freemius/` is
 third-party code and is not copied here; get it from
