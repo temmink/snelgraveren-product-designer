@@ -5,7 +5,19 @@ defined('ABSPATH') || exit;
 
 class ExportRepository {
 
+    /**
+     * Every format an export record can carry. "lbrn" was missing until
+     * 1.13.0, so a LightBurn export was stored as "pdf" (Migration1500 fixes
+     * the column and the mislabelled rows).
+     */
+    public const FORMATS = ['pdf', 'png', 'svg', 'lbrn'];
+
     private string $table;
+
+    /** A known export format, or "pdf" for anything else. */
+    public static function normalize_format(string $format): string {
+        return in_array($format, self::FORMATS, true) ? $format : 'pdf';
+    }
 
     public function __construct() {
         global $wpdb;
@@ -14,8 +26,7 @@ class ExportRepository {
 
     public function create(int $design_id, int $order_id, string $format): int {
         global $wpdb;
-        $allowed = ['pdf', 'png', 'svg'];
-        $format  = in_array($format, $allowed, true) ? $format : 'pdf';
+        $format  = self::normalize_format($format);
         $wpdb->insert($this->table, [
             'design_id' => $design_id,
             'order_id'  => $order_id,

@@ -4,7 +4,7 @@ Tags: woocommerce, product designer, personalization, engraving, customizer
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.12.9
+Stable tag: 1.13.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -148,6 +148,12 @@ No other external services are used. Design exports (PDF/PNG/SVG) are rendered e
 
 == Upgrade Notice ==
 
+= 1.13.1 =
+Fixes the scale of a product side without its own width in the LightBurn and PDF exports, font names LightBurn could not find, and names every export file after order, side and product.
+
+= 1.13.0 =
+Smaller designer script; the Pro vector exports now load only on Pro sites. Production exports now show the product's outline as a non-engraving reference (LightBurn: tool layer T1) — open and save each template once.
+
 = 1.12.9 =
 Fixes clip art that was shown and exported cut off, and places new clip art inside shaped engraving areas.
 
@@ -167,6 +173,18 @@ Fixes design saves failing with "No route was found matching the URL and request
 Fixes the second, dead "Customize Product" button on phones for products in modal display mode.
 
 == Changelog ==
+
+= 1.13.1 =
+* Fix: a product side without its own "Real width (mm)" (the back of the dog tags) uses the width of another side in the designer, but the exports used the 96-DPI pixel size for it. In LightBurn the reference outline of that side came out about 209 mm wide around text laid out at 38 mm, and the PDF page of that side had the wrong size too. The exports now use the same width as the designer, also for orders placed before this update. The template builder no longer says such a side is exported at the 96-DPI size.
+* Fix: a Google font stored as "BebasNeue" (instead of "Bebas Neue") reached LightBurn and the "SVG + fonts" file under that name, so LightBurn reported it could not find the font. Exports now use the font's real name; fonts you uploaded yourself keep their name.
+* Change: export files are named after the order, the product side and the product — for example 2571_voorkant_dog-tags.lbrn2 — and a multi-side download after the order and product (2571_dog-tags-lbrn.zip). Exports made without an order (Designs page) use the start of the design ID instead of the order number.
+
+= 1.13.0 =
+* Change: the Pro production exports (vector SVG and LightBurn) moved into their own script, which only Pro sites load. The free designer script is about a quarter smaller and free sites no longer prepare export files they cannot use.
+* Fix: on a product with a shaped (SVG) engraving boundary, a template's own text/artwork could be dragged outside the shape by the customer when the design's layers sat in the whole-canvas holding zone rather than in the boundary zone. Elements now follow the real design/boundary zone wherever they physically live, so they stay inside the shape. Existing templates and already-saved designs benefit without re-saving; a too-wide element is also kept on the canvas instead of sliding off.
+* New: every production export of an order (PNG, PDF, SVG, SVG + fonts, LightBurn) now carries the template's engraving-area outline as a reference, so the design can be lined up with the real product. In LightBurn it sits on tool layer T1, which is never sent to the laser; in SVG it is a separate group "referentie"; in PNG and PDF a thin blue line. Because the outline comes from the template, orders placed before this update get it too — open and save each template once in the template builder; until then the order screen says so.
+* Fix: the PNG, SVG, LightBurn and "SVG + fonts" export buttons all downloaded a ZIP with the same name, so it was easy to open the wrong format. The download name now says which format it is, and the two SVG variants are kept as separate files instead of overwriting each other.
+* Improvement: in the template builder you can now add or move your own template layers into any zone — including an empty holding/boundary zone — without first ticking an element type. "Allowed element types" now only governs what customers may add, and the field explains this. The template builder also shows an always-visible lock-status dot per layer (red locked, amber locked-by-default, green open to the customer).
 
 = 1.12.9 =
 * Fix: clip art made as an SVG without its own width and height (a viewBox only, as most design tools export it) was drawn cut off — only part of the artwork showed, at every scale, and the cut-off version also reached the cart picture and the production PNG. SVG artwork is now always drawn whole, also in designs saved before this update.

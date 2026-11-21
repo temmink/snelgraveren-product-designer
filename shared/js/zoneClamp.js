@@ -169,12 +169,26 @@ export function keepInsideRect(zone, canvas) {
  * @param {{width:number, height:number}} [options.canvas] logical canvas size,
  *   used as the fallback rect. Omit it and a zoneless object is left alone,
  *   which is the pre-fallback behaviour.
+ * @param {boolean} [options.canvasBackstop] also hold an object that HAS a
+ *   restrict zone on the canvas, on any axis where it does not fit the zone.
+ *   Without it such an axis is completely free, the canvas edge included: a
+ *   template text 500 px wide in a 480 px boundary could be dragged half off
+ *   the design (measured on the slate template, bbox left -149). The canvas
+ *   is applied FIRST and the zone after it, so the zone always has the last
+ *   word and an object that fits its zone ends up exactly where it did
+ *   before. Still lenient: an axis too large for the canvas stays free.
+ *   Opt-in — the customer designer passes it, the template builder does not.
  * @returns {boolean} whether the object was moved
  */
 export function clampObjectDuringMove(obj, zone, options = {}) {
   if (!obj) return false;
   const rect = keepInsideRect(zone, options.canvas);
   if (!rect) return false;
+
+  let backstopMoved = false;
+  if (options.canvasBackstop && zone && zone.behavior === 'restrict') {
+    backstopMoved = clampObjectDuringMove(obj, null, { canvas: options.canvas });
+  }
 
   // Fabric writes `left`/`top` on every drag frame but only refreshes the
   // cached corner coords when the transform ENDS, so getBoundingRect() here
@@ -186,7 +200,7 @@ export function clampObjectDuringMove(obj, zone, options = {}) {
   obj.setCoords();
   const bound = obj.getBoundingRect();
   const { left, top } = clampRectToZone({ objLeft: obj.left, objTop: obj.top, bound, zone: rect });
-  if (left === obj.left && top === obj.top) return false;
+  if (left === obj.left && top === obj.top) return backstopMoved;
 
   obj.set({ left, top });
   obj.setCoords();

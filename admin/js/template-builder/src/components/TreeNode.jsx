@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { __ } from '@wordpress/i18n';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { isLayerLockedForCustomer } from '../../../../../shared/js/layerLockForCustomer';
 
 /* ── SVG Icons (clean, consistent 16×16) ───────────────────────────────── */
 const Icons = {
@@ -110,6 +111,27 @@ export default function TreeNode({ node, nodeType, isSelected, isExpanded, onSel
   const label = isZone ? (node.name || __( 'Unnamed Zone', 'snelgraveren-product-designer' )) : (node.name || node.text || node.type || __( 'Layer', 'snelgraveren-product-designer' ));
   const hasChildren = isZone && (node.layers || []).length > 0;
 
+  // Lock status as an always-visible traffic-light dot for LAYERS, so the
+  // merchant sees at a glance what a customer may touch. The dot reflects the
+  // EFFECTIVE customer lock (isLayerLockedForCustomer, the same helper the
+  // customer designer uses), not the raw padlock: an svg/image with no padlock
+  // set is locked for the customer BY DEFAULT (amber) — the state the old thin
+  // icon never showed, and the reason "Sweet Dreams" could not be selected.
+  // Zones keep the original red-when-locked padlock.
+  const effLocked = isZone ? !!node.locked : isLayerLockedForCustomer(node);
+  const lockTone = node.locked === true ? 'red' : (!isZone && effLocked ? 'amber' : 'green');
+  const lockTip = isZone
+    ? (node.locked ? __( 'Unlock', 'snelgraveren-product-designer' ) : __( 'Lock', 'snelgraveren-product-designer' ))
+    : (node.locked === true
+        ? (node.type === 'text'
+            ? __( 'Locked — the customer can still edit the text but cannot move or resize it. Click to open.', 'snelgraveren-product-designer' )
+            : __( 'Locked — the customer cannot touch this layer. Click to open.', 'snelgraveren-product-designer' ))
+        : (lockTone === 'amber'
+            ? __( 'Locked by default — the customer cannot select this layer. Click to open.', 'snelgraveren-product-designer' )
+            : (node.type === 'text'
+                ? __( 'Open — the customer can edit this text. Click to lock.', 'snelgraveren-product-designer' )
+                : __( 'Open — the customer can move and resize this layer. Click to lock.', 'snelgraveren-product-designer' ))));
+
   const handleDoubleClick = (e) => {
     e.stopPropagation();
     setEditValue(isZone ? (node.name || '') : (node.name || node.text || ''));
@@ -213,12 +235,21 @@ export default function TreeNode({ node, nodeType, isSelected, isExpanded, onSel
             aria-label={ node.visible === false ? __( 'Show', 'snelgraveren-product-designer' ) : __( 'Hide', 'snelgraveren-product-designer' ) }
             title={ node.visible === false ? __( 'Show', 'snelgraveren-product-designer' ) : __( 'Hide', 'snelgraveren-product-designer' ) }
           >{node.visible === false ? Icons.eyeClosed : Icons.eyeOpen}</button>
-          <button
-            className={`pf-tree-node__action${node.locked ? ' pf-tree-node__action--locked' : ''}`}
-            onClick={(e) => { e.stopPropagation(); onAction('toggle-lock', node); }}
-            aria-label={ node.locked ? __( 'Unlock', 'snelgraveren-product-designer' ) : __( 'Lock', 'snelgraveren-product-designer' ) }
-            title={ node.locked ? __( 'Unlock', 'snelgraveren-product-designer' ) : __( 'Lock', 'snelgraveren-product-designer' ) }
-          >{node.locked ? Icons.locked : Icons.unlocked}</button>
+          {isZone ? (
+            <button
+              className={`pf-tree-node__action${node.locked ? ' pf-tree-node__action--locked' : ''}`}
+              onClick={(e) => { e.stopPropagation(); onAction('toggle-lock', node); }}
+              aria-label={ node.locked ? __( 'Unlock', 'snelgraveren-product-designer' ) : __( 'Lock', 'snelgraveren-product-designer' ) }
+              title={ lockTip }
+            >{node.locked ? Icons.locked : Icons.unlocked}</button>
+          ) : (
+            <button
+              className={`pf-tree-node__action pf-tree-node__lockdot pf-tree-node__lockdot--${lockTone}`}
+              onClick={(e) => { e.stopPropagation(); onAction('toggle-lock', node); }}
+              aria-label={ effLocked ? __( 'Unlock', 'snelgraveren-product-designer' ) : __( 'Lock', 'snelgraveren-product-designer' ) }
+              title={ lockTip }
+            >{effLocked ? Icons.locked : Icons.unlocked}</button>
+          )}
           <button
             className="pf-tree-node__action pf-tree-node__action--danger"
             onClick={(e) => { e.stopPropagation(); onAction('delete', node); }}

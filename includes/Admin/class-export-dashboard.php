@@ -4,7 +4,6 @@ namespace Snelgraveren\ProductDesigner\Admin;
 defined('ABSPATH') || exit;
 
 use Snelgraveren\ProductDesigner\Database\DesignRepository;
-use Snelgraveren\ProductDesigner\Database\ExportRepository;
 use Snelgraveren\ProductDesigner\Export\DesignInspector;
 use Snelgraveren\ProductDesigner\Export\ExportManager;
 use Snelgraveren\ProductDesigner\Plugin;
@@ -160,8 +159,6 @@ class ExportDashboard {
             }
         }
         $manager = new ExportManager();
-        $repo    = new ExportRepository();
-        $designs = new DesignRepository();
 
         $zip_path = wp_tempnam('pf-bulk-export.zip');
         $zip      = new \ZipArchive();
@@ -179,32 +176,23 @@ class ExportDashboard {
             [, $order_id, $hash] = $m;
             $order_id = (int) $order_id;
 
-            $design = $designs->get_by_hash($hash);
             $order  = wc_get_order($order_id);
             $prefix = 'order-' . ($order ? $order->get_order_number() : $order_id) . '/';
 
             foreach ($formats as $format) {
-                // Reuse the latest done export of this format, else generate.
-                $export_id = 0;
-                if ($design) {
-                    foreach ($repo->get_by_design((int) $design['id']) as $export) {
-                        if ($export['format'] === $format && $export['status'] === 'done') {
-                            $export_id = (int) $export['id'];
-                            break;
-                        }
-                    }
-                }
-                if (!$export_id) {
-                    $result    = $manager->generate_export($hash, $format, $order_id);
-                    $export_id = (int) ($result['export_id'] ?? 0);
-                    if (!$export_id || ($result['status'] ?? '') !== 'done') {
-                        // One missing format must not sink the ZIP — a design
-                        // saved before 1.11.0 has no LightBurn data yet, for
-                        // example. Note it where the operator will look.
-                        $missing[] = sprintf('%s%s: %s', $prefix, strtoupper($format),
-                            (string) ($result['error'] ?? 'export failed'));
-                        continue;
-                    }
+                // Always regenerate (1.13.0): an earlier export can predate
+                // the template's reference outline or a template change, and
+                // "the latest svg" could be either SVG variant. Generation
+                // only writes the stored browser renders, so it is cheap.
+                $result    = $manager->generate_export($hash, $format, $order_id);
+                $export_id = (int) ($result['export_id'] ?? 0);
+                if (!$export_id || ($result['status'] ?? '') !== 'done') {
+                    // One missing format must not sink the ZIP — a design
+                    // saved before 1.11.0 has no LightBurn data yet, for
+                    // example. Note it where the operator will look.
+                    $missing[] = sprintf('%s%s: %s', $prefix, strtoupper($format),
+                        (string) ($result['error'] ?? 'export failed'));
+                    continue;
                 }
                 foreach ($manager->get_download_paths($export_id) as $path) {
                     if ($zip->addFile($path, $prefix . basename($path))) {

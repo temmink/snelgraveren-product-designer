@@ -52,8 +52,9 @@ export default function ViewTabs() {
 
   // Real-world physical width of the current view, in mm. Used to export at true
   // scale (SVG mm units / PDF page size). The height is derived from the canvas
-  // aspect ratio, shown as a hint, so the export is never distorted. 0 = unset
-  // (export falls back to the 96-DPI pixel assumption).
+  // aspect ratio, shown as a hint, so the export is never distorted. 0 = unset:
+  // the export then uses another view's width (R13, the same rule the server
+  // applies), and only when no view has one the 96-DPI pixel assumption.
   const currentView = views[currentViewIndex];
   const widthMm = Number(currentView?.width_mm) || 0;
   // Inherited value (R13): shown only as a hint below the field. The input
@@ -62,8 +63,8 @@ export default function ViewTabs() {
   const { widthMm: resolvedWidthMm, inherited: widthMmInherited } = resolveWidthMm(views, currentViewIndex);
   const canvasW = currentView?.canvas_width || 800;
   const canvasH = currentView?.canvas_height || 600;
-  const derivedHeightMm = widthMm > 0
-    ? Math.round((widthMm * canvasH / canvasW) * 100) / 100
+  const derivedHeightMm = resolvedWidthMm > 0
+    ? Math.round((resolvedWidthMm * canvasH / canvasW) * 100) / 100
     : 0;
 
   return (
@@ -162,7 +163,7 @@ export default function ViewTabs() {
           </span>
         )}
         <span style={{ fontSize: 12, color: '#757575' }}>
-          {widthMm > 0
+          {resolvedWidthMm > 0
             /* translators: %s is the derived height in millimetres */
             ? `${ __( 'Height follows canvas:', 'snelgraveren-product-designer' ) } ${derivedHeightMm} mm`
             : __( 'Empty = export uses the 96-DPI pixel size', 'snelgraveren-product-designer' )}

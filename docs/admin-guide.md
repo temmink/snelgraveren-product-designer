@@ -264,7 +264,7 @@ The tree panel (Structure tab) shows a hierarchical view of the current view's s
 - Click a zone or layer to expand and edit its properties.
 - **Drag-and-drop** reordering: reorder layers within a zone, move layers between zones (validates allowed types), or reorder zones themselves.
 - **Toggle visibility** (eye icon) — hide a zone or layer from the customer.
-- **Toggle lock** (lock icon) — pin a zone or layer in place for the customer. A locked text layer can still be rewritten by the customer; locked artwork cannot be selected at all (see Layers above).
+- **Toggle lock** (lock icon) — pin a zone or layer in place for the customer. A locked text layer can still be rewritten by the customer; locked artwork cannot be selected at all (see Layers above). Since 1.12.10 every layer shows an always-visible coloured status dot: **red** = locked, **amber** = locked by default (an image/SVG whose lock was never set — the customer cannot select it), **green** = open to the customer. One click on the dot switches the layer between open and locked. The amber state is the easy-to-miss one: an uploaded image or SVG layer is locked for the customer until you explicitly open it.
 - **Add layer** — click the + button on a zone to add a new layer (text, image, or SVG).
 - **Delete** — remove a zone or layer.
 - **Add Boundary** — add a new zone to the current view.
@@ -296,6 +296,8 @@ The tree panel (Structure tab) shows a hierarchical view of the current view's s
 
 Both behaviors are enforced in both the admin canvas (unless Free Move is on) and the frontend designer.
 
+> **A real engraving boundary must use Restrict, not Clip.** Clip only *masks* the overflow — the customer can still drag the text or artwork out of the shape, and it is simply cut off on screen. If you want a shaped area (dog tag, serving board, keychain) that actually holds the customer's elements inside it, set its Behavior to **Restrict**. A common mistake is to build the shape, see it clip nicely, and leave the Behavior on Clip; the element then escapes the shape on the product page.
+
 ### Allowed Element Types
 
 Each zone specifies which element types are permitted via checkboxes:
@@ -304,6 +306,8 @@ Each zone specifies which element types are permitted via checkboxes:
 - **SVG** — vector graphics
 
 A zone that allows only text will not accept image or SVG elements. The frontend designer hides the corresponding "Add" buttons if no zone on the current view allows that type.
+
+> **Allowed element types is purely a customer permission (since 1.12.11).** It governs what *customers* may add to the zone — nothing more. You can place and drag your *own* template layers into any zone regardless of these ticks, so a holding or boundary zone can be left with every type unticked. Leaving them unticked matters: ticking a type on a holding zone makes that zone *claim* the customer's elements of that type, which can override your real engraving boundary. A LightBurn import creates its `Imported` holding zone with nothing ticked for exactly this reason. Rule of thumb: tick a type only on the zone you actually want customers to design in.
 
 ### SVG Boundaries
 
@@ -618,6 +622,8 @@ The JSON format includes the design template metadata and all view canvas data.
 
 The designer will now appear on the product's frontend page.
 
+> **If you delete and re-create a template, re-link it on the product.** Deleting a template clears the product's stored template id, so the **Template** dropdown falls back to "— Select template —" even though **Enable Designer** stays ticked. With no template selected the designer does not render at all (the product page looks like a plain product). After re-creating or re-importing a template, open the product, pick the new template from the dropdown and save.
+
 **Product meta fields saved:**
 
 | Meta Key | Description |
@@ -632,12 +638,12 @@ The designer will now appear on the product's frontend page.
 
 | Mode | Behavior |
 |------|----------|
-| **Embedded** | The designer renders inline on the product page, within the product description area (via the `[productforge]` shortcode or the `woocommerce_before_add_to_cart_button` hook). |
+| **Embedded** | The designer renders inline on the product page, within the product description area (via the `[sgpd_designer]` shortcode or the `woocommerce_before_add_to_cart_button` hook). |
 | **Modal** | A "Customize Product" button appears on the page. Clicking it opens the designer as a fullscreen overlay with focus trapping and keyboard accessibility. |
 
 **Mobile override:** On mobile devices (screen width ≤ 768px), the designer always uses modal mode regardless of the setting.
 
-**Shortcode:** The `[productforge]` shortcode can be placed anywhere in the product description to control exactly where the designer appears. If the shortcode is present, the hook-based render is skipped to prevent double rendering.
+**Shortcode:** The `[sgpd_designer]` shortcode can be placed anywhere in the product description to control exactly where the designer appears. If the shortcode is present, the hook-based render is skipped to prevent double rendering. (The old unprefixed `[productforge]` / `[productdesigner]` tags were removed in 1.7.6/1.7.7 for the wordpress.org listing; leftover instances fall through to the automatic render, so the designer still shows.)
 
 ---
 
@@ -737,7 +743,7 @@ When a customized product is in the cart:
 | **Classic checkout** | Design hash saved to order item meta via `woocommerce_checkout_create_order_line_item`. |
 | **Block checkout** | Safety net via `woocommerce_store_api_checkout_update_order_meta` — matches cart items to order items by product ID. |
 | **Order item thumbnail** | Design thumbnails replace product images in order confirmation and emails. |
-| **Admin order view** | Design thumbnail shown at 38×38px. Export buttons (PDF/PNG/SVG) appear per order item. Completed exports show download links. |
+| **Admin order view** | Design thumbnail shown at 38×38px. Export buttons (PNG, and with Pro PDF/SVG/LightBurn/SVG + fonts) appear per order item. Completed exports show ⬇ links; clicking one generates a fresh export. |
 | **Order item meta display** | `_pf_design_hash` is exposed as "Design: Customized" in order details. |
 
 ### Design Surcharges
@@ -772,7 +778,7 @@ Inputs are sanitized on write (`enshrined/svg-sanitize` for SVG, PNG magic-byte 
 | **Library** | TCPDF |
 | **Source** | Pre-rendered PNG (embedded directly) or SVG (converted to PNG via `rsvg-convert` or Imagick) |
 | **Multi-view** | One page per view in a single PDF file |
-| **Page size** | Template canvas dimensions, converted from pixels to mm at 96 DPI |
+| **Page size** | The view's **Real width (mm)**, height from the canvas aspect ratio. A view without its own width uses the width of another view of the template (front and back of one product share it), exactly as the designer does. Only when no view has a width: canvas pixels at 96 DPI |
 | **Orientation** | Per page: landscape if width ≥ height, portrait otherwise |
 
 ### PNG Export
@@ -780,7 +786,7 @@ Inputs are sanitized on write (`enshrined/svg-sanitize` for SVG, PNG magic-byte 
 | Feature | Detail |
 |---------|--------|
 | **Source** | Pre-rendered PNG (written directly) or SVG (converted via `rsvg-convert` or Imagick at 300 DPI) |
-| **Multi-view** | Separate PNG file per view (suffixed `-view-N`); `file_path` stores a comma-separated list |
+| **Multi-view** | Separate PNG file per view (`{order}_{side}_{product}.png`); `file_path` stores a comma-separated list |
 | **DPI** | 300 when converting from SVG |
 
 ### SVG Export
@@ -806,13 +812,17 @@ To configure these options, use `wp option update pf_export_trigger_status proce
 **From the admin order view:**
 
 Each order item with a design shows export buttons:
-- Click **PDF**, **PNG**, or **SVG** to trigger an export.
+- Click **PNG**, **PDF**, **SVG**, **LightBurn** or **SVG + fonts** to trigger an export (all but PNG need Pro).
 - The file downloads automatically when generation is complete.
-- Previously generated exports of the same format are replaced.
+- Previously generated exports of the same format (and SVG variant) are replaced.
+- Every format carries the template's engraving-area outline as a reference: in LightBurn on tool layer T1 (never sent to the laser), in SVG as the group `referentie`, in PNG and PDF as a thin blue line. A template saved before 1.13.0 gets it after being opened and saved once in the template builder; until then the order screen says so.
+- Font names are written as the font is really called (a Google font stored as `BebasNeue` is exported as `Bebas Neue`), so LightBurn finds the installed font. Uploaded fonts keep their own name.
 
-**Export file storage:**
-- Path: `wp-content/uploads/pf-exports/{format}/`
-- Filename: `{design_hash}-{design_id}.{ext}`
+**Export file storage and names (1.13.1):**
+- Path: `wp-content/uploads/pf-exports/{format}/{design_hash}/` — one folder per design, so two designs in one order never overwrite each other.
+- One file per product side: `{order}_{side}_{product}.{ext}`, e.g. `3049_voorkant_naamplaatje-hond-gepersonaliseerd.lbrn2`; the font-embedded SVG adds `_fonts`. The side is the view name (stock names such as Front/Back in the shop's language); the product name is the parent product's name, cut between words at 40 characters.
+- PDF (all sides in one file): `{order}_{product}.pdf`. A download of several sides is a ZIP: `{order}_{product}-{format}.zip` (`-lbrn`, `-svg`, `-svg-fonts`, `-png`).
+- Exported without an order (the Designs page): the first 8 characters of the design ID take the order number's place.
 - Protected with `.htaccess` (deny direct access) and `index.php` (directory listing prevention).
 - Downloads served via the REST API with proper headers (`Content-Disposition: attachment`, `nocache_headers`, `X-Content-Type-Options: nosniff`).
 

@@ -835,6 +835,34 @@
   color: #d63638;
 }
 
+/* ── Layer lock status: always-visible traffic-light dot ───────────────────
+   A filled coloured disc with the padlock glyph centred in white. The thin
+   padlock stroke alone was too small to scan in a long tree, and "locked by
+   default" (an svg layer whose padlock was never set) showed nothing at all —
+   so a merchant could not see that customers were unable to select it. The dot
+   stays visible without hover; red = locked, amber = locked by default,
+   green = open to the customer. */
+.pf-tree-node__lockdot {
+  opacity: 1;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  justify-content: center;
+  color: #fff;
+}
+.pf-tree-node__lockdot svg {
+  width: 12px;
+  height: 12px;
+}
+.pf-tree-node__lockdot--red   { background: #d63638; }
+.pf-tree-node__lockdot--amber { background: #dba617; }
+.pf-tree-node__lockdot--green { background: #00a32a; }
+.pf-tree-node__lockdot:hover       { color: #fff; }
+.pf-tree-node__lockdot--red:hover   { background: #b32d2e; }
+.pf-tree-node__lockdot--amber:hover { background: #bf8f14; }
+.pf-tree-node__lockdot--green:hover { background: #008a24; }
+
 /* ── Add layer inline ──────────────────────────────────────────────────── */
 .pf-tree-panel__add-layer {
   display: flex;

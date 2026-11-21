@@ -197,7 +197,10 @@ class SystemStatus {
 
         // The database's own reason, recorded by the last repair attempt —
         // "missing tables" alone tells a merchant (and us) nothing.
-        $schema_errors = empty($missing) ? [] : (array) get_option(\Snelgraveren\ProductDesigner\Database\Migration1400::ERRORS_OPTION, []);
+        // Shown even when every table exists: a column repair can fail on its
+        // own (Migration1500 widening pf_exports.format — without it the
+        // LightBurn export cannot be recorded at all).
+        $schema_errors = (array) get_option(\Snelgraveren\ProductDesigner\Database\Migration1400::ERRORS_OPTION, []);
         if ($schema_errors) {
             /* translators: %s: database error messages */
             $message .= ' ' . sprintf(__('Database error: %s', 'snelgraveren-product-designer'), implode(' | ', array_map('strval', $schema_errors)));
@@ -206,7 +209,7 @@ class SystemStatus {
         return [
             'id'      => 'db_tables',
             'label'   => __('Database tables', 'snelgraveren-product-designer'),
-            'status'  => empty($missing) ? 'ok' : 'error',
+            'status'  => !empty($missing) ? 'error' : ($schema_errors ? 'warning' : 'ok'),
             'message' => $message,
             'fix'     => empty($missing) ? '' : __('Deactivate and re-activate the plugin to repair the database tables. If they are still missing afterwards, send the database error above to support.', 'snelgraveren-product-designer'),
         ];

@@ -51,5 +51,7 @@ class Uninstaller {
         delete_option('sgpd_color_names');
         delete_option('sgpd_migrated_from_pf');
         delete_option('sgpd_schema_errors');
+        delete_option('sgpd_frontend_js_hash');
+        delete_option('sgpd_frontend_pro_js_hash');
     }
 }

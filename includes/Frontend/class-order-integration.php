@@ -200,6 +200,17 @@ class OrderIntegration {
                 . '</p>';
         }
 
+        // The production exports carry the template's outline as a reference
+        // (LightBurn tool layer T1). A template saved before that existed has
+        // none yet — say so instead of leaving it silently out of the files.
+        $template = $design ? (new \Snelgraveren\ProductDesigner\Database\TemplateRepository())->get((int) $design['template_id']) : null;
+        if ($template && \Snelgraveren\ProductDesigner\Export\ReferenceOutline::template_missing_outline($template)) {
+            $builder_url = admin_url('admin.php?page=sgpd-template-builder&action=edit&template_id=' . (int) $design['template_id']);
+            echo '<p style="margin:4px 0;">'
+                . esc_html__('The template has no reference outline yet, so the exports do not show the product shape. Open the template and save it once.', 'snelgraveren-product-designer')
+                . ' <a href="' . esc_url($builder_url) . '">' . esc_html__('Open template', 'snelgraveren-product-designer') . '</a></p>';
+        }
+
         echo '<strong style="display:block;margin-bottom:4px;">' . esc_html__('Export Design:', 'snelgraveren-product-designer') . '</strong>';
 
         // Export buttons — gate PDF/SVG/LightBurn for Pro. The LightBurn format
@@ -214,6 +225,7 @@ class OrderIntegration {
             $label = $format === 'lbrn' ? 'LightBurn' : strtoupper($format);
             echo '<button type="button" class="button button-small pf-export-btn" '
                 . 'data-hash="' . esc_attr($hash) . '" '
+                . 'data-order="' . (int) $item->get_order_id() . '" '
                 . 'data-format="' . esc_attr($format) . '" '
                 . 'data-api="' . esc_url($api_base) . '" '
                 . 'data-nonce="' . esc_attr($nonce) . '" '
@@ -227,6 +239,7 @@ class OrderIntegration {
         if ( Plugin::has_feature( 'svg_export' ) ) {
             echo '<button type="button" class="button button-small pf-export-btn" '
                 . 'data-hash="' . esc_attr($hash) . '" '
+                . 'data-order="' . (int) $item->get_order_id() . '" '
                 . 'data-format="svg" '
                 . 'data-variant="embed" '
                 . 'data-api="' . esc_url($api_base) . '" '
@@ -249,18 +262,38 @@ class OrderIntegration {
                 if ($export['status'] !== 'done') {
                     continue;
                 }
+                // One link per format AND SVG variant: "SVG" and "SVG + fonts"
+                // are separate files since 1.13.0.
                 $fmt = $export['format'];
+                if ($fmt === 'svg' && \Snelgraveren\ProductDesigner\Export\ExportNaming::variant_of((string) $export['file_path']) === 'embed') {
+                    $fmt = 'svg-fonts';
+                }
                 if (!isset($latest_by_format[$fmt]) || (int) $export['id'] > (int) $latest_by_format[$fmt]['id']) {
                     $latest_by_format[$fmt] = $export;
                 }
             }
             if (!empty($latest_by_format)) {
                 echo '<div class="pf-existing-exports" style="margin-top:6px;">';
-                foreach ($latest_by_format as $export) {
+                foreach ($latest_by_format as $fmt_key => $export) {
                     $download_url = $api_base . '/exports/' . (int) $export['id'] . '/download?_wpnonce=' . $nonce;
-                    $label = strtoupper($export['format']);
+                    $label = match ($fmt_key) {
+                        'lbrn'      => 'LightBurn',
+                        'svg-fonts' => __('SVG + fonts', 'snelgraveren-product-designer'),
+                        default     => strtoupper($fmt_key),
+                    };
                     $date  = wp_date(get_option('date_format') . ' ' . get_option('time_format'), strtotime($export['created_at']));
-                    echo '<a href="' . esc_url($download_url) . '" class="button button-small" style="margin-right:4px;margin-top:2px;" title="' . esc_attr($date) . '">'
+                    // The click regenerates (same handler as the buttons above):
+                    // a stored file can predate the template's reference
+                    // outline or a template change. The href stays as the
+                    // no-JS fallback.
+                    echo '<a href="' . esc_url($download_url) . '" class="button button-small pf-export-btn"'
+                        . ' data-hash="' . esc_attr($hash) . '"'
+                        . ' data-order="' . (int) $item->get_order_id() . '"'
+                        . ' data-format="' . esc_attr((string) $export['format']) . '"'
+                        . ' data-variant="' . ($fmt_key === 'svg-fonts' ? 'embed' : 'outline') . '"'
+                        . ' data-api="' . esc_url($api_base) . '"'
+                        . ' data-nonce="' . esc_attr($nonce) . '"'
+                        . ' style="margin-right:4px;margin-top:2px;" title="' . esc_attr($date) . '">'
                         . '⬇ ' . esc_html($label)
                         . '</a>';
                 }
@@ -297,7 +330,7 @@ class OrderIntegration {
                             'Content-Type': 'application/json',
                             'X-WP-Nonce': nonce
                         },
-                        body: JSON.stringify({ format: format, variant: variant })
+                        body: JSON.stringify({ format: format, variant: variant, order_id: parseInt(btn.dataset.order || '0', 10) })
                     })
                     .then(function(r) { return r.json(); })
                     .then(function(data) {

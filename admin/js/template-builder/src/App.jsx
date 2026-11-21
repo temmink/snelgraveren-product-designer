@@ -10,6 +10,8 @@ import PricingPanel from './components/PricingPanel';
 import GlobalSettings from './components/GlobalSettings';
 import { loadGoogleFonts, loadCustomFonts, resolveAllowedFonts } from './utils/fonts';
 import { fontApi, fontGroupApi, paletteApi, clipartApi } from './api/templateApi';
+import { loadSVGFromString, util as fabricUtil } from 'fabric';
+import { withExportOutline } from '../../../../shared/js/zoneOutline';
 
 const isPremium = window.sgpdTemplateBuilder?.isPremium;
 
@@ -172,7 +174,18 @@ export default function App() {
       // Note: The spec requires a single DB transaction (template + views atomically).
       // Atomicity is enforced server-side by the REST handler (future improvement);
       // the client saves sequentially so partial failures are surfaced via saveError.
+      // Each zone carries its outline for the production exports' reference
+      // layer (LightBurn T1). Computed here, with Fabric, because only Fabric
+      // places a zone SVG exactly the way the customer designer does.
+      const fabricForOutline = { loadSVGFromString, util: fabricUtil };
+      const fetchText = (url) => fetch(url).then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status} for ${url}`);
+        return r.text();
+      });
       for (const [index, view] of views.entries()) {
+        const zonesWithOutline = await Promise.all(
+          (view.zones_config || []).map((z) => withExportOutline(z, fabricForOutline, fetchText))
+        );
         const viewData = {
           name:            view.name,
           sort_order:           index,
@@ -181,7 +194,7 @@ export default function App() {
           width_mm:             view.width_mm || 0,
           background_url:       view.background_url || '',
           background_transform: view.background_transform || {},
-          zones_config:         view.zones_config  || [],
+          zones_config:         zonesWithOutline,
           layers_config:        [],
           permissions:          view.permissions   || {},
         };

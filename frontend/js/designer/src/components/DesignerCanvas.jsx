@@ -13,8 +13,9 @@ import { applyCurve } from '../utils/curvedText';
 import useCanvasHistory, { beginHistorySettling, endHistorySettling } from '../hooks/useCanvasHistory';
 import { filterFabricJson } from '../utils/fabricJson';
 import { fitInsideZoneShape } from '../../../../../shared/js/zoneContainment';
+import { placeZoneBoundary } from '../../../../../shared/js/zoneOutline';
 import { clampObjectDuringMove, settleObjectInZone, zonePlacementShape } from '../../../../../shared/js/zoneClamp';
-import { zoneClips, firstZoneForCustomerType, zoneAtPointForCustomerType } from '../../../../../shared/js/zoneSelection';
+import { zoneClips, firstZoneForCustomerType, zoneAtPointForCustomerType, governingZoneIndex } from '../../../../../shared/js/zoneSelection';
 import { minFontSizePx, textMinScaleLimit } from '../../../../../shared/js/fontSizeLimits';
 import { isLayerLockedForCustomer, customerLockProps } from '../../../../../shared/js/layerLockForCustomer';
 import MmRuler from '../../../../../shared/js/MmRuler.jsx';
@@ -239,8 +240,16 @@ export default function DesignerCanvas() {
 
   // ── Clamp object inside its assigned zone ─────────────────────────────────
 
+  // The zone that GOVERNS the object, which is not always the zone that holds
+  // it: a template text sitting in the import's container zone is held to the
+  // merchant's real boundary, exactly like a text the customer adds — see
+  // governingZoneIndex in shared/js/zoneSelection.js. A layer the merchant
+  // locked is not the customer's to move and stays with its own zone.
   const zoneOf = useCallback((obj) => {
-    const zi = obj?.data?.zoneIndex;
+    const held = obj?.data?.zoneIndex;
+    const zi = obj?.data?.templateLocked === true
+      ? held
+      : governingZoneIndex(zones, held, obj?.data?.elementType);
     if (zi == null || zi < 0 || !zones[zi] || zones[zi].behavior !== 'restrict') return null;
     return zones[zi];
   }, [zones]);
@@ -252,7 +261,7 @@ export default function DesignerCanvas() {
   // No zone (or a zone that only clips) falls back to the canvas, so nothing
   // the customer adds can be dragged off the design.
   const clampToZone = useCallback((obj) => {
-    clampObjectDuringMove(obj, zoneOf(obj), { canvas: canvasRect });
+    clampObjectDuringMove(obj, zoneOf(obj), { canvas: canvasRect, canvasBackstop: true });
   }, [zoneOf, canvasRect]);
 
   // End-of-gesture enforcement: hold the object inside the real svg outline,
@@ -260,7 +269,7 @@ export default function DesignerCanvas() {
   // customer put it, still selectable and still movable. Zoneless objects get
   // the canvas fallback here too, and never an outline.
   const settleIntoZone = useCallback((obj) => {
-    settleObjectInZone(obj, zoneOf(obj), { canvas: canvasRect });
+    settleObjectInZone(obj, zoneOf(obj), { canvas: canvasRect, canvasBackstop: true });
   }, [zoneOf, canvasRect]);
 
   const clampScaleToZone = useCallback((obj) => {
@@ -432,12 +441,8 @@ export default function DesignerCanvas() {
             const filtered = objects.filter(Boolean);
             if (filtered.length === 0) return;
             const group = util.groupSVGElements(filtered, options);
+            placeZoneBoundary(group, zone);
             group.set({
-              left:        zone.x,
-              top:         zone.y,
-              scaleX:      zone.svg_scale || 1,
-              scaleY:      zone.svg_scale || 1,
-              angle:       zone.svg_rotation || 0,
               selectable:  false,
               evented:     false,
               data:        { zoneIndex: index, isZoneOverlay: true, svgFillEditable: !!zone.svg_fill_editable },
@@ -618,7 +623,7 @@ export default function DesignerCanvas() {
             // settle: this is what the merchant positioned, and load time is
             // not a customer gesture. Moving their layout on render would be a
             // surprise; the outline is enforced the moment the customer drags.
-            if (zone.behavior === 'restrict') clampToZone(text);
+            if (zone.behavior === 'restrict' && governingZoneIndex(zones, zoneIdx, 'text') === zoneIdx) clampToZone(text);
           }
           // Template text renders before its custom font may have finished
           // loading (real-world timing, not covered by the global
@@ -664,7 +669,7 @@ export default function DesignerCanvas() {
               canvas.add(group);
               if (!locked) {
                 applyPermissions(group, 'svg');
-                if (zone.behavior === 'restrict') clampToZone(group);
+                if (zone.behavior === 'restrict' && governingZoneIndex(zones, zoneIdx, 'svg') === zoneIdx) clampToZone(group);
               }
               group.setCoords();
               // Template art loads async and lands ON TOP of the synchronously
@@ -726,7 +731,7 @@ export default function DesignerCanvas() {
                 canvas.sendObjectToBack(img);
               } else if (!locked) {
                 applyPermissions(img, 'image');
-                if (zone.behavior === 'restrict') clampToZone(img);
+                if (zone.behavior === 'restrict' && governingZoneIndex(zones, zoneIdx, 'image') === zoneIdx) clampToZone(img);
               }
               img.setCoords();
               canvas.renderAll();

@@ -92,7 +92,10 @@ export default function TreePanel() {
         break;
       case 'toggle-lock':
         if (layerIndex != null) {
-          updateLayer(currentViewIndex, zoneIndex, layerIndex, { locked: !node.locked });
+          // Toggle the EFFECTIVE customer-lock, not the raw padlock: an svg/image
+          // with no padlock set reads as locked-by-default, so one click must
+          // open it (write locked:false) rather than first writing locked:true.
+          updateLayer(currentViewIndex, zoneIndex, layerIndex, { locked: !isLayerLockedForCustomer(node) });
         } else {
           updateZone(currentViewIndex, zoneIndex, { locked: !node.locked });
         }
@@ -138,11 +141,10 @@ export default function TreePanel() {
         const toIdx = tLayers.findIndex((l) => l._key === over.id);
         if (toIdx < 0) continue;
 
-        // Check allowed_types compatibility.
-        const layer = layers[fromIdx];
-        const targetZone = zones[tzi];
-        if (!(targetZone.allowed_types || []).includes(layer.type)) return;
-
+        // allowed_types is a CUSTOMER permission (what shoppers may add to the
+        // zone), not an admin constraint. The merchant may move a template
+        // layer into any zone — including a holding/boundary zone whose
+        // allowed_types is empty — so there is no type gate here.
         moveLayer(currentViewIndex, zi, fromIdx, tzi, toIdx);
         return;
       }
@@ -285,7 +287,13 @@ function AddLayerPanel({ zone, onAdd, onCancel }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingItems, setLoadingItems] = useState(false);
-  const allowedTypes = zone.allowed_types || ['text', 'image', 'svg'];
+  // The Add-Layer panel is an admin tool: the merchant may add any kind of
+  // template layer to any zone, so every source is offered regardless of the
+  // zone's allowed_types (which only governs what CUSTOMERS may add). Without
+  // this, a holding/boundary zone with allowed_types [] offered no way to add
+  // artwork, forcing merchants to tick a type — which then made the zone claim
+  // the customer's elements and broke the real boundary.
+  const allowedTypes = ['text', 'image', 'svg'];
 
   const addFromUrl = (src, name, type = 'svg') => {
     // Load image to get dimensions, then scale to fit boundary

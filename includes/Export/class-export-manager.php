@@ -76,7 +76,10 @@ class ExportManager {
         // has been generated successfully.
         $stale = [];
         foreach ($this->exports->get_by_design($design_id) as $old) {
-            if ($old['format'] === $format) {
+            // The two SVG variants are separate files and separate downloads:
+            // a new "SVG + fonts" must not retire the outlined SVG, or back.
+            if ($old['format'] === $format
+                && ($format !== 'svg' || ExportNaming::variant_of((string) ($old['file_path'] ?? '')) === $variant)) {
                 $stale[] = $old;
             }
         }
@@ -119,15 +122,24 @@ class ExportManager {
             return ['error' => 'Design has no export SVG data. Please re-save the design to generate export data.'];
         }
 
-        $export_dir = $this->get_export_dir($format);
-        $file_name  = $design_hash . '-' . $design_id;
+        // "<order>_<side>_<product>" per view, in a folder of its own per
+        // design (two designs in one order must not overwrite each other).
+        $export_dir = $this->get_export_dir($format, $design_hash);
+        $ref        = ExportNaming::order_ref($order_id, $design_hash);
+        $product    = $this->product_name((int) ($design['product_id'] ?? 0), (string) ($template['title'] ?? ''));
+        $labels     = [];
+        foreach ($views as $i => $view) {
+            $labels[$i] = $this->side_label($view, $template, (int) $i);
+        }
+        $stems = array_combine(array_keys($labels), ExportNaming::view_stems($ref, array_values($labels), $product, $format, $variant));
+        $pdf_stem = ExportNaming::pdf_stem($ref, $product);
 
         try {
             $file_path = match ($format) {
-                'pdf' => (new PremiumExports($this))->export_pdf($views, $template, $export_dir, $file_name),
-                'png' => $this->export_png($views, $template, $export_dir, $file_name),
-                'svg' => (new PremiumExports($this))->export_svg($views, $template, $export_dir, $file_name, $variant),
-                'lbrn' => (new PremiumExports($this))->export_lbrn($views, $export_dir, $file_name),
+                'pdf' => (new PremiumExports($this))->export_pdf($views, $template, $export_dir, $pdf_stem),
+                'png' => $this->export_png($views, $template, $export_dir, $stems),
+                'svg' => (new PremiumExports($this))->export_svg($views, $template, $export_dir, $stems, $variant),
+                'lbrn' => (new PremiumExports($this))->export_lbrn($views, $template, $export_dir, $stems),
                 default => throw new \InvalidArgumentException(esc_html(sprintf('Unsupported format: %s', $format))),
             };
 
@@ -228,7 +240,7 @@ class ExportManager {
      * Export views as PNG files. Supports both PNG data URLs (direct save)
      * and SVG data (convert via rsvg/Imagick).
      */
-    private function export_png(array $views, array $template, string $dir, string $file_name): string {
+    private function export_png(array $views, array $template, string $dir, array $stems): string {
         $paths = [];
         foreach ($views as $i => $view) {
             $raw = $view['export_svg'] ?? '';
@@ -241,12 +253,20 @@ class ExportManager {
                 continue;
             }
 
-            $suffix    = count($views) > 1 ? '-view-' . ($i + 1) : '';
-            $file_path = $dir . $file_name . $suffix . '.png';
+            $file_path = $dir . $stems[$i] . '.png';
 
             if ($export['type'] === 'png') {
-                // Browser-rendered PNG: save directly
-                if (file_put_contents($file_path, $export['data']) === false) {
+                // Browser-rendered PNG (3x): add the template's reference
+                // outline, scaled from canvas px to the PNG's own pixels.
+                $data = $export['data'];
+                $outline = ReferenceOutline::for_view($view, $template);
+                if ($outline) {
+                    $size  = @getimagesizefromstring($data);
+                    $dims  = $this->get_view_dimensions($view, $template);
+                    $scale = ($size && $dims['width'] > 0) ? $size[0] / $dims['width'] : 3.0;
+                    $data  = ReferenceOutline::draw_png($data, $outline, $scale);
+                }
+                if (file_put_contents($file_path, $data) === false) {
                     throw new \RuntimeException(esc_html(sprintf('PNG export failed for view %d', $i + 1)));
                 }
             } else {
@@ -372,7 +392,9 @@ class ExportManager {
                 return [
                     'width'    => (int) ($tv['canvas_width'] ?? 800),
                     'height'   => (int) ($tv['canvas_height'] ?? 600),
-                    'width_mm' => (float) ($tv['width_mm'] ?? 0),
+                    // A view without its own width uses its sibling's, exactly
+                    // as the designer and the browser-side LightBurn writer do.
+                    'width_mm' => ExportNaming::resolve_width_mm($template_views, $view_id),
                 ];
             }
         }
@@ -385,11 +407,21 @@ class ExportManager {
         ];
     }
 
-    private function get_export_dir(string $format): string {
+    private function get_export_dir(string $format, string $design_hash = ''): string {
         $upload_dir = wp_upload_dir();
         $dir = $upload_dir['basedir'] . '/pf-exports/' . $format . '/';
         wp_mkdir_p($dir);
+        $this->protect_dir($dir);
+        if ($design_hash !== '' && preg_match('/^[a-f0-9]{32}$/', $design_hash)) {
+            $dir .= $design_hash . '/';
+            wp_mkdir_p($dir);
+            $this->protect_dir($dir);
+        }
+        return $dir;
+    }
 
+    /** index.php + .htaccess in an export folder: never listable, never served directly. */
+    private function protect_dir(string $dir): void {
         // Add index.php and .htaccess for security
         $index = $dir . 'index.php';
         if (!file_exists($index)) {
@@ -399,7 +431,44 @@ class ExportManager {
         if (!file_exists($htaccess)) {
             file_put_contents($htaccess, "Options -Indexes\nDeny from all");
         }
+    }
 
-        return $dir;
+    /** The product's name for file names (the parent of a variation), else the template's title. */
+    private function product_name(int $product_id, string $fallback): string {
+        if ($product_id > 0 && function_exists('wc_get_product')) {
+            $product = wc_get_product($product_id);
+            if ($product && $product->get_parent_id()) {
+                $product = wc_get_product($product->get_parent_id());
+            }
+            if ($product) {
+                return (string) $product->get_name();
+            }
+        }
+        return $fallback;
+    }
+
+    /**
+     * A view's side as the shop shows it: the merchant's own name, with the
+     * plugin's stock names translated (the same list as the designer's
+     * utils/viewLabel.js), so a Dutch shop gets "voorkant", not "front".
+     */
+    private function side_label(array $design_view, array $template, int $index): string {
+        $name = '';
+        foreach ($template['views'] ?? [] as $tv) {
+            if ((int) ($tv['id'] ?? 0) === (int) ($design_view['view_id'] ?? 0)) {
+                $name = trim((string) ($tv['name'] ?? ''));
+                break;
+            }
+        }
+        $stock = [
+            'front'  => _x('Front', 'product side', 'snelgraveren-product-designer'),
+            'back'   => _x('Back', 'product side', 'snelgraveren-product-designer'),
+            'left'   => _x('Left', 'product side', 'snelgraveren-product-designer'),
+            'right'  => _x('Right', 'product side', 'snelgraveren-product-designer'),
+            'top'    => _x('Top', 'product side', 'snelgraveren-product-designer'),
+            'bottom' => _x('Bottom', 'product side', 'snelgraveren-product-designer'),
+            'inside' => _x('Inside', 'product side', 'snelgraveren-product-designer'),
+        ];
+        return $stock[strtolower($name)] ?? ($name !== '' ? $name : 'view-' . ($index + 1));
     }
 }

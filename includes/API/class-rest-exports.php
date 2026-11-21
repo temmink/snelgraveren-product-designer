@@ -142,7 +142,7 @@ class RestExports {
         }
         $zip->close();
 
-        $zip_name = preg_replace('/[^a-zA-Z0-9._-]/', '_', basename($paths[0], '.' . pathinfo($paths[0], PATHINFO_EXTENSION))) . '-all-views.zip';
+        $zip_name = \Snelgraveren\ProductDesigner\Export\ExportNaming::zip_name($paths[0]);
 
         header('Content-Type: application/zip');
         header('Content-Disposition: attachment; filename="' . $zip_name . '"');

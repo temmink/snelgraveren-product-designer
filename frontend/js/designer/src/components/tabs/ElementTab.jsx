@@ -3,6 +3,7 @@ import { __ } from '@wordpress/i18n';
 import { cache as fabricCache } from 'fabric';
 import useDesignerStore from '../../store/useDesignerStore';
 import { alignElement } from '../../../../../../shared/js/alignElement';
+import { governingZoneIndex } from '../../../../../../shared/js/zoneSelection';
 import ImageFilters from '../ImageFilters';
 import CurvedTextProperties from '../CurvedTextProperties';
 import { renderHersheyText, ENGRAVING_FONTS } from '../../utils/hersheyFonts';
@@ -457,7 +458,11 @@ function AlignmentButtons({ fabricObj, template, currentViewIndex, snapshotView 
     if (!obj) return;
     const canvas = obj.canvas;
     const view = template?.views?.[currentViewIndex];
-    const zi = obj.data?.zoneIndex;
+    // Align inside the zone that governs the element, not the container that
+    // merely holds it (shared/js/zoneSelection.js#governingZoneIndex).
+    const zi = obj.data?.templateLocked === true
+      ? obj.data?.zoneIndex
+      : governingZoneIndex(view?.zones_config || [], obj.data?.zoneIndex, obj.data?.elementType);
 
     // Use the Fabric zone object's bounding rect for SVG boundaries.
     let bounds;

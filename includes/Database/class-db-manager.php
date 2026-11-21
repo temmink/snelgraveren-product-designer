@@ -23,6 +23,7 @@ class DbManager {
             1200 => Migration1200::class,
             1300 => Migration1300::class,
             1400 => Migration1400::class,
+            1500 => Migration1500::class,
         ];
 
         foreach ($migrations as $version => $class) {
@@ -41,5 +42,6 @@ class DbManager {
      */
     public static function repair_schema(): void {
         (new Migration1400())->up();
+        (new Migration1500())->up();
     }
 }

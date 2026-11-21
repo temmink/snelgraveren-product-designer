@@ -3,7 +3,7 @@
  * Plugin Name: Snelgraveren Product Designer for WooCommerce
  * Plugin URI:  https://github.com/temmink/snelgraveren-product-designer
  * Description: Let customers personalise products with text, images, and SVGs using a drag-and-drop editor.
- * Version:     1.12.9
+ * Version:     1.13.1
  * Author:      Martin Temmink
  * License:     GPL-2.0-or-later
  * Text Domain: snelgraveren-product-designer
@@ -13,14 +13,14 @@
  * WC requires at least: 8.0
  * WC tested up to:      9.9
  *
- * @fs_premium_only /includes/Export/class-premium-exports.php, /includes/Pricing/, /includes/API/class-rest-pricing.php, /includes/API/class-rest-palettes.php, /includes/API/class-rest-fonts-admin.php, /includes/API/class-rest-clipart-admin.php, /vendor/tecnickcom/, /includes/Proof/, /includes/Emails/, /templates/proof/, /templates/emails/proof-ready.php, /templates/emails/proof-changes-requested.php, /templates/emails/proof-approved.php
+ * @fs_premium_only /includes/Export/class-premium-exports.php, /includes/Pricing/, /includes/API/class-rest-pricing.php, /includes/API/class-rest-palettes.php, /includes/API/class-rest-fonts-admin.php, /includes/API/class-rest-clipart-admin.php, /vendor/tecnickcom/, /includes/Proof/, /includes/Emails/, /templates/proof/, /templates/emails/proof-ready.php, /templates/emails/proof-changes-requested.php, /templates/emails/proof-approved.php, /dist/frontend-designer-pro.js
  */
 
 namespace Snelgraveren\ProductDesigner;
 
 defined('ABSPATH') || exit;
 
-define('SGPD_VERSION',    '1.12.9');
+define('SGPD_VERSION',    '1.13.1');
 define('SGPD_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SGPD_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('SGPD_PLUGIN_FILE', __FILE__);

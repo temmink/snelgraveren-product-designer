@@ -110,6 +110,25 @@ const configs = {
       },
     },
   },
+  // Pro production exports (pro/js/designer-export). Not in the free build or
+  // the public source — see that folder's index.js. 'fabric' is external and
+  // resolves to the designer's own Fabric (window.sgpdFabric), so exports are
+  // rendered by the same classes and patches as the customer's canvas.
+  'frontend-pro': {
+    build: {
+      outDir: 'dist',
+      emptyOutDir: false,
+      rollupOptions: {
+        external: ['fabric'],
+        input: { 'frontend-designer-pro': 'pro/js/designer-export/src/index.js' },
+        output: {
+          format: 'iife',
+          entryFileNames: '[name].js',
+          globals: { fabric: 'sgpdFabric' },
+        },
+      },
+    },
+  },
 };
 
 export default defineConfig(configs[entry] || configs.admin);

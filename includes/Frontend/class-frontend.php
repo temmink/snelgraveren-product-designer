@@ -532,80 +532,10 @@ class Frontend {
         $dist_path = SGPD_PLUGIN_DIR . 'dist/';
         $dist_url  = SGPD_PLUGIN_URL . 'dist/';
 
-        $upload_dir = wp_upload_dir();
-        $cache_path = trailingslashit($upload_dir['basedir']) . 'pf-cache/';
-        $cache_url  = trailingslashit($upload_dir['baseurl']) . 'pf-cache/';
-
         // Enqueue JS
         $js_file = 'frontend-designer.js';
         if (file_exists($dist_path . $js_file)) {
-            // Hashing the full bundle on every pageview is wasteful — cache
-            // the hash keyed on the file's mtime, recompute only after a build.
-            $js_mtime   = (int) filemtime($dist_path . $js_file);
-            $hash_cache = get_option('sgpd_frontend_js_hash');
-            if (is_array($hash_cache) && ($hash_cache['mtime'] ?? 0) === $js_mtime && !empty($hash_cache['hash'])) {
-                $js_version = $hash_cache['hash'];
-            } else {
-                $js_version = substr(md5_file($dist_path . $js_file), 0, 8);
-                update_option('sgpd_frontend_js_hash', ['mtime' => $js_mtime, 'hash' => $js_version], true);
-            }
-
-            // Safari caches JS with max-age=31557600 (1 year) keyed on the
-            // URL. LiteSpeed's Delay JS feature strips the ?ver= query
-            // parameter we pass to wp_enqueue_script, so without a different
-            // URL, Safari keeps serving the old bundle after every deploy.
-            // Copy the source to a hash-named file in uploads/pf-cache/ so the
-            // URL itself changes per build. wp.org disallows writing inside
-            // the plugin directory, so this never touches dist/. If uploads
-            // isn't writable we fall back to the un-hashed dist/ URL (same
-            // fallback behavior as before).
-            $hashed_file = 'frontend-designer.' . $js_version . '.js';
-            wp_mkdir_p($cache_path);
-            $hashed_path = $cache_path . $hashed_file;
-            if (!file_exists($hashed_path) && wp_is_writable($cache_path)) {
-                // Keep the NEWEST existing hashed copy (the previous build's):
-                // LiteSpeed page-cached HTML keeps referencing that URL until
-                // the cache expires or is flushed — deleting it immediately
-                // would 404 the bundle on every cached page. Older copies and
-                // orphaned temp files are removed.
-                $existing = [];
-                foreach (glob($cache_path . 'frontend-designer.*.js') ?: [] as $candidate) {
-                    if (strpos(basename($candidate), 'frontend-designer.tmp-') === 0) {
-                        // Temp file from a crashed/concurrent request.
-                        if (time() - (int) filemtime($candidate) > DAY_IN_SECONDS) {
-                            wp_delete_file($candidate);
-                        }
-                        continue;
-                    }
-                    $existing[] = $candidate;
-                }
-                usort($existing, static function ($a, $b) {
-                    return (int) filemtime($b) <=> (int) filemtime($a);
-                });
-                foreach (array_slice($existing, 1) as $old) {
-                    wp_delete_file($old);
-                }
-
-                // Write via temp file + atomic move: a concurrent request can
-                // never serve (and Safari never caches, with its 1-year
-                // max-age) a half-written bundle. The temp name never matches
-                // $hashed_file, so it is never enqueued.
-                global $wp_filesystem;
-                if (empty($wp_filesystem)) {
-                    require_once ABSPATH . 'wp-admin/includes/file.php';
-                    WP_Filesystem();
-                }
-                if ($wp_filesystem) {
-                    $tmp_path = $cache_path . 'frontend-designer.tmp-' . wp_generate_password(8, false) . '.js';
-                    if ($wp_filesystem->copy($dist_path . $js_file, $tmp_path, true)
-                        && !$wp_filesystem->move($tmp_path, $hashed_path, true)) {
-                        wp_delete_file($tmp_path);
-                    }
-                }
-            }
-
-            $enqueue_from_cache = file_exists($hashed_path);
-            $enqueue_url        = $enqueue_from_cache ? ($cache_url . $hashed_file) : ($dist_url . $js_file);
+            [$enqueue_url, $js_version] = $this->hashed_bundle($js_file, 'sgpd_frontend_js_hash');
 
             wp_enqueue_script(
                 'sgpd-frontend-designer',
@@ -660,6 +590,115 @@ class Frontend {
     private bool $designer_rendered = false;
 
     /**
+     * URL of a dist/ bundle, served from a hash-named copy in uploads/pf-cache/.
+     *
+     * Safari caches JS with max-age=31557600 (1 year) keyed on the URL, and
+     * LiteSpeed's Delay JS strips ?ver=, so the URL itself must change per
+     * build. wp.org disallows writing inside the plugin directory, so the copy
+     * goes to uploads/. Falls back to the plain dist/ URL when uploads is not
+     * writable. Used for the designer bundle and the Pro export bundle.
+     *
+     * @param string $js_file     File name inside dist/, e.g. 'frontend-designer.js'.
+     * @param string $hash_option Option caching the hash keyed on the file's mtime.
+     * @return array{0:string,1:string} [url, version hash]
+     */
+    private function hashed_bundle(string $js_file, string $hash_option): array {
+        $dist_path = SGPD_PLUGIN_DIR . 'dist/';
+        $dist_url  = SGPD_PLUGIN_URL . 'dist/';
+        $upload_dir = wp_upload_dir();
+        $cache_path = trailingslashit($upload_dir['basedir']) . 'pf-cache/';
+        $cache_url  = trailingslashit($upload_dir['baseurl']) . 'pf-cache/';
+        $base       = basename($js_file, '.js');
+
+        // Hashing the full bundle on every pageview is wasteful — cache
+        // the hash keyed on the file's mtime, recompute only after a build.
+        $js_mtime   = (int) filemtime($dist_path . $js_file);
+        $hash_cache = get_option($hash_option);
+        if (is_array($hash_cache) && ($hash_cache['mtime'] ?? 0) === $js_mtime && !empty($hash_cache['hash'])) {
+            $js_version = $hash_cache['hash'];
+        } else {
+            $js_version = substr(md5_file($dist_path . $js_file), 0, 8);
+            update_option($hash_option, ['mtime' => $js_mtime, 'hash' => $js_version], true);
+        }
+
+        // Safari caches JS with max-age=31557600 (1 year) keyed on the
+        // URL. LiteSpeed's Delay JS feature strips the ?ver= query
+        // parameter we pass to wp_enqueue_script, so without a different
+        // URL, Safari keeps serving the old bundle after every deploy.
+        // Copy the source to a hash-named file in uploads/pf-cache/ so the
+        // URL itself changes per build. wp.org disallows writing inside
+        // the plugin directory, so this never touches dist/. If uploads
+        // isn't writable we fall back to the un-hashed dist/ URL (same
+        // fallback behavior as before).
+        $hashed_file = $base . '.' . $js_version . '.js';
+        wp_mkdir_p($cache_path);
+        $hashed_path = $cache_path . $hashed_file;
+        if (!file_exists($hashed_path) && wp_is_writable($cache_path)) {
+            // Keep the NEWEST existing hashed copy (the previous build's):
+            // LiteSpeed page-cached HTML keeps referencing that URL until
+            // the cache expires or is flushed — deleting it immediately
+            // would 404 the bundle on every cached page. Older copies and
+            // orphaned temp files are removed.
+            $existing = [];
+            foreach (glob($cache_path . $base . '.*.js') ?: [] as $candidate) {
+                if (strpos(basename($candidate), $base . '.tmp-') === 0) {
+                    // Temp file from a crashed/concurrent request.
+                    if (time() - (int) filemtime($candidate) > DAY_IN_SECONDS) {
+                        wp_delete_file($candidate);
+                    }
+                    continue;
+                }
+                $existing[] = $candidate;
+            }
+            usort($existing, static function ($a, $b) {
+                return (int) filemtime($b) <=> (int) filemtime($a);
+            });
+            foreach (array_slice($existing, 1) as $old) {
+                wp_delete_file($old);
+            }
+
+            // Write via temp file + atomic move: a concurrent request can
+            // never serve (and Safari never caches, with its 1-year
+            // max-age) a half-written bundle. The temp name never matches
+            // $hashed_file, so it is never enqueued.
+            global $wp_filesystem;
+            if (empty($wp_filesystem)) {
+                require_once ABSPATH . 'wp-admin/includes/file.php';
+                WP_Filesystem();
+            }
+            if ($wp_filesystem) {
+                $tmp_path = $cache_path . $base . '.tmp-' . wp_generate_password(8, false) . '.js';
+                if ($wp_filesystem->copy($dist_path . $js_file, $tmp_path, true)
+                    && !$wp_filesystem->move($tmp_path, $hashed_path, true)) {
+                    wp_delete_file($tmp_path);
+                }
+            }
+        }
+
+        $enqueue_from_cache = file_exists($hashed_path);
+        $enqueue_url        = $enqueue_from_cache ? ($cache_url . $hashed_file) : ($dist_url . $js_file);
+
+        return [$enqueue_url, $js_version];
+    }
+
+    /**
+     * URL of the Pro production-export bundle (vector SVG + LightBurn), or ''.
+     *
+     * Only on a licensed Pro site and only when the bundle exists: the free
+     * build does not contain dist/frontend-designer-pro.js at all
+     * (bin/free-build.sh). The designer loads it itself (utils/proExport.js).
+     */
+    private function pro_export_url(): string {
+        if (!\Snelgraveren\ProductDesigner\Plugin::is_premium()) {
+            return '';
+        }
+        if (!file_exists(SGPD_PLUGIN_DIR . 'dist/frontend-designer-pro.js')) {
+            return '';
+        }
+        return $this->hashed_bundle('frontend-designer-pro.js', 'sgpd_frontend_pro_js_hash')[0];
+    }
+
+    /**
      * Designer config emitted as data-config JSON attribute on
      * #pf-designer-root. It lives on the HTML element itself so LiteSpeed's
      * JS optimizations can never break the ordering. Built in
@@ -683,6 +722,8 @@ class Frontend {
                 ? get_woocommerce_currency_symbol()
                 : '€',
             'isPremium'       => \Snelgraveren\ProductDesigner\Plugin::is_premium(),
+            // Pro vector exports, loaded on demand by the designer; '' on free.
+            'pro_export_url'  => $this->pro_export_url(),
             /**
              * Whether the designer pins a "Customize Product" button to the
              * bottom of the screen while the designer (or its open button) is

@@ -465,6 +465,9 @@ export default function ZoneForm({ initialData = {}, onSubmit, onCancel, onChang
 
       <fieldset className="pf-zone-form__fieldset">
         <legend>{ __( 'Allowed element types', 'snelgraveren-product-designer' ) }</legend>
+        <p style={{ fontSize: 11, opacity: 0.7, margin: '0 0 6px' }}>
+          { __( 'What CUSTOMERS may add here. Leave empty for a holding or boundary zone that only carries your own template artwork — ticking a type makes this zone claim the customer’s elements of that type, which can override your real engraving boundary. You can place your own template layers in any zone regardless of this setting.', 'snelgraveren-product-designer' ) }
+        </p>
         {['text', 'image', 'svg'].map((t) => (
           <label key={t} className="pf-zone-form__checkbox-label">
             <input

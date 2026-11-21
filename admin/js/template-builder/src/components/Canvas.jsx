@@ -4,6 +4,7 @@ import { Canvas as FabricCanvas, Rect, FabricImage, IText, FabricText, loadSVGFr
 import useTemplateStore from '../store/useTemplateStore';
 import { parseSvgToFabric } from '../utils/svgPathUtils';
 import { alignElement } from '../../../../../shared/js/alignElement';
+import { placeZoneBoundary } from '../../../../../shared/js/zoneOutline';
 import { clampObjectDuringMove, settleObjectInZone } from '../../../../../shared/js/zoneClamp';
 import { mergeLayersToBoundary } from '../utils/mergeLayersToBoundary';
 import MmRuler from '../../../../../shared/js/MmRuler.jsx';
@@ -492,12 +493,8 @@ export default function Canvas() {
             ...style,
             stroke: null,
             strokeWidth: 0,
-            left:   zone.x,
-            top:    zone.y,
-            scaleX: zone.svg_scale || 1,
-            scaleY: zone.svg_scale || 1,
-            angle:  zone.svg_rotation || 0,
           });
+          placeZoneBoundary(existing, zone);
           existing.data = { ...existing.data, zoneIndex: index };
           existing.setCoords();
         } else {
@@ -516,13 +513,9 @@ export default function Canvas() {
                 ...zoneStyleFor(zone),
                 stroke: null,
                 strokeWidth: 0,
-                left:   zone.x,
-                top:    zone.y,
-                scaleX: zone.svg_scale || 1,
-                scaleY: zone.svg_scale || 1,
-                angle:  zone.svg_rotation || 0,
                 data:   { zoneIndex: index, zoneKey: key, isZone: true },
               });
+              placeZoneBoundary(group, zone);
               canvas.add(group);
               group.setCoords();
               sendZonesToBack();

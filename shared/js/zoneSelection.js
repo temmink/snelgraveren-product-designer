@@ -92,3 +92,71 @@ export function zoneAtPointForCustomerType(zones, x, y, elementType) {
   }
   return -1;
 }
+
+/**
+ * The zone type ('text' | 'image' | 'svg') a customer-side element counts as,
+ * from its `data.elementType`. Curved and engraving text are text to a zone.
+ *
+ * @param {string} elementType
+ * @returns {string|null} null for anything a zone does not list (a drawing)
+ */
+export function zoneTypeOfElement(elementType) {
+  if (elementType === 'image' || elementType === 'svg') return elementType;
+  if (elementType === 'text' || elementType === 'curved-text' || elementType === 'engraving-text') return 'text';
+  return null;
+}
+
+/**
+ * Which zone GOVERNS an element the customer can move — as opposed to which
+ * zone merely HOLDS it in the template.
+ *
+ * WHY THESE ARE TWO DIFFERENT THINGS
+ *
+ * A template layer is stored inside a zone, and the designer used to treat
+ * that zone as the one that constrains it. For a LightBurn import that is the
+ * wrong zone: every imported layer — the editable texts included — lands in
+ * the canvas-sized `Imported` container (admin/.../utils/importedZone.js),
+ * and the merchant then draws the real engraving boundary as a SECOND zone,
+ * which holds no layers at all. Measured on the slate template (28):
+ *
+ *   #0  Imported             restrict  rect  0,0 600x600   []               3 texts
+ *   #1  VeiligGraveerGebied  restrict  svg   62,60 480x480 text,image,svg   —
+ *
+ * The example text "Naam 1 - Naam 2" could be dragged to (0,0), outside the
+ * engraving boundary, because zone 0 — the whole canvas — was its zone. A text
+ * the customer ADDED on the same template went to zone 1 and was held inside.
+ * Same product, same kind of element, two different boundaries.
+ *
+ * THE RULE
+ *
+ * A zone that does not offer itself to the customer for this type
+ * (`zoneAcceptsCustomerType`) is a container, not a boundary: it says nothing
+ * about where the customer may put the element. Such an element is governed
+ * by the zone a NEW element of that type would get — the first one that does
+ * accept it. When the holding zone accepts the type itself it keeps governing
+ * (a template with two real design areas must not have its layers pulled from
+ * one into the other), and when no zone accepts the type nothing changes.
+ *
+ * Resolved when the zone is ASKED FOR, never written back: the stored
+ * template, the object's `data.zoneIndex` and saved designs stay as they are,
+ * so a template the merchant reorders or re-ticks is picked up at once and
+ * designs saved before this rule existed are covered too.
+ *
+ * Only for elements the customer can move. Locked template art stays with the
+ * zone that holds it.
+ *
+ * @param {object[]} zones
+ * @param {number|null|undefined} zoneIndex the zone holding the element
+ * @param {string} elementType `data.elementType` of the element
+ * @returns {number|null|undefined} the governing zone index; `zoneIndex`
+ *   itself when nothing better applies
+ */
+export function governingZoneIndex(zones, zoneIndex, elementType) {
+  const list = zones || [];
+  const type = zoneTypeOfElement(elementType);
+  if (!type) return zoneIndex;
+  const holding = zoneIndex != null && zoneIndex >= 0 ? list[zoneIndex] : null;
+  if (holding && zoneAcceptsCustomerType(holding, type)) return zoneIndex;
+  const first = firstZoneForCustomerType(list, type);
+  return first >= 0 ? first : zoneIndex;
+}

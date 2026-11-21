@@ -309,6 +309,17 @@ class RestTemplates {
                 }
             }
 
+            // Reference outline for the production exports: plain path data
+            // only, because it is written into SVG markup at export time.
+            if (is_array($zone) && array_key_exists('export_outline', $zone)) {
+                $outline = \Snelgraveren\ProductDesigner\Export\ReferenceOutline::sanitize_outline($zone['export_outline']);
+                if ($outline === null) {
+                    unset($zone['export_outline']);
+                } else {
+                    $zone['export_outline'] = $outline;
+                }
+            }
+
             if (empty($zone['layers']) || !is_array($zone['layers'])) {
                 continue;
             }

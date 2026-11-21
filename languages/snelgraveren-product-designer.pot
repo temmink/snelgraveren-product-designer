@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Snelgraveren Product Designer for WooCommerce 1.12.8\n"
+"Project-Id-Version: Snelgraveren Product Designer for WooCommerce 1.13.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/snelgraveren-product-designer\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-17T00:50:02+00:00\n"
+"POT-Creation-Date: 2026-11-21T13:56:11+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: snelgraveren-product-designer\n"
@@ -38,7 +38,7 @@ msgstr ""
 #: includes/Admin/class-admin.php:48
 #: includes/Admin/class-product-integration.php:18
 #: blocks/designer/editor.js:31
-#: frontend/js/designer/src/App.jsx:794
+#: frontend/js/designer/src/App.jsx:800
 msgid "Product Designer"
 msgstr ""
 
@@ -70,7 +70,7 @@ msgstr ""
 #: includes/Admin/class-admin.php:86
 #: includes/Admin/views/clipart.php:3
 #: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:281
-#: admin/js/template-builder/src/components/TreePanel.jsx:473
+#: admin/js/template-builder/src/components/TreePanel.jsx:481
 msgid "Clipart"
 msgstr ""
 
@@ -251,7 +251,7 @@ msgstr ""
 #: includes/Admin/class-designs-page.php:587
 #: includes/Admin/class-template-list-table.php:195
 #: includes/Admin/class-template-list-table.php:226
-#: admin/js/template-builder/src/App.jsx:236
+#: admin/js/template-builder/src/App.jsx:249
 msgid "Draft"
 msgstr ""
 
@@ -266,7 +266,7 @@ msgstr ""
 #: includes/Admin/class-designs-page.php:590
 #: includes/Admin/class-template-list-table.php:197
 #: includes/Admin/class-template-list-table.php:228
-#: admin/js/template-builder/src/App.jsx:238
+#: admin/js/template-builder/src/App.jsx:251
 msgid "Archived"
 msgstr ""
 
@@ -288,7 +288,7 @@ msgid "Filter"
 msgstr ""
 
 #: includes/Admin/class-designs-page.php:635
-#: admin/js/template-builder/src/components/TreePanel.jsx:698
+#: admin/js/template-builder/src/components/TreePanel.jsx:706
 msgid "Preview"
 msgstr ""
 
@@ -471,7 +471,7 @@ msgstr ""
 
 #: includes/Admin/class-settings-page.php:35
 #: includes/Admin/class-settings-page.php:36
-#: admin/js/template-builder/src/App.jsx:20
+#: admin/js/template-builder/src/App.jsx:22
 msgid "Settings"
 msgstr ""
 
@@ -858,7 +858,7 @@ msgstr ""
 
 #: includes/Admin/class-template-list-table.php:196
 #: includes/Admin/class-template-list-table.php:227
-#: admin/js/template-builder/src/App.jsx:237
+#: admin/js/template-builder/src/App.jsx:250
 msgid "Published"
 msgstr ""
 
@@ -1131,8 +1131,8 @@ msgstr ""
 msgid "Product Designer: the designer is switched on for this product, but its template is missing or not published, so customers do not see it. Only you see this message."
 msgstr ""
 
-#: includes/Frontend/class-frontend.php:802
-#: frontend/js/designer/src/App.jsx:770
+#: includes/Frontend/class-frontend.php:843
+#: frontend/js/designer/src/App.jsx:776
 #: frontend/js/designer/src/components/StartBar.jsx:37
 msgid "Customize Product"
 msgstr ""
@@ -1141,19 +1141,28 @@ msgstr ""
 msgid "This design contains raster images (photos) — check engraving suitability before production."
 msgstr ""
 
-#: includes/Frontend/class-order-integration.php:203
+#: includes/Frontend/class-order-integration.php:210
+msgid "The template has no reference outline yet, so the exports do not show the product shape. Open the template and save it once."
+msgstr ""
+
+#: includes/Frontend/class-order-integration.php:211
+msgid "Open template"
+msgstr ""
+
+#: includes/Frontend/class-order-integration.php:214
 msgid "Export Design:"
 msgstr ""
 
-#: includes/Frontend/class-order-integration.php:234
+#: includes/Frontend/class-order-integration.php:245
 msgid "SVG with fonts embedded (editable text)"
 msgstr ""
 
-#: includes/Frontend/class-order-integration.php:236
+#: includes/Frontend/class-order-integration.php:247
+#: includes/Frontend/class-order-integration.php:279
 msgid "SVG + fonts"
 msgstr ""
 
-#: includes/Frontend/class-order-integration.php:242
+#: includes/Frontend/class-order-integration.php:253
 msgid "Pro: PDF & SVG export"
 msgstr ""
 
@@ -1324,7 +1333,7 @@ msgstr ""
 #: admin/js/clipart/src/App.jsx:226
 #: admin/js/design-templates/src/App.jsx:94
 #: admin/js/fonts/src/App.jsx:133
-#: admin/js/template-builder/src/App.jsx:245
+#: admin/js/template-builder/src/App.jsx:258
 #: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:134
 #: admin/js/template-builder/src/components/settings/SettingsColors.jsx:104
 msgid "Save"
@@ -1337,7 +1346,7 @@ msgstr ""
 #: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:137
 #: admin/js/template-builder/src/components/settings/SettingsColors.jsx:107
 #: admin/js/template-builder/src/components/settings/SettingsFonts.jsx:150
-#: admin/js/template-builder/src/components/ZoneForm.jsx:523
+#: admin/js/template-builder/src/components/ZoneForm.jsx:526
 msgid "Cancel"
 msgstr ""
 
@@ -1353,17 +1362,17 @@ msgstr ""
 #: admin/js/fonts/src/App.jsx:284
 #: admin/js/template-builder/src/components/settings/SettingsAssets.jsx:154
 #: admin/js/template-builder/src/components/settings/SettingsColors.jsx:124
-#: admin/js/template-builder/src/components/TreeNode.jsx:225
-#: admin/js/template-builder/src/components/TreeNode.jsx:226
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:162
+#: admin/js/template-builder/src/components/TreeNode.jsx:256
+#: admin/js/template-builder/src/components/TreeNode.jsx:257
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:163
 msgid "Delete"
 msgstr ""
 
 #: admin/js/clipart/src/App.jsx:248
 #: admin/js/design-templates/src/App.jsx:202
 #: admin/js/fonts/src/App.jsx:378
-#: admin/js/template-builder/src/components/TreePanel.jsx:396
-#: admin/js/template-builder/src/components/TreePanel.jsx:419
+#: admin/js/template-builder/src/components/TreePanel.jsx:404
+#: admin/js/template-builder/src/components/TreePanel.jsx:427
 msgid "Loading..."
 msgstr ""
 
@@ -1414,7 +1423,7 @@ msgstr ""
 
 #: admin/js/design-templates/src/App.jsx:63
 #: admin/js/design-templates/src/App.jsx:209
-#: admin/js/template-builder/src/components/TreePanel.jsx:693
+#: admin/js/template-builder/src/components/TreePanel.jsx:701
 #: admin/js/template-builder/src/components/ZoneForm.jsx:218
 msgid "Name"
 msgstr ""
@@ -1543,177 +1552,177 @@ msgstr ""
 msgid "No font groups yet. Create one and tick the fonts that belong in it."
 msgstr ""
 
-#: admin/js/template-builder/src/App.jsx:17
+#: admin/js/template-builder/src/App.jsx:19
 msgid "Structure"
 msgstr ""
 
-#: admin/js/template-builder/src/App.jsx:18
+#: admin/js/template-builder/src/App.jsx:20
 #: admin/js/template-builder/src/components/settings/SettingsPermissions.jsx:7
 msgid "Permissions"
 msgstr ""
 
-#: admin/js/template-builder/src/App.jsx:19
+#: admin/js/template-builder/src/App.jsx:21
 #: admin/js/template-builder/src/components/settings/SettingsPricing.jsx:7
 msgid "Pricing"
 msgstr ""
 
-#: admin/js/template-builder/src/App.jsx:97
+#: admin/js/template-builder/src/App.jsx:99
 msgid "Front"
 msgstr ""
 
-#: admin/js/template-builder/src/App.jsx:148
+#: admin/js/template-builder/src/App.jsx:150
 msgid "Title is required."
 msgstr ""
 
-#: admin/js/template-builder/src/App.jsx:204
+#: admin/js/template-builder/src/App.jsx:217
 msgid "Save failed."
 msgstr ""
 
-#: admin/js/template-builder/src/App.jsx:213
+#: admin/js/template-builder/src/App.jsx:226
 msgid "Loading template…"
 msgstr ""
 
-#: admin/js/template-builder/src/App.jsx:222
+#: admin/js/template-builder/src/App.jsx:235
 msgid "← Templates"
 msgstr ""
 
-#: admin/js/template-builder/src/App.jsx:229
+#: admin/js/template-builder/src/App.jsx:242
 msgid "Template title…"
 msgstr ""
 
-#: admin/js/template-builder/src/App.jsx:245
-#: frontend/js/designer/src/App.jsx:903
+#: admin/js/template-builder/src/App.jsx:258
+#: frontend/js/designer/src/App.jsx:909
 msgid "Saving…"
 msgstr ""
 
-#: admin/js/template-builder/src/App.jsx:245
+#: admin/js/template-builder/src/App.jsx:258
 msgid "Saved ✓"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1126
+#: admin/js/template-builder/src/components/Canvas.jsx:1119
 msgid "Select Background Image"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1127
-#: admin/js/template-builder/src/components/Canvas.jsx:1379
+#: admin/js/template-builder/src/components/Canvas.jsx:1120
+#: admin/js/template-builder/src/components/Canvas.jsx:1372
 msgid "Set Background"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1328
+#: admin/js/template-builder/src/components/Canvas.jsx:1321
 msgid "Select at least one vector layer to use as a boundary."
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1333
+#: admin/js/template-builder/src/components/Canvas.jsx:1326
 #: admin/js/template-builder/src/components/ZoneForm.jsx:247
 msgid "Boundary"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1350
+#: admin/js/template-builder/src/components/Canvas.jsx:1343
 #, js-format
 msgid "Boundary created. Ignored non-vector layers: %d"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1361
+#: admin/js/template-builder/src/components/Canvas.jsx:1354
 msgid "Enable zone enforcement"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1361
+#: admin/js/template-builder/src/components/Canvas.jsx:1354
 msgid "Disable zone enforcement for free positioning"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1363
+#: admin/js/template-builder/src/components/Canvas.jsx:1356
 msgid "Enforce Zones"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1363
+#: admin/js/template-builder/src/components/Canvas.jsx:1356
 msgid "Free Move"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1369
+#: admin/js/template-builder/src/components/Canvas.jsx:1362
 msgid "Turn the selected vector layer(s) into a boundary"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1371
+#: admin/js/template-builder/src/components/Canvas.jsx:1364
 msgid "Use as Boundary"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1377
+#: admin/js/template-builder/src/components/Canvas.jsx:1370
 msgid "Set background image"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1379
+#: admin/js/template-builder/src/components/Canvas.jsx:1372
 msgid "Change Background"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1385
+#: admin/js/template-builder/src/components/Canvas.jsx:1378
 msgid "Resize and reposition the background image"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1387
+#: admin/js/template-builder/src/components/Canvas.jsx:1380
 msgid "Resize BG"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1394
+#: admin/js/template-builder/src/components/Canvas.jsx:1387
 msgid "Apply background position"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1396
+#: admin/js/template-builder/src/components/Canvas.jsx:1389
 msgid "Done"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1403
+#: admin/js/template-builder/src/components/Canvas.jsx:1396
 msgid "Remove background image"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1405
+#: admin/js/template-builder/src/components/Canvas.jsx:1398
 msgid "Remove BG"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1412
+#: admin/js/template-builder/src/components/Canvas.jsx:1405
 #: frontend/js/designer/src/components/Toolbar.jsx:38
 msgid "Undo (Ctrl+Z)"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1414
+#: admin/js/template-builder/src/components/Canvas.jsx:1407
 msgid "↩ Undo"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1420
+#: admin/js/template-builder/src/components/Canvas.jsx:1413
 #: frontend/js/designer/src/components/Toolbar.jsx:45
 msgid "Redo (Ctrl+Shift+Z)"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1422
+#: admin/js/template-builder/src/components/Canvas.jsx:1415
 msgid "↪ Redo"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1475
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:499
+#: admin/js/template-builder/src/components/Canvas.jsx:1468
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:504
 msgid "Align left"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1476
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:500
+#: admin/js/template-builder/src/components/Canvas.jsx:1469
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:505
 msgid "Align center"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1477
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:501
+#: admin/js/template-builder/src/components/Canvas.jsx:1470
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:506
 msgid "Align right"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1478
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:502
+#: admin/js/template-builder/src/components/Canvas.jsx:1471
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:507
 msgid "Align top"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1479
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:503
+#: admin/js/template-builder/src/components/Canvas.jsx:1472
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:508
 msgid "Align middle"
 msgstr ""
 
-#: admin/js/template-builder/src/components/Canvas.jsx:1480
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:504
+#: admin/js/template-builder/src/components/Canvas.jsx:1473
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:509
 msgid "Align bottom"
 msgstr ""
 
@@ -1819,12 +1828,12 @@ msgid "Element prices"
 msgstr ""
 
 #: admin/js/template-builder/src/components/PricingPanel.jsx:43
-#: admin/js/template-builder/src/components/TreePanel.jsx:322
-#: admin/js/template-builder/src/components/TreePanel.jsx:326
-#: admin/js/template-builder/src/components/TreePanel.jsx:457
-#: admin/js/template-builder/src/components/TreePanel.jsx:656
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:23
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:718
+#: admin/js/template-builder/src/components/TreePanel.jsx:330
+#: admin/js/template-builder/src/components/TreePanel.jsx:334
+#: admin/js/template-builder/src/components/TreePanel.jsx:465
+#: admin/js/template-builder/src/components/TreePanel.jsx:664
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:24
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:723
 #: frontend/js/designer/src/components/tabs/LayersTab.jsx:20
 msgid "Text"
 msgstr ""
@@ -1998,7 +2007,7 @@ msgid "colors"
 msgstr ""
 
 #: admin/js/template-builder/src/components/settings/SettingsColors.jsx:245
-#: frontend/js/designer/src/App.jsx:892
+#: frontend/js/designer/src/App.jsx:898
 #: frontend/js/designer/src/components/ClipartPicker.jsx:55
 msgid "Close"
 msgstr ""
@@ -2109,7 +2118,7 @@ msgid "When enabled, customers must save a design before they can add the produc
 msgstr ""
 
 #: admin/js/template-builder/src/components/settings/SettingsGeneral.jsx:27
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:628
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:633
 msgid "Product Color"
 msgstr ""
 
@@ -2225,196 +2234,218 @@ msgstr ""
 msgid "Allowed types:"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreeNode.jsx:110
+#: admin/js/template-builder/src/components/TreeNode.jsx:111
 msgid "Unnamed Zone"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreeNode.jsx:110
-#: admin/js/template-builder/src/components/TreePanel.jsx:686
+#: admin/js/template-builder/src/components/TreeNode.jsx:111
+#: admin/js/template-builder/src/components/TreePanel.jsx:694
 msgid "Layer"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreeNode.jsx:145
-msgid "Drag to reorder"
-msgstr ""
-
-#: admin/js/template-builder/src/components/TreeNode.jsx:154
-msgid "Collapse"
-msgstr ""
-
-#: admin/js/template-builder/src/components/TreeNode.jsx:154
-msgid "Expand"
-msgstr ""
-
-#: admin/js/template-builder/src/components/TreeNode.jsx:206
-#: admin/js/template-builder/src/components/TreeNode.jsx:207
-msgid "Add layer"
-msgstr ""
-
-#: admin/js/template-builder/src/components/TreeNode.jsx:213
-#: admin/js/template-builder/src/components/TreeNode.jsx:214
-msgid "Show"
-msgstr ""
-
-#: admin/js/template-builder/src/components/TreeNode.jsx:213
-#: admin/js/template-builder/src/components/TreeNode.jsx:214
-msgid "Hide"
-msgstr ""
-
-#: admin/js/template-builder/src/components/TreeNode.jsx:219
-#: admin/js/template-builder/src/components/TreeNode.jsx:220
+#: admin/js/template-builder/src/components/TreeNode.jsx:124
+#: admin/js/template-builder/src/components/TreeNode.jsx:242
+#: admin/js/template-builder/src/components/TreeNode.jsx:249
 msgid "Unlock"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreeNode.jsx:219
-#: admin/js/template-builder/src/components/TreeNode.jsx:220
+#: admin/js/template-builder/src/components/TreeNode.jsx:124
+#: admin/js/template-builder/src/components/TreeNode.jsx:242
+#: admin/js/template-builder/src/components/TreeNode.jsx:249
 msgid "Lock"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:168
+#: admin/js/template-builder/src/components/TreeNode.jsx:127
+msgid "Locked — the customer can still edit the text but cannot move or resize it. Click to open."
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:128
+msgid "Locked — the customer cannot touch this layer. Click to open."
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:130
+msgid "Locked by default — the customer cannot select this layer. Click to open."
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:132
+msgid "Open — the customer can edit this text. Click to lock."
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:133
+msgid "Open — the customer can move and resize this layer. Click to lock."
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:167
+msgid "Drag to reorder"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:176
+msgid "Collapse"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:176
+msgid "Expand"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:228
+#: admin/js/template-builder/src/components/TreeNode.jsx:229
+msgid "Add layer"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:235
+#: admin/js/template-builder/src/components/TreeNode.jsx:236
+msgid "Show"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreeNode.jsx:235
+#: admin/js/template-builder/src/components/TreeNode.jsx:236
+msgid "Hide"
+msgstr ""
+
+#: admin/js/template-builder/src/components/TreePanel.jsx:170
 msgid "Add a boundary first to place layers."
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:217
+#: admin/js/template-builder/src/components/TreePanel.jsx:219
 msgid "Add Boundary"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:219
+#: admin/js/template-builder/src/components/TreePanel.jsx:221
 msgid "+ Add Boundary"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:221
+#: admin/js/template-builder/src/components/TreePanel.jsx:223
 msgid "Saved Boundary"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:342
+#: admin/js/template-builder/src/components/TreePanel.jsx:350
 msgid "Select SVG"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:342
+#: admin/js/template-builder/src/components/TreePanel.jsx:350
 msgid "Select Image"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:343
+#: admin/js/template-builder/src/components/TreePanel.jsx:351
 msgid "Use"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:389
+#: admin/js/template-builder/src/components/TreePanel.jsx:397
 msgid "Back"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:391
+#: admin/js/template-builder/src/components/TreePanel.jsx:399
 msgid "Clipart Library"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:399
+#: admin/js/template-builder/src/components/TreePanel.jsx:407
 msgid "No collections yet."
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:400
+#: admin/js/template-builder/src/components/TreePanel.jsx:408
 msgid "Create one"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:421
+#: admin/js/template-builder/src/components/TreePanel.jsx:429
 msgid "Empty collection."
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:448
+#: admin/js/template-builder/src/components/TreePanel.jsx:456
 msgid "Add Layer"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:465
+#: admin/js/template-builder/src/components/TreePanel.jsx:473
 msgid "Media Library"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:507
 #: admin/js/template-builder/src/components/TreePanel.jsx:515
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:343
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:793
+#: admin/js/template-builder/src/components/TreePanel.jsx:523
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:344
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:798
 #: frontend/js/designer/src/components/Toolbar.jsx:100
 msgid "Color"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:592
+#: admin/js/template-builder/src/components/TreePanel.jsx:600
 msgid "Font Size"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:621
+#: admin/js/template-builder/src/components/TreePanel.jsx:629
 #, js-format
 msgid "Raised to %2$d px — this template’s minimum text size is %1$s mm."
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:623
+#: admin/js/template-builder/src/components/TreePanel.jsx:631
 #, js-format
 msgid "Raised to %d px — the smallest size this field accepts."
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:625
+#: admin/js/template-builder/src/components/TreePanel.jsx:633
 #, js-format
 msgid "Minimum %1$s mm (%2$d px), set under Permissions → Text."
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:647
+#: admin/js/template-builder/src/components/TreePanel.jsx:655
 msgid "Customers cannot move this layer."
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:648
+#: admin/js/template-builder/src/components/TreePanel.jsx:656
 msgid "Customers can move this layer."
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:653
+#: admin/js/template-builder/src/components/TreePanel.jsx:661
 msgid "Text Properties"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:661
+#: admin/js/template-builder/src/components/TreePanel.jsx:669
 msgid "Font Family"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:675
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:423
+#: admin/js/template-builder/src/components/TreePanel.jsx:683
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:424
 msgid "Text Align"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:677
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:172
+#: admin/js/template-builder/src/components/TreePanel.jsx:685
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:173
 msgid "Left"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:678
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:173
+#: admin/js/template-builder/src/components/TreePanel.jsx:686
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:174
 msgid "Center"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:679
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:174
+#: admin/js/template-builder/src/components/TreePanel.jsx:687
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:175
 msgid "Right"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:690
+#: admin/js/template-builder/src/components/TreePanel.jsx:698
 msgid "Properties"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:702
+#: admin/js/template-builder/src/components/TreePanel.jsx:710
 msgid "Opacity"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:716
+#: admin/js/template-builder/src/components/TreePanel.jsx:724
 msgid "X"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:720
+#: admin/js/template-builder/src/components/TreePanel.jsx:728
 msgid "Y"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:726
+#: admin/js/template-builder/src/components/TreePanel.jsx:734
 msgid "Scale X"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:730
+#: admin/js/template-builder/src/components/TreePanel.jsx:738
 msgid "Scale Y"
 msgstr ""
 
-#: admin/js/template-builder/src/components/TreePanel.jsx:735
+#: admin/js/template-builder/src/components/TreePanel.jsx:743
 #: admin/js/template-builder/src/components/ZoneForm.jsx:343
 msgid "Rotation"
 msgstr ""
@@ -2594,19 +2625,23 @@ msgstr ""
 msgid "Allowed element types"
 msgstr ""
 
-#: admin/js/template-builder/src/components/ZoneForm.jsx:489
+#: admin/js/template-builder/src/components/ZoneForm.jsx:469
+msgid "What CUSTOMERS may add here. Leave empty for a holding or boundary zone that only carries your own template artwork — ticking a type makes this zone claim the customer’s elements of that type, which can override your real engraving boundary. You can place your own template layers in any zone regardless of this setting."
+msgstr ""
+
+#: admin/js/template-builder/src/components/ZoneForm.jsx:492
 msgid "Default Font"
 msgstr ""
 
-#: admin/js/template-builder/src/components/ZoneForm.jsx:495
+#: admin/js/template-builder/src/components/ZoneForm.jsx:498
 msgid "Default (Arial)"
 msgstr ""
 
-#: admin/js/template-builder/src/components/ZoneForm.jsx:510
+#: admin/js/template-builder/src/components/ZoneForm.jsx:513
 msgid "Mask SVG URL"
 msgstr ""
 
-#: admin/js/template-builder/src/components/ZoneForm.jsx:522
+#: admin/js/template-builder/src/components/ZoneForm.jsx:525
 msgid "Save Boundary"
 msgstr ""
 
@@ -2622,74 +2657,74 @@ msgstr ""
 msgid "The designer could not load. Please reload the page."
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:480
+#: frontend/js/designer/src/App.jsx:486
 msgid "Could not find the add-to-cart form."
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:630
+#: frontend/js/designer/src/App.jsx:636
 msgid "Please customize your product before adding to cart."
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:748
+#: frontend/js/designer/src/App.jsx:754
 msgid "Loading designer..."
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:752
+#: frontend/js/designer/src/App.jsx:758
 msgid "Template not available."
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:775
+#: frontend/js/designer/src/App.jsx:781
 msgid "Your design is kept."
 msgstr ""
 
 #. translators: %s: the product options still to choose, e.g. "Size, Colour"
-#: frontend/js/designer/src/App.jsx:821
+#: frontend/js/designer/src/App.jsx:827
 #, js-format
 msgid "First choose: %s. Your design is kept."
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:826
-#: frontend/js/designer/src/App.jsx:842
+#: frontend/js/designer/src/App.jsx:832
+#: frontend/js/designer/src/App.jsx:848
 msgid "Choose options"
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:834
+#: frontend/js/designer/src/App.jsx:840
 msgid "This combination of options cannot be ordered. Choose another one. Your design is kept."
 msgstr ""
 
 #. translators: %s: the shop's own availability message, e.g. "Out of stock"
-#: frontend/js/designer/src/App.jsx:837
+#: frontend/js/designer/src/App.jsx:843
 #, js-format
 msgid "%s — choose another option. Your design is kept."
 msgstr ""
 
 #. translators: %s: the example texts, quoted and comma-separated, e.g. “First name”, “Phone number” (Back)
-#: frontend/js/designer/src/App.jsx:851
+#: frontend/js/designer/src/App.jsx:857
 #, js-format
 msgid "Still the example text: %s. It will be engraved like this."
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:863
+#: frontend/js/designer/src/App.jsx:869
 msgid "Change it"
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:866
+#: frontend/js/designer/src/App.jsx:872
 msgid "Leave it out"
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:869
+#: frontend/js/designer/src/App.jsx:875
 msgid "Order as it is"
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:876
+#: frontend/js/designer/src/App.jsx:882
 msgid "This could not be added to the cart yet — see the message at the top of the page. Your design is kept."
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:881
+#: frontend/js/designer/src/App.jsx:887
 msgid "Design surcharge:"
 msgstr ""
 
-#: frontend/js/designer/src/App.jsx:904
+#: frontend/js/designer/src/App.jsx:910
 msgid "Save & add to cart"
 msgstr ""
 
@@ -2701,17 +2736,17 @@ msgstr ""
 msgid "Letter spacing"
 msgstr ""
 
-#: frontend/js/designer/src/components/DesignerCanvas.jsx:1078
-#: frontend/js/designer/src/components/DesignerCanvas.jsx:1150
+#: frontend/js/designer/src/components/DesignerCanvas.jsx:1083
+#: frontend/js/designer/src/components/DesignerCanvas.jsx:1155
 msgid "Your text here"
 msgstr ""
 
-#: frontend/js/designer/src/components/DesignerCanvas.jsx:1206
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:270
+#: frontend/js/designer/src/components/DesignerCanvas.jsx:1211
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:271
 msgid "Your text"
 msgstr ""
 
-#: frontend/js/designer/src/components/DesignerCanvas.jsx:1254
+#: frontend/js/designer/src/components/DesignerCanvas.jsx:1259
 msgid "Photos are not possible on this product (engraving requires vector artwork)."
 msgstr ""
 
@@ -2787,7 +2822,7 @@ msgid "More kinds of text"
 msgstr ""
 
 #: frontend/js/designer/src/components/tabs/AddTab.jsx:85
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:24
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:25
 msgid "Curved text"
 msgstr ""
 
@@ -2796,7 +2831,7 @@ msgid "Add engraving text (single-line font)"
 msgstr ""
 
 #: frontend/js/designer/src/components/tabs/AddTab.jsx:94
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:25
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:26
 msgid "Engraving text"
 msgstr ""
 
@@ -2804,76 +2839,76 @@ msgstr ""
 msgid "Now click on the product where the text should go."
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:26
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:27
 #: frontend/js/designer/src/components/tabs/LayersTab.jsx:22
 msgid "Photo"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:27
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:28
 #: frontend/js/designer/src/components/tabs/LayersTab.jsx:24
 msgid "Clip art"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:28
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:29
 #: frontend/js/designer/src/components/tabs/LayersTab.jsx:26
 msgid "Drawing"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:29
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:30
 #: frontend/js/designer/src/components/tabs/LayersTab.jsx:28
 msgid "Element"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:83
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:84
 msgid "Select an element to edit its properties"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:144
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:386
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:145
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:387
 msgid "More options"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:284
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:285
 msgid "Font"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:301
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:759
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:302
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:764
 #: frontend/js/designer/src/components/Toolbar.jsx:89
 msgid "Size"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:389
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:390
 msgid "Style"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:395
 #: frontend/js/designer/src/components/tabs/ElementTab.jsx:396
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:397
 msgid "Bold"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:409
 #: frontend/js/designer/src/components/tabs/ElementTab.jsx:410
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:411
 msgid "Italic"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:509
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:514
 msgid "Position on the product"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:554
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:559
 msgid "This image is scaled beyond its resolution — the result may look blurry or pixelated. Use a larger image for a sharp result."
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:561
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:566
 msgid "Tint Color"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:729
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:734
 msgid "Engraving Font"
 msgstr ""
 
-#: frontend/js/designer/src/components/tabs/ElementTab.jsx:729
+#: frontend/js/designer/src/components/tabs/ElementTab.jsx:734
 msgid "single-line"
 msgstr ""
 

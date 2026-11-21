@@ -18,8 +18,8 @@ import {
   withoutExcludedObjects,
   renderOffscreenThumbnail,
   renderOffscreenExportPng,
-  buildExportVectors,
 } from './utils/exportRender';
+import { loadProExport, buildProExportVectors } from './utils/proExport';
 import { countPriceableElements } from './utils/priceCounts';
 import useIsMobile from './hooks/useIsMobile';
 import { withoutTextPlaceholders } from '../../../../shared/js/textPlaceholder';
@@ -160,6 +160,12 @@ export default function App() {
     }, 400);
     return () => clearTimeout(timer);
   }, [canvasSnapshots, config.template_id, template]);
+
+  // Pro sites: fetch the vector-export bundle while the customer designs, so
+  // the first save does not wait for it. No URL (free build) → nothing.
+  useEffect(() => {
+    if (config.pro_export_url) loadProExport(config.pro_export_url);
+  }, [config.pro_export_url]);
 
   // Load template on mount, then load existing design if hash is present.
   // Depend on config.template_id (not []) so that if the first render sees an
@@ -706,7 +712,7 @@ export default function App() {
         // Real vector SVG (outline default + font-embedded variant), rendered
         // offscreen at native size so it is zoom-independent and correctly scaled.
         const { outline: exportVector, embed: exportVectorEmbed, lbrn: exportLbrn } =
-          await buildExportVectors(json, w, h, {
+          await buildProExportVectors(config.pro_export_url, json, w, h, {
             customFonts: customFontsRef.current,
             restUrl: config.rest_url,
             widthMm: resolveWidthMm(views, idx).widthMm,
